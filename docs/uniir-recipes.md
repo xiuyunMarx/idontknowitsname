@@ -1,0 +1,15 @@
+# Jac UniIR parsing recipes and gotchas (jaclang.jac0core.unitree, verified 2026-08)
+
+Compile: `JacProgram().compile(path, options=CompileOptions(type_check=False, no_cgen=True, force_target_program=True))`. All modules in `prog.mod.hub` (path→Module; also contains imported .py modules — filter `path.endswith(".jac")`). The returned root Module has NO `.hub`. `type_check=True` works when deps are importable but isn't needed for sems or types-as-written. Impl files (`main.impl.jac`) are merged into the main module.
+
+- **byllm decls**: `mod.get_all_sub_nodes(uni.Ability)` where `ab.is_genai_ability` (== body is Expr) and `isinstance(ab.signature, uni.FuncSignature)`. Body is the `llm(...)` FuncCall; kwargs are `uni.KWPair` (`kw.key.unparse()`); literals via `.lit_value` on Int/Float/String/MultiString/Bool; `ListVal.values`.
+- **sems**: compiler resolves `sem X.y` onto nodes — `ab.semstr`, `ParamVar.semstr`, `Archetype.semstr`, `HasVar.semstr`. No separate registry needed.
+- **types**: `p.type_tag.unparse()` is spaced (`: list [ dict [ str , str ] ]`) — regex-normalize to `list[dict[str, str]]`.
+- **obj/enum defs**: `uni.Archetype` (`arch_type.value` ∈ obj/node/edge/walker, `base_classes`, body ArchHas→HasVar), `uni.Enum` (body Assignments: `st.target[0].sym_name` + value `lit_value`).
+- **genai visit**: `visit [-->] by llm(...)` — VisitStmt whose `target` is `uni.BinaryExpr` with `op.value == "by"` and `right` = the llm FuncCall. NOT a direct kid of VisitStmt; `AtomTrailer.is_genai` is False here.
+- **GOTCHA**: `ab.event_trigger_type_names()` returns None without the filling pass — fall back to `ab.signature.arch_tag_info.unparse()` (EventSignature) to get `with X entry` trigger types.
+- **control flow**: every node has `.parent`, ordered `.kid` (children incl. tokens), `find_parent_of_type(T)`, `get_all_sub_nodes(T)`. Subsequent statements at a level = kids after current filtered `isinstance(k, uni.CodeBlockStmt)`, excluding `uni.ElseIf` (`ElseStmt` isn't CodeBlockStmt). Loops: WhileStmt/IterForStmt/InForStmt. `uni.ModuleCode` = `with entry` block. Branching stmts for topology: IfStmt/While/For/Try/Match.
+- **glob literals**: search `uni.Assignment` where `target[0].sym_name == name`, value via `lit_value` (resolves `intent=ROUTER_INTENT`).
+- **method calls**: `AtomTrailer.unparse()` is spaced (`self . respond`) — normalize dots, take rightmost name. Receiver `self` → enclosing ability's `method_owner` + `base_classes` chain for precise class resolution.
+
+Topology design: may-happen-next **over-approximation** — branch both sides, loop back-edges, union over all callers, name-fallback when receiver unresolvable. Rationale: spurious edge = wasted speculative prefill (≈free on decode-bound GPU); missed edge = the cold TTFT the system exists to remove. Dynamic aliasing (`f = self.m; f()`) deliberately out of scope (user decision). `_visit_successors` excludes the ability containing the visit (suppresses trivial self-edges, trades away genuine same-ability revisit loops).

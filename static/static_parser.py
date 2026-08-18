@@ -38,6 +38,8 @@ class ByLLMDecl:
 
     name: str
     qualifier: str = ""  # "RagChat." for methods, "" for module-level defs
+    kind: str = "func"  # "func" = byllm function; "visit" = `visit ... by llm()` routing call
+    intent: str = ""  # visit only: the static intent= text (resolved through glob literals)
     params: List[Dict[str, Any]] = field(default_factory=list)  # {name, type, sem, required}
     return_type: str = "str"
     sem: str = ""  # authored sem of the function itself
@@ -604,13 +606,62 @@ def _call_decl_keys(call: uni.FuncCall, program: JacProgram, by_simple: Dict[str
     return cands
 
 
-def _byllm_calls_in(node: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]]) -> List[str]:
-    """Decl keys of every byllm invocation inside a subtree, in source order."""
+def _genai_visit_call(vs: uni.VisitStmt) -> Optional[uni.FuncCall]:
+    """The llm(...) call of a `visit <target> by llm(...)` statement, else None."""
+    tgt = vs.target
+    if isinstance(tgt, uni.BinaryExpr) and isinstance(tgt.right, uni.FuncCall):
+        op_txt = str(getattr(tgt.op, "value", "") or "").strip().lower()
+        if op_txt == "by":
+            return tgt.right
+    return None
+
+
+def find_genai_visits(program: JacProgram) -> List[uni.VisitStmt]:
+    """Every `visit ... by llm()` routing call site in the program."""
+    out: List[uni.VisitStmt] = []
+    seen: set = set()
+    for mod in _iter_jac_modules(program):
+        for vs in mod.get_all_sub_nodes(uni.VisitStmt):
+            if _genai_visit_call(vs) is None:
+                continue
+            key = (vs.loc.mod_path, vs.loc.first_line, vs.loc.col_start)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(vs)
+    return out
+
+
+def visit_key(vs: uni.VisitStmt) -> str:
+    """Graph key of a visit-routing call site: `interact.route.visit@183`."""
+    enc = vs.find_parent_of_type(uni.Ability)
+    owner = enc.method_owner if enc is not None else None
+    q = f"{owner.name.value}." if owner is not None else ""
+    if enc is not None:
+        abname = enc.name_ref.value if isinstance(enc.name_ref, uni.Name) else enc.py_resolve_name()
+    else:
+        abname = "module"
+    return f"{q}{abname}.visit@{vs.loc.first_line}"
+
+
+def _visit_key_map(program: JacProgram) -> Dict[int, str]:
+    return {id(vs): visit_key(vs) for vs in find_genai_visits(program)}
+
+
+def _llm_calls_in(node: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]], visit_keys: Dict[int, str]) -> List[str]:
+    """Keys of every LLM call inside a subtree: byllm function invocations plus genai visits."""
     out: List[str] = []
     for call in node.get_all_sub_nodes(uni.FuncCall):
         for key in _call_decl_keys(call, program, by_simple):
             if key not in out:
                 out.append(key)
+    visits = list(node.get_all_sub_nodes(uni.VisitStmt))
+    if isinstance(node, uni.VisitStmt):
+        visits.append(node)
+    for vs in visits:
+        k = visit_keys.get(id(vs))
+        if k and k not in out:
+            out.append(k)
     return out
 
 
@@ -661,27 +712,30 @@ def _enclosing_walker_names(node: uni.UniNode) -> List[str]:
     return _trigger_names(enc)
 
 
-def _visit_successors(program: JacProgram, walker_name: str, by_simple: Dict[str, List[str]]) -> List[str]:
-    """byllm calls inside node abilities this walker can trigger (`can x with W entry`)."""
+def _visit_successors(program: JacProgram, walker_name: str, by_simple: Dict[str, List[str]], visit_keys: Dict[int, str], exclude: Optional[uni.Ability] = None) -> List[str]:
+    """LLM calls the traversal can reach after a `visit`: node abilities this walker
+    triggers (`can x with W entry`) plus the walker's own node-triggered abilities.
+    `exclude` drops the ability containing the visit itself (suppresses the trivial
+    self-edge; genuine same-ability revisit loops are traded away for precision)."""
     out: List[str] = []
     for mod in _iter_jac_modules(program):
         for nab in mod.get_all_sub_nodes(uni.Ability):
+            if nab is exclude or nab.is_genai_ability:
+                continue
             owner = nab.method_owner
-            if owner is None or nab.is_genai_ability:
+            if owner is None:
                 continue
             kind = owner.arch_type.value if hasattr(owner.arch_type, "value") else ""
-            if kind != "node":
+            hit = (kind == "node" and walker_name in set(_trigger_names(nab))) or (kind == "walker" and owner.name.value == walker_name and bool(_trigger_names(nab)))
+            if not hit:
                 continue
-            trigs = set(_trigger_names(nab))
-            if walker_name not in trigs:
-                continue
-            for key in _byllm_calls_in(nab, by_simple):
+            for key in _llm_calls_in(nab, program, by_simple, visit_keys):
                 if key not in out:
                     out.append(key)
     return out
 
 
-def _next_after(site: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]]) -> Tuple[List[str], bool]:
+def _next_after(site: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]], visit_keys: Dict[int, str]) -> Tuple[List[str], bool]:
     """Successor decl keys reachable after `site` completes, scanning forward in control flow.
 
     Climbs enclosing statement lists via the ordered `kid` children. An
@@ -704,13 +758,18 @@ def _next_after(site: uni.UniNode, program: JacProgram, by_simple: Dict[str, Lis
             following = [k for k in after if isinstance(k, uni.CodeBlockStmt) and not isinstance(k, uni.ElseIf)]
         stopped = False
         for st in following:
-            visit_nodes = [st] if isinstance(st, uni.VisitStmt) else list(st.get_all_sub_nodes(uni.VisitStmt))
-            for vs in visit_nodes:
+            # Plain visits extend the traversal; genai visits are LLM calls themselves
+            # (their key lands via _llm_calls_in and their traversal successors belong
+            # to the visit node in the graph, not to the current site).
+            all_visits = [st] if isinstance(st, uni.VisitStmt) else list(st.get_all_sub_nodes(uni.VisitStmt))
+            for vs in all_visits:
+                if visit_keys.get(id(vs)) is not None:
+                    continue
                 for wname in _enclosing_walker_names(vs):
-                    for key in _visit_successors(program, wname, by_simple):
+                    for key in _visit_successors(program, wname, by_simple, visit_keys, exclude=vs.find_parent_of_type(uni.Ability)):
                         if key not in out:
                             out.append(key)
-            calls = _byllm_calls_in(st, by_simple)
+            calls = _llm_calls_in(st, program, by_simple, visit_keys)
             for key in calls:
                 if key not in out:
                     out.append(key)
@@ -721,7 +780,7 @@ def _next_after(site: uni.UniNode, program: JacProgram, by_simple: Dict[str, Lis
             return out, False
         if isinstance(p, _LOOP_STMTS):
             # Falling off a loop-body iteration can re-enter the loop from its top.
-            for key in _byllm_calls_in(p, by_simple):
+            for key in _llm_calls_in(p, program, by_simple, visit_keys):
                 if key not in out:
                     out.append(key)
         if isinstance(p, uni.Ability):
@@ -731,11 +790,18 @@ def _next_after(site: uni.UniNode, program: JacProgram, by_simple: Dict[str, Lis
         cur = p
 
 
-def _successors_of_callable(program: JacProgram, simple_name: str, by_simple: Dict[str, List[str]], visited: set) -> List[str]:
-    """Union of what can run next after any invocation of `simple_name` returns."""
-    out: List[str] = []
-    for site in _invocation_sites(program, simple_name):
-        keys, escaped = _next_after(site, program, by_simple)
+def _by_simple_of(funcDecls: Dict[str, ByLLMDecl]) -> Dict[str, List[str]]:
+    by_simple: Dict[str, List[str]] = {}
+    for key, d in funcDecls.items():
+        if d.kind == "func":  # visit decls are matched positionally, never by call name
+            by_simple.setdefault(d.name, []).append(key)
+    return by_simple
+
+
+def _collect_after_sites(program: JacProgram, sites: List[uni.UniNode], by_simple: Dict[str, List[str]], visit_keys: Dict[int, str], visited: set, out: List[str]) -> None:
+    """Fold the continuations of every site into `out`, chasing caller continuations."""
+    for site in sites:
+        keys, escaped = _next_after(site, program, by_simple, visit_keys)
         for key in keys:
             if key not in out:
                 out.append(key)
@@ -752,30 +818,95 @@ def _successors_of_callable(program: JacProgram, simple_name: str, by_simple: Di
         if ename in visited:
             continue
         visited.add(ename)
-        for key in _successors_of_callable(program, ename, by_simple, visited):
-            if key not in out:
-                out.append(key)
-    return out
+        _collect_after_sites(program, _invocation_sites(program, ename), by_simple, visit_keys, visited, out)
 
 
 def parse_callsite_topology(program: JacProgram, ab: uni.Ability, funcDecls: Dict[str, ByLLMDecl]) -> List[str]:
-    """Decl keys of the byllm calls that can run next after `ab` completes.
+    """Keys of the LLM calls (byllm functions and genai visits) that can run next after `ab` completes.
 
     Static may-happen-next over-approximation: sequential flow, branches, loops
     (self/repeat edges), caller continuations, and walker `visit` edges into
     node abilities. Over-approximating costs only wasted speculative prefill;
     missing an edge costs a cold TTFT — so edges err toward inclusion.
     """
-    by_simple: Dict[str, List[str]] = {}
-    for key, d in funcDecls.items():
-        by_simple.setdefault(d.name, []).append(key)
-    simple = ab.name_ref.value if isinstance(ab.name_ref, uni.Name) else ab.py_resolve_name()
-    return _successors_of_callable(program, simple, by_simple, visited={simple})
+    by_simple = _by_simple_of(funcDecls)
+    visit_keys = _visit_key_map(program)
+    my_key = ability_key(ab)
+    simple = my_key.split(".")[-1]
+    out: List[str] = []
+    _collect_after_sites(program, list(_sites_of_decl(program, my_key, by_simple)), by_simple, visit_keys, {simple}, out)
+    return out
+
+
+def parse_visit_topology(program: JacProgram, vs: uni.VisitStmt, funcDecls: Dict[str, ByLLMDecl]) -> List[str]:
+    """Successors of a `visit ... by llm()` call site: the statements after it, plus
+    the abilities its traversal can trigger."""
+    by_simple = _by_simple_of(funcDecls)
+    visit_keys = _visit_key_map(program)
+    out, _ = _next_after(vs, program, by_simple, visit_keys)
+    enc = vs.find_parent_of_type(uni.Ability)
+    for wname in _enclosing_walker_names(vs):
+        for key in _visit_successors(program, wname, by_simple, visit_keys, exclude=enc):
+            if key not in out:
+                out.append(key)
+    return out
+
+
+def build_visit_decl(program: JacProgram, vs: uni.VisitStmt) -> ByLLMDecl:
+    """Compile-time record of a `visit ... by llm(select=.., intent=..)` routing call.
+
+    The invariant is the routing system prompt (+ select suffix) and the static
+    `Goal: {intent}` head of the user message; walker/here/candidates are runtime.
+    """
+    call = _genai_visit_call(vs)
+    key = visit_key(vs)
+    qualifier, name = key.rsplit(".", 1) if "." in key else ("", key)
+    call_params: Dict[str, Any] = {}
+    intent = ""
+    for kw in (call.params or []) if call is not None else []:
+        if not isinstance(kw, uni.KWPair) or kw.key is None:
+            continue
+        k = kw.key.unparse().strip()
+        ok, v = literal_of(kw.value)
+        if k == "intent":
+            if not ok and isinstance(kw.value, uni.Name):
+                gv = _glob_literal(program, kw.value.value)
+                ok, v = (gv is not None), gv
+            if ok:
+                intent = str(v)
+            else:
+                print(f"[side-runtime] warning: dynamic intent ({kw.value.unparse()}); visit invariant excludes it")
+        elif ok:
+            call_params[k] = v
+    return ByLLMDecl(
+        name=name,
+        qualifier=qualifier + "." if qualifier else "",
+        kind="visit",
+        intent=intent,
+        call_params=call_params,
+        return_type="str",
+        module=vs.loc.mod_path,
+        lineno=vs.loc.first_line,
+    )
+
+
+def _glob_literal(program: JacProgram, name: str) -> Optional[Any]:
+    """Value of a module-level glob when its initializer is a literal."""
+    for mod in _iter_jac_modules(program):
+        for asg in mod.get_all_sub_nodes(uni.Assignment):
+            tgt = asg.target[0] if asg.target else None
+            if isinstance(tgt, uni.AstSymbolNode) and tgt.sym_name == name and asg.value is not None:
+                ok, v = literal_of(asg.value)
+                if ok:
+                    return v
+    return None
 
 
 def build_callsite_graph(program: JacProgram, funcDecls: Dict[str, ByLLMDecl]) -> Dict[str, List[str]]:
-    """Adjacency over byllm call sites: key -> decl keys that can be invoked next."""
+    """Adjacency over LLM call sites (byllm functions + genai visits): key -> possible-next keys."""
     graph: Dict[str, List[str]] = {}
     for ab in find_byllm_abilities(program):
         graph[ability_key(ab)] = parse_callsite_topology(program, ab, funcDecls)
+    for vs in find_genai_visits(program):
+        graph[visit_key(vs)] = parse_visit_topology(program, vs, funcDecls)
     return graph

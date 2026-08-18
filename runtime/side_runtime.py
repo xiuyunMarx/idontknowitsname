@@ -8,7 +8,7 @@ from typing import Dict, List
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # make `static` importable
 
 from static.async_byllm import AsyncByLLM
-from static.static_parser import ByLLMDecl, ability_key, build_callsite_graph, build_decl, build_uniir, collect_type_defs, find_byllm_abilities
+from static.static_parser import ByLLMDecl, ability_key, build_callsite_graph, build_decl, build_uniir, build_visit_decl, collect_type_defs, find_byllm_abilities, find_genai_visits, visit_key
 
 
 class SideRuntime:
@@ -26,10 +26,15 @@ class SideRuntime:
         self._parse_topology()
 
     def _parse_byLLM_decl(self) -> None:
-        """Parse the byllm function declarations and build one AsyncByLLM per call site."""
+        """Parse every LLM call site — byllm functions and `visit ... by llm()` routing — build one AsyncByLLM per site."""
         for ab in find_byllm_abilities(self.program):
             decl = build_decl(self.program, ab, self.type_defs)
             key = ability_key(ab)
+            self.func_decls[key] = decl
+            self.byllm_callsites[key] = AsyncByLLM(decl)
+        for vs in find_genai_visits(self.program):
+            decl = build_visit_decl(self.program, vs)
+            key = visit_key(vs)
             self.func_decls[key] = decl
             self.byllm_callsites[key] = AsyncByLLM(decl)
 
@@ -41,12 +46,19 @@ class SideRuntime:
         """The AsyncByLLM objects worth speculatively prefilling after `key` completes."""
         return [self.byllm_callsites[k] for k in self.callsites_topo.get(key, []) if k in self.byllm_callsites]
 
+    def prewarm_callsite(self, key: str) -> None:
+        if key not in self.byllm_callsites:
+            raise ValueError(f"Unknown byllm call site key: {key}")
+        self.byllm_callsites[key].warm_invariant()
+        
+        
     def bind_engine(self, engine) -> None:
         for fn in self.byllm_callsites.values():
             fn.bind_engine(engine)
 
 
-def main() -> None:
+
+if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Dump the byllm call-site topology of a Jac program")
     ap.add_argument("file", help="path to the program's entry .jac file")
     ap.add_argument("--no-type-check", action="store_true")
@@ -56,6 +68,3 @@ def main() -> None:
     for key, nxt in rt.callsites_topo.items():
         print(f"  {key} -> {nxt if nxt else '(end)'}")
 
-
-if __name__ == "__main__":
-    main()

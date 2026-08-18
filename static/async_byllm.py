@@ -59,6 +59,9 @@ class AsyncByLLM(torch.nn.Module):
         inject_tool_hint, so the token prefix matches what byllm would send.
         """
         d = self.decl
+        if d.kind == "visit":
+            self._build_visit_invariant()
+            return
         system = self.system_persona
         if d.extra_system_prompt:
             system += "\n\n" + d.extra_system_prompt
@@ -91,8 +94,35 @@ class AsyncByLLM(torch.nn.Module):
                 kwargs["structured_outputs"] = so
             self.sampler = SamplingParams(**kwargs)
 
+    def _build_visit_invariant(self) -> None:
+        """Invariant of a `visit ... by llm()` routing call (mirrors byllm route_visit): the routing system prompt with its select suffix, and the static Goal line."""
+        d = self.decl
+        system = "You are routing a graph walker. Choose which candidate node(s) the walker should visit next, by handle. Return only valid handles."
+        select = d.call_params.get("select")
+        if select == 1:
+            system += " Choose exactly one."
+        elif isinstance(select, int) and not isinstance(select, bool):
+            system += f" Choose exactly {select}."
+        self.invariant_system = system
+        self.invariant_user_prefix = f"Goal: {d.intent}" if d.intent else ""
+        if self.sampler is None:
+            kwargs: Dict[str, Any] = {"max_tokens": int(d.call_params.get("max_tokens", 64))}
+            if "temperature" in d.call_params:
+                kwargs["temperature"] = float(d.call_params["temperature"])
+            self.sampler = SamplingParams(**kwargs)
+
     def build_full_prompt(self, params: Dict[str, Any]) -> List[Dict[str, str]]:
         """Append the runtime bindings zone (and `self` identity zone) to the invariant prefix."""
+        if self.decl.kind == "visit":
+            # Runtime zones of route_visit's user message, in its exact order.
+            parts = [self.invariant_user_prefix] if self.invariant_user_prefix else []
+            if params.get("walker") is not None:
+                parts.append(f"Walker:\n{params['walker']}")
+            if params.get("here") is not None:
+                parts.append(f"Current node:\n{params['here']}")
+            if params.get("candidates") is not None:
+                parts.append(f"Candidates (choose by handle):\n{params['candidates']}")
+            return [{"role": "system", "content": self.invariant_system}, {"role": "user", "content": "\n\n".join(parts)}]
         lines = [self.invariant_user_prefix]
         for p in self.decl.params:
             if p["name"] in params:
@@ -138,6 +168,8 @@ class AsyncByLLM(torch.nn.Module):
 
     def parse_response(self, text: str) -> Any:
         """Parse the raw completion into the declared return type (mirrors MTRuntime.parse_response)."""
+        if self.decl.kind == "visit":
+            return text  # handle names; resolution to node instances is runtime-side
         rt = self.decl.return_type
         if self.decl.tools:
             found, val = extract_finish_output(text)
@@ -162,5 +194,4 @@ class AsyncByLLM(torch.nn.Module):
         messages = self.build_full_prompt(params)
         outputs = self.model.chat(messages, sampling_params=self.sampler, use_tqdm=False)  # type: ignore[arg-type]
         self.last_output = outputs[0]
-        text = outputs[0].outputs[0].text
-        return self.parse_response(text)
+        return self.parse_response(outputs[0].outputs[0].text)
