@@ -60,7 +60,6 @@ class SideRuntime:
             fn.bind_engine(engine)
 
 
-
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Dump the byllm call-site topology of a Jac program")
     ap.add_argument("file", help="path to the program's entry .jac file")

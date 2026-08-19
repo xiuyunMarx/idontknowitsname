@@ -1004,3 +1004,47 @@ def build_callsite_graph(program: JacProgram, funcDecls: Dict[str, ByLLMDecl]) -
     for vs in find_genai_visits(program):
         graph[visit_key(vs)] = parse_visit_topology(program, vs, funcDecls)
     return graph
+
+
+def bfs_distances(graph: Dict[str, List[str]], src: str) -> Dict[str, int]:
+    """Hop distance from `src` to every reachable call site (src itself = 0).
+    Drives distance-layered idle warming: nearest byllm calls prefill first, then
+    the next ring out, and so on; unreachable sites are behind the workflow
+    position and not worth an invariant warm."""
+    dist: Dict[str, int] = {src: 0}
+    frontier = [src]
+    while frontier:
+        nxt: List[str] = []
+        for u in frontier:
+            for v in graph.get(u, []):
+                if v not in dist:
+                    dist[v] = dist[u] + 1
+                    nxt.append(v)
+        frontier = nxt
+    return dist
+
+
+def entry_distances(graph: Dict[str, List[str]]) -> Dict[str, int]:
+    """Multi-source BFS from the workflow's entry call sites (in-degree 0): the
+    rank prewarm drains in before any request has fixed a position — the first
+    real request needs an entry, then its ring 1, and so on. A cyclic graph with
+    no in-degree-0 site falls back to all-zero (insertion order)."""
+    indeg: Dict[str, int] = {k: 0 for k in graph}
+    for vs in graph.values():
+        for v in vs:
+            if v in indeg:
+                indeg[v] += 1
+    entries = [k for k, d in indeg.items() if d == 0]
+    if not entries:
+        return {k: 0 for k in graph}
+    dist: Dict[str, int] = {e: 0 for e in entries}
+    frontier = entries
+    while frontier:
+        nxt: List[str] = []
+        for u in frontier:
+            for v in graph.get(u, []):
+                if v not in dist:
+                    dist[v] = dist[u] + 1
+                    nxt.append(v)
+        frontier = nxt
+    return dist

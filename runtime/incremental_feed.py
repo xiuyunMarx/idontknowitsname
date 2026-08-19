@@ -337,3 +337,30 @@ def extract_visit_ctx(user_text: str) -> Optional[Tuple[str, str]]:
     if m is None:
         return None
     return m.group(1), m.group(2)
+
+
+_CAND_LINE_RE = re.compile(r"^([A-Za-z0-9_]+)\)\s")
+
+
+def parse_candidate_handles(candidates: str) -> List[str]:
+    """The choice handles of a route prompt's candidates zone, in zone order.
+    Lines are `handle) <description>`; the description's shape varies (sems,
+    arrows, field dumps), but the handle itself is `_slugify(NodeType.__name__)`
+    plus an optional `_suffix` — so callers map handles back to node types by
+    slug matching, never by parsing the description."""
+    out: List[str] = []
+    for line in candidates.splitlines():
+        m = _CAND_LINE_RE.match(line.strip())
+        if m is not None:
+            out.append(m.group(1))
+    return out
+
+
+def slugify_handle(text: str) -> str:
+    """Byte-mirror of visit_routing.jac's _slugify (handle base construction)."""
+    s = re.sub(r"\W+", "_", str(text)).strip("_")
+    if not s:
+        return "n"
+    if not (s[0].isalpha() or s[0] == "_"):
+        s = "n_" + s
+    return s
