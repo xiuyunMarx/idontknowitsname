@@ -8,7 +8,7 @@ from typing import Dict, List
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # make `static` importable
 
 from static.async_byllm import AsyncByLLM
-from static.static_parser import ByLLMDecl, ability_key, build_callsite_graph, build_decl, build_uniir, build_visit_decl, collect_type_defs, find_byllm_abilities, find_genai_visits, visit_key
+from static.static_parser import ByLLMDecl, ability_key, build_callsite_graph, build_decl, build_provenance, build_uniir, build_visit_decl, collect_type_defs, find_byllm_abilities, find_genai_visits, invert_provenance, visit_key
 
 
 class SideRuntime:
@@ -39,8 +39,11 @@ class SideRuntime:
             self.byllm_callsites[key] = AsyncByLLM(decl)
 
     def _parse_topology(self) -> None:
-        """Static may-happen-next graph over the byllm call sites."""
+        """Static may-happen-next graph over the byllm call sites, plus the binding
+        provenance table (param -> value-source spec) driving speculative feeds."""
         self.callsites_topo = build_callsite_graph(self.program, self.func_decls)
+        self.provenance = build_provenance(self.program, self.func_decls)
+        self.ret_consumers = invert_provenance(self.provenance)  # producer -> [(consumer, param)]
 
     def next_callsites(self, key: str) -> List[AsyncByLLM]:
         """The AsyncByLLM objects worth speculatively prefilling after `key` completes."""
@@ -67,4 +70,8 @@ if __name__ == "__main__":
     print(f"[side-runtime] {len(rt.byllm_callsites)} call site(s)")
     for key, nxt in rt.callsites_topo.items():
         print(f"  {key} -> {nxt if nxt else '(end)'}")
+    print("[side-runtime] provenance:")
+    for key, params in rt.provenance.items():
+        for name, spec in params.items():
+            print(f"  {key}.{name} <- {spec}")
 

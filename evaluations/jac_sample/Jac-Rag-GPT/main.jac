@@ -16,6 +16,7 @@ import os;
 import time;
 import from datetime { datetime }
 import from jaclang.byllm.lib { Model }
+import from jaclang.byllm.llm { InterceptorLLM }
 import from dotenv { load_dotenv }
 import from rag_engine { RagEngine, AppConfig, load_config }
 
@@ -25,7 +26,7 @@ with entry {
 }
 
 glob app_config: AppConfig = load_config("faiss_reranking");
-glob llm = Model(model_name=os.environ.get("MODEL", app_config.model_name));
+glob llm = InterceptorLLM(model_name=os.environ.get("MODEL", app_config.model_name));
 
 glob base_dir: str = os.path.dirname(__file__);
 glob rag_engine: RagEngine = RagEngine(

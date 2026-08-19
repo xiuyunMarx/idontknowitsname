@@ -813,7 +813,17 @@ def _collect_after_sites(program: JacProgram, sites: List[uni.UniNode], by_simpl
         owner = encl.method_owner
         kind = owner.arch_type.value if owner is not None and hasattr(owner.arch_type, "value") else ""
         if kind in ("walker", "node"):
-            continue  # ability end hands control to graph traversal, handled via visit edges
+            # Traversal-queue continuation: a walker/node ability body ending hands
+            # control back to the traversal — ANY ability this walker can still
+            # trigger (queued nodes of any type, the walker's own later/exit
+            # abilities) may run next. May-edges over all of them; a same-type
+            # self-edge is legitimate (another instance may be queued).
+            wnames = [owner.name.value] if (kind == "walker" and owner is not None) else _trigger_names(encl)
+            for wname in wnames:
+                for k2 in _visit_successors(program, wname, by_simple, visit_keys, exclude=None):
+                    if k2 not in out:
+                        out.append(k2)
+            continue
         ename = encl.name_ref.value if isinstance(encl.name_ref, uni.Name) else encl.py_resolve_name()
         if ename in visited:
             continue
@@ -900,6 +910,90 @@ def _glob_literal(program: JacProgram, name: str) -> Optional[Any]:
                 if ok:
                     return v
     return None
+
+
+# ---------------------------------------------------------------------------
+# Binding provenance: where each callsite's argument values come from
+# ---------------------------------------------------------------------------
+_FIELD_EXPR_RE = re.compile(r"^(visitor|here|self)\.([A-Za-z_][A-Za-z0-9_]*)((?:\[[^\]]*\])?)$")
+
+
+def _classify_arg(expr: uni.UniNode, site: uni.FuncCall, program: JacProgram, by_simple: Dict[str, List[str]]) -> Dict[str, Any]:
+    """Provenance spec of one argument expression:
+    const  — literal, value known at compile time
+    field  — walker/node state (`visitor.f`, `here.f`, `self.f`), optionally sliced;
+             evaluable from the state visible when a predecessor call starts
+    ret    — the return value of another byllm call (direct call or a variable
+             assigned from one in the enclosing ability/module scope)
+    unknown — anything else; never fed, decl-order rendering as usual."""
+    ok, v = literal_of(expr)
+    if ok:
+        return {"kind": "const", "value": v}
+    text = re.sub(r"\s+", "", expr.unparse().strip())
+    m = _FIELD_EXPR_RE.match(text)
+    if m:
+        return {"kind": "field", "scope": m.group(1), "attr": m.group(2), "slice": m.group(3)}
+    if isinstance(expr, uni.FuncCall):
+        keys = _call_decl_keys(expr, program, by_simple)
+        if len(keys) == 1:
+            return {"kind": "ret", "of": keys[0]}
+    if isinstance(expr, uni.Name):
+        # A bare variable: look for an assignment `name = <byllm call>(...)` in the
+        # enclosing scope (ability body, or module for top-level code).
+        scope = site.find_parent_of_type(uni.Ability) or site.find_parent_of_type(uni.ModuleCode)
+        if scope is not None:
+            for asg in scope.get_all_sub_nodes(uni.Assignment):
+                tgt = asg.target[0] if asg.target else None
+                if isinstance(tgt, uni.AstSymbolNode) and tgt.sym_name == expr.value and isinstance(asg.value, uni.FuncCall):
+                    keys = _call_decl_keys(asg.value, program, by_simple)
+                    if len(keys) == 1:
+                        return {"kind": "ret", "of": keys[0]}
+    return {"kind": "unknown", "expr": expr.unparse().strip()}
+
+
+def build_provenance(program: JacProgram, funcDecls: Dict[str, ByLLMDecl]) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    """For every function callsite key: param name -> provenance spec, merged over
+    its invocation sites (sites that disagree demote the param to unknown)."""
+    by_simple = _by_simple_of(funcDecls)
+    out: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for key, decl in funcDecls.items():
+        if decl.kind != "func":
+            continue
+        merged: Dict[str, Dict[str, Any]] = {}
+        for site in _sites_of_decl(program, key, by_simple):
+            pos_args: List[uni.UniNode] = []
+            kw_args: Dict[str, uni.UniNode] = {}
+            for prm in site.params or []:
+                if isinstance(prm, uni.KWPair) and prm.key is not None:
+                    kw_args[prm.key.unparse().strip()] = prm.value
+                elif not isinstance(prm, uni.KWPair):
+                    pos_args.append(prm)
+            for i, p in enumerate(decl.params):
+                expr = kw_args.get(p["name"]) if p["name"] in kw_args else (pos_args[i] if i < len(pos_args) else None)
+                if expr is None:
+                    continue
+                spec = _classify_arg(expr, site, program, by_simple)
+                if p["name"] in merged and merged[p["name"]] != spec:
+                    merged[p["name"]] = {"kind": "unknown", "expr": "<sites disagree>"}
+                else:
+                    merged.setdefault(p["name"], spec)
+        if merged:
+            out[key] = merged
+    return out
+
+
+def invert_provenance(provenance: Dict[str, Dict[str, Dict[str, Any]]]) -> Dict[str, List[Tuple[str, str]]]:
+    """Inverse provenance index: producer key -> [(consumer key, param name)] for
+    ret-sourced params. Drives dataflow firing of feeds: when a call completes,
+    its consumers are looked up here directly — NOT via topology adjacency, so a
+    result reaches consumers any number of calls downstream (a=f(); b=g();
+    h(a,b) feeds h.a the moment f ends, while g hasn't even started)."""
+    out: Dict[str, List[Tuple[str, str]]] = {}
+    for ckey, params in provenance.items():
+        for pname, spec in params.items():
+            if spec.get("kind") == "ret" and spec.get("of"):
+                out.setdefault(spec["of"], []).append((ckey, pname))
+    return out
 
 
 def build_callsite_graph(program: JacProgram, funcDecls: Dict[str, ByLLMDecl]) -> Dict[str, List[str]]:

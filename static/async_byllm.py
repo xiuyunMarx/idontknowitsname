@@ -20,8 +20,14 @@ class OutputConversionError(ValueError):
         super().__init__(message)
         self.raw_output = raw_output
 
-SYSTEM_PERSONA = "This is a task you must complete by returning only the output. The task will be expressed in the form of function call with arguments. Do not include explanations, code, or extra text—only the result."
-TOOL_INSTRUCTION = " Use the tools provided to reach the goal. Call one tool at a time with proper args—no explanations, no narration. Think step by step, invoking tools as needed. When done, always call finish_tool(output) to return the final output. Only use tools."
+# Byte-exact prompt constants, imported from byllm itself: Jac triple-quoted
+# strings do NOT dedent, so the real values carry leading indent and newlines —
+# a hand-mirrored copy diverges in the first KV block and kills every cache hit.
+try:
+    from jaclang.byllm.mtir import INSTRUCTION_TOOL as TOOL_INSTRUCTION, SYSTEM_PERSONA #type: ignore[import]
+except Exception:  # byllm unavailable: keep the (approximate) fallback
+    SYSTEM_PERSONA = "This is a task you must complete by returning only the output. The task will be expressed in the form of function call with arguments. Do not include explanations, code, or extra text—only the result."
+    TOOL_INSTRUCTION = " Use the tools provided to reach the goal. Call one tool at a time with proper args—no explanations, no narration. Think step by step, invoking tools as needed. When done, always call finish_tool(output) to return the final output. Only use tools."
 
 
 class AsyncByLLM(torch.nn.Module):
@@ -111,18 +117,27 @@ class AsyncByLLM(torch.nn.Module):
                 kwargs["temperature"] = float(d.call_params["temperature"])
             self.sampler = SamplingParams(**kwargs)
 
+    def visit_stable_prefix(self, here: str = "", candidates: str = "") -> str:
+        """The cross-request-stable user prefix of a visit-by site under the
+        cache-aware layout: Goal (compile-time) + Current node + Candidates
+        (graph-dependent, stable until the graph changes). The per-request
+        Walker zone comes after — outside this prefix by design."""
+        parts = [self.invariant_user_prefix] if self.invariant_user_prefix else []
+        if here:
+            parts.append(f"Current node:\n{here}")
+        if candidates:
+            parts.append(f"Candidates (choose by handle):\n{candidates}")
+        return "\n\n".join(parts)
+
     def build_full_prompt(self, params: Dict[str, Any]) -> List[Dict[str, str]]:
         """Append the runtime bindings zone (and `self` identity zone) to the invariant prefix."""
         if self.decl.kind == "visit":
-            # Runtime zones of route_visit's user message, in its exact order.
-            parts = [self.invariant_user_prefix] if self.invariant_user_prefix else []
+            # Cache-aware zone order (route_visit with JAC_ROUTE_CACHE_LAYOUT=1):
+            # stable zones first, per-request Walker last.
+            user = self.visit_stable_prefix(str(params.get("here") or ""), str(params.get("candidates") or ""))
             if params.get("walker") is not None:
-                parts.append(f"Walker:\n{params['walker']}")
-            if params.get("here") is not None:
-                parts.append(f"Current node:\n{params['here']}")
-            if params.get("candidates") is not None:
-                parts.append(f"Candidates (choose by handle):\n{params['candidates']}")
-            return [{"role": "system", "content": self.invariant_system}, {"role": "user", "content": "\n\n".join(parts)}]
+                user = user + f"\n\nWalker:\n{params['walker']}" if user else f"Walker:\n{params['walker']}"
+            return [{"role": "system", "content": self.invariant_system}, {"role": "user", "content": user}]
         lines = [self.invariant_user_prefix]
         for p in self.decl.params:
             if p["name"] in params:
