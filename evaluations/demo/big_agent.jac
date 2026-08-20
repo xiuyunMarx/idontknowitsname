@@ -6,7 +6,7 @@ before final_verdict runs), which only dataflow firing can do."""
 
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob llm = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-4B");
 
 def report_timeline(q: str) -> str by llm(temperature=0.0, max_tokens=680);
 sem report_timeline = "Write a detailed chronological reconstruction (at least 22 sentences, each sentence at least 15 words, numbered 1. through 22.) of the incident described: when the job started, when the first anomaly appeared, escalation points, and when the failure became terminal. Plain factual prose, no speculation about causes.";

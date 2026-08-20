@@ -1,9 +1,10 @@
 # PBKV & CacheScout deep-read differentiation (2026-08-19)
 
 Two 2026 papers surfaced by the novelty sweep; both closer in title than KVFlow, one
-closer in substance. Quotes below were extracted from the arXiv HTML via a single
-fetch pass — **spot-check each against the PDF before citing in the paper** (unlike
-kvflow-diff.md these are not yet hand-verified).
+closer in substance. PBKV quotes were extracted from the arXiv HTML via a single
+fetch pass — spot-check against the PDF before citing. **CacheScout section
+re-verified 2026-08-19 (three targeted HTML passes; all quotes below confirmed
+verbatim)** — PDF-render spot-check of equations still advisable before camera-ready.
 
 **Threat level: CacheScout HIGH (overlaps tier-1 + idle scheduling), PBKV MODERATE
 (different action on KV, but owns "prediction-based" framing for dynamic workflows).**
@@ -64,6 +65,38 @@ UChicago (LMCache-adjacent authors: Kuntai Du, Yuhan Liu, Junchen Jiang).
   six-agent supervisor over GSM8K/MT-Bench/GAIA/SWE-bench; hit rate +10–18pp,
   mean TTFT −18–45%, throughput +19–57%; vs vLLM and Continuum (TTL pinning).
 - Stated limitation: "Gains diminish when execution approaches random routing."
+
+Hand-verification pass (2026-08-19) added the following confirmed facts:
+- Predictor: first-order Markov chain over agent transitions, agent identity from
+  the "prompt-prefix fingerprint"; transition matrix `P_ij = (C_ij+eps)/sum_k(C_ik+eps)`;
+  prediction = argmax_j P_ij. **Top-1 only — never multi-step, never multiple
+  candidates**: "it predicts the next agent from the same transition matrix and
+  warms the corresponding anchor between requests."
+- Warmup content confirmed anchor-only: "an inference request containing only the
+  predicted agent's anchor with max_tokens=1"; the user zone is "a minimal user
+  prompt" — a SYNTHETIC prompt. They assert the blocks are "constructed exactly as
+  they would be during a real agent invocation" but the paper never discusses
+  divergence between the synthetic warmup prefix and real served prompts (no
+  byte-verification anywhere; serving is untouched: "no changes to either
+  component", requests go through "the standard serving API").
+- Scheduling gaps confirmed: warmup priority in the engine scheduler is not
+  disclosed; NO mechanism for a real request arriving mid-warmup (no abort, no
+  preemption, no quantified interference — "off the critical path" is asserted,
+  not enforced); the rate limit's value/mechanism is never specified; the gate is
+  R >= R_min where R = 1 − H(A_{t+1}|A_t)/H(A_{t+1}) (prediction quality, NOT
+  engine interference), and the R_min value used is not disclosed.
+- Reuse-disparity numbers: anchor blocks reused 49–173× on average vs 12–15× for
+  session-history blocks ("agent anchors receive 4–13× more reuse than
+  session-specific history"); anchors are 53–62% of all prompt tokens — i.e.
+  **their own measurement of their coverage ceiling**.
+- No dedicated Limitations/Future Work section; no mention of workflow structure
+  from program analysis, argument prefill, grammar/structured output, or decode
+  interference. Eval: Llama-3.1-8B on 8×RTX PRO 6000 (96GB), Qwen3-235B-A22B-FP8
+  scale-out; six-agent AutoGen supervisor on GSM8K/MT-Bench/GAIA/SWE-bench;
+  0.2–50 sessions/s sweep. Compared against vLLM and Continuum; cites KVFlow,
+  Parrot, SAGA, TokenCake, Autellix, KVCOMM.
+- arXiv v1 submitted 2026-07-16 (the 08-14 sighting was later circulation, not a
+  new version — treat priority date as July).
 
 ## Differentiation table (ours = Proactive Prefill)
 

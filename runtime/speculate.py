@@ -110,7 +110,7 @@ class SpeculateCandidate:
             if out is None or not out.logprobs:
                 return None
             scores = self._score(cand_tokens, list(out.token_ids), list(out.logprobs))
-            ranked = sorted(scores, key=scores.get, reverse=True)
+            ranked = sorted(scores, key=scores.get, reverse=True) #type: ignore
             predicted = ranked[0]
             dist = _softmax(scores)
             favored = self.server.favor_candidate(key, cand_types[predicted], reason=f"probe:{key}")

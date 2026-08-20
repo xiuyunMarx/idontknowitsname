@@ -68,25 +68,76 @@ def parse_only(file_path: str) -> uni.Module:
     return JacProgram().parse_str(source, file_path)
 
 
+def _module_jac_imports(mod: uni.Module, base_dir: "Path") -> List["Path"]:
+    """Local .jac files this module imports (`import from x.y {..}` / `import x;`),
+    resolved dotted-name-relative to the importing file's directory. Non-local
+    names (stdlib, site-packages) simply don't resolve to a file and are skipped."""
+    out: List[Path] = []
+    for imp in mod.get_all_sub_nodes(uni.Import):
+        texts: List[str] = []
+        fl = getattr(imp, "from_loc", None)
+        if fl is not None:
+            texts.append(fl.unparse())
+        else:
+            for it in getattr(imp, "items", None) or []:
+                try:
+                    texts.append(it.unparse())
+                except Exception:
+                    continue
+        for text in texts:
+            dotted = re.sub(r"\s+", "", text.split(" as ")[0]).strip(";")
+            if not dotted:
+                continue
+            p = base_dir / (dotted.replace(".", "/") + ".jac")
+            if p.is_file():
+                out.append(p.resolve())
+    return out
+
+
 def build_uniir(
     file_path: str, type_check: bool = False
 ) -> tuple[JacProgram, uni.Module]:
-    """Full compile to UniIR: symbol tables bound, imports resolved, sems attached.
+    """Full compile to UniIR: symbol tables bound, sems attached; the returned
+    program's ``prog.mod.hub`` holds every module.
 
-    Returns the program (holds every module in ``prog.mod.hub`` plus
-    ``errors_had``/``warnings_had``) and the root module of ``file_path``.
+    Imported .jac modules are compiled and merged into the hub BY THIS FUNCTION:
+    the no_cgen compile does not follow imports on its own, and compiling with
+    type_check=True is not an alternative — its lowering pass rewrites genai
+    abilities into regular bodies, so `is_genai_ability` (and with it every
+    byllm decl) disappears. Each imported module is compiled as its own
+    type_check=False program and its root module inserted into the entry
+    program's hub; discovery is transitive with path-level dedup.
     """
-    prog = JacProgram()
-    mod = prog.compile(
-        file_path,
-        options=CompileOptions(
-            type_check=type_check,   # types on nodes; slower, needs deps importable
-            no_cgen=True,            # skip Python bytecode generation
-            force_target_program=True,
-        ),
-    )
-    for err in prog.errors_had:
-        print(f"[side-runtime] compile error: {err}")
+    from pathlib import Path as _P
+
+    def _compile_one(path: str) -> tuple[JacProgram, uni.Module]:
+        prog = JacProgram()
+        mod = prog.compile(
+            path,
+            options=CompileOptions(
+                type_check=type_check,   # types on nodes; slower, needs deps importable
+                no_cgen=True,            # skip Python bytecode generation
+                force_target_program=True,
+            ),
+        )
+        for err in prog.errors_had:
+            print(f"[side-runtime] compile error: {err}")
+        return prog, mod
+
+    prog, mod = _compile_one(file_path)
+    seen = {_P(file_path).resolve()}
+    frontier = _module_jac_imports(mod, _P(file_path).resolve().parent)
+    while frontier:
+        target = frontier.pop()
+        if target in seen:
+            continue
+        seen.add(target)
+        sub_prog, sub_mod = _compile_one(str(target))
+        prog.mod.hub[str(target)] = sub_mod
+        for k, m in sub_prog.mod.hub.items():
+            if k.endswith(".jac") and str(_P(k).resolve() if _P(k).is_absolute() else k) not in prog.mod.hub:
+                prog.mod.hub.setdefault(k, m)
+        frontier.extend(_module_jac_imports(sub_mod, target.parent))
     return prog, mod
 
 
@@ -712,11 +763,55 @@ def _enclosing_walker_names(node: uni.UniNode) -> List[str]:
     return _trigger_names(enc)
 
 
+def _ability_stmts(ab: uni.Ability) -> List[uni.UniNode]:
+    """Ordered top-level statements of an ability body. Impl-merged bodies keep
+    them as direct kids of the Ability; fall back to the body attribute's list
+    shapes. An empty result means the shape was unrecognizable — callers should
+    fall back to the collect-all superset rather than assume an empty body."""
+    stmts = [k for k in (getattr(ab, "kid", None) or []) if isinstance(k, uni.CodeBlockStmt) and not isinstance(k, uni.ElseIf)]
+    if stmts:
+        return stmts
+    body = getattr(ab, "body", None)
+    if isinstance(body, list):
+        return [k for k in body if isinstance(k, uni.CodeBlockStmt) and not isinstance(k, uni.ElseIf)]
+    inner = getattr(body, "body", None)
+    if isinstance(inner, list):
+        return [k for k in inner if isinstance(k, uni.CodeBlockStmt) and not isinstance(k, uni.ElseIf)]
+    return []
+
+
+def _frontier_calls(stmts: List[uni.UniNode], program: JacProgram, by_simple: Dict[str, List[str]], visit_keys: Dict[int, str]) -> Tuple[List[str], bool]:
+    """First-reachable LLM calls scanning a statement list from its top — the
+    same forward scan `_next_after` applies to the statements AFTER a site, here
+    applied from the body's start: a branching statement contributes its
+    contained calls and the scan continues (it may execute zero times); the
+    first statement with an unconditional byllm call surely runs before anything
+    later and ends the scan. Returns (keys, stopped); stopped=False means the
+    body can complete without an unconditional LLM call, so what runs next is
+    the traversal continuation — callers should widen to the collect-all
+    superset (missing an edge costs a cold TTFT; extra edges only cost order)."""
+    out: List[str] = []
+    for st in stmts:
+        calls = _llm_calls_in(st, program, by_simple, visit_keys)
+        for k in calls:
+            if k not in out:
+                out.append(k)
+        if calls and not isinstance(st, _BRANCHING_STMTS):
+            return out, True
+    return out, False
+
+
 def _visit_successors(program: JacProgram, walker_name: str, by_simple: Dict[str, List[str]], visit_keys: Dict[int, str], exclude: Optional[uni.Ability] = None) -> List[str]:
-    """LLM calls the traversal can reach after a `visit`: node abilities this walker
-    triggers (`can x with W entry`) plus the walker's own node-triggered abilities.
-    `exclude` drops the ability containing the visit itself (suppresses the trivial
-    self-edge; genuine same-ability revisit loops are traded away for precision)."""
+    """LLM calls the traversal can reach FIRST in each ability this walker
+    triggers (`can x with W entry` node abilities plus the walker's own
+    node-triggered abilities). Per ability only the frontier counts: calls after
+    an unconditional byllm call are that call's successors via its own
+    sequential edges, not the visit's — listing them here would flatten the BFS
+    rings (min-distance shadows the chain edges) and let stale walker fields
+    feed deep stages. Abilities whose body can end without an unconditional
+    call fall back to their collect-all superset. `exclude` drops the ability
+    containing the visit itself (suppresses the trivial self-edge; genuine
+    same-ability revisit loops are traded away for precision)."""
     out: List[str] = []
     for mod in _iter_jac_modules(program):
         for nab in mod.get_all_sub_nodes(uni.Ability):
@@ -729,7 +824,10 @@ def _visit_successors(program: JacProgram, walker_name: str, by_simple: Dict[str
             hit = (kind == "node" and walker_name in set(_trigger_names(nab))) or (kind == "walker" and owner.name.value == walker_name and bool(_trigger_names(nab)))
             if not hit:
                 continue
-            for key in _llm_calls_in(nab, program, by_simple, visit_keys):
+            keys, stopped = _frontier_calls(_ability_stmts(nab), program, by_simple, visit_keys)
+            if not stopped:
+                keys = _llm_calls_in(nab, program, by_simple, visit_keys)
+            for key in keys:
                 if key not in out:
                     out.append(key)
     return out

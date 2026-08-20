@@ -273,11 +273,10 @@ class GuardServer:
             await self._queue_kick.wait()
             self._queue_kick.clear()
             while self.spec_queue:
-                pos = self.last_call_key
+                pos = self.last_call_key 
                 dist = bfs_distances(topo, pos) if pos else entry_distances(topo)
                 far = 10 ** 6
-                # Probe-favored sites (the predicted winner of an in-flight
-                # selection) sort before same-distance siblings.
+                # Probe-favored sites (the predicted winner of an in-flight selection) sort before same-distance siblings.
                 key = min(self.spec_queue, key=lambda k: (dist.get(k, far), 0 if k in self.probe_favored else 1))
                 self._drain_busy = True
                 try:

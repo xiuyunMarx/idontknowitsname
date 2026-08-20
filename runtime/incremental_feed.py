@@ -142,84 +142,107 @@ def final_messages(fn: Any, params: Dict[str, Any], session: Optional[PrefillSes
 # Provenance evaluation: turn compile-time value-source specs into repr texts
 # using the runtime state visible at a predecessor call
 # ---------------------------------------------------------------------------
-def _split_top_commas(text: str) -> List[str]:
-    parts: List[str] = []
-    buf = ""
+_IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _scan_value(text: str, i: int) -> Optional[int]:
+    """End index of one repr value starting at text[i]: quoted strings consumed
+    with escape handling, bracket nesting tracked (quotes inside containers are
+    string literals), stop at a top-level `,` or the group's `)` (not consumed).
+    Returns None on malformed input (unterminated string, stray closer)."""
     depth = 0
-    in_str = False
-    quote = ""
-    esc = False
-    for ch in text:
-        if in_str:
-            buf += ch
-            if esc:
-                esc = False
-            elif ch == "\\":
-                esc = True
-            elif ch == quote:
-                in_str = False
-        elif ch in "\"'":
-            in_str = True
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch in "\"'":
             quote = ch
-            buf += ch
-        elif ch in "([{":
+            i += 1
+            esc = False
+            while i < n:
+                c = text[i]
+                if esc:
+                    esc = False
+                elif c == "\\":
+                    esc = True
+                elif c == quote:
+                    break
+                i += 1
+            if i >= n:
+                return None
+            i += 1
+            continue
+        if ch in "([{":
             depth += 1
-            buf += ch
         elif ch in ")]}":
+            if depth == 0:
+                return i if ch == ")" else None
             depth -= 1
-            buf += ch
         elif ch == "," and depth == 0:
-            parts.append(buf)
-            buf = ""
-        else:
-            buf += ch
-    if buf.strip():
-        parts.append(buf)
-    return parts
+            return i
+        i += 1
+    return None
+
+
+def _scan_field_group(text: str, start: int) -> Optional[Dict[str, str]]:
+    """Parse a describe field group `(name=repr, name (sem)=repr, ...)` whose
+    opening paren is at text[start], requiring its close to land exactly at the
+    end of `text`. Label/sem prose never toggles string state — sems are raw
+    English and may contain apostrophes, which is precisely what a naive
+    quote-aware balance scan trips over — quotes count only in value position.
+    A sem label is a balanced (...) read quote-agnostically."""
+    n = len(text)
+    i = start + 1
+    out: Dict[str, str] = {}
+    while True:
+        while i < n and text[i] in " \t\n":
+            i += 1
+        m = _IDENT_RE.match(text, i)
+        if m is None:
+            return None
+        name = m.group(0)
+        i = m.end()
+        if text[i:i + 2] == " (":
+            depth = 0
+            j = i + 1
+            while j < n:
+                if text[j] == "(":
+                    depth += 1
+                elif text[j] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            if j >= n:
+                return None
+            i = j + 1
+        if i >= n or text[i] != "=":
+            return None
+        i += 1
+        end = _scan_value(text, i)
+        if end is None or end >= n:
+            return None
+        out[name] = text[i:end].strip()
+        i = end
+        if text[i] == ")":
+            return out if i == n - 1 and out else None
+        i += 1  # skip the ','
 
 
 def parse_arch_fields(desc: str) -> Dict[str, str]:
     """Field repr texts out of a byllm `_describe_arch` rendering:
-    `interact(message='hi', chat_history=[...])` -> {name: repr_text}.
-    The head may be a sem string containing parens, so the field group is the
-    balanced (...) that closes exactly at the end of the description."""
+    `Desk(request='hi', profile (the ticket)='...')` -> {name: repr_text}.
+    The head may be a sem string containing parens or apostrophes, so every
+    `(` is tried as the field-group opener and validated by a full label/value
+    parse that must close exactly at the end of the description."""
     text = desc.rstrip()
     if not text.endswith(")"):
         return {}
     for i, ch in enumerate(text):
         if ch != "(":
             continue
-        depth = 0
-        in_str = False
-        quote = ""
-        esc = False
-        for j in range(i, len(text)):
-            c = text[j]
-            if in_str:
-                if esc:
-                    esc = False
-                elif c == "\\":
-                    esc = True
-                elif c == quote:
-                    in_str = False
-            elif c in "\"'":
-                in_str = True
-                quote = c
-            elif c == "(":
-                depth += 1
-            elif c == ")":
-                depth -= 1
-                if depth == 0:
-                    break
-        else:
-            return {}
-        if j == len(text) - 1:  # this "(" closes at the very end: the field group
-            out: Dict[str, str] = {}
-            for part in _split_top_commas(text[i + 1:j]):
-                m = re.match(r"\s*([A-Za-z_][A-Za-z0-9_]*)(?:\s\([^=]*\))?=(.*)$", part, re.S)
-                if m:
-                    out[m.group(1)] = m.group(2)
-            return out
+        fields = _scan_field_group(text, i)
+        if fields:
+            return fields
     return {}
 
 

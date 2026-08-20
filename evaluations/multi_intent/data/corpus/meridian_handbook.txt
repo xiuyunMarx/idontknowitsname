@@ -1,0 +1,19 @@
+Overview. Meridian Analytics is a self-serve product-analytics platform that ingests events through native SDKs and a REST API and provides dashboards, funnel analysis, and a cohort explorer. Workspaces are organized per product, and every chart can be shared by link inside the workspace.
+
+SDKs and ingestion. Native SDKs are available for JavaScript, iOS, Android, Python and Go; server-side ingestion uses the REST API with batched payloads of up to 500 events per request. Events larger than 32 KB are rejected at ingestion with a 413 response, and event timestamps may be backdated at most 72 hours.
+
+Data retention. Raw event data is retained for 13 months on the Growth plan and 25 months on the Enterprise plan; aggregated rollups are kept indefinitely; verified deletion requests are processed within 30 days. Retention windows are counted from the event timestamp, not from the ingestion time.
+
+Pricing. The Free tier includes 1 million events per month; the Growth plan includes 10 million events per month at 299 USD per month, with additional events billed at 25 USD per additional million; Enterprise pricing is custom; annual billing includes two months free. Event counts are measured after deduplication, and unused included volume does not roll over between months.
+
+Billing operations. Plan upgrades take effect immediately with prorated charges; downgrades take effect at the next billing cycle. Invoices are issued on the first business day of the month, and payment is due within 30 days. Overage charges appear on the invoice of the month after the overage occurred.
+
+Security. Meridian holds a SOC 2 Type II attestation, encrypts data at rest with AES-256 and in transit with TLS 1.3, offers single sign-on via SAML on the Enterprise plan only, and provides an EU data-residency option hosted in Frankfurt. API keys are scoped per workspace and can be rotated without downtime; audit logs of workspace administration are retained for 12 months.
+
+User roles. Workspaces support three roles: viewers can read every dashboard, editors can create and modify charts and cohorts, and admins additionally manage members, API keys and billing. Role changes are recorded in the audit log, and the last admin of a workspace cannot be removed.
+
+Exports. Any dashboard can be exported to CSV; a nightly full raw-event export to Amazon S3 is available on the Enterprise plan; the export API is rate-limited to 600 requests per minute. Scheduled email exports of a dashboard are available on all paid plans.
+
+Integrations. Meridian ships first-party integrations for Slack alerting, webhook-based alerts, and warehouse sync into BigQuery and Snowflake; warehouse sync runs every 6 hours on Growth and hourly on Enterprise. Alert rules can watch any saved chart and fire on threshold or anomaly conditions.
+
+Support. Free-tier support is community-only; Growth includes email support with a next-business-day first response; Enterprise includes a named support engineer with a 4-hour first-response SLA for production incidents. The public status page publishes uptime monthly, and the service credits policy applies below 99.9 percent monthly uptime on Enterprise.
