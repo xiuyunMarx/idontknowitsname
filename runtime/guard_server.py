@@ -10,8 +10,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # make `static`/`runtime` importable
-
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from transformers import AutoTokenizer
@@ -56,9 +55,7 @@ class Monitor:
         self._log("call_start", key)
 
     def on_first_token(self, key: str, rid: str = "", walker_fields: Optional[Dict[str, str]] = None) -> None:
-        """Speculate once the current call's first token is out: its TTFT-critical
-        window is over, and the remaining decode (~95% of the call) is still ample
-        overlap for warming successors without interfering with prefill. Besides the
+        """Speculate once the current call's first token is out: its TTFT-critical window is over, and the remaining decode (~95% of the call) is still ample   overlap for warming successors without interfering with prefill. Besides the
         spatial enqueue, this is the first provenance checkpoint: successor params
         sourced from state visible NOW (walker fields, constants) get RECORDED —
         engine-free session bookkeeping; the prefill rides the unified queue job.
@@ -77,10 +74,7 @@ class Monitor:
         if self.server.prov_feed:
             for succ in self.server.side_rt.callsites_topo.get(key, []):
                 self.server.record_provenance(succ, walker_fields=walker_fields)
-        # Spatial speculation: enqueue EVERY call site reachable from here — the
-        # drainer executes them nearest-first (ring 1, then ring 2, ...), each
-        # ring re-ranked against the live workflow position, so long idle windows
-        # walk outward layer by layer instead of stopping at direct successors.
+        # Spatial speculation: enqueue EVERY call site reachable from here, nearest-first
         for succ, d in sorted(bfs_distances(self.server.side_rt.callsites_topo, key).items(), key=lambda kv: kv[1]):
             if succ == key:
                 continue
@@ -122,7 +116,7 @@ class Monitor:
 class GuardServer:
     """Owns the AsyncLLM engine and the compiled SideRuntime of one Jac program."""
 
-    def __init__(self, jac_path: str, model: str, *, max_model_len: int = 4096, gpu_memory_utilization: float = 0.45, enforce_eager: bool = True, type_check: bool = True):
+    def __init__(self, jac_path: str, model: str, *, max_model_len: int = 4096, gpu_memory_utilization: float = 0.45, enforce_eager: bool = True, type_check: bool = True, enable_probe:bool = False):
         self.side_rt = SideRuntime(jac_path, type_check=type_check)
         self.model_name = model
         self.engine = AsyncLLM.from_engine_args(AsyncEngineArgs(
@@ -156,12 +150,8 @@ class GuardServer:
         self._queue_kick = asyncio.Event()
         self._drainer: Optional[asyncio.Task] = None
         self._drain_busy = False  # a popped job is executing (for warm_all's drain wait)
-        # Probe speculator: at visit-by fan-out sites, fork the just-prefilled
-        # route prompt with a closed think block (skip the thinking phase) and
-        # sample the choice distribution — the predicted candidate's byllm calls
-        # get FAVORED in the drainer's ranking (see runtime/speculate.py).
-        # Default OFF; enable with --probe.
-        self.probe = False
+        # Probe speculator: for visit-by fan-out sites, let model say what to choose
+        self.probe = enable_probe  
         self.speculator = SpeculateCandidate(self.engine, self)
         self.probe_favored: set = set()
         self.route_prompts: Dict[str, str] = {}  # visit key -> last served route prompt (probe input)
@@ -394,6 +384,27 @@ class GuardServer:
         while self.spec_queue or self._drain_busy:
             await asyncio.sleep(0.05)
 
+    async def reset(self, keep_visit_ctx: bool = False) -> Dict[str, Any]:
+        """Reset the engine to cold state"""
+        self.spec_queue.clear()
+        deadline = time.perf_counter() + 2.0  # let in-flight warms finish; they would refill the cache
+        while (self._warm_inflight or self._drain_busy) and time.perf_counter() < deadline:
+            await asyncio.sleep(0.01)
+        ok = await self.engine.reset_prefix_cache()
+        self._warm_hash.clear()
+        self.feeds.sessions.clear()
+        if not keep_visit_ctx:
+            self.feeds.visit_ctx.clear()
+        self.prov_results.clear()
+        self.route_prompts.clear()
+        self.probe_favored.clear()
+        self.last_call_key = None
+        self.stats = {k: [] for k in self.stats}
+        self.monitor.events.clear()
+        for k in self.scheduler.stats:
+            self.scheduler.stats[k] = 0
+        return {"ok": bool(ok), "kv_reset": bool(ok), "visit_ctx_kept": keep_visit_ctx}
+
     # ------------------------------------------------------------------- call
     async def call_text(self, key: str, params: Dict[str, Any], sampling_params: Optional[SamplingParams] = None, sid: str = "") -> Tuple[str, Optional[float]]:
         """Serve one byllm call, returning raw generated text. The prompt is always
@@ -505,6 +516,7 @@ class GuardServer:
             final, ttft = await self._generate(prompt, SamplingParams(**kwargs), rid, on_first_token=cb)
         duration = time.perf_counter() - t0
         cached = getattr(final, "num_cached_tokens", None)
+        print(f"[DEBUG] TTFT for subagent {key} = {ttft:.3f}s")
         self.stats["calls"].append({"key": key or "(generic)", "ttft": ttft, "duration": duration, "cached_tokens": cached, "prompt_head": prompt[:200]})
         text = final.outputs[0].text if final is not None and final.outputs else ""
         if key:
@@ -573,6 +585,11 @@ def _build_app(server: GuardServer):
     async def visit_ctx_ep() -> Dict[str, Any]:
         return {"visit_ctx": server.feeds.visit_ctx}
 
+    @app.post("/reset")
+    async def reset_ep(keep_visit_ctx: bool = False):
+        """Cold-start reset between runs"""
+        return await server.reset(keep_visit_ctx=keep_visit_ctx)
+
     @app.post("/generate")
     async def generate_ep(request: Request):
         payload = await request.json()
@@ -581,12 +598,18 @@ def _build_app(server: GuardServer):
 
     return app
 
-
+async def _prewarm_vllm(server: GuardServer):
+    prompt = server._render([{"role":"user", "content":" ".join(f"{i:04x}" for i in range(512))}])
+    sp = SamplingParams(max_tokens=16, temperature=0)
+    async for _ in server.engine.generate(prompt, sp, f"prewarm-{uuid.uuid4().hex[:8]}"):
+        pass
+    assert await server.engine.reset_prefix_cache()
+    print(f"[guard] vLLM prewarmed with 512-token prompt")
+    
 async def _serve(server: GuardServer, host: str, port: int, deploy_warm: bool = True, calibrate: bool = True) -> None:
     import uvicorn
+    await _prewarm_vllm(server)
     if calibrate:
-        # Engine-based interference sweep (cached per device+model): sets the
-        # scheduler's busy-mode speculation budget before any traffic.
         await server.scheduler.calibrate()
     server.start_drainer()
     if deploy_warm:
@@ -611,11 +634,14 @@ def main() -> None:
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=8964)
     args = ap.parse_args()
-    server = GuardServer(args.file, args.model, max_model_len=args.max_model_len, gpu_memory_utilization=args.gpu_mem, type_check=not args.no_type_check)
+    server = GuardServer(args.file, args.model,
+                         max_model_len=args.max_model_len, 
+                         gpu_memory_utilization=args.gpu_mem, 
+                         type_check=not args.no_type_check,
+                         enable_probe=args.probe)
     server.speculate = not args.no_speculate
     server.prov_feed = not args.no_prov_feed
     server.greedy = args.greedy
-    server.probe = args.probe
 
     async def run() -> None:
         try:

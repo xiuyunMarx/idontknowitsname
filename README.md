@@ -72,10 +72,13 @@ Two small patches live in the jaseci checkout (`~/jaseci/jac/jaclang/byllm/`): `
 python3 runtime/guard_server.py demo/chain_big.jac --no-type-check \
     --model Qwen/Qwen2.5-3B-Instruct --greedy --port 8964
 
-# 2. run the Jac program (its glob llm is an InterceptorLLM pointing at :8964)
+# 2. Set the visit [-->] by's prompt layout to the framework-compatible version. 
+export JAC_ROUTE_CACHE_LAYOUT=1
+
+# 3. run the Jac program (its glob llm is an InterceptorLLM pointing at :8964)
 cd demo && python3 -m jaclang run chain_big.jac
 
-# 3. inspect what happened
+# 4. inspect what happened
 curl -s localhost:8964/stats | python3 -m json.tool   # TTFT, cached_tokens, feeds, reorders
 ```
 

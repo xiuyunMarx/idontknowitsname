@@ -36,7 +36,17 @@ from runtime.incremental_feed import parse_candidate_handles, slugify_handle
 
 
 PROBE_STEER = "The walker should visit:"
-THINK_CLOSE = "<think>\n\n</think>\n\n" # Empty for none-thinking model
+
+
+def derive_think_close(server: Any) -> str:
+    """Model-adaptive skip-thinking suffix deducing."""
+    msgs = [{"role": "user", "content": "x"}]
+    try:
+        default = server._render(msgs)
+        closed = server.tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+    except Exception:
+        return ""
+    return closed[len(default):] if closed != default and closed.startswith(default) else ""
 
 
 def _match_owner(handle: str, owners: List[str]) -> Optional[str]:
@@ -60,6 +70,10 @@ class SpeculateCandidate:
         self.top_logprobs = top_logprobs
         self.probe_priority = probe_priority
         self._inflight: set = set()
+        # Derived once at server init (the tokenizer never changes); the probe
+        # path just reads the string — no render work rides the decode window.
+        self.think_close: str = derive_think_close(server)
+        server.monitor._log("probe_think_close", "", suffix=repr(self.think_close))
 
     # ------------------------------------------------------------------ scoring
     def _handle_tokens(self, handles: List[str]) -> Dict[str, List[int]]:
@@ -85,29 +99,44 @@ class SpeculateCandidate:
             scores[h] = s
         return scores
 
+    def _skip(self, key: str, reason: str, **extra: Any) -> None:
+        """Bailing is correct advisory behavior (blind order, never a wrong
+        prompt) — but it must bail LOUDLY: a silent no-op is indistinguishable
+        from a probe that never launched (measured 2026-08-20: a client run
+        without JAC_ROUTE_CACHE_LAYOUT=1 left no trace beyond a cold route)."""
+        self.server.monitor._log("probe_skipped", key, reason=reason, **extra)
+
     # -------------------------------------------------------------------- probe
     async def probe(self, key: str, route_prompt: str) -> Optional[str]:
         """Sample the choice distribution for one route request and favor the
         predicted candidate's downstream byllm calls in the spec queue.
-        Returns the predicted handle (None if the probe could not run)."""
-        if not route_prompt or key in self._inflight:
+        Returns the predicted handle (None if the probe could not run; every
+        bail path logs a probe_skipped event with its reason)."""
+        if not route_prompt:
+            self._skip(key, "no_route_prompt")
+            return None
+        if key in self._inflight:
+            self._skip(key, "inflight")
             return None
         ctx = self.server.feeds.get_visit_ctx(key)
         if not ctx:
+            self._skip(key, "no_ctx", hint="visit ctx is learned only from cache-aware route prompts (client env JAC_ROUTE_CACHE_LAYOUT=1) or fed via POST /feed_visit")
             return None
         owners = list({k.split(".")[0] for k in self.server.side_rt.callsites_topo.get(key, [])})
         cand_types = {h: o for h in parse_candidate_handles(ctx.get("candidates", "")) if (o := _match_owner(h, owners)) is not None}
         if len(cand_types) < 2:
-            return None  # nothing to rank
+            self._skip(key, "candidates<2", matched=list(cand_types), owners=owners)
+            return None
         self._inflight.add(key)
         t0 = time.perf_counter()
         try:
             cand_tokens = self._handle_tokens(list(cand_types))
             need = min(self.max_probe_tokens, max(len(t) for t in cand_tokens.values()))
             sp = SamplingParams(max_tokens=need, temperature=0.0, logprobs=self.top_logprobs)
-            final, _ = await self.server._generate(route_prompt + THINK_CLOSE + PROBE_STEER, sp, f"probe-{uuid.uuid4().hex[:8]}", priority=self.probe_priority)
+            final, _ = await self.server._generate(route_prompt + self.think_close + PROBE_STEER, sp, f"probe-{uuid.uuid4().hex[:8]}", priority=self.probe_priority)
             out = final.outputs[0] if final is not None and final.outputs else None
             if out is None or not out.logprobs:
+                self._skip(key, "no_logprobs")
                 return None
             scores = self._score(cand_tokens, list(out.token_ids), list(out.logprobs))
             ranked = sorted(scores, key=scores.get, reverse=True) #type: ignore

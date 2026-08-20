@@ -7,7 +7,7 @@ import from langchain_community.vectorstores { FAISS }
 import from langchain_huggingface { HuggingFaceEmbeddings }
 import from sentence_transformers { CrossEncoder }
 import time;
-glob llm = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-4B");
 obj RagStore {
     has corpus_dir: str;
     has embedding_model: str = "BAAI/bge-small-en-v1.5";
