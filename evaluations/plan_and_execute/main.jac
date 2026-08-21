@@ -57,6 +57,12 @@ obj RagStore {
         }
         return "\n".join(out);
     }
+
+    def overview(query: str) -> str {
+        # orientation retrieval for the request as a whole, kept distinct from the
+        # per-subtask search so the two do not share one value identity
+        return self.search(query);
+    }
 }
 
 obj TaskPlan{
@@ -74,7 +80,7 @@ walker Executor{
     }
     can handle with PlanAndExecute entry{
         request = self.request;
-        collected_data = "";
+        notes: str = "";
         plans:list[TaskPlan] = here.generate_plan(request);
         max_retries: int = 3;
         for plan in plans{
@@ -82,22 +88,24 @@ walker Executor{
             while (max_retries > 0){
                 retrieved_data:str = self.database.search(plan.query); # tool calling, temporal gap exists here
                 if here.verify_data(plan, retrieved_data) {
-                    collected_data += f"Task: {plan.task}, Data: {retrieved_data}\n";
+                    notes = here.integrate(notes, plan, retrieved_data); # the record grows through a call, so it is a value the runtime can follow
                     break;
                 }else{
                     max_retries -= 1;
                 }
             }
         }
-        summary: str = here.synthesize_report(request, collected_data);
-        self.collected_data = collected_data;
+        background: str = self.database.overview(request); # last tool gap: everything else the report needs is already known when it opens
+        summary: str = here.synthesize_report(request, plans, notes, background);
+        self.collected_data = notes;
         print(f"Summary Report:\n{summary}");
     }
 }
 node PlanAndExecute{
     def generate_plan(request: str) -> list[TaskPlan] by llm();
     def verify_data(original_plan: TaskPlan, retrieved_data: str) -> bool by llm();
-    def synthesize_report(request: str, retrieved_data: str) -> str by llm();
+    def integrate(notes: str, original_plan: TaskPlan, retrieved_data: str) -> str by llm();
+    def synthesize_report(request: str, plans: list[TaskPlan], notes: str, background: str) -> str by llm();
 }
 
 sem TaskPlan = "one retrieval subtask of a decomposed research request";
@@ -112,9 +120,16 @@ sem PlanAndExecute.verify_data = "You are the verifier of a closed-corpus resear
 sem PlanAndExecute.verify_data.original_plan = "the retrieval subtask being checked, including the condition its passage must satisfy";
 sem PlanAndExecute.verify_data.retrieved_data = "the passage the archive returned for this subtask's query";
 
-sem PlanAndExecute.synthesize_report = "You are the senior editor of a closed-corpus research desk writing the final oversight briefing. You are given the original request and the collected record of every subtask that was answered, each entry naming the subtask and quoting the passage the archive returned for it. Write the briefing as continuous prose that answers the request point by point in the order the request asked, grounding every statement in what the collected passages say and never introducing a fact that is not in them. Where the record leaves one of the request's points unanswered, say so plainly instead of filling the gap from your own knowledge. Do not reproduce the record as a list, do not describe your own process, and do not close with a summary of what you have just written.";
+sem PlanAndExecute.integrate = "You are the record keeper of a closed-corpus research desk, maintaining the case record every later step will read. You are given the record as it stands, the subtask that was just answered, and the passage the archive returned for it. Produce the updated record. Reproduce the existing record first, unchanged, in its original order and word for word, then append one new entry for the subtask just answered. The new entry states the subtask on one line under the label Task, then quotes the returned passage in full and verbatim under the label Passage. Never shorten, paraphrase, summarise or re-order an entry that is already in the record, and never drop a passage: the editor who writes the final briefing has to be able to quote any of these passages word for word, so the record only ever grows. Add no commentary of your own, do not answer the request here, and reply with the updated record directly. /no_think";
+sem PlanAndExecute.integrate.notes = "the case record as it stands, to be reproduced verbatim before the new entry";
+sem PlanAndExecute.integrate.original_plan = "the subtask that was just answered";
+sem PlanAndExecute.integrate.retrieved_data = "the passage the archive returned for that subtask, to be quoted in full";
+
+sem PlanAndExecute.synthesize_report = "You are the senior editor of a closed-corpus research desk writing the final oversight briefing. You are given the original request, the list of subtasks it was decomposed into, the case record holding the archive passage accepted for each of those subtasks, and one further passage retrieved for the request as a whole. Write the briefing as continuous prose that answers the request point by point in the order the request asked, grounding every statement in what the collected passages say and never introducing a fact that is not in them. Where the record leaves one of the request's points unanswered, say so plainly instead of filling the gap from your own knowledge. Do not reproduce the record as a list, do not describe your own process, and do not close with a summary of what you have just written.";
 sem PlanAndExecute.synthesize_report.request = "the original oversight request the briefing must answer";
-sem PlanAndExecute.synthesize_report.retrieved_data = "the collected record of answered subtasks, each with the passage the archive returned for it";
+sem PlanAndExecute.synthesize_report.plans = "the subtasks the request was decomposed into, in the order the briefing must answer them";
+sem PlanAndExecute.synthesize_report.notes = "the case record: every answered subtask with the archive passage accepted for it, in the order they were answered";
+sem PlanAndExecute.synthesize_report.background = "one further passage retrieved for the request as a whole, for orientation only";
 glob CORPUS_DIR: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "corpus");
 
 with entry {
