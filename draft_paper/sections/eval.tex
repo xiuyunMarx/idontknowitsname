@@ -25,9 +25,10 @@ therefore the same byLLM runtime served by vLLM with its automatic prefix cachin
 \end{itemize}
 
 Prefill--decode aggregation is disabled in these runs because the 3090 cannot
-sustain it for this model. All reported values are median TTFT over 20
-cold-start requests; the measurements are first requests, not steady-state
-requests behind a warm cache.
+sustain it for this model. All reported values are median TTFT: for case study 1,
+over 20 cold-start requests; for case study 2, over the calls that 20 multi-hop
+questions issue at each call site. The measurements are first requests, not
+steady-state requests behind a warm cache.
 
 \subsection{Case study 1: multi-intent supervisor with four subagents}
 
@@ -97,7 +98,7 @@ prompts are assembled from values produced earlier in the request.}
 
 \paragraph{Where there is no gain, and why.} The entry stage
 (\texttt{normalize}) is already at the floor: at 193 prompt tokens its baseline
-TTFT of 37.3\,ms is within 2\,ms of the 35.3\,ms Oracle, so there is essentially
+TTFT of 37.3\,ms is 2.0\,ms above the 35.3\,ms Oracle, so there is essentially
 nothing to remove. The routing stage and all four \texttt{analyze} stages show
 1.00$\times$ and capture 0\% of their headroom, even though their Oracle values
 show that headroom exists --- \texttt{route}, for instance, sits at 65.8\,ms

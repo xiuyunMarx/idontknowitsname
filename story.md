@@ -114,6 +114,6 @@ The compiler recovers the loop back-edge (`integrate -> {reason, integrate, fina
 | `integrate` | 58 / 71 | 39.4 ms | 38.3 ms | 1.03x | 368 → 544 |
 | **`finalize`** | **20 / 20** | **66.8 ms** | **39.2 ms** | **1.71x** | **304 → 496** |
 
-1. In this testcase, reason has no headroom for it, because there is no gap between integrate and reason.
+1. In this testcase, ``reason`` has no headroom for reducing TTFT, because there is no gap between integrate and reason.
 2. ``integrate`` got a TTFT improment because it consumes the output cumulation of ``integrate``, and the ``integrate``'s output is prefilled during gap.
 3. ``integrate`` also consumes value from `reason`, and proactively prefill it in the gap. But due to that the incremental prompt is small, gain is minor.
