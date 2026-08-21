@@ -1,0 +1,75 @@
+\section{Introduction}
+
+LLM applications are increasingly written as programs rather than as single
+prompts. A request is decomposed into a sequence of specialized agents, each of
+which submits its own prompt to a shared serving engine, and each of those
+prompts repeats a large body of content --- system instructions, tool
+definitions, few-shot examples, accumulated context --- that a previous call
+already paid to encode. Modern engines exploit this with prefix
+caching~\cite{kwon2023pagedattention,zheng2023sglang}, but a cache only helps if
+the right entry is resident at the right moment, and agentic traffic is
+adversarial to recency-based replacement: the natural reuse distance of an
+agent's context spans the entire rest of the workflow.
+
+A line of recent systems responds by trying to know the future. KVFlow abstracts
+the execution schedule as an agent step graph and prefetches the tensors an agent
+will need in the next step~\cite{pan2025kvflow}. PBKV predicts agent invocations
+several steps ahead by fusing historical workflows with the context of the target
+workflow~\cite{zheng2026pbkv}. CacheScout learns agent execution transitions
+online, with no predefined workflow graph and no offline training, and issues a
+lightweight synthetic warmup request to materialize the predicted agent's
+reusable anchor~\cite{zhang2026cachescout}. Pythia captures workflow semantics
+through an interface exposed at the serving layer and uses them to prefetch
+shared contexts and asynchronously warm caches~\cite{yu2026pythia}. All four
+place the same bet: that the identity of the next agent can be inferred from
+outside the program.
+
+\paragraph{Observation.} That bet is only necessary because the serving layer is
+downstream of the program. In a language-integrated LLM abstraction --- we build
+on byLLM, the runtime of the meaning-typed programming model implemented in the
+Jac language~\cite{dantanarayana2025mtp} --- the prompt is not handed to the
+runtime by the application; it is \emph{assembled} by the compiler and runtime
+from typed program constructs. A significant portion of what will eventually be
+sent to the engine is therefore fixed at compile time. What is not fixed is
+small and precisely characterized: the values that will be bound to the
+parameters of each call. This changes the question from \emph{which agent runs
+next?} to \emph{which prefixes are already knowable, and when does each argument
+become available?} --- and both are answerable by static analysis.
+
+\paragraph{Approach.} We build \sysname{}, a compiler--runtime co-design. The
+compiler recovers a may-happen call topology as a BFS-layered reachable set,
+recovers \emph{binding provenance} linking each produced value to the future
+parameters it will feed, and separates the invariant from the variant part of
+every prompt. Because it owns prompt assembly, it also rewrites the layout:
+reusable zones are ordered first, and values that arrive late are confined to a
+trailing binding zone, so that the reusable prefix is a genuine prefix rather
+than being fragmented by interleaved dynamic content. The runtime consumes this
+to prefill KV during engine idle windows --- both the temporal idle opened by a
+tool call or a retrieval round trip and the spatial idle available under chunked
+prefill~\cite{agrawal2024sarathi} --- constructing the longest knowable prefix:
+invariants, graph context, already-bound argument values, and the grammar
+compilation needed for constrained decoding~\cite{dong2025xgrammar}. Because the
+served prompt remains byLLM's own rendering, speculation is advisory: a wrong
+guess costs a cache miss, never a semantic change.
+
+\paragraph{Contributions.}
+\begin{enumerate}\itemsep2pt
+\item A compiler-based static analysis that recovers, for byLLM programs and
+      with zero annotation and zero training, the call topology, the provenance
+      of each parameter, and the invariant portion of each runtime prompt, and
+      that automatically lays out every LLM prompt for maximal KV reuse ---
+      content that byLLM's stock runtime renders in a fragmented order.
+\item A runtime that proactively and speculatively prefills KV cache in engine
+      idle windows using that compile-time structure, reducing cold-start TTFT.
+\item An evaluation of the resulting compiler--runtime co-design. We report two
+      verification case studies here; a broader study across agent applications
+      is ongoing, and we present the current results as evidence that the
+      co-design is worth pursuing rather than as a general performance claim.
+\end{enumerate}
+
+\paragraph{Positioning.} We are not competing with KV residency management. KVFlow
+and PBKV govern which KV \emph{stays} on the GPU; \sysname{} governs which KV
+\emph{comes into existence}, and when. The two compose: a residency policy has
+more to work with when the entries it is ranking were created ahead of demand
+rather than on the critical path. Section~\ref{sec:related} makes the axes of
+difference explicit.

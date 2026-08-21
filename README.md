@@ -95,4 +95,6 @@ python3 runtime/side_runtime.py jac_sample/Jac-Rag-GPT/main.jac --no-type-check
 
 Working end-to-end: interception, invariant warming, topology speculation, visit-context quasi-static feed (incl. grammar precompile), automatic provenance-driven binding feed, serve-time reorder. Open: streaming a predecessor's tokens into a successor's binding mid-decode; `here`/`self`-scope provenance; invariant promotion for provably-closed candidate sets; multi-case benchmark sweeps under concurrent load.
 
+Next step: currently idle is detected by Scheduler rather than querying the LLM engine. Enable idle detection throuth engine in the future
+
 Research project, 2026. See `docs/` for full APIs, measured data, and reproduction recipes.

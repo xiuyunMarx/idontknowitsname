@@ -1,0 +1,101 @@
+\section{Design}
+\label{sec:design}
+
+\sysname{} has two halves: a compile-time analysis that produces structure, and a
+runtime that spends idle GPU time against that structure.
+
+\subsection{Static analysis over byLLM programs}
+
+The analysis runs as a compiler pass and requires no annotation from the
+developer and no trained model. It produces three artifacts.
+
+\paragraph{Call topology.} The pass deduces the topology of byLLM calls: which
+call sites can reach which other call sites, expanded as a BFS-layered reachable
+set rather than a single next-step guess. The result is a may-happen relation, so
+a branch whose outcome is not statically decidable contributes all of its
+successors rather than none of them.
+
+\paragraph{Argument provenance.} For every parameter of every call site, the pass
+records where the value that will be bound to it is produced. This is the
+artifact that distinguishes \sysname{} from next-agent prediction: knowing that
+call site $v$ will run is far less actionable than knowing that the value being
+computed right now is the third argument of $v$, and is therefore prefillable
+right now.
+
+\paragraph{Invariant/variant split.} Each runtime prompt is partitioned into the
+portion that is fixed at compile time and the portion that depends on runtime
+values. The invariant portion is the part that can be materialized without any
+speculation at all.
+
+\subsection{Cache-aware prompt layout}
+
+Because the compiler owns prompt assembly, it does not have to accept the prompt
+as given. byLLM's stock rendering interleaves invariant and variant content, which
+fragments what would otherwise be a long shared prefix: a single early-positioned
+dynamic value invalidates every token after it for reuse purposes. The pass
+rewrites the layout so that zones are ordered by expected stability --- invariant
+instruction and schema content first, graph context next, and a trailing binding
+zone whose internal order follows the arrival order recovered by the provenance
+analysis. The effect is that the prefix that is reusable is also contiguous, which
+is what a prefix cache is able to exploit.
+
+This is an authority a serving-layer system structurally does not have. A system
+that sits between the agent framework and the
+engine~\cite{zhang2026cachescout,yu2026pythia} can decide what to keep, evict, or
+warm, but it receives the prompt already rendered.
+
+\subsection{Runtime: prefilling in engine idle windows}
+
+The runtime consumes the compiler's artifacts and issues prefill work when the
+engine would otherwise be underutilized. It targets two kinds of idle. \emph{Temporal}
+idle is the wall-clock gap in which no work is outstanding for the request,
+opened by a tool call or a retrieval round trip. \emph{Spatial} idle is capacity
+within a scheduling step that is not consumed by the current batch; \sysname{}
+reaches it through chunked prefill~\cite{agrawal2024sarathi}, which lets prefill
+tokens be admitted incrementally alongside ongoing work rather than as an
+indivisible unit.
+
+Within an idle window, the runtime builds the longest knowable prefix of a
+reachable future call: its invariant zone, the graph context that is already
+determined, the argument values that provenance says are already bound, and the
+grammar compilation required for constrained decoding of the call's structured
+output~\cite{dong2025xgrammar}. This is a strictly larger unit than a fixed
+anchor. Where a warmup-based approach materializes the recurring context of a
+predicted agent, \sysname{} additionally materializes the speculated argument
+content, which is the part of the prompt that content-level approaches set aside.
+
+\subsection{Proactive binding of early-computed arguments}
+
+The single most productive case falls directly out of provenance: an argument
+that is prepared \emph{before} the byLLM function that consumes it is called.
+Such a value is not speculative at all --- it exists, it is final, and its
+consumer is statically known. The runtime prefills it as soon as it is produced,
+so by the time control reaches the consuming call site the corresponding KV is
+already resident. Section~\ref{sec:eval} shows that this case accounts for the
+bulk of the measured gain: call sites whose prompts accumulate the outputs of
+earlier stages are precisely the ones that improve most.
+
+\subsection{Resolving supervisor branches}
+
+A supervisor that selects one of several subagents creates a branch that the
+static topology can only over-approximate. \sysname{} includes a training-free
+mechanism to narrow it: truncate the supervisor's reasoning and fork a probe
+decode to see which successor it is heading toward, or equivalently run a draft
+model to speculate the routing decision, and prefill that successor first. The
+mechanism requires no additional training and no workload-specific tuning.
+
+We note explicitly that this component is \emph{not enabled} in the measurements
+reported in Section~\ref{sec:eval}: the configuration evaluated there uses
+compiler-derived speculative prefill only, with no probe and no deploy-time
+prewarm. The consequence is visible in the results, where the call sites
+immediately downstream of the routing decision show no improvement.
+
+\subsection{Correctness model}
+
+Speculation in \sysname{} is advisory and byte-verified. The prompt that is
+served is byLLM's own rendering of the call, unchanged; the speculatively
+constructed KV is used only if the tokens it covers match that rendering exactly.
+A mispredicted branch, a stale value, or a layout mismatch therefore degrades to
+a cache miss and a normal cold prefill. There is no configuration in which
+speculation changes the prompt the model sees, and hence none in which it changes
+the program's output.

@@ -1,0 +1,35 @@
+\begin{abstract}
+Agentic LLM programs spend a large part of their wall-clock latency on prefill:
+every hop of a multi-agent workflow re-submits a long prompt whose prefix the
+serving engine may or may not still hold. Existing systems attack this by
+\emph{predicting} which agent will be dispatched next, from an app-supplied step
+graph, an offline-trained predictor, or an online model of observed dispatches,
+and then moving or warming the corresponding key--value (KV) cache. We observe
+that for programs written against a language-integrated LLM abstraction, the
+prediction problem is largely unnecessary: because the prompt is assembled by the
+compiler rather than by the application, a static analysis can recover the call
+topology, the provenance of every argument, and the split between the invariant
+and variant parts of each prompt, with zero annotation, zero training, and zero
+observation of a running workload.
+
+We present \sysname{}, a compiler--runtime co-design that turns this compile-time
+knowledge into idle-time work. The compiler emits a may-happen call topology
+together with binding provenance --- which value produced now will feed which
+parameter later --- and rewrites the prompt layout so that reusable content is
+contiguous. The runtime uses that information to speculatively prefill KV during
+engine idle windows, in particular the gaps opened by tool calls and retrieval,
+so that a subsequent call arrives at an already-populated prefix. Speculation is
+advisory: the prompt actually served is the runtime's own rendering, so a wrong
+guess costs a cache miss and never a wrong prompt.
+
+We report two verification case studies on Qwen3-4B on a single RTX 3090. On a
+multi-intent workflow with a supervisor and four subagents, \sysname{} reduces
+summed per-request time-to-first-token (\(\Sigma\)TTFT) from 469.9\,ms to
+265.1\,ms (1.77\(\times\)) against a vLLM automatic-prefix-caching baseline,
+capturing 72\% of the headroom to a fully-cached Oracle at 186.2\,ms, with
+per-component gains up to 5.07\(\times\). On a single-agent ReAct loop with a
+data-dependent back-edge, the terminal call site improves from 66.8\,ms to
+39.2\,ms (1.71\(\times\)). These are early, single-configuration results; we state
+their scope explicitly. \sysname{} is complementary to systems that govern KV
+\emph{residency}: it governs KV \emph{creation}.
+\end{abstract}

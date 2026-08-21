@@ -1,0 +1,111 @@
+\relax 
+\citation{kwon2023pagedattention,zheng2023sglang}
+\citation{pan2025kvflow}
+\citation{zheng2026pbkv}
+\citation{zhang2026cachescout}
+\citation{yu2026pythia}
+\citation{dantanarayana2025mtp}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Observation.}{1}\protected@file@percent }
+\citation{agrawal2024sarathi}
+\citation{dong2025xgrammar}
+\citation{dantanarayana2025mtp}
+\@writefile{toc}{\contentsline {paragraph}{Approach.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Positioning.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Motivation}{2}\protected@file@percent }
+\newlabel{sec:motivation}{{2}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Who cares about TTFT}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{TTFT is a provisioning metric.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Prefill is the part of latency still addressable at the systems layer.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Prefill removed from the critical path is throughput, not just latency.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Agentic call sites are prefill-heavy by construction.}{2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Why a compiler can know the prompt}{2}\protected@file@percent }
+\citation{zhang2026cachescout,yu2026pythia}
+\citation{agrawal2024sarathi}
+\citation{dong2025xgrammar}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The idle window created by a tool call or retrieval round trip. In the baseline the engine is idle through the gap and pays a cold prefill for the next call. ProPrefill{} spends the gap constructing the longest knowable prefix of that call, so the demand-time prefill shrinks to the residual.\relax }}{3}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:motivation}{{1}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Design}{3}\protected@file@percent }
+\newlabel{sec:design}{{3}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Static analysis over byLLM programs}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Call topology.}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Argument provenance.}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Invariant/variant split.}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Cache-aware prompt layout}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Runtime: prefilling in engine idle windows}{3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Proactive binding of early-computed arguments}{3}\protected@file@percent }
+\citation{yang2025qwen3}
+\citation{kwon2023pagedattention}
+\citation{cobbe2021gsm8k}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Resolving supervisor branches}{4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Correctness model}{4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{4}\protected@file@percent }
+\newlabel{sec:eval}{{4}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Setup}{4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Case study 1: a supervisor routes to one of four subagents, each a three-stage pipeline separated by retrieval.\relax }}{4}\protected@file@percent }
+\newlabel{fig:topology}{{2}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Case study 1: multi-intent supervisor with four subagents}{4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Where there is no gain, and why.}{4}\protected@file@percent }
+\citation{yao2023react}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Case study 1: per-component median TTFT over 20 cold-start requests, Qwen3-4B on one RTX 3090. Oracle is measured by replaying one identically-sized prompt twice and reading the second serve. ``Headroom captured'' is the fraction of the baseline-to-Oracle gap that ProPrefill{} closes.\relax }}{5}\protected@file@percent }
+\newlabel{tab:percomponent}{{1}{5}}
+\@writefile{toc}{\contentsline {paragraph}{Where the gain is, and why.}{5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cost where there is no benefit.}{5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Aggregate.}{5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Case study 2: median TTFT per call site, Qwen3-4B on one RTX 3090, 20 multi-hop questions. The loop is data-dependent, so the two configurations do not execute the same number of calls; call counts are given for both.\relax }}{5}\protected@file@percent }
+\newlabel{tab:react}{{2}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Case study 2: a ReAct tool loop}{5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Per-component median TTFT for case study 1 (data of Table\nobreakspace  {}1\hbox {}). Gains concentrate in the late stages, whose prompts are assembled from values produced earlier in the request.\relax }}{6}\protected@file@percent }
+\newlabel{fig:percomponent}{{3}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Case study 2: a single-agent ReAct loop with a data-dependent back-edge. The retrieval step opens an idle window of roughly 0.3\tmspace  +\thinmuskip {.1667em}s per turn.\relax }}{6}\protected@file@percent }
+\newlabel{fig:react}{{4}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Case study 2 median TTFT per call site (data of Table\nobreakspace  {}2\hbox {}).\relax }}{6}\protected@file@percent }
+\newlabel{fig:reactbars}{{5}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Threats to Validity and Scope of the Claim}{6}\protected@file@percent }
+\newlabel{sec:threats}{{5}{6}}
+\@writefile{toc}{\contentsline {paragraph}{We report \(\Sigma \)TTFT, not end-to-end latency.}{6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The Oracle column is an upper bound, and should be read as one.}{6}\protected@file@percent }
+\citation{pan2025kvflow}
+\citation{zheng2026pbkv}
+\citation{zhang2026cachescout}
+\citation{yu2026pythia}
+\citation{choi2026idlespec}
+\@writefile{toc}{\contentsline {paragraph}{The hardware constrains the mechanism.}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The baseline is vLLM's APC.}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Two topologies, one model, one GPU.}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{A configuration caveat, not a result caveat.}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Related Work and Positioning}{7}\protected@file@percent }
+\newlabel{sec:related}{{6}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Workflow-aware KV cache management}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Axes of difference}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Complementary, not competing.}{7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Exploiting idle time}{7}\protected@file@percent }
+\citation{wang2026agentflow}
+\citation{kwon2023pagedattention}
+\citation{zheng2023sglang}
+\citation{agrawal2024sarathi}
+\citation{dong2025xgrammar}
+\citation{dantanarayana2025mtp}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Axes of difference. Attributions in the first two columns are drawn from the cited papers' own descriptions of their designs.\relax }}{8}\protected@file@percent }
+\newlabel{tab:axes}{{3}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Static analysis of agent programs}{8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Serving substrates}{8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{8}\protected@file@percent }
+\bibstyle{plainnat}
+\bibdata{refs}
+\bibcite{agrawal2024sarathi}{{1}{2024}{{Agrawal et~al.}}{{Agrawal, Kedia, Panwar, Mohan, Kwatra, Gulavani, Tumanov, and Ramjee}}}
+\bibcite{choi2026idlespec}{{2}{2026}{{Choi et~al.}}{{Choi, Park, Song, Dingliwal, Jayanthi, Shin, and Galstyan}}}
+\bibcite{cobbe2021gsm8k}{{3}{2021}{{Cobbe et~al.}}{{Cobbe, Kosaraju, Bavarian, Chen, Jun, Kaiser, Plappert, Tworek, Hilton, Nakano, Hesse, and Schulman}}}
+\bibcite{dantanarayana2025mtp}{{4}{2025}{{Dantanarayana et~al.}}{{Dantanarayana, Kang, Sivasothynathan, Clarke, Li, Kashmira, Flautner, Tang, and Mars}}}
+\bibcite{dong2025xgrammar}{{5}{2025}{{Dong et~al.}}{{Dong, Ruan, Cai, Lai, Xu, Zhao, and Chen}}}
+\bibcite{kwon2023pagedattention}{{6}{2023}{{Kwon et~al.}}{{Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang, and Stoica}}}
+\bibcite{pan2025kvflow}{{7}{2025}{{Pan et~al.}}{{Pan, Patel, Hu, Shen, Guan, Li, Qin, Wang, and Ding}}}
+\bibcite{wang2026agentflow}{{8}{2026}{{Wang et~al.}}{{Wang, Hou, Zhao, Cheng, and Wang}}}
+\bibcite{yang2025qwen3}{{9}{2025}{{Yang et~al.}}{{Yang, Li, Yang, Zhang, Hui, Zheng, Yu, Gao, Huang, Lv, et~al.}}}
+\bibcite{yao2023react}{{10}{2023}{{Yao et~al.}}{{Yao, Zhao, Yu, Du, Shafran, Narasimhan, and Cao}}}
+\bibcite{yu2026pythia}{{11}{2026}{{Yu et~al.}}{{Yu, Shu, Ni, Qian, Li, Wang, Zhang, Xu, Yang, Zhu, Zhai, Lu, Xing, Lu, Jin, Liu, and Xu}}}
+\bibcite{zhang2026cachescout}{{12}{2026}{{Zhang et~al.}}{{Zhang, Kim, Feng, Du, Liu, Zhong, Ching, Jiang, and Hu}}}
+\bibcite{zheng2026pbkv}{{13}{2026}{{Zheng et~al.}}{{Zheng, Fu, Wu, Yuan, Zhang, Wang, Zhu, Yan, and Jiang}}}
+\bibcite{zheng2023sglang}{{14}{2023}{{Zheng et~al.}}{{Zheng, Yin, Xie, Sun, Huang, Yu, Cao, Kozyrakis, Stoica, Gonzalez, Barrett, and Sheng}}}

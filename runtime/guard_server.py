@@ -140,8 +140,7 @@ class GuardServer:
         self.dump_dir = os.environ.get("GUARD_DUMP_PROMPTS") or None  # debug: write every rendered prompt to this dir
         self.last_call_key: Optional[str] = None  # current workflow position
         self.stats: Dict[str, List[Dict[str, Any]]] = {"warms": [], "calls": [], "feeds": [], "reorders": [], "probes": []}
-        # Speculation admission: real-traffic tracking, idle-window execution,
-        # calibrated busy budget. All cap/state logic lives in the Scheduler.
+        # Speculation admission: real-traffic tracking, idle-window execution, calibrated busy budget. All cap/state logic lives in the Scheduler.
         self.scheduler = Scheduler(self.engine)
         # Speculation ORDER: one pending job per call site ("prefill its longest
         # known stable prefix"); a single drainer executes them nearest-first by

@@ -1,0 +1,45 @@
+\section{Threats to Validity and Scope of the Claim}
+\label{sec:threats}
+
+We state the boundaries of the evidence above explicitly.
+
+\paragraph{We report \(\Sigma\)TTFT, not end-to-end latency.} Summed TTFT is the
+quantity the mechanism acts on, and it is what we measure. We do not claim a
+proportional end-to-end win: the fraction of a request's wall-clock time that
+\(\Sigma\)TTFT represents depends on decode lengths, tool latency, and retrieval
+cost, none of which \sysname{} changes.
+
+\paragraph{The Oracle column is an upper bound, and should be read as one.} Oracle
+is measured by replaying an identically-sized prompt and reading the second serve,
+so it reflects what the hardware does when every token is already cached. It
+upper-bounds what \emph{any} KV-reuse system could achieve in this setting. The
+72\% figure in Table~\ref{tab:percomponent} is a fraction of that bound, not a
+fraction of total request latency.
+
+\paragraph{The hardware constrains the mechanism.} On an RTX 3090, a 4B model is
+large relative to the device. Prefill cannot be overlapped with decode without
+harming decode latency, so prefill--decode aggregation is disabled in these runs.
+This cuts both ways: it removes a source of interference that would complicate the
+measurement, but it also means the spatial-idle path of Section~\ref{sec:design}
+is not exercised here, and results on hardware where aggregation is viable may
+differ in both directions.
+
+\paragraph{The baseline is vLLM's APC.} We build on vLLM, so the baseline adopts
+vLLM's automatic prefix caching. We do not compare against the workflow-aware KV
+management systems discussed in Section~\ref{sec:related}; those systems govern a
+different stage of the KV lifecycle, and a fair comparison would require porting
+them onto the same runtime and hardware.
+
+\paragraph{Two topologies, one model, one GPU.} The evidence is two case studies
+at a single model size on a single device, with 20 requests each. They were chosen
+to be structurally different --- a static fan-out with a supervisor branch, and a
+data-dependent loop with a self-referential carry --- but they do not establish
+how the approach behaves under concurrency, at other model sizes, or on workloads
+whose idle windows are shorter than the prefill work available to fill them. The
+broader evaluation is ongoing.
+
+\paragraph{A configuration caveat, not a result caveat.} The measurements use
+compiler-derived speculative prefill with no probe decode and no deploy-time
+prewarm. The zero-gain rows for \texttt{route} and the four \texttt{analyze}
+stages are therefore properties of this configuration. We report them as measured
+and do not extrapolate what the probe mechanism would recover.
