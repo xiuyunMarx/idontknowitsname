@@ -8,9 +8,9 @@ from pydantic import TypeAdapter
 from vllm.sampling_params import SamplingParams, StructuredOutputsParams
 
 try:
-    from static_parser import ByLLMDecl, extract_finish_output, format_tools_for_prompt, resolve_type, response_format_of
+    from static_parser import ByLLMDecl, extract_finish_output, format_tools_for_prompt, resolve_type, response_format_of, schema_entry
 except ImportError:  # imported as part of the `static` package (e.g. from runtime/)
-    from static.static_parser import ByLLMDecl, extract_finish_output, format_tools_for_prompt, resolve_type, response_format_of
+    from static.static_parser import ByLLMDecl, extract_finish_output, format_tools_for_prompt, resolve_type, response_format_of, schema_entry
 
 
 class OutputConversionError(ValueError):
@@ -85,8 +85,9 @@ class AsyncByLLM(torch.nn.Module):
             header = f"{header} --- {d.sem}"
         head_lines = [header]
         for p in d.params:
-            if p.get("sem"):
-                head_lines.append("      " + f"{p['name']}: {p['type']} ---- {p['sem']}")
+            row = schema_entry(p["name"], p["type"], p.get("sem", ""), d.param_type_objs.get(p["name"]))
+            for line in row.split("\n") if row else []:
+                head_lines.append("      " + line)  # byllm indents every line of the entry
         self.invariant_user_prefix = "\n".join(head_lines)
         # Sampling params are compile-time constants too
         if self.sampler is None:

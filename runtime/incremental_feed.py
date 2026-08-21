@@ -257,15 +257,23 @@ def extract_walker_fields(user_text: str) -> Dict[str, str]:
 _SLICE_RE = re.compile(r"\[[-\d:, ]*\]")
 
 
-def eval_provenance(spec: Dict[str, Any], walker_fields: Optional[Dict[str, str]] = None, results: Optional[Dict[str, str]] = None) -> Optional[str]:
+def eval_provenance(spec: Dict[str, Any], walker_fields: Optional[Dict[str, str]] = None, results: Optional[Dict[str, Any]] = None, item_index: int = 0) -> Optional[str]:
     """Repr text for one provenance spec, or None when not evaluable yet (or ever).
     `walker_fields` maps field name -> repr text seen in a predecessor's prompt;
-    `results` maps callsite key -> repr text of its parsed return value."""
+    `results` maps callsite key -> the parsed return VALUE of that call;
+    `item_index` picks the element for ret_item (the loop cursor, 0 on first use)."""
     kind = spec.get("kind")
     if kind == "const":
         return repr(spec.get("value"))
     if kind == "ret":
-        return (results or {}).get(spec.get("of") or "")
+        val = (results or {}).get(spec.get("of") or "")
+        return None if val is None else repr(val)
+    if kind == "ret_item":
+        seq = (results or {}).get(spec.get("of") or "")
+        try:
+            return repr(seq[item_index])
+        except Exception:
+            return None  # not a sequence, or the loop has run past its end
     if kind == "field" and spec.get("scope") == "visitor" and walker_fields:
         raw = walker_fields.get(spec.get("attr") or "")
         if raw is None:
@@ -281,7 +289,39 @@ def eval_provenance(spec: Dict[str, Any], walker_fields: Optional[Dict[str, str]
             return repr(eval("v" + sl, {"__builtins__": {}}, {"v": value}))
         except Exception:
             return None
-    return None  # here/self scopes need the successor's own node instance; unknown never feeds
+    return None  # here/self scopes need the successor's own node instance; call/unknown are observed, never derived
+
+
+def observed_key(spec: Dict[str, Any]) -> Optional[str]:
+    """Identity of a value the compiler can name but not derive, shared by every
+    callsite that reads the same source: a value observed in one served prompt
+    feeds the others (`request = self.request` passed to two calls is one value).
+    const/ret/ret_item have real derivations and never fall back to observation."""
+    kind = spec.get("kind")
+    if kind == "field":
+        return f"field:{spec.get('scope')}.{spec.get('attr')}{spec.get('slice') or ''}"
+    if kind == "call":
+        return f"call:{spec.get('of')}"
+    if kind == "unknown":
+        return f"unknown:{spec.get('expr')}"
+    return None
+
+
+def extract_bindings(user_text: str, fn: Any) -> Dict[str, str]:
+    """param name -> repr text, read back out of a byllm-rendered user message.
+    What the server actually served is the ground truth for values the compiler
+    cannot derive (tool returns) and for locating a ret_item's loop cursor."""
+    param_names = {p["name"] for p in fn.decl.params}
+    lines = user_text.split("\n")
+    span = _binding_block(lines, param_names)
+    if span is None:
+        return {}
+    out: Dict[str, str] = {}
+    for ln in lines[span[0]:span[1]]:
+        name, sep, rhs = ln.partition(" = ")
+        if sep and name in param_names:
+            out[name] = rhs
+    return out
 
 
 # ---------------------------------------------------------------------------

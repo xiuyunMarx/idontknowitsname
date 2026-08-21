@@ -17,7 +17,7 @@ from transformers import AutoTokenizer
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.sampling_params import SamplingParams, StructuredOutputsParams
 from vllm.v1.engine.async_llm import AsyncLLM
-from runtime.incremental_feed import FeedStore, eval_provenance, extract_visit_ctx, extract_walker_fields, final_messages, partial_user_prompt, reorder_binding_zone
+from runtime.incremental_feed import FeedStore, eval_provenance, extract_bindings, extract_visit_ctx, observed_key, extract_walker_fields, final_messages, partial_user_prompt, reorder_binding_zone
 from runtime.scheduler.scheduler import Scheduler
 from runtime.speculate import SpeculateCandidate
 from static.static_parser import bfs_distances, entry_distances, extract_finish_output
@@ -81,7 +81,7 @@ class Monitor:
             self._log("speculate", succ, after=key, dist=d)
             self.server.enqueue_spec(succ, reason=f"spec:{key}")
 
-    def on_call_end(self, key: str, ttft: Optional[float], duration: float, rid: str = "", result_repr: Optional[str] = None) -> None:
+    def on_call_end(self, key: str, ttft: Optional[float], duration: float, rid: str = "", result: Any = None) -> None:
         """Second provenance checkpoint: the call's parsed result is now known.
         DATAFLOW firing, not topology firing: consumers of ret(this call) come from
         the inverse provenance index, however many calls downstream they sit —
@@ -96,9 +96,9 @@ class Monitor:
         consumer in time. In a zero-gap flow the job just stays parked; the serve
         still replays the recorded session, losing only the warm."""
         self._log("call_end", key, ttft=ttft, duration=duration)
-        if result_repr is None or not self.server.speculate or not self.server.prov_feed:
+        if result is None or not self.server.speculate or not self.server.prov_feed:
             return
-        self.server.prov_results[key] = result_repr
+        self.server.prov_results[key] = result
         for ckey, _param in self.server.side_rt.ret_consumers.get(key, []):
             self._log("ret_record", ckey, after=key)
             self.server.record_provenance(ckey, results=self.server.prov_results)
@@ -134,7 +134,15 @@ class GuardServer:
         self.prov_feed = True  # tier-3 provenance feeds; off isolates invariant-warm-only (tier-3 ablation)
         self.greedy = False  # force temperature=0 on served requests (deterministic experiments)
         self.feeds = FeedStore()
-        self.prov_results: Dict[str, str] = {}  # producer key -> latest parsed-result repr (single-flow assumption)
+        self.prov_results: Dict[str, Any] = {}  # producer key -> latest parsed return VALUE (single-flow assumption)
+        self.item_idx: Dict[Tuple[str, str], int] = {}  # (consumer key, param) -> which element of a ret list comes next
+        self.observed: Dict[str, str] = {}  # observed_key -> last repr served for it (values no derivation can reach)
+        self.spec_sites: Dict[str, List[str]] = {}  # observed_key -> call sites reading that same source
+        for _k, _params in self.side_rt.provenance.items():
+            for _spec in _params.values():
+                _sk = observed_key(_spec)
+                if _sk and _k not in self.spec_sites.setdefault(_sk, []):
+                    self.spec_sites[_sk].append(_k)
         self._warm_inflight: set = set()
         self._warm_hash: Dict[str, str] = {}  # key -> sha1 of the last successfully warmed prefix (dedup)
         self.dump_dir = os.environ.get("GUARD_DUMP_PROMPTS") or None  # debug: write every rendered prompt to this dir
@@ -341,7 +349,7 @@ class GuardServer:
         if self.feeds.set_visit_ctx(key, here, candidates, schema):
             self.enqueue_spec(key, reason="feed:visit")
 
-    def record_provenance(self, succ: str, walker_fields: Optional[Dict[str, str]] = None, results: Optional[Dict[str, str]] = None) -> None:
+    def record_provenance(self, succ: str, walker_fields: Optional[Dict[str, str]] = None, results: Optional[Dict[str, Any]] = None) -> None:
         """Record every parameter of `succ` whose provenance spec is evaluable from
         the observed state. Params land in declaration order (so when everything
         fires at once the serve-time reorder is an identity). All provenance
@@ -359,9 +367,47 @@ class GuardServer:
             spec = prov.get(p["name"])
             if spec is None:
                 continue
-            val = eval_provenance(spec, walker_fields=walker_fields, results=results)
+            val = eval_provenance(spec, walker_fields=walker_fields, results=results, item_index=self.item_idx.get((succ, p["name"]), 0))
+            if val is None:
+                val = self.observed.get(observed_key(spec) or "")  # nothing derives it; use what was served
             if val is not None:
                 self.record_param(succ, "prov", p["name"], val)
+
+    def observe_bindings(self, key: str, fn: Any, user_text: str) -> None:
+        """Learn from the prompt just served. A `ret_item`'s loop cursor is LOCATED by
+        matching the served value against the producer's list (a retry re-serving the
+        same element re-finds the same index instead of drifting), so the next iteration
+        is fed the NEXT element during the coming gap. Everything else the compiler can
+        name but not derive — a tool return, a walker field, a plain local — is stored
+        under its `observed_key` and re-recorded into EVERY call site reading that same
+        source: `request = self.request` passed to two calls is one value, so seeing it
+        in the first call's prompt feeds the second. A stale guess costs the tail of one
+        warm; the serve-time reorder stops at that line and the prefix still hits."""
+        if not self.speculate or not self.prov_feed:
+            return
+        prov = self.side_rt.provenance.get(key) or {}
+        served = extract_bindings(user_text, fn)
+        touched = set()
+        for p in fn.decl.params:
+            name = p["name"]
+            spec = prov.get(name) or {}
+            text = served.get(name)
+            if text is None:
+                continue
+            if spec.get("kind") == "ret_item":
+                seq = self.prov_results.get(spec.get("of") or "")
+                try:
+                    self.item_idx[(key, name)] = [repr(x) for x in seq].index(text) + 1
+                except Exception:
+                    continue
+                touched.add(key)
+                continue
+            sk = observed_key(spec)
+            if sk and self.observed.get(sk) != text:
+                self.observed[sk] = text
+                touched.update(self.spec_sites.get(sk, ()))
+        for k in touched:  # re-record in decl order so each session stays replayable
+            self.record_provenance(k, results=self.prov_results)
 
     async def warm_all(self) -> None:
         """Deploy-time prewarm: enqueue every call site ordered by BFS distance from
@@ -386,6 +432,8 @@ class GuardServer:
         if not keep_visit_ctx:
             self.feeds.visit_ctx.clear()
         self.prov_results.clear()
+        self.item_idx.clear()
+        self.observed.clear()
         self.route_prompts.clear()
         self.probe_favored.clear()
         self.last_call_key = None
@@ -460,6 +508,7 @@ class GuardServer:
             key = self._match_visit_key(messages)
         fn = None
         walker_fields: Optional[Dict[str, str]] = None
+        user_text = ""
         if key:
             self.monitor.on_call_start(key)
             fn = self.side_rt.byllm_callsites.get(key)
@@ -473,9 +522,9 @@ class GuardServer:
                         self.feeds.set_visit_ctx(key, ctx[0], ctx[1], schema)
                 else:
                     # reorder the byllm-rendered binding zone (first user message) into the best-matching session's arrival order
+                    user_text = str(self._flatten_content(messages[1].get("content")) or "")
                     pending = self.feeds.sessions_for(key)
                     if pending:
-                        user_text = str(self._flatten_content(messages[1].get("content")) or "")
                         new_text, matched, n = reorder_binding_zone(user_text, fn, pending)
                         if matched is not None and n > 0:
                             messages = list(messages)
@@ -510,17 +559,22 @@ class GuardServer:
         self.stats["calls"].append({"key": key or "(generic)", "ttft": ttft, "duration": duration, "cached_tokens": cached, "prompt_head": prompt[:200]})
         text = final.outputs[0].text if final is not None and final.outputs else ""
         if key:
-            # Second checkpoint's input: this call's parsed result (str returns and
-            # finish_tool payloads; other shapes aren't feedable as bindings yet).
-            result_repr: Optional[str] = None
+            # Second checkpoint's input: this call's parsed result — str, finish_tool
+            # payload, or a typed instance (a list return is what ret_item indexes into).
+            result: Any = None
             if fn is not None and fn.decl.kind != "visit":
                 if fn.decl.tools:
                     found, val = extract_finish_output(text)
                     if found:
-                        result_repr = repr(val)
-                elif fn.decl.return_type in ("", "str"):
-                    result_repr = repr(text)
-            self.monitor.on_call_end(key, ttft, duration, rid, result_repr)
+                        result = val
+                else:
+                    try:
+                        result = fn.parse_response(text)
+                    except Exception:
+                        result = None  # malformed output; byllm retries and we learn from that turn
+                if user_text:
+                    self.observe_bindings(key, fn, user_text)
+            self.monitor.on_call_end(key, ttft, duration, rid, result)
         return text, ttft
 
     async def shutdown(self) -> None:

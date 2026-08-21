@@ -62,6 +62,7 @@ obj RagStore {
 obj TaskPlan{
     has task: str;
     has query: str;
+    has acceptance: str;
 }
 
 walker Executor{
@@ -72,21 +73,24 @@ walker Executor{
         visit [-->][?:PlanAndExecute];
     }
     can handle with PlanAndExecute entry{
-        plans:list[TaskPlan] = here.generate_plan(self.request);
+        request = self.request;
+        collected_data = "";
+        plans:list[TaskPlan] = here.generate_plan(request);
         max_retries: int = 3;
         for plan in plans{
             max_retries = 3;
             while (max_retries > 0){
                 retrieved_data:str = self.database.search(plan.query); # tool calling, temporal gap exists here
                 if here.verify_data(plan, retrieved_data) {
-                    self.collected_data += f"Task: {plan.task}, Data: {retrieved_data}\n";
+                    collected_data += f"Task: {plan.task}, Data: {retrieved_data}\n";
                     break;
                 }else{
                     max_retries -= 1;
                 }
             }
         }
-        summary: str = here.synthesize_report(self.request, self.collected_data);
+        summary: str = here.synthesize_report(request, collected_data);
+        self.collected_data = collected_data;
         print(f"Summary Report:\n{summary}");
     }
 }
@@ -95,10 +99,29 @@ node PlanAndExecute{
     def verify_data(original_plan: TaskPlan, retrieved_data: str) -> bool by llm();
     def synthesize_report(request: str, retrieved_data: str) -> str by llm();
 }
+
+sem TaskPlan = "one retrieval subtask of a decomposed research request";
+sem TaskPlan.task = "what this subtask is meant to establish, in one short sentence";
+sem TaskPlan.query = "the single archive query that retrieves the passage for this subtask, naming the entity in full and in the wording the archive itself would use";
+sem TaskPlan.acceptance = "the concrete condition the retrieved passage must satisfy for this subtask to count as answered, written as one checkable statement";
+
+sem PlanAndExecute.generate_plan = "You are the planner of a closed-corpus research desk. You are given one oversight request that asks for several distinct facts about the same subject. Break it into the smallest set of independent retrieval subtasks that together cover the request, one subtask per fact the request names, in the order the request names them. The archive returns a single passage per query, so each subtask must target exactly one entity and one attribute of it and must never fold two hops into one query. Write each query the way the archive's own passages are worded, naming the entity in full rather than by pronoun or abbreviation, and state for each subtask the condition a passage must meet to count as an answer. Do not answer the request here, do not merge two of its points into one subtask, and do not invent subtasks the request did not ask for.";
+sem PlanAndExecute.generate_plan.request = "the oversight request to be decomposed into retrieval subtasks";
+
+sem PlanAndExecute.verify_data = "You are the verifier of a closed-corpus research desk. You are given one retrieval subtask and the single passage the archive returned for its query. Decide whether that passage actually satisfies the subtask's acceptance condition. Answer true only when the passage states the required fact explicitly and states it about the entity the subtask names; answer false when the passage is about a different entity, when it merely implies the fact or leaves it to be inferred, or when the fact is absent altogether. Judge the passage in front of you and nothing else: never draw on your own knowledge of the world, never credit a passage because it is topically related to the subtask, and never accept a passage on the grounds that a later search would probably find the missing part.";
+sem PlanAndExecute.verify_data.original_plan = "the retrieval subtask being checked, including the condition its passage must satisfy";
+sem PlanAndExecute.verify_data.retrieved_data = "the passage the archive returned for this subtask's query";
+
+sem PlanAndExecute.synthesize_report = "You are the senior editor of a closed-corpus research desk writing the final oversight briefing. You are given the original request and the collected record of every subtask that was answered, each entry naming the subtask and quoting the passage the archive returned for it. Write the briefing as continuous prose that answers the request point by point in the order the request asked, grounding every statement in what the collected passages say and never introducing a fact that is not in them. Where the record leaves one of the request's points unanswered, say so plainly instead of filling the gap from your own knowledge. Do not reproduce the record as a list, do not describe your own process, and do not close with a summary of what you have just written.";
+sem PlanAndExecute.synthesize_report.request = "the original oversight request the briefing must answer";
+sem PlanAndExecute.synthesize_report.retrieved_data = "the collected record of answered subtasks, each with the passage the archive returned for it";
+glob CORPUS_DIR: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "corpus");
+
 with entry {
-    question:str = sys.argv[1];
+    question: str = os.environ.get("QUESTION", "Prepare an oversight briefing on the Tidewater Survey covering: its scope and current status, who leads it and what their background is, which instrument it depends on and what that instrument's known failure modes are, which program funds it and under what conditions, and what the archive retention rules mean for its data.");
+    if len(sys.argv) > 1 { question = sys.argv[1]; }
     if not [root-->][?:PlanAndExecute] {
         root ++> PlanAndExecute();
     }
-    root spawn Executor(request=question, database=RagStore(corpus_dir="Not prepared yet"));
+    root spawn Executor(request=question, database=RagStore(corpus_dir=CORPUS_DIR));
 }

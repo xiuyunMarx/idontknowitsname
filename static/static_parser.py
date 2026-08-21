@@ -51,6 +51,7 @@ class ByLLMDecl:
     lineno: int = 0
     reponse_format: Optional[Dict[str, Any]] = None  # expanded response_format (None for str returns / tools)
     return_type_obj: Optional[Any] = None  # materialized Python type translated from Jac obj/enum defs
+    param_type_objs: Dict[str, Any] = field(default_factory=dict)  # param name -> materialized type (drives the schema zone)
 
     def signature(self) -> str:
         args = ", ".join(f"{p['name']}: {p['type']}" if p["type"] else p["name"] for p in self.params)
@@ -304,6 +305,54 @@ def materialized_namespace(type_text: str, defs: Optional[Dict[str, Dict[str, An
             if cls is not None:
                 ns[ident] = cls
     return ns
+
+
+def describe_input_type(ty: Any, depth: int = 0) -> str:
+    """Mirror of byllm `_describe_input_type` (mtir.impl.jac), driven by the declared
+    TYPE instead of the runtime value: obj params expand into field rows, enum params
+    into member rows, primitives into nothing. Nested obj fields expand by type — byllm
+    expands them by value, so a field left None there yields fewer rows here."""
+    pad = "    " * (depth + 1)
+    if isinstance(ty, type) and issubclass(ty, enum_mod.Enum):
+        tsem = getattr(ty, "_jac_semstr", "") or ""
+        msem = getattr(ty, "_jac_semstr_inner", {}) or {}
+        rows = [f"{pad}{ty.__name__}" + (f" -- {tsem}" if tsem else "")]
+        for m in ty:
+            d = msem.get(m.name, "")
+            rows.append(f"{pad}  - {m.name} = {m.value!r}" + (f" ---- {d}" if d else ""))
+        return "\n".join(rows)
+    if dataclasses.is_dataclass(ty) and isinstance(ty, type):
+        tsem = getattr(ty, "_jac_semstr", "") or ""
+        fsem = getattr(ty, "_jac_semstr_inner", {}) or {}
+        rows = [f"{pad}{ty.__name__}" + (f" -- {tsem}" if tsem else "")]
+        for f in dataclasses.fields(ty):
+            if f.name.startswith("_"):
+                continue
+            d = fsem.get(f.name, "")
+            tyname = getattr(f.type, "__name__", None) or str(f.type)
+            rows.append(f"{pad}  - {f.name}: {tyname}" + (f" ---- {d}" if d else ""))
+            nested = describe_input_type(f.type, depth + 2)
+            if nested:
+                rows.append(nested)
+        return "\n".join(rows)
+    return ""
+
+
+def schema_entry(pname: str, type_text: str, sem: str, ty: Any) -> str:
+    """Mirror of byllm `_schema_entry`: one schema-zone entry, or "" for a param
+    nobody described (a sem-less primitive earns no entry). The caller indents."""
+    desc = describe_input_type(ty)
+    head, body = "", ""
+    if desc:
+        lines = desc.split("\n")
+        head = lines[0].strip()
+        body = "\n".join(ln[2:] if ln.startswith("  ") else ln for ln in lines[1:])
+    if not sem and not body:
+        return ""
+    rows = [f"{pname}: {head or type_text}" + (f" ---- {sem}" if sem else "")]
+    if body:
+        rows.append(body)
+    return "\n".join(rows)
 
 
 def json_schema_of(type_text: str, defs: Optional[Dict[str, Dict[str, Any]]] = None, _depth: int = 0) -> Dict[str, Any]:
@@ -576,6 +625,7 @@ def build_decl(program: JacProgram, ab: uni.Ability, type_defs: Optional[Dict[st
         lineno=ab.loc.first_line,
         reponse_format=None if tools else response_format_of(ret, type_defs),
         return_type_obj=resolve_type(ret, materialized_namespace(ret, type_defs)),
+        param_type_objs={p["name"]: resolve_type(p["type"], materialized_namespace(p["type"], type_defs)) for p in params},
     )
 
 
@@ -1016,6 +1066,54 @@ def _glob_literal(program: JacProgram, name: str) -> Optional[Any]:
 _FIELD_EXPR_RE = re.compile(r"^(visitor|here|self)\.([A-Za-z_][A-Za-z0-9_]*)((?:\[[^\]]*\])?)$")
 
 
+def _field_spec(expr: uni.UniNode) -> Optional[Dict[str, Any]]:
+    """`visitor.f` / `here.f` / `self.f` (optionally sliced) -> a field spec."""
+    m = _FIELD_EXPR_RE.match(re.sub(r"\s+", "", expr.unparse().strip()))
+    return {"kind": "field", "scope": m.group(1), "attr": m.group(2), "slice": m.group(3)} if m else None
+
+
+def _ret_key(expr: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]]) -> Optional[str]:
+    """The byllm callsite key a call expression returns, when exactly one resolves."""
+    if isinstance(expr, uni.FuncCall):
+        keys = _call_decl_keys(expr, program, by_simple)
+        if len(keys) == 1:
+            return keys[0]
+    return None
+
+
+def _classify_name(name: str, scope: uni.UniNode, program: JacProgram, by_simple: Dict[str, List[str]], seen: Optional[set] = None) -> Dict[str, Any]:
+    """Where a local variable's value comes from, within one ability/module scope."""
+    seen = seen if seen is not None else set()
+    if name in seen:
+        return {"kind": "unknown", "expr": name}
+    seen.add(name)
+    for asg in scope.get_all_sub_nodes(uni.Assignment):
+        tgt = asg.target[0] if asg.target else None
+        if not (isinstance(tgt, uni.AstSymbolNode) and tgt.sym_name == name and asg.value is not None):
+            continue
+        if isinstance(asg.value, uni.FuncCall):
+            key = _ret_key(asg.value, program, by_simple)
+            if key:
+                return {"kind": "ret", "of": key}
+            # A plain call: a tool or any local function. The compiler cannot source
+            # its value, but naming the producer marks it as an observable one.
+            return {"kind": "call", "of": re.sub(r"\s+", "", asg.value.target.unparse().strip())}
+        spec = _field_spec(asg.value)  # `x = self.request`: a field read through a local
+        if spec:
+            return spec
+    for loop in scope.get_all_sub_nodes(uni.InForStmt):
+        if getattr(loop.target, "sym_name", None) != name:
+            continue
+        src = loop.collection
+        key = _ret_key(src, program, by_simple)
+        if key is None and isinstance(src, uni.Name):
+            inner = _classify_name(src.value, scope, program, by_simple, seen)
+            key = inner.get("of") if inner.get("kind") == "ret" else None
+        if key:
+            return {"kind": "ret_item", "of": key}  # loop var over a byllm call's returned list
+    return {"kind": "unknown", "expr": name}
+
+
 def _classify_arg(expr: uni.UniNode, site: uni.FuncCall, program: JacProgram, by_simple: Dict[str, List[str]]) -> Dict[str, Any]:
     """Provenance spec of one argument expression:
     const  — literal, value known at compile time
@@ -1023,29 +1121,24 @@ def _classify_arg(expr: uni.UniNode, site: uni.FuncCall, program: JacProgram, by
              evaluable from the state visible when a predecessor call starts
     ret    — the return value of another byllm call (direct call or a variable
              assigned from one in the enclosing ability/module scope)
+    ret_item — one element of a byllm call's returned list (`for x in plans`);
+             the element index is a runtime cursor, not a compile-time constant
+    call   — the return value of a non-byllm call (a tool); produced too late to
+             predict, but observable in a served prompt and reusable next time
     unknown — anything else; never fed, decl-order rendering as usual."""
     ok, v = literal_of(expr)
     if ok:
         return {"kind": "const", "value": v}
-    text = re.sub(r"\s+", "", expr.unparse().strip())
-    m = _FIELD_EXPR_RE.match(text)
-    if m:
-        return {"kind": "field", "scope": m.group(1), "attr": m.group(2), "slice": m.group(3)}
-    if isinstance(expr, uni.FuncCall):
-        keys = _call_decl_keys(expr, program, by_simple)
-        if len(keys) == 1:
-            return {"kind": "ret", "of": keys[0]}
+    spec = _field_spec(expr)
+    if spec:
+        return spec
+    key = _ret_key(expr, program, by_simple)
+    if key:
+        return {"kind": "ret", "of": key}
     if isinstance(expr, uni.Name):
-        # A bare variable: look for an assignment `name = <byllm call>(...)` in the
-        # enclosing scope (ability body, or module for top-level code).
         scope = site.find_parent_of_type(uni.Ability) or site.find_parent_of_type(uni.ModuleCode)
         if scope is not None:
-            for asg in scope.get_all_sub_nodes(uni.Assignment):
-                tgt = asg.target[0] if asg.target else None
-                if isinstance(tgt, uni.AstSymbolNode) and tgt.sym_name == expr.value and isinstance(asg.value, uni.FuncCall):
-                    keys = _call_decl_keys(asg.value, program, by_simple)
-                    if len(keys) == 1:
-                        return {"kind": "ret", "of": keys[0]}
+            return _classify_name(expr.value, scope, program, by_simple)
     return {"kind": "unknown", "expr": expr.unparse().strip()}
 
 
@@ -1089,7 +1182,7 @@ def invert_provenance(provenance: Dict[str, Dict[str, Dict[str, Any]]]) -> Dict[
     out: Dict[str, List[Tuple[str, str]]] = {}
     for ckey, params in provenance.items():
         for pname, spec in params.items():
-            if spec.get("kind") == "ret" and spec.get("of"):
+            if spec.get("kind") in ("ret", "ret_item") and spec.get("of"):
                 out.setdefault(spec["of"], []).append((ckey, pname))
     return out
 
