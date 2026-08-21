@@ -246,18 +246,9 @@ class GuardServer:
         self._drainer = asyncio.create_task(self._drain_spec())
 
     async def _drain_spec(self) -> None:
-        """Single sequential consumer of spec_queue. Each iteration re-ranks the
-        queue by BFS distance from the LIVE workflow position and executes the
-        nearest job, then re-ranks: idle windows walk outward layer by layer, and
-        a position change between jobs reorders the remainder instead of dropping
-        it. Before any request has fixed a position (deploy prewarm), distance
-        from the workflow's ENTRY sites orders the queue instead. Jobs whose site
-        is no longer reachable from the current position are behind the workflow
-        and dropped — unless they carry recorded bindings (ret values are SSA-like
-        and their consumer always still lies downstream; never throw those away).
-        Sequential on purpose: the admission gate inside warm() parks the head job
-        while the engine is busy, which parks the whole queue — the head is by
-        construction the nearest."""
+        """Single sequential consumer of spec_queue. Each iteration re-ranks the queue by BFS distance from the LIVE position and executes the nearest job:
+        1. Jobs whose site is no longer reachable from the current position are behind the workflow
+        and dropped — unless they carry recorded bindings."""
         topo = self.side_rt.callsites_topo
         while True:
             await self._queue_kick.wait()
