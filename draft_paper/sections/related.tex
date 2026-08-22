@@ -1,4 +1,4 @@
-\section{Related Work and Positioning}
+\section{Related Work}
 \label{sec:related}
 
 \subsection{Workflow-aware KV cache management}
@@ -22,8 +22,8 @@ sequence of invoked agents depends on the task. It predicts agent invocations
 several steps ahead by fusing guidance from historical workflows with the context
 of the target workflow, scores cache entries by reuse potential, and applies the
 predictions conservatively in both eviction and prefetching. It reports up to
-1.85$\times$ over LRU on dynamic workflows and up to 1.26$\times$ over KVFlow on a
-static workflow.
+1.85$\times$ over LRU on dynamic workflows and up to 1.26$\times$ over KVFlow on
+the static workflow in its evaluation.
 
 \textbf{CacheScout}~\cite{zhang2026cachescout} removes the offline dependency
 entirely: it learns agent execution transitions online, requiring no predefined
@@ -34,81 +34,34 @@ for 53--62\% of prompt tokens across its four evaluated workloads. It materializ
 predicted context by issuing a lightweight synthetic warmup request containing
 only the predicted agent's reusable anchor.
 
-\textbf{Pythia}~\cite{yu2026pythia} captures workflow semantics through a simple
-interface at the serving layer and uses the resulting predictability to attack low
-prefix cache hit rates, contention from long-context requests, and queuing delay,
-with a speculative cache manager that prefetches shared contexts and warms caches
-asynchronously.
+\textbf{Pythia}~\cite{yu2026pythia} goes furthest along the content axis. It
+mines logged execution traces into probabilistic automata, identifies each
+request through three annotations attached at submission
+(\texttt{workflow\_type\_id}, \texttt{workflow\_id}, \texttt{agent\_id}), and
+prefills not only shared prefixes but argument content: upcoming prompts are
+assembled by injecting inputs and outputs recorded in the execution history,
+addressed through strict memory pointers into prior requests, and precomputed
+in idle GPU cycles. Its knowledge is the trace: a workflow or a path outside
+the history has nothing to instantiate.
 
-\subsection{Axes of difference}
+\textbf{SAGA}~\cite{saga2026} makes the workflow, rather than the individual
+call, the schedulable unit on a GPU cluster. Its agent execution graphs arrive
+from framework hints (orchestrator callbacks and message logs) or are inferred
+from request traces at 87\% accuracy, with a fallback to request-level
+scheduling while a new agent type accumulates history; eviction is ranked by
+the predicted reuse of an agent's successors, reported within 1.31$\times$ of
+B\'el\'ady's offline optimal on SWE-bench.
 
-Table~\ref{tab:axes} lays out where \sysname{} sits relative to these systems.
-The summary is that prior systems \emph{predict} what the serving layer will be
-asked for, from a graph, a trained model, or observed history; a
-language-integrated compiler \emph{knows} it --- including the argument values,
-which is the part the serving-layer approaches set aside.
-
-\begin{table*}[t]
-\centering
-\caption{Axes of difference. Attributions in the first two columns are drawn from
-the cited papers' own descriptions of their designs.}
-\label{tab:axes}
-\footnotesize
-\renewcommand{\arraystretch}{1.15}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}p{0.125\textwidth}p{0.245\textwidth}p{0.245\textwidth}p{0.265\textwidth}@{}}
-\toprule
-axis & KVFlow / PBKV & CacheScout / Pythia & \sysname{} \\
-\midrule
-where the knowledge comes from
-& app-supplied step graph (KVFlow); prediction fusing historical workflows with target context (PBKV)
-& online model of observed dispatches, no offline training (CacheScout); workflow semantics through a serving-layer interface (Pythia)
-& \textbf{compiler static analysis}: zero annotation, zero training, zero observation \\
-what is known
-& next agent / next-$K$ agent invocations
-& next agent, top-1
-& full may-happen topology (BFS-layered reachable set) \emph{plus} \textbf{binding provenance}: which value feeds which future parameter \\
-what the system does to KV
-& \emph{move} KV that already exists: CPU$\rightarrow$GPU prefetch, reuse-scored eviction
-& \emph{create} anchor KV through a synthetic warmup request; prefetch and asynchronously warm shared context
-& \textbf{create the longest knowable prefix}: invariants, graph context, speculated argument values, grammar precompile \\
-depth of speculation
-& fixed prompts; content of the dynamic portion is not speculated
-& fixed anchor only; anchors are 53--62\% of prompt tokens by CacheScout's own measurement, which bounds that coverage
-& depth set by the compile-time dependency level of each argument \\
-authority over the prompt
-& none: the prompt is taken as given
-& none: designed to sit beside the framework and engine without changing either
-& \textbf{the compiler rewrites the layout} (cache-aware zone order, arrival-order binding zone) --- structurally unavailable to a serving-layer system \\
-cold start
-& out of scope: evaluation pre-warms fixed prompts
-& blind until enough dispatches have been observed
-& live on request \#1; the measurements in Section~\ref{sec:eval} \emph{are} first requests \\
-correctness model
-& no content speculation, hence no divergence risk
-& synthetic warmup prefix may diverge from the served prompt
-& advisory and byte-verified: the served prompt is byLLM's own rendering, so a wrong guess costs a cache miss, never a wrong prompt \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\paragraph{Complementary, not competing.} KVFlow and PBKV govern the steady-state
-\emph{residency} of KV; \sysname{} governs its \emph{creation}. A residency policy
-still has to decide what to keep once entries exist, and it has strictly more to
-work with when those entries were produced ahead of demand. We view the two as
-composable layers of the same stack rather than alternatives.
-
-\subsection{Exploiting idle time}
-
-IdleSpec~\cite{choi2026idlespec} shares our starting observation --- that agentic
-execution is punctuated by idle periods spent waiting for observations --- but
-spends that time differently. It generates plan candidates during idle periods and
-aggregates them once observations arrive, in order to improve agent
-\emph{accuracy}; it reports 55.6\% average accuracy on GAIA and FRAMES with
-Gemini-2.5-Flash, 5.1\% above a baseline that does not use idle time, and gains up
-to 9.1\% on MLE-Bench's Any Medal rate. \sysname{} spends the same windows on KV
-construction and targets latency rather than task quality, so the two are
-orthogonal uses of the same resource.
+\textbf{Helium}~\cite{helium2026} is the nearest neighbor on the compile-time
+axis. It treats an agentic workflow as a query plan: the developer composes the
+workflow in a dedicated DSL, LLM calls become plan operators, compilation
+identifies the static token sequences of each prompt, and the KV for those
+sequences is precomputed at the workflow's first execution and reused
+afterward, with the plan's leaves partitioned across workers to maximize reuse.
+It reports up to 1.56$\times$ over KVFlow. The compiled knowledge stops at
+static prefixes: the plan is authored by the developer rather than recovered
+from a program, argument values are not speculated, and cache eviction remains
+the engine's native LRU.
 
 \subsection{Static analysis of agent programs}
 

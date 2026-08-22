@@ -95,12 +95,30 @@ the in-body statistics). None is a measurement of this system.
 | related.tex:16-17 | 1.83x, 2.19x vs SGLang hier. radix cache | KVFlow, arXiv 2507.07400 | abstract, verbatim |
 | related.tex:25 | 1.85x over LRU (dynamic), 1.26x over KVFlow (static) | PBKV, arXiv 2605.06472 | abstract, verbatim |
 | related.tex:31-32 | 76-86% top-1 within 50 observed dispatches | CacheScout, arXiv 2608.14624 | full text: "reaches 76-86% top-1 accuracy within 50 observed dispatches"; also story.md:12 for the ~50 figure |
-| related.tex:33, :77 | 53-62% of prompt tokens, four workloads | CacheScout, arXiv 2608.14624 | full text: "accounts for 53-62% of all prompt tokens across the four multi-agent workloads"; also story.md:15 |
-| related.tex:107-109 | 55.6% on GAIA/FRAMES with Gemini-2.5-Flash, 5.1% over baseline, up to 9.1% on MLE-Bench Any Medal | IdleSpec, arXiv 2605.22154 | abstract, verbatim |
+| related.tex:33 | 53-62% of prompt tokens, four workloads | CacheScout, arXiv 2608.14624 | full text: "accounts for 53-62% of all prompt tokens across the four multi-agent workloads"; also story.md:15 (the second occurrence, in the axes table, was removed with that table on 2026-08-22) |
 | related.tex:119 | five frameworks, 5,399 agent programs | AgentFlow, arXiv 2607.01640 | abstract, verbatim |
+| related.tex (SAGA para, added 2026-08-22) | 87% pattern-inference accuracy; within 1.31x of Belady's offline optimal on SWE-bench | SAGA, arXiv 2605.00528 v2 | full text: "Pattern inference achieves 87% accuracy in predicting workflow structure"; abstract: "achieving within 1.31x of Belady's optimal offline policy" (the 1.31x is a competitive ratio measured on SWE-bench, Table 5 / eval) |
+| related.tex (Helium para, added 2026-08-22) | up to 1.56x over KVFlow | Helium, arXiv 2603.16104 | full text: "Helium outperforms KVFlow by up to 1.56x" (the abstract's "up to 1.56x over state-of-the-art agent serving systems" resolves to the KVFlow baseline) |
 
-Pythia (arXiv 2604.25899) is cited with no numbers. All 14 bib entries resolve to a
+Pythia (arXiv 2604.25899) is cited with no numbers. All 16 bib entries resolve to a
 real arXiv record with matching title and author list.
+
+**Addendum 2026-08-22.** Related work extended with SAGA (arXiv 2605.00528) and
+Helium (arXiv 2603.16104); Pythia paragraph rewritten to state its argument-content
+prefill (strict memory pointers, execution-history injection, extra_body
+annotations — verified against the arXiv HTML full text); PBKV row unchanged in
+numbers ("a static workflow" reworded to "the static workflow in its evaluation",
+matching the paper's singular benchmark). The two new third-party rows above are
+the only numeric literals these edits introduced; one sentence with no numerals was
+removed from eval.tex.
+
+**Addendum 2026-08-22b.** The "Axes of difference" subsection (with the tab:axes
+table) and the "Exploiting idle time" subsection were deleted outright. This
+removes the IdleSpec statistics (55.6%, 5.1%, 9.1% — the former related.tex:107-109
+row; IdleSpec is no longer cited anywhere) and the axes-table duplicate of the
+CacheScout 53-62% figure. Line-number references and the occurrence counts in
+sections E1/E2 predate the 2026-08-22 edits; the classification itself is
+unchanged (no new unclassified literal exists).
 
 ## E. Every literal absent from story.md, classified
 

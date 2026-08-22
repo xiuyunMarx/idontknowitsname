@@ -21,3 +21,11 @@ exactly where provenance says a value is available before its consumer runs, whi
 is the strongest available evidence that the mechanism is doing what the design
 claims rather than something incidental. Extending the evaluation across more agent
 applications, model sizes, and concurrency levels is ongoing work.
+
+The same artifacts reach past prefill. Provenance inverted is a liveness
+analysis: it names the call after which a binding's KV has no remaining
+consumer and can be freed deterministically instead of by recency. Invariant
+token counts fixed at compile time give every application a known warm working
+set and a known re-warm cost before it is deployed. Retention, eviction, and
+admission --- decisions serving systems currently make by prediction --- then
+become compiler outputs as well; that is the next stage of this co-design.
