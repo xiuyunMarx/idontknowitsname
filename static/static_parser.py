@@ -14,9 +14,11 @@ import copy
 import dataclasses
 import enum as enum_mod
 import json
+import os
 import re
 import typing
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import jaclang  # noqa: F401  # registers the .jac meta importer (needed first)
@@ -42,6 +44,7 @@ class ByLLMDecl:
     intent: str = ""  # visit only: the static intent= text (resolved through glob literals)
     params: List[Dict[str, Any]] = field(default_factory=list)  # {name, type, sem, required}
     return_type: str = "str"
+    return_type_render: str = ""  # byllm's `_type_name` rendering (module-qualified generics); "" = use return_type
     sem: str = ""  # authored sem of the function itself
     owner_sem: str = ""  # sem of the owning archetype; drives the `self` identity zone
     tools: List[Dict[str, Any]] = field(default_factory=list)  # OpenAI tool schemas, finish_tool last
@@ -54,9 +57,10 @@ class ByLLMDecl:
     param_type_objs: Dict[str, Any] = field(default_factory=dict)  # param name -> materialized type (drives the schema zone)
 
     def signature(self) -> str:
-        args = ", ".join(f"{p['name']}: {p['type']}" if p["type"] else p["name"] for p in self.params)
+        args = ", ".join(f"{p['name']}: {p.get('type_render') or p['type']}" if p["type"] else p["name"] for p in self.params)
         sig = f"{self.name}({args})"
-        return f"{sig} -> {self.return_type}" if self.return_type else sig
+        ret = self.return_type_render or self.return_type
+        return f"{sig} -> {ret}" if ret else sig
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +215,16 @@ def _arch_body(node: uni.UniNode) -> list:
     return inner if isinstance(inner, list) else []
 
 
-def collect_type_defs(program: JacProgram) -> Dict[str, Dict[str, Any]]:
+def _runtime_module_name(mod_path: str, entry_path: Optional[str]) -> str:
+    """How Python will name this Jac module at run time: the entry file executes as
+    `__main__`, any other module by its stem. byllm renders a parameterized generic
+    through `str(t)`, which embeds that name — `list[__main__.TaskPlan]`."""
+    if entry_path and os.path.abspath(mod_path) == os.path.abspath(entry_path):
+        return "__main__"
+    return Path(mod_path).stem
+
+
+def collect_type_defs(program: JacProgram, entry_path: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
     """Harvest every obj/node/edge/walker archetype and enum definition from the program."""
     defs: Dict[str, Dict[str, Any]] = {}
     for mod_path, mod in program.mod.hub.items():
@@ -229,7 +242,7 @@ def collect_type_defs(program: JacProgram) -> Dict[str, Dict[str, Any]]:
                             "default_src": hv.value.unparse().strip() if hv.value is not None else None,
                         })
             kind = arch.arch_type.value if hasattr(arch.arch_type, "value") else str(arch.arch_type)
-            defs[arch.name.value] = {"kind": kind, "sem": (arch.semstr or "").strip(), "fields": fields}
+            defs[arch.name.value] = {"kind": kind, "sem": (arch.semstr or "").strip(), "fields": fields, "module": _runtime_module_name(mod_path, entry_path)}
         for en in mod.get_all_sub_nodes(uni.Enum):
             members: List[Tuple[str, Any]] = []
             for st in _arch_body(en):
@@ -260,6 +273,7 @@ def materialize_type(name: str, defs: Dict[str, Dict[str, Any]], cache: Optional
     try:
         if spec["kind"] == "enum":
             cls = enum_mod.Enum(name, spec["members"])
+            cls.__module__ = spec.get("module") or "__main__"
             cls._jac_semstr = spec["sem"]  # type: ignore[attr-defined]
             cache[name] = cls
             return cls
@@ -285,6 +299,7 @@ def materialize_type(name: str, defs: Dict[str, Dict[str, Any]], cache: Optional
             else:
                 defaulted.append((f["name"], fty, dataclasses.field(default=dv)))
         cls = dataclasses.make_dataclass(name, [*plain, *defaulted])
+        cls.__module__ = spec.get("module") or "__main__"  # only str(generic) sees it; repr() uses __qualname__
         cls._jac_semstr = spec["sem"]  # type: ignore[attr-defined]
         cls._jac_semstr_inner = {f["name"]: f["sem"] for f in spec["fields"] if f["sem"]}  # type: ignore[attr-defined]
         cache[name] = cls
@@ -307,11 +322,40 @@ def materialized_namespace(type_text: str, defs: Optional[Dict[str, Dict[str, An
     return ns
 
 
+def render_type_name(type_text: str, ty: Any) -> str:
+    """Mirror of byllm's `_type_name` (mtir.impl.jac): a parameterized generic goes
+    through `str(t)` — which qualifies user types with their module — and anything
+    else through `__name__`. Source text is the fallback when the type is unknown."""
+    if ty is None:
+        return type_text
+    if getattr(ty, "__args__", None) is not None:
+        return str(ty).replace("typing.", "")
+    return getattr(ty, "__name__", None) or type_text
+
+
 def describe_input_type(ty: Any, depth: int = 0) -> str:
     """Mirror of byllm `_describe_input_type` (mtir.impl.jac), driven by the declared
     TYPE instead of the runtime value: obj params expand into field rows, enum params
-    into member rows, primitives into nothing. Nested obj fields expand by type — byllm
-    expands them by value, so a field left None there yields fewer rows here."""
+    into member rows, primitives into nothing, and a container is described by what it
+    holds (`list[Step]` reads exactly like a bare `Step`, at the SAME depth). Two places
+    where type and value can disagree, both of which cost a cache miss and nothing else:
+    byllm describes an EMPTY container as nothing, and a None-valued obj field as
+    nothing, while the declared type still expands here."""
+    if depth > 2:
+        return ""  # byllm's own recursion cap
+    origin = typing.get_origin(ty)
+    if origin in (list, tuple, set):
+        for arg in typing.get_args(ty):
+            inner = describe_input_type(arg, depth)
+            if inner:
+                return inner
+        return ""
+    if origin is dict:
+        for arg in typing.get_args(ty)[1:]:
+            inner = describe_input_type(arg, depth)
+            if inner:
+                return inner
+        return ""
     pad = "    " * (depth + 1)
     if isinstance(ty, type) and issubclass(ty, enum_mod.Enum):
         tsem = getattr(ty, "_jac_semstr", "") or ""
@@ -611,6 +655,10 @@ def build_decl(program: JacProgram, ab: uni.Ability, type_defs: Optional[Dict[st
     tools = [tool_schema(program, t) for t in tool_names]
     if tools:
         tools.append(finish_tool_schema(ret, type_defs))
+    ret_obj = resolve_type(ret, materialized_namespace(ret, type_defs))
+    param_objs = {p["name"]: resolve_type(p["type"], materialized_namespace(p["type"], type_defs)) for p in params}
+    for p in params:
+        p["type_render"] = render_type_name(p["type"], param_objs.get(p["name"]))
     return ByLLMDecl(
         name=name,
         qualifier=qualifier,
@@ -624,8 +672,9 @@ def build_decl(program: JacProgram, ab: uni.Ability, type_defs: Optional[Dict[st
         module=ab.loc.mod_path,
         lineno=ab.loc.first_line,
         reponse_format=None if tools else response_format_of(ret, type_defs),
-        return_type_obj=resolve_type(ret, materialized_namespace(ret, type_defs)),
-        param_type_objs={p["name"]: resolve_type(p["type"], materialized_namespace(p["type"], type_defs)) for p in params},
+        return_type_obj=ret_obj,
+        return_type_render=render_type_name(ret, ret_obj),
+        param_type_objs=param_objs,
     )
 
 

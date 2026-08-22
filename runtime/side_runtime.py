@@ -18,7 +18,7 @@ class SideRuntime:
 
     def __init__(self, repo_path: str, type_check: bool = True):
         self.program, self.mod = build_uniir(repo_path, type_check=type_check)
-        self.type_defs = collect_type_defs(self.program)  # Jac obj/enum defs, for return-type translation
+        self.type_defs = collect_type_defs(self.program, entry_path=repo_path)  # Jac obj/enum defs, for return-type translation
         self.func_decls: Dict[str, ByLLMDecl] = {}
         self.byllm_callsites: Dict[str, AsyncByLLM] = {}
         self.callsites_topo: Dict[str, List[str]] = {}  # key -> byllm calls that can run next

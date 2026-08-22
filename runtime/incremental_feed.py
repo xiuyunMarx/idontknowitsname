@@ -307,6 +307,23 @@ def observed_key(spec: Dict[str, Any]) -> Optional[str]:
     return None
 
 
+def _complete_expr(text: str) -> Optional[str]:
+    """The longest prefix of a rendered binding that parses as one Python expression.
+    byllm appends its schema hint to the END of the user message with no separator
+    (`...its data."Schema requirements:`), so the block's last line can carry trailing
+    text that is not part of the value. Parsing, not literal_eval: a dataclass repr
+    (`TaskPlan(task='..')`) is a valid expression but not a literal. Unparsable text
+    fails closed — better no observation than a junk one."""
+    ends = [len(text)] + [i + 1 for i in range(len(text) - 1, 0, -1) if text[i] in "\"')]}"]
+    for end in ends:
+        try:
+            ast.parse(text[:end], mode="eval")
+            return text[:end]
+        except SyntaxError:
+            continue
+    return None
+
+
 def extract_bindings(user_text: str, fn: Any) -> Dict[str, str]:
     """param name -> repr text, read back out of a byllm-rendered user message.
     What the server actually served is the ground truth for values the compiler
@@ -320,7 +337,9 @@ def extract_bindings(user_text: str, fn: Any) -> Dict[str, str]:
     for ln in lines[span[0]:span[1]]:
         name, sep, rhs = ln.partition(" = ")
         if sep and name in param_names:
-            out[name] = rhs
+            val = _complete_expr(rhs)
+            if val is not None:
+                out[name] = val
     return out
 
 

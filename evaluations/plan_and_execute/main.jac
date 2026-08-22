@@ -88,7 +88,7 @@ walker Executor{
             while (max_retries > 0){
                 retrieved_data:str = self.database.search(plan.query); # tool calling, temporal gap exists here
                 if here.verify_data(plan, retrieved_data) {
-                    notes = here.integrate(notes, plan, retrieved_data); # the record grows through a call, so it is a value the runtime can follow
+                    notes = here.integrate(plan, notes, retrieved_data); # the record grows through a call, so it is a value the runtime can follow
                     break;
                 }else{
                     max_retries -= 1;
@@ -104,7 +104,7 @@ walker Executor{
 node PlanAndExecute{
     def generate_plan(request: str) -> list[TaskPlan] by llm();
     def verify_data(original_plan: TaskPlan, retrieved_data: str) -> bool by llm();
-    def integrate(notes: str, original_plan: TaskPlan, retrieved_data: str) -> str by llm();
+    def integrate(original_plan: TaskPlan, notes: str, retrieved_data: str) -> str by llm();
     def synthesize_report(request: str, plans: list[TaskPlan], notes: str, background: str) -> str by llm();
 }
 
@@ -125,7 +125,7 @@ sem PlanAndExecute.integrate.notes = "the case record as it stands, to be reprod
 sem PlanAndExecute.integrate.original_plan = "the subtask that was just answered";
 sem PlanAndExecute.integrate.retrieved_data = "the passage the archive returned for that subtask, to be quoted in full";
 
-sem PlanAndExecute.synthesize_report = "You are the senior editor of a closed-corpus research desk writing the final oversight briefing. You are given the original request, the list of subtasks it was decomposed into, the case record holding the archive passage accepted for each of those subtasks, and one further passage retrieved for the request as a whole. Write the briefing as continuous prose that answers the request point by point in the order the request asked, grounding every statement in what the collected passages say and never introducing a fact that is not in them. Where the record leaves one of the request's points unanswered, say so plainly instead of filling the gap from your own knowledge. Do not reproduce the record as a list, do not describe your own process, and do not close with a summary of what you have just written.";
+sem PlanAndExecute.synthesize_report = "You are the senior editor of a closed-corpus research desk writing the final oversight briefing. You are given the original request, the subtasks it was decomposed into, the case record naming every subtask that was answered together with the archive passage accepted for it, and one further passage retrieved for the request as a whole. Write the briefing as continuous prose that answers the request point by point in the order the request asked, grounding every statement in what the collected passages say and never introducing a fact that is not in them. Where the record leaves one of the request's points unanswered, say so plainly instead of filling the gap from your own knowledge. Do not reproduce the record as a list, do not describe your own process, and do not close with a summary of what you have just written.";
 sem PlanAndExecute.synthesize_report.request = "the original oversight request the briefing must answer";
 sem PlanAndExecute.synthesize_report.plans = "the subtasks the request was decomposed into, in the order the briefing must answer them";
 sem PlanAndExecute.synthesize_report.notes = "the case record: every answered subtask with the archive passage accepted for it, in the order they were answered";
