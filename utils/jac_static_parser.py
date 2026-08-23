@@ -100,8 +100,8 @@ class ByLLMCallsite:
                 self.bound_args[name] = view
 
     def get_ready_prompt(self) -> List[Dict[str, str]]:
-        """[system, user-prefix] of what is known now — invariant plus the bound
-        bindings in bind order. The server prefills the KV cache with exactly this."""
+        """[system, user-prefix] of what is known now — invariant plus the bound bindings in bind order. 
+        The server prefills the KV cache with exactly this."""
         user = "\n".join([self.render_invariant_prompt()]
                          + [f"{n} = {v}" for n, v in self.bound_args.items()])
         return [
@@ -268,10 +268,7 @@ class ProgramTopology:
         return [s for s in self.callsites if s.key == key]
 
     def site_of(self, key: str, site: Optional[str] = None) -> ByLLMCallsite:
-        """The callsite a wire request came from: `site` is the call frame's
-        "file.jac:line". Serve prompts are decl-identical across sites, so an
-        unmatched or absent `site` falls back to the decl's first site — only the
-        warm/bind state differs per site."""
+        """The callsite a wire request came from."""
         sites = self.sites_of(key)
         if not sites:
             raise KeyError(f"no byllm callsite for key {key!r}")
