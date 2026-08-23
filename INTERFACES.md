@@ -28,13 +28,17 @@ Every frame is a 4-byte big-endian payload length followed by a UTF-8 JSON body.
 | client → server | `tool_result` | `call`, `content` | Return the local tool result or error text. |
 | server → client | `final` | `call`, `output`, `text` | Complete a call. The client parses `output` into its declared Jac type. |
 | client → server | `reject` | `call`, `feedback` | Reject a final value that failed typed parsing and request regeneration. |
-| client → server | `generate` | `id`, `key`, `messages` | Single-turn generation used by visit routing. |
+| client → server | `generate` | `id`, `key`, `messages` | Single-turn generation used by visit routing. Optional fields: `site`, `pid`, `schema`, sampling overrides. |
 | server → client | `result` | `id`, `text` | Complete a `generate` request. |
 | server → client | `error` | `error` | Report a protocol, generation, or state error; `id` is included when known. |
 
-`key` is `Owner.name` for a method or `name` for a module-level function.
-`site` is `file.jac:line`. `args` contains parameter names mapped to Jac/Python
-`repr` strings; the server inserts these strings verbatim into prompts.
+`key` is `Owner.name` for a method, `name` for a module-level function, and
+`__visit@<file>.jac:<line>` for a `visit <edges> by llm()` routing call. A routing
+call has no callable behind it, so both ends derive its key from source location:
+the static pass from the `VisitStmt`, the client from the `.jac` stack frame
+executing the visit. `site` is `file.jac:line`. `args` contains parameter names
+mapped to Jac/Python `repr` strings; the server inserts these strings verbatim
+into prompts.
 
 Optional numeric values may arrive as JSON `null`. The server applies defaults:
 
@@ -104,10 +108,36 @@ Important queries:
 - `site_of(key, site)` resolves the exact invocation site, falling back to the
   declaration's first site when source location is absent or unmatched.
 - `next_calls(key)` returns an over-approximated set of reachable successor keys.
-- `ready_params(consumer, done)` reports parameter readiness. Constants and
-  fields are statically ready; `ret` and `ret_item` become ready when their
-  producer key is in `done`.
+- `ready_params(consumer, done, via=None)` reports parameter readiness. Constants
+  and fields are statically ready; `ret` and `ret_item` become ready when their
+  producer key is in `done`, `ret_any` when any of its producers is. `via` names
+  the call control passes through to reach `consumer`; when it is a routing call,
+  node-scoped sources are withheld (see below).
 - `consumers_of(producer)` returns `(consumer, parameter)` dataflow edges.
+
+### Visit routing
+
+A `visit <edges> by llm(...)` gets a synthesized decl with `kind == "visit"`,
+keyed by location. Its compile-time invariant is byllm's routing system text
+(fixed by `select=`) plus `Goal: <intent>`, which `route_visit` emits ahead of
+every runtime zone under both layouts. The three runtime zones — `walker`,
+`here`, `candidates` — are bound through `incremental_prompt()` like parameters,
+in the order `route_visit` will emit them.
+
+- `decl.candidates` over-approximates the node archetypes the router may pick:
+  the edge expression's node filter, else every node type whose entry abilities
+  can fire for this walker.
+- `next_calls(visit_key)` returns the **first byLLM call of each candidate
+  node's firing entry ability**
+- Provenance carries a `binding`: `walker` for walker state (`self.x` in a walker
+  ability, `visitor.x` in a node ability) and `node` for node state (`here.x` in
+  a walker ability, `self.x` in a node ability). Walker state rides through a
+  traversal step unchanged; node state belongs to whichever node the router picks
+  and does not exist until it answers, so `ready_params(..., via=<visit key>)`
+  withholds it.
+- A field written by a byLLM call (`visitor.answer = classify(...)`) is indexed
+  as a dataflow producer, which is what makes a result reach a consumer in
+  another ability — a local never crosses an ability boundary.
 
 `ByLLMCallsite` owns byte-stable prompt construction:
 
@@ -134,7 +164,7 @@ token prefix matches the speculative token prefix.
 eligible slot it:
 
 1. Looks up successors with `next_calls(current_site.key)`.
-2. Calls `ready_params(successor, state.done)`.
+2. Calls `ready_params(successor, state.done, via=current_site.key)`.
 3. Binds ready constants and retains return parameters propagated by completed
    producers.
 4. Renders `successor_site.get_ready_prompt()`.
@@ -146,7 +176,10 @@ within one active call; it is not a KV-cache index.
 
 When a call produces a final value, its key enters the backend's `done` set and
 the value is bound into every return consumer. A rejected final removes the key
-from `done`.
+from `done`. A routing `generate` is tracked the same way: it is registered as
+the current call before generation, its key enters `done` when the router
+answers, and the state survives until the client's next frame — which is exactly
+the idle window in which the candidate nodes' first calls get warmed.
 
 Use `--no-prefill` to disable `monitor_idle()` while leaving APC and all on-demand
 serving enabled. This is the baseline mode.

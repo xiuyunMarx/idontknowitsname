@@ -15,7 +15,7 @@ every message is a 4-byte big-endian length followed by a UTF-8 JSON body.
     client -> {"type": "tool_result", "call", "content"}
     server -> {"type": "final", "call", "output", "text"}
     client -> {"type": "reject", "call", "feedback"}     # final failed typed parse; regenerate
-    client -> {"type": "generate", "id", "key", "messages", ...}   # visit routing, single turn
+    client -> {"type": "generate", "id", "key", "site", "messages", ...}  # visit routing, single turn
     server -> {"type": "result", "id", "text"}
 
 The backend is a pure transport endpoint: it parses every frame into a typed
@@ -58,7 +58,7 @@ _WIRE_FIELDS: Dict[str, Tuple[str, ...]] = {
     "call": ("id", "key", "site", "program_name", "pid", "args", "self", "call_params"),
     "tool_result": ("call", "content"),
     "reject": ("call", "feedback"),
-    "generate": ("id", "key", "program_name", "pid", "messages", "schema", "temperature", "max_tokens", "stop"),
+    "generate": ("id", "key", "site", "program_name", "pid", "messages", "schema", "temperature", "max_tokens", "stop"),
 }
 
 
@@ -71,8 +71,8 @@ class ByLLMRequest:
     args: Optional[Dict[str, str]] = None  # {param name: repr}
     id: Optional[int] = None               # wire id of a call/generate
     call: Optional[int] = None             # tool_result/reject: id of the call they belong to
-    key: Optional[str] = None              # callsite key: Owner.name / name ("" for visit routing)
-    site: Optional[str] = None             # call only: invocation location "file.jac:line" (may be None)
+    key: Optional[str] = None              # callsite key: Owner.name / name / __visit@file.jac:line
+    site: Optional[str] = None             # invocation location "file.jac:line" (may be None)
     program_name: Optional[str] = None 
     model_name: Optional[str] = None       # register only
     call_params: Optional[Dict[str, Any]] = None

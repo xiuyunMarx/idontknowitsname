@@ -18,6 +18,23 @@ JSON_TYPE = {"str": "string", "int": "integer", "float": "number", "bool": "bool
 FIELD_EXPR_RE = re.compile(r"^(visitor|here|self)\.([A-Za-z_][A-Za-z0-9_]*)(\[[^\]]*\])?$")
 LOOP_STMTS = (uni.WhileStmt, uni.IterForStmt, uni.InForStmt)
 
+# --- visit routing (`visit <edges> by llm(...)`) -----------------------------
+# byllm builds the routing prompt in jaclang/byllm/visit_routing.jac::route_visit.
+# These mirror it byte for byte: the warm prefix the server prefills must be a
+# real prefix of what the client later sends on the `generate` path.
+ROUTE_SYSTEM = ("You are routing a graph walker. Choose which candidate node(s) the "
+                "walker should visit next, by handle. Return only valid handles.")
+# Zone label -> the header route_visit emits above the zone's runtime body.
+ROUTE_ZONE_LABEL = {
+    "walker": "Walker:",
+    "here": "Current node:",
+    "candidates": "Candidates (choose by handle):",
+}
+# route_visit orders the runtime zones by JAC_ROUTE_CACHE_LAYOUT; `Goal: <intent>`
+# precedes both layouts, which is why it alone can be warmed at compile time.
+ROUTE_LAYOUT_DEFAULT = ("walker", "here", "candidates")
+ROUTE_LAYOUT_CACHE = ("here", "candidates", "walker")
+
 
 def norm(text: str) -> str:
     """unparse() is space-padded (`self . request`); collapse before any matching."""
@@ -48,14 +65,23 @@ def literal_of(expr: uni.UniNode) -> Tuple[bool, Any]:
         return True, expr.lit_value
     if isinstance(expr, uni.Bool):
         return True, expr.lit_value
-    if isinstance(expr, uni.ListVal):
+    if isinstance(expr, (uni.ListVal, uni.TupleVal)):
         vals = []
         for item in expr.values or []:
             ok, v = literal_of(item)
             if not ok:
                 return False, None
             vals.append(v)
-        return True, vals
+        return True, tuple(vals) if isinstance(expr, uni.TupleVal) else vals
+    if isinstance(expr, uni.DictVal):
+        out = {}
+        for kv in expr.kv_pairs or []:
+            ok_k, k = literal_of(kv.key) if kv.key is not None else (False, None)
+            ok_v, v = literal_of(kv.value)
+            if not (ok_k and ok_v):
+                return False, None
+            out[k] = v
+        return True, out
     return False, None
 
 
