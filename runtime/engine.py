@@ -9,6 +9,7 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.sampling_params import SamplingParams
 from vllm.v1.engine.async_llm import AsyncLLM
 
+from console_helper.debug_output import console_debug, console_log, console_warn, console_error
 
 class ModelEngine:
     def __init__(self, model_name: str):
@@ -51,13 +52,7 @@ class ModelEngine:
             ):
                 if output.outputs:
                     if first_token:
-                        print(
-                            f"[serve] {request_id} "
-                            f"ttft_ms={(time.perf_counter() - started) * 1000:.2f} "
-                            f"cached_tokens={output.num_cached_tokens or 0} "
-                            f"prompt_tokens={len(output.prompt_token_ids or [])}",
-                            flush=True,
-                        )
+                        console_debug(f"[serve] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
                         first_token = False
                     text = output.outputs[0].text
         finally:

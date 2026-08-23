@@ -1,5 +1,7 @@
 import argparse
 import asyncio
+import os
+os.environ["LD_PRELOAD"] = "/home/xiaoyu/miniconda3/envs/jaseci/lib/libstdc++.so.6"
 
 from runtime.engine import ModelEngine
 from runtime.server import GuardServer

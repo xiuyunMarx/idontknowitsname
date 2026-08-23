@@ -1,114 +1,180 @@
-# InterceptorLLM Interfaces
+# Proactive Prefill Interfaces
+
+## Architecture
+
+```text
+Jac program / InterceptorLLM
+        │ framed JSON over a persistent TCP connection
+        ▼
+InterceptorLLMBackend ──► GuardServer event queue
+                              ├── real generation ──► ModelEngine / vLLM
+                              ├── per-call ReAct task and inbox
+                              └── idle monitor ─────► speculative prefill
+```
+
+Each configured Jac program has one `InterceptorLLMBackend` and TCP port. All
+backends feed one `GuardServer` queue and share one vLLM engine. A backend accepts
+one client connection at a time; different backends can serve concurrently.
 
 ## Wire protocol
 
-4-byte big-endian length + UTF-8 JSON body, over one persistent TCP connection.
-One dedicated `InterceptorLLMBackend` per Jac program; no concurrent calls on one
-`InterceptorLLM` instance (hard error). The server drives the ReAct loop.
+Every frame is a 4-byte big-endian payload length followed by a UTF-8 JSON body.
 
-| Dir | type | fields | meaning |
-|-----|------|--------|---------|
-| c→s | `register` | `program_name, pid, model_name` | once, right after connect |
-| c→s | `call` | `id, key, site: "file.jac:line"\|null, program_name, pid, args:{name: repr}, self: repr\|null, call_params` | start one byllm call (plain calls too: zero tool rounds); `site` is the invocation location, resolved server-side via `site_of` |
-| s→c | `tool_call` | `call, name, arguments, text` | execute this tool locally; strictly one at a time |
-| c→s | `tool_result` | `call, content` | tool output (or error text) |
-| s→c | `final` | `call, output, text` | end of call; client parses `output` into the declared type |
-| c→s | `reject` | `call, feedback` | `final` failed typed parsing; server regenerates (budget = `max_output_retries`) |
-| c→s | `generate` | `id, key, messages, schema, temperature, max_tokens, stop` | visit routing only: single turn, full messages |
-| s→c | `result` | `id, text` | reply to `generate` |
-| s→c | `error` | `error` (+ `id`) | any failure |
+| Direction | Type | Required fields | Meaning |
+|---|---|---|---|
+| client → server | `register` | `program_name`, `model_name` | Register a client on its preconfigured backend; `pid` is optional. |
+| client → server | `call` | `id`, `key`, `program_name`, `args` | Start a byLLM call. Optional fields: `site`, `pid`, `self`, `call_params`. |
+| server → client | `tool_call` | `call`, `name`, `arguments`, `text` | Ask the Jac client to execute one local tool. |
+| client → server | `tool_result` | `call`, `content` | Return the local tool result or error text. |
+| server → client | `final` | `call`, `output`, `text` | Complete a call. The client parses `output` into its declared Jac type. |
+| client → server | `reject` | `call`, `feedback` | Reject a final value that failed typed parsing and request regeneration. |
+| client → server | `generate` | `id`, `key`, `messages` | Single-turn generation used by visit routing. |
+| server → client | `result` | `id`, `text` | Complete a `generate` request. |
+| server → client | `error` | `error` | Report a protocol, generation, or state error; `id` is included when known. |
 
-`key` = `Owner.name` or `name` (empty for visit routing). `text` on server frames is
-the raw generated text, recorded client-side for conversation write-back.
-`call_params` carries `max_react_iterations` (server enforces; server must produce
-a `final` on overflow) and `max_output_retries`.
+`key` is `Owner.name` for a method or `name` for a module-level function.
+`site` is `file.jac:line`. `args` contains parameter names mapped to Jac/Python
+`repr` strings; the server inserts these strings verbatim into prompts.
 
-## Jac client — `InterceptorLLM` (`jaseci/jac/jaclang/byllm/llm.jac`)
+Optional numeric values may arrive as JSON `null`. The server applies defaults:
 
-```jac
-glob llm = InterceptorLLM(model_name=..., comm_ip="localhost", comm_port=8964, program_name=...);  # default: basename(sys.argv[0])
-```
+- `temperature`: `0.7`
+- `max_tokens`: `512`
+- `max_react_iterations`: `8`
+- `max_output_retries`: `2`
 
-Connects + registers in `postinit`. Overrides `_invoke_react_loop` with the
-`call`/`tool_call`/`final` state machine; only tool execution and typed-result
-construction stay client-side. Falls back to a plain `Model` when streaming or
-when the server is unreachable; reconnects on the next call after a drop.
+Literal values extracted from `by llm(...)` override the generation defaults.
 
-## Server — `InterceptorLLMBackend` (`utils/interceptor_receiver.py`)
+## Registration and server lifetime
+
+Programs must be configured before serving because a `register` frame does not
+contain a source path or listening port:
 
 ```python
-queue: asyncio.Queue = asyncio.Queue()
-backends = [InterceptorLLMBackend(name, queue, comm_ip="localhost", comm_port=port), ...]
-await asyncio.gather(*(b.listen() for b in backends), guard.run(queue))
+server.add_program("research", "jac_programs/research_agent.jac", 8964)
+await server.serve()
 ```
 
-Asyncio, pure transport: the backend parses every frame into a typed
-`byLLMRequest` (a bad frame is answered with an error frame and never reaches
-the queue), validates `register`, then puts `(backend, request)` on the shared
-queue and goes back to reading. The guard server consumes the queue, keeps
-per-call conversation state (keyed by backend + `request.id`/`request.call` —
-`tool_result`/`reject` arrive as their own queue events), and replies with
-`await backend.send(frame)`; a `generate` reply must echo the request's `id`.
+`GuardServer.serve()` starts every TCP listener, the incoming-event monitor, and,
+unless disabled, the engine-idle monitor. Registration verifies the program name,
+associates the backend connection with the configured topology, and initializes
+its completed-call set.
 
-`byLLMRequest`: `type`, `pid` (-1 when the frame carries none), and per-type
-optionals — `id`/`key`/`args`/`nest_scope_desc` (wire `self`)/`call_params`
-(call), `call`/`content` (tool_result), `call`/`feedback` (reject),
-`program_name`/`model_name` (register), `messages`/`schema`/`temperature`/
-`max_tokens`/`stop` (generate). `byLLMRequest.from_frame(msg)` parses and
-validates; `req.to_frame()` reconstructs the wire dict. While a call waits for its tool_result the loop is free (the
-proactive-prefill window); blocking generation must go through `run_in_executor`
-or an async engine. A second concurrent connection is rejected; a program-name
-mismatch on `register` shuts the backend down.
+## Request dispatch and ReAct
 
-## Static pass — `utils/jac_static_parser.py`
+`monitor_task()` never waits for a complete model workflow. It continuously
+drains the shared queue:
+
+- `call` starts an independent `_process_request()` task.
+- `tool_result` and `reject` are routed by `(backend identity, call id)` into that
+  task's private inbox.
+- `generate` starts an independent single-turn task.
+
+A ReAct task can therefore suspend on `await state.inbox.get()` while the monitor
+admits messages and calls from other tenants.
+
+```text
+call → generate → tool_call → await tool_result → generate → ... → final
+```
+
+The text tool protocol requests:
+
+```text
+<tool_call>{"name":"tool_name","arguments":{...}}</tool_call>
+```
+
+For model compatibility, the server also accepts a bare JSON tool object and
+consumes only its first JSON value. If a tool-enabled model returns non-empty
+plain text instead of calling `finish_tool`, the server treats that text as
+`finish_tool.final_output`; the Jac client still performs typed validation. An
+empty response is an error.
+
+After `final`, a `reject` regenerates within `max_output_retries`. The next `call`
+on the same backend is the implicit acknowledgement of the preceding final.
+
+## Static topology and prompt interface
 
 ```python
-p = ProgramTopoly(program_name, src_path); p.parse_dependency()
+program = ProgramTopology(program_name, src_path)
+program.parse_dependency()
 ```
 
-- `p.decls: {key: ByLLMDecl}` — every `def ... by llm()`: params (name/type/sem),
-  return type, sems, OpenAI tool schemas (finish_tool last), literal call_params.
-- `p.callsites: [ByLLMCallsite]`, `p.sites_of(key)`
-- `p.next_calls(key)` — may-run-next keys (over-approximated topology)
-- `p.ready_params(consumer, done)` — per-param readiness given completed keys
-  (`const`/`field` ready now; `ret`/`ret_item` ready iff producer in `done`)
-- `p.consumers_of(producer)` — `[(consumer key, param)]` dataflow
+Important queries:
 
-`ByLLMCallsite` (stateful warm/serve rendering; `args`/`self_view` are wire
-reprs, inserted verbatim; resolve a request's site with
-`p.site_of(req.key, req.site)` — unmatched/absent `site` falls back to the
-decl's first site, whose serve prompt is identical):
+- `site_of(key, site)` resolves the exact invocation site, falling back to the
+  declaration's first site when source location is absent or unmatched.
+- `next_calls(key)` returns an over-approximated set of reachable successor keys.
+- `ready_params(consumer, done)` reports parameter readiness. Constants and
+  fields are statically ready; `ret` and `ret_item` become ready when their
+  producer key is in `done`.
+- `consumers_of(producer)` returns `(consumer, parameter)` dataflow edges.
 
-- `invariant_system` — persona + system_prompt + tool instruction + text tool protocol
-- `render_invariant_prompt()` — signature header + sem'd param schema rows
-- `incremental_prompt(known_args)` — binds ready param reprs into `bound_args`
-  (bind order = warm prefix order; already-bound names skipped)
-- `get_ready_prompt()` — `[system, user-prefix]` of what is known now; the
-  server prefills the KV cache with exactly this
-- `assemble_prompt(args, self_view=None)` — `[system, user]` for serving, as a
-  byte-extension of the warmed prefix: bound params keep their position and
-  bytes (a conflicting request value wins in place), remaining params appended
-  in declaration order
-- `clear_bindings()` — reset warm state after the call is served
+`ByLLMCallsite` owns byte-stable prompt construction:
 
-Where the callsite's other two duties live:
+- `render_invariant_prompt()` renders the signature and semantic schema.
+- `incremental_prompt(values)` binds known argument `repr` strings.
+- `get_ready_prompt()` returns the invariant system/user prefix plus every bound
+  parameter already available.
+- `assemble_prompt(args, self_view)` builds the real prompt as an extension of
+  that warm prefix.
+- `clear_bindings()` resets served speculative state.
 
-**Duty 2 — who consumes this site's return (dataflow)**: data on the callsite,
-computation in the parser. `self.consumers` (`jac_static_parser.py:54`) is a
-callsite attribute, filled by `parse_dependency` at :148 from
-`_invert_provenance` (:406, the inversion of `_build_provenance`'s (:383)
-param→source table). Equivalent query entry: `JacStaticParser.consumers_of(producer)` (:436).
+Prefix identity is essential: vLLM APC reuses KV blocks only when the served
+token prefix matches the speculative token prefix.
 
-**Duty 3 — which callsites' params become ready after this call (scheduling)**:
-not on `ByLLMCallsite` yet; split across two parser queries:
-- `next_calls(key)` (:418) — which byllm calls may run next in the topology;
-- `ready_params(consumer, done)` (:423) — per-param readiness of a consumer given
-  the completed set (`const`/`field` derivable now; `ret`/`ret_item` ready iff the
-  producer is in `done`).
+## Idle-prefill interface
 
-`utils/utils.py`: `schema_entry`, `render_bindings` (never re-reprs),
-`render_tool`/`format_tools_for_prompt` (byte-identical to byllm's text tool
-protocol), `finish_tool_schema` (param `final_output`, matching byllm), plus the
-UniIR extraction helpers (`params_of`, `extract_llm_call`, `literal_of`, ...).
+`ModelEngine.is_engine_idle()` admits speculative work when either:
 
+- the engine has no unfinished request (temporal idle), or
+- the current decode concurrency has an unused profiled prefill slot (spatial
+  idle).
 
+`monitor_idle()` currently selects the most recently admitted call. For each
+eligible slot it:
+
+1. Looks up successors with `next_calls(current_site.key)`.
+2. Calls `ready_params(successor, state.done)`.
+3. Binds ready constants and retains return parameters propagated by completed
+   producers.
+4. Renders `successor_site.get_ready_prompt()`.
+5. Submits a priority-1, one-token generation through `ModelEngine.prefill()`.
+
+vLLM manages KV-cache lookup and eviction through APC. `prefilled_sites` only
+prevents duplicate scheduling of the same application-level callsite state
+within one active call; it is not a KV-cache index.
+
+When a call produces a final value, its key enters the backend's `done` set and
+the value is bound into every return consumer. A rejected final removes the key
+from `done`.
+
+Use `--no-prefill` to disable `monitor_idle()` while leaving APC and all on-demand
+serving enabled. This is the baseline mode.
+
+## Model engine
+
+`ModelEngine` enables vLLM prefix caching, chunked prefill, and priority
+scheduling. Its runtime operations are:
+
+- `render(messages)` — apply the model's chat template.
+- `generate(prompt, request_id, sampling_params)` — serve a real request.
+- `prefill(prompt, request_id)` — submit a low-priority, one-token cache warm.
+- `is_engine_idle()` — test temporal/spatial prefill capacity.
+- `_profile(...)` — populate `max_parallelizable_prefill[decode_count]` and stop
+  when no concurrent prefill is safe.
+
+The first output of every real generation logs first-token latency, cached prompt
+tokens, and total prompt tokens. Prefill submissions log their duration.
+
+## Current limitations
+
+- Ongoing-call selection is most-recent-first; no fairness or probability policy
+  is implemented yet.
+- Completed-call state is scoped to a backend connection, not an explicit
+  workflow/flow identifier.
+- `ByLLMCallsite.bound_args` is stateful and assumes the backend's documented
+  single-call client behavior.
+- Traversal-queue continuation for walker/node abilities is not modeled in the
+  rewritten topology pass.
+- Registration activates preconfigured programs; it cannot dynamically compile
+  an unknown source program.
