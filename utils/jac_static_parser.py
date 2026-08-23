@@ -1,8 +1,10 @@
+import json
 import os
 import re
 
 import jaclang  # registers the .jac meta importer — must come first
 import jaclang.jac0core.unitree as uni #type: ignore
+from jaclang.byllm.schema import json_to_instance #type: ignore
 from jaclang.jac0core.compile_options import CompileOptions #type: ignore
 from jaclang.jac0core.program import JacProgram #type: ignore
 from dataclasses import dataclass, field
@@ -11,6 +13,12 @@ from typing import Any, Dict, List, Optional, Tuple
 from utils.utils import (SYSTEM_PERSONA, TOOL_INSTRUCTION, FIELD_EXPR_RE, LOOP_STMTS, ROUTE_SYSTEM, ROUTE_ZONE_LABEL, ROUTE_LAYOUT_DEFAULT, ROUTE_LAYOUT_CACHE, norm, clean_type, json_type_of, literal_of, params_of, extract_llm_call, finish_tool_schema, format_tools_for_prompt, schema_entry, render_bindings)
 
 VISIT_PREFIX = "__visit@"
+
+# The builtin names a return-type annotation may eval to. A user obj/enum name
+# is a NameError on purpose: its class is never materialized server-side, so its
+# instance repr cannot be reproduced here.
+_SERVE_TYPES = {"str": str, "int": int, "float": float, "bool": bool, "list": list,
+                "dict": dict, "tuple": tuple, "set": set, "None": None, "any": object, "Any": object}
 
 
 def visit_key(mod_path: str, lineno: int) -> str:
@@ -83,6 +91,24 @@ class ByLLMDecl:
         ret = self.return_type_render or self.return_type
         return f"{sig} -> {ret}" if ret else sig
 
+    def parse_response(self, output: Any) -> Tuple[bool, Any]:
+        """The typed value the client will build from this decl's `final` frame,
+        mirrored byte-for-byte (interceptorLLM.impl.jac json-dumps a non-str wire
+        output, MTRuntime.parse_response passes str returns through and feeds the
+        rest to json.loads + json_to_instance) — so a warm arg binding of its repr
+        equals the client's serve-time arg repr. (False, None) when the value is
+        not derivable here: a user obj/enum return, or a payload whose parse fails
+        (which the client answers with a reject)."""
+        if not isinstance(output, str):
+            output = json.dumps(output)
+        if self.return_type == "str" or not output.strip():
+            return True, output
+        try:
+            ty = eval(self.return_type, {"__builtins__": {}}, _SERVE_TYPES)
+            return True, json_to_instance(json.loads(output), ty)
+        except Exception:
+            return False, None
+
 
 class ByLLMCallsite:
     """One invocation site of a byllm decl. Duty includes:
@@ -153,12 +179,14 @@ class ByLLMCallsite:
         return self._invariant_user
 
     def incremental_prompt(self, known_args: Dict[str, str]) -> None:
-        """Bind ready parameter reprs into this site's warm state. Skip the already binded params.
+        """Bind ready parameter reprs into this site's warm state. A rebind (retried
+        producer, fresher output) overwrites in place — dict insertion order survives
+        an overwrite, so the param keeps its warm-prefix position.
         A routing site binds zones instead of params — they are the observations
         (walker, current node, candidate list) that stand in for arguments there."""
         names = set(self.decl.zones) if self.is_visit else {p["name"] for p in self.decl.params}
         for name, view in known_args.items():
-            if name in names and name not in self.bound_args:
+            if name in names:
                 self.bound_args[name] = view
 
     def _visit_zone_lines(self, values: Dict[str, str]) -> List[str]:
@@ -230,7 +258,7 @@ class ProgramTopology:
         self.module = JacProgram().compile(self.src_path, options=self._options)
         self.decls: Dict[str, ByLLMDecl] = {}
         self.callsites: List[ByLLMCallsite] = []
-        self.topology: Dict[str, List[str]] = {}  # key -> may-run-next keys
+        self.topology: Dict[str, List[str]] = {}  # callsite_uuid -> may-run-next keys
         self.provenance: Dict[str, Dict[str, Dict[str, Any]]] = {}  # key -> param -> source spec
         self.ret_consumers: Dict[str, List[Tuple[str, str]]] = {}  # producer -> [(consumer, param)]
         self._parsed = False
@@ -255,8 +283,7 @@ class ProgramTopology:
         self._parsed = True
 
     def get_decls(self) -> Dict[str, ByLLMDecl]:
-        """Every `def ... by llm()` in the module. Type materialization deferred: the
-        interceptor wire protocol carries argument reprs, so serving never needs it."""
+        """Every `def ... by llm()` in the module."""
         if self.decls:
             return self.decls
         decls: Dict[str, ByLLMDecl] = {}
@@ -773,7 +800,7 @@ class ProgramTopology:
         return out
 
     def _build_topology(self) -> Dict[str, List[str]]:
-        graph: Dict[str, List[str]] = {k: [] for k in self.get_decls()}
+        graph: Dict[str, List[str]] = {}
         for site in self.callsites:
             anchor = site.stmt if site.stmt is not None else site.call
             succ, escaped = self._next_keys(anchor)
@@ -783,7 +810,7 @@ class ProgramTopology:
                 succ = succ + self._visit_successors(site.decl)
             if escaped is not None:
                 succ = succ + self._continuation_keys(escaped, set())
-            out = graph[site.key]
+            out = graph.setdefault(site.callsite_uuid, [])
             for k in succ:
                 if k != site.key and k not in out:
                     out.append(k)
@@ -953,10 +980,10 @@ class ProgramTopology:
 
     # ---------------------------------------------------------------- queries
 
-    def next_calls(self, key: str) -> List[str]:
-        """1. Which byllm calls may run next after `key`."""
+    def next_calls(self, site: ByLLMCallsite) -> List[str]:
+        """1. Which byllm calls may run next after this exact callsite."""
         self.parse_dependency()
-        return self.topology.get(key, [])
+        return self.topology.get(site.callsite_uuid, [])
 
     def ready_params(self, consumer: str, done: set, via: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         """2. Readiness of `consumer`'s params given the completed call keys `done`.

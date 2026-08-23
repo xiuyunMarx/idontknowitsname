@@ -3,11 +3,12 @@ import json
 import re
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from vllm.sampling_params import SamplingParams
 
 from runtime.engine import ModelEngine
+from runtime.routing_speculate import RoutingSpeculate
 from utils.jac_static_parser import ProgramTopology, ByLLMCallsite
 from utils.interceptor_receiver import InterceptorLLMBackend, ByLLMRequest
 from console_helper.debug_output import console_debug, console_log, console_warn, console_error
@@ -23,6 +24,8 @@ class _CallState:
     messages: list[dict[str, str]]
     done: set[str]
     prefilled_sites: set[str] = field(default_factory=set)
+    pending_tool_text: Optional[str] = None  # assistant turn awaiting a tool_result
+    route_plan: Optional[List[ByLLMCallsite]] = None  # visit successors, ranked once per call
     inbox: asyncio.Queue[Optional[ByLLMRequest]] = field(default_factory=asyncio.Queue)
 
 
@@ -39,6 +42,7 @@ class GuardServer:
         self._last_call: Dict[int, _CallState] = {}
         self._done: Dict[int, set[str]] = {}
         self._generation_slots = asyncio.Semaphore(num_workers)
+        self._speculate = RoutingSpeculate(engine)
         self._proactive_prefill = proactive_prefill
         self._engine_idle_interval = 0.01
 
@@ -74,31 +78,68 @@ class GuardServer:
             await asyncio.sleep(self._engine_idle_interval)
             if not await self._engine.is_engine_idle() or not self._calls:
                 continue
+            
+            # The in-flight call's own next turn comes first.
+            for candidate in reversed(list(self._calls.values())):
+                if await self._warm_tool_turn(candidate):
+                    break
+
+            if not await self._engine.is_engine_idle():
+                continue
 
             state = next(reversed(self._calls.values()))
             program = self._programs[state.request.program_name]  # type: ignore[index]
-            warmed = False
-            for key in program.next_calls(state.site.key): # type: ignore[union-attr]
-                for site in program.sites_of(key):
-                    if site.callsite_uuid in state.prefilled_sites:
-                        continue
-                    constants = {
-                        name: repr(info["spec"]["value"])
-                        for name, info in program.ready_params(
-                            key, state.done, via=state.site.key
-                        ).items()
-                        if info["ready"] and info["spec"]["kind"] == "const"
-                    }
-                    site.incremental_prompt(constants)
-                    prompt = self._engine.render(site.get_ready_prompt())
-                    await self._engine.prefill(
-                        prompt, f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}"
-                    )
-                    state.prefilled_sites.add(site.callsite_uuid)
-                    warmed = True
+
+            if state.site.is_visit:
+                # Probed once per call: the ranked plan is cached on the state so
+                # subsequent idle ticks reuse it instead of re-probing the router.
+                if state.route_plan is None:
+                    state.route_plan = await self._speculate.sort_candidate_calls(state, program)
+                successors = state.route_plan
+            else:
+                successors = [
+                    site
+                    for key in program.next_calls(state.site)
+                    for site in program.sites_of(key)
+                ]
+
+            for site in successors:
+                if site.callsite_uuid in state.prefilled_sites:
+                    continue
+                constants = {
+                    name: repr(info["spec"]["value"])
+                    for name, info in program.ready_params(
+                        site.key, state.done, via=state.site.key
+                    ).items()
+                    if info["ready"] and info["spec"]["kind"] == "const"
+                }
+                site.incremental_prompt(constants)
+                prompt = self._engine.render(site.get_ready_prompt())
+                await self._engine.prefill(
+                    prompt, f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}"
+                )
+                state.prefilled_sites.add(site.callsite_uuid)
+                if not await self._engine.is_engine_idle():
                     break
-                if warmed:
-                    break
+
+    async def _warm_tool_turn(self, state: _CallState) -> bool:
+        """Prefill the in-flight call's tool calling assitant tokens."""
+        text = state.pending_tool_text
+        if text is None:
+            return False
+        tag = f"toolturn-{state.site.callsite_uuid}-{len(state.messages)}"
+        if tag in state.prefilled_sites:
+            return False
+        prompt = self._engine.render(
+            state.messages
+            + [
+                {"role": "assistant", "content": text},
+                {"role": "user", "content": "<tool_result>"},
+            ]
+        )
+        await self._engine.prefill(prompt, f"prefill-{tag}-{uuid.uuid4().hex}")
+        state.prefilled_sites.add(tag)
+        return True
 
     async def monitor_task(self) -> None:
         """Keep draining transport events; long-running calls get their own task."""
@@ -237,6 +278,7 @@ class GuardServer:
                         iterations += 1
                         if iterations > max_iterations:
                             raise RuntimeError("maximum ReAct iterations exceeded")
+                        state.pending_tool_text = text
                         await backend.send(
                             {
                                 "type": "tool_call",
@@ -247,6 +289,7 @@ class GuardServer:
                             }
                         )
                         event = await state.inbox.get()
+                        state.pending_tool_text = None
                         if event is None:
                             return
                         if event.type != "tool_result":
@@ -266,10 +309,18 @@ class GuardServer:
                     output = text.strip()
 
                 state.done.add(site.key)
-                for consumer, parameter in program.consumers_of(site.key):
-                    for consumer_site in program.sites_of(consumer):
-                        consumer_site.incremental_prompt({parameter: repr(output)})
-                        state.prefilled_sites.discard(consumer_site.callsite_uuid)
+                ok, value = site.decl.parse_response(output)
+                if ok:
+                    for consumer, parameter in program.consumers_of(site.key):
+                        item = program.provenance[consumer][parameter]["kind"] == "ret_item"
+                        if item and not (isinstance(value, (list, tuple)) and value):
+                            continue
+                        # ret_item serves one list element per iteration; only the
+                        # first iteration is warmable, so bind its element.
+                        view = repr(value[0]) if item else repr(value)
+                        for consumer_site in program.sites_of(consumer):
+                            consumer_site.incremental_prompt({parameter: view})
+                            state.prefilled_sites.discard(consumer_site.callsite_uuid)
 
                 await backend.send(
                     {"type": "final", "call": call_id, "output": output, "text": text}

@@ -6,6 +6,7 @@ import uuid
 from typing import Dict, List
 
 from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.logprobs import Logprob
 from vllm.sampling_params import SamplingParams
 from vllm.v1.engine.async_llm import AsyncLLM
 
@@ -28,6 +29,8 @@ class ModelEngine:
         self._prefill_tasks = 0
 
     async def is_engine_idle(self) -> bool:
+        """Admit speculative work when the engine is free, or when the profiled
+        prefill budget for the current decode concurrency still has room."""
         return (
             not self.engine.output_processor.has_unfinished_requests()
             or self._prefill_tasks < self.max_parallelizable_prefill.get(self._decode_tasks, 0)
@@ -45,18 +48,24 @@ class ModelEngine:
         text = ""
         started = time.perf_counter()
         first_token = True
-        self._decode_tasks += 1
+        self._prefill_tasks += 1  # A real call prefills until its first token, then decodes. 
         try:
             async for output in self.engine.generate(
                 prompt, sampling_params or self.sp, request_id
             ):
                 if output.outputs:
                     if first_token:
-                        console_debug(f"[serve] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
+                        self._prefill_tasks -= 1
+                        self._decode_tasks += 1
                         first_token = False
+                        console_debug(f"[serve] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
                     text = output.outputs[0].text
         finally:
-            self._decode_tasks -= 1
+            # Exactly one decrement per increment, whichever phase we ended in.
+            if first_token:
+                self._prefill_tasks -= 1
+            else:
+                self._decode_tasks -= 1
         return text
 
     async def prefill(self, prefill_prompt: str, request_id: str) -> None:
@@ -74,6 +83,18 @@ class ModelEngine:
             f"[prefill] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f}",
             flush=True,
         )
+
+    async def probe(self, prompt: str, request_id: str) -> Dict[int, Logprob]:
+        """Greedy one-token probe; returns the top logprobs at the first position."""
+        sampling_params = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
+        self._prefill_tasks += 1
+        try:
+            async for output in self.engine.generate(prompt, sampling_params, request_id, priority=1):
+                if output.outputs and output.outputs[0].logprobs:
+                    return output.outputs[0].logprobs[0]
+        finally:
+            self._prefill_tasks -= 1
+        return {}
 
     @staticmethod
     def _random_prompt(num_words: int) -> str:
