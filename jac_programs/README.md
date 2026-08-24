@@ -4,7 +4,7 @@ Start the proactive-prefill server:
 
 ```bash
 python start_server.py \
-  --model Qwen/Qwen2.5-3B-Instruct \
+  --model Qwen/Qwen2.5-0.5B-Instruct \
   --program research:jac_programs/research_agent.jac:8964 \
   --program operations:jac_programs/operations_agent.jac:8965 \
   --program route:jac_programs/route_wire.jac:8966 \
@@ -18,6 +18,19 @@ QUESTION="How are customer exports encrypted?" jac run jac_programs/research_age
 REQUEST="Calculate the error rate and report p95 latency." jac run jac_programs/operations_agent.jac
 TICKET="Our export job fails with a 500 after the last release." jac run jac_programs/route_wire.jac
 ```
+
+Every tenant's `glob llm` takes the model from `$MODEL` (default
+`Qwen/Qwen2.5-0.5B-Instruct`); it must name the same model the server runs.
+
+Four more tenants diversify the load for the multi-tenant experiments
+(`experiments/run_experiment.py`), each stressing an axis the first three do not:
+
+| program | port | axis |
+|---|---|---|
+| `support_email_agent.jac` (`$EMAIL`) | 8967 | long invariant prompt: a ~1.5k-char style guide plus three tools |
+| `data_pipeline_agent.jac` (`$RECORD`) | 8968 | deep chain: six small byLLM calls back to back |
+| `moderation_agent.jac` (`$POST`) | 8969 | branch fan-out: classify, then one of three branch calls |
+| `dispatch_router.jac` (`$ISSUE`) | 8970 | second visit-routing tenant with five candidate desks |
 
 The tools intentionally sleep for 200–350 ms, and each workflow leaves another
 200 ms between byLLM calls. Tool windows expose invariant prefill opportunities;

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import random
 import statistics
 import time
@@ -13,28 +14,47 @@ from vllm.v1.engine.async_llm import AsyncLLM
 from console_helper.debug_output import console_debug, console_log, console_warn, console_error
 
 class ModelEngine:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, gpu_memory_utilization: float = 0.9, max_model_len: int = 8192):
+        self.model_name = model_name
         self.engine = AsyncLLM.from_engine_args(
             AsyncEngineArgs(
                 model=model_name,
-                gpu_memory_utilization=0.9,
-                max_model_len=8192,
+                gpu_memory_utilization=gpu_memory_utilization,
+                max_model_len=max_model_len,
                 enable_prefix_caching=True,
                 scheduling_policy="priority",
             )
         )
         self.sp = SamplingParams(temperature=0.7)
-        self.max_parallelizable_prefill: Dict[int, int] = {}
+        self.max_prefill_tokens: Dict[int, int] = {}  # decode concurrency -> safe in-flight prefill tokens
         self._decode_tasks = 0
-        self._prefill_tasks = 0
+        self._prefill_tokens = 0  # estimated tokens of all in-flight prefills, real and speculative
 
-    async def is_engine_idle(self) -> bool:
-        """Admit speculative work when the engine is free, or when the profiled
-        prefill budget for the current decode concurrency still has room."""
+    def count_tokens(self, prompt: str) -> int:
+        return len(self.engine.get_tokenizer().encode(prompt))  # type: ignore[union-attr]
+
+    def has_prefill_room(self, tokens: int) -> bool:
+        """Admit a prefill of `tokens` when the engine is free, or when the profiled
+        token budget for the current decode concurrency still has room for it."""
         return (
             not self.engine.output_processor.has_unfinished_requests()
-            or self._prefill_tasks < self.max_parallelizable_prefill.get(self._decode_tasks, 0)
+            or self._prefill_tokens + tokens <= self.max_prefill_tokens.get(self._decode_tasks, 0)
         )
+
+    def save_profile(self, path: str) -> None:
+        with open(path, "w") as f:
+            json.dump({"model": self.model_name, "max_prefill_tokens": self.max_prefill_tokens}, f)
+
+    def load_profile(self, path: str) -> bool:
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return False
+        if data.get("model") != self.model_name:
+            return False
+        self.max_prefill_tokens = {int(k): int(v) for k, v in data["max_prefill_tokens"].items()}
+        return True
 
     def render(self, messages: List[Dict[str, str]]) -> str:
         return self.engine.get_tokenizer().apply_chat_template(messages, tokenize=False, add_generation_prompt=True) #type: ignore
@@ -47,53 +67,63 @@ class ModelEngine:
     ) -> str:
         text = ""
         started = time.perf_counter()
+        first_token_at = started
         first_token = True
-        self._prefill_tasks += 1  # A real call prefills until its first token, then decodes. 
+        out_tokens = 0
+        cost = self.count_tokens(prompt)
+        self._prefill_tokens += cost  # A real call prefills until its first token, then decodes.
         try:
             async for output in self.engine.generate(
                 prompt, sampling_params or self.sp, request_id
             ):
                 if output.outputs:
                     if first_token:
-                        self._prefill_tasks -= 1
+                        self._prefill_tokens -= cost
                         self._decode_tasks += 1
                         first_token = False
-                        console_debug(f"[serve] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
+                        first_token_at = time.perf_counter()
+                        console_debug(f"[serve] {request_id} duration_ms={(first_token_at - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
                     text = output.outputs[0].text
+                    out_tokens = len(output.outputs[0].token_ids)
         finally:
             # Exactly one decrement per increment, whichever phase we ended in.
             if first_token:
-                self._prefill_tasks -= 1
+                self._prefill_tokens -= cost
             else:
                 self._decode_tasks -= 1
+                console_debug(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
         return text
 
-    async def prefill(self, prefill_prompt: str, request_id: str) -> None:
+    async def prefill(self, prefill_prompt: str, request_id: str, cost: int | None = None) -> None:
+        """`cost` is the caller's estimate of uncached tokens; defaults to full length."""
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True)
         started = time.perf_counter()
-        self._prefill_tasks += 1
+        cost = self.count_tokens(prefill_prompt) if cost is None else cost
+        self._prefill_tokens += cost
         try:
             async for _ in self.engine.generate(
                 prefill_prompt, sampling_params, request_id, priority=1
             ):
                 pass
         finally:
-            self._prefill_tasks -= 1
+            self._prefill_tokens -= cost
         print(
-            f"[prefill] {request_id} duration_ms={(time.perf_counter() - started) * 1000:.2f}",
+            f"[prefill] {request_id} cost_tokens={cost} duration_ms={(time.perf_counter() - started) * 1000:.2f}",
             flush=True,
         )
 
-    async def probe(self, prompt: str, request_id: str) -> Dict[int, Logprob]:
-        """Greedy one-token probe; returns the top logprobs at the first position."""
+    async def probe(self, prompt: str, request_id: str, cost: int = 64) -> Dict[int, Logprob]:
+        """Greedy one-token probe; returns the top logprobs at the first position.
+        The prompt rides the router's own just-computed prefix, so its uncached
+        cost is a few think-block tokens — billed as a small nominal `cost`."""
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
-        self._prefill_tasks += 1
+        self._prefill_tokens += cost
         try:
             async for output in self.engine.generate(prompt, sampling_params, request_id, priority=1):
                 if output.outputs and output.outputs[0].logprobs:
                     return output.outputs[0].logprobs[0]
         finally:
-            self._prefill_tasks -= 1
+            self._prefill_tokens -= cost
         return {}
 
     @staticmethod
@@ -186,12 +216,14 @@ class ModelEngine:
         prefill_words: int = 512,
         warmup_tokens: int = 8,
     ) -> None:
-        """Find safe prefill concurrency for each decode concurrency.
+        """Find the safe in-flight prefill token budget for each decode concurrency.
 
         For each number of concurrent decode requests, measure unloaded TBT and
         then add sustained prefill workers one at a time. A count is safe when
-        median TBT remains within ``tbt_slack`` of baseline. Stop as soon as
-        even one concurrent prefill is unsafe.
+        median TBT remains within ``tbt_slack`` of baseline; the budget is that
+        count times the worker's token length. When not even one worker is safe,
+        retry a single worker with halved prompts — token granularity often
+        admits a small budget where task granularity says zero.
         """
         if tbt_slack < 0:
             raise ValueError("tbt_slack must be >= 0")
@@ -200,7 +232,8 @@ class ModelEngine:
         if decode_tokens <= warmup_tokens + 2:
             raise ValueError("decode_tokens must exceed warmup_tokens by at least 3")
 
-        self.max_parallelizable_prefill.clear()
+        self.max_prefill_tokens.clear()
+        chunk_tokens = self.count_tokens(self._random_prompt(prefill_words))
 
         # Exclude model/CUDA first-request initialization from the baseline.
         await self._measure_tbt(
@@ -234,11 +267,27 @@ class ModelEngine:
                     break
                 safe_prefills = num_prefills
 
-            self.max_parallelizable_prefill[num_decodes] = safe_prefills
+            budget = safe_prefills * chunk_tokens
+            if safe_prefills == 0:
+                words = prefill_words // 2
+                while words >= 64:
+                    measured = await self._measure_tbt(
+                        num_decodes,
+                        1,
+                        decode_tokens=decode_tokens,
+                        prefill_words=words,
+                        warmup_tokens=warmup_tokens,
+                    )
+                    if measured <= tbt_limit:
+                        budget = self.count_tokens(self._random_prompt(words))
+                        break
+                    words //= 2
+
+            self.max_prefill_tokens[num_decodes] = budget
             print(
                 f"[profile] decode_tasks={num_decodes} "
                 f"baseline_tbt={baseline * 1_000:.2f}ms "
-                f"safe_prefill_tasks={safe_prefills}"
+                f"budget_tokens={budget}"
             )
-            if safe_prefills == 0:
+            if budget == 0:
                 break

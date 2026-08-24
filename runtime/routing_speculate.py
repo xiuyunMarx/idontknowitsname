@@ -118,20 +118,21 @@ class RoutingSpeculate:
         # visit prompt statically: only the client knows the live graph state.
         full_prompt = self.engine.render(state.messages)
 
+        # The newest user message carrying the zone: a typed-retry appends a
+        # feedback user turn after it, and a retry state is still speculable.
+        marker = ROUTE_ZONE_LABEL["candidates"] + "\n"
         user_content = next(
             (
                 str(message.get("content") or "")
                 for message in reversed(state.messages)
                 if message.get("role") == "user"
+                and marker in str(message.get("content") or "")
             ),
-            "",
+            None,
         )
-        marker = ROUTE_ZONE_LABEL["candidates"] + "\n"
-        _, found, remainder = user_content.partition(marker)
-        if not found:
-            raise ValueError(
-                f"visit routing prompt {state.site.key!r} has no candidates zone"
-            )
+        if user_content is None:
+            return None
+        _, _, remainder = user_content.partition(marker)
 
         # A blank line terminates this zone in both route layouts. Candidate
         # descriptions themselves are emitted one per line.

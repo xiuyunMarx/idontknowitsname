@@ -1,0 +1,70 @@
+INFO 08-23 20:57:03 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-23 20:57:03 [model.py:1678] Using max model len 8192
+INFO 08-23 20:57:03 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-23 20:57:03 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=3485988) INFO 08-23 20:57:04 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-0.5B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-0.5B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-0.5B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=3485988) INFO 08-23 20:57:04 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:57235 backend=nccl
+[rank0]:[W823 20:57:04.017550766 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=3485988) INFO 08-23 20:57:04 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=3485988) INFO 08-23 20:57:05 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-0.5B-Instruct...
+(EngineCore pid=3485988) INFO 08-23 20:57:05 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=3485988) INFO 08-23 20:57:05 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=3485988) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=3485988) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=3485988) INFO 08-23 20:57:06 [weight_utils.py:625] No model.safetensors.index.json found in remote.
+(EngineCore pid=3485988) Loading safetensors checkpoint shards:   0% Completed | 0/1 [00:00<?, ?it/s]
+(EngineCore pid=3485988) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  7.74it/s]
+(EngineCore pid=3485988) Loading safetensors checkpoint shards: 100% Completed | 1/1 [00:00<00:00,  7.74it/s]
+(EngineCore pid=3485988) 
+(EngineCore pid=3485988) INFO 08-23 20:57:06 [default_loader.py:384] Loading weights took 0.14 seconds
+(EngineCore pid=3485988) INFO 08-23 20:57:06 [gpu_model_runner.py:4820] Model loading took 0.93 GiB memory and 0.834888 seconds
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/f3630b28e1/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [backends.py:1111] Dynamo bytecode transform time: 2.01 s
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.496 s
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/a5a91646d7f4e56fd87f7c5c22248500f77b55e3e795dcd0d633e50976d104af/rank_0_0/model
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [monitor.py:48] torch.compile took 2.65 s in total
+(EngineCore pid=3485988) INFO 08-23 20:57:09 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.29 GiB total
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [gpu_worker.py:436] Available KV cache memory: 19.89 GiB
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9121 to maintain the same effective KV cache size.
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [kv_cache_utils.py:1319] GPU KV cache size: 1,738,368 tokens
+(EngineCore pid=3485988) INFO 08-23 20:57:10 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 212.20x
+(EngineCore pid=3485988) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:00, 55.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:00, 54.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████▏    | 18/35 [00:00<00:00, 54.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 24/35 [00:00<00:00, 53.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▌ | 30/35 [00:00<00:00, 53.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:00<00:00, 52.74it/s]
+(EngineCore pid=3485988) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 53.04it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 12/19 [00:00<00:00, 52.78it/s]Capturing CUDA graphs (decode, FULL):  95%|█████████▍| 18/19 [00:00<00:00, 52.68it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 52.81it/s]
+(EngineCore pid=3485988) INFO 08-23 20:57:12 [gpu_model_runner.py:6046] Graph capturing finished in 1 secs, took 0.27 GiB
+(EngineCore pid=3485988) INFO 08-23 20:57:12 [gpu_worker.py:597] CUDA graph pool memory: 0.27 GiB (actual), 0.29 GiB (estimated), difference: 0.02 GiB (7.4%).
+(EngineCore pid=3485988) INFO 08-23 20:57:12 [core.py:283] init engine (profile, create kv cache, warmup model) took 5.61 seconds
+[32m[LOG][0m InterceptorLLMBackend for 'operations' listening on localhost:8965
+[32m[LOG][0m InterceptorLLMBackend for 'dispatch' listening on localhost:8970
+[32m[LOG][0m InterceptorLLMBackend for 'research' listening on localhost:8964
+[32m[LOG][0m InterceptorLLMBackend for 'support_email' listening on localhost:8967
+[32m[LOG][0m InterceptorLLMBackend for 'pipeline' listening on localhost:8968
+[32m[LOG][0m InterceptorLLMBackend for 'route' listening on localhost:8966
+[32m[LOG][0m InterceptorLLMBackend for 'moderation' listening on localhost:8969
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 52042)
+[32m[LOG][0m Registered 'pipeline' (pid 3486286, model 'Qwen/Qwen2.5-0.5B-Instruct')
+[36m[DEBUG][0m call from 'pipeline' pid 3486286 key='extract_fields'
+WARNING 08-23 20:57:15 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[36m[DEBUG][0m [serve] pipeline:extract_fields:1-07ff13d7fee54194a5acba6730f3004d duration_ms=66.22 cached_tokens=0 prompt_tokens=145
+[prefill] prefill-validate_fields@61:15-c72263b80eea48d7b1a823f2bc484b69 cost_tokens=95 duration_ms=72.34
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 41666)
+[32m[LOG][0m Registered 'route' (pid 3486288, model 'Qwen/Qwen2.5-0.5B-Instruct')
+[36m[DEBUG][0m [decode] pipeline:extract_fields:1-07ff13d7fee54194a5acba6730f3004d decode_ms=156.38 output_tokens=69
+[prefill] prefill-validate_fields@61:15-7b879ef1c836486f8599e7f483308a57 cost_tokens=168 duration_ms=8.42
+[prefill] prefill-classify_record@63:16-cd03771a6438402aacd9290cb9d41d4e cost_tokens=167 duration_ms=8.75
+[prefill] prefill-summarize_record@65:15-f4c428e9abda46cd9829480cddd469ab cost_tokens=180 duration_ms=8.06
+[36m[DEBUG][0m generate from 'route' pid 3486288 key='__visit@route_wire.jac:92'
+[prefill] prefill-translate_summary@67:19-0055cece366b4940872f984066935bec cost_tokens=84 duration_ms=10.31
+[36m[DEBUG][0m [serve] route:__visit@route_wire.jac:92:1-f998dc03717943deab31c56831f45e77 duration_ms=11.20 cached_tokens=0 prompt_tokens=201
+[36m[DEBUG][0m [decode] route:__visit@route_wire.jac:92:1-f998dc03717943deab31c56831f45e77 decode_ms=4.71 output_tokens=3
+[36m[DEBUG][0m generate from 'route' pid 3486288 key='__visit@route_wire.jac:92'
+[36m[DEBUG][0m [serve] route:__visit@route_wire.jac:92:2-0aae5265740243caa711b4d79238394f duration_ms=14.94 cached_tokens=176 prompt_tokens=440
+[36m[DEBUG][0m [decode] route:__visit@route_wire.jac:92:2-0aae5265740243caa711b4d79238394f decode_ms=18.84 output_tokens=10
+[36m[DEBUG][0m call from 'pipeline' pid 3486286 key='validate_fields'
+[36m[DEBUG][0m call from 'route' pid 3486288 key='resolve_billing'
+[32m[LOG][0m Client ('127.0.0.1', 52042) disconnected
+[32m[LOG][0m Client ('127.0.0.1', 41666) disconnected
+(EngineCore pid=3485988) INFO 08-23 21:07:13 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=3485988) INFO 08-23 21:07:13 [core.py:1233] Shutdown complete

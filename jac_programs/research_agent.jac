@@ -3,7 +3,7 @@ import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
 glob llm = InterceptorLLM(
-    model_name="Qwen/Qwen2.5-3B-Instruct",
+    model_name=str(os.environ.get("MODEL") or "Qwen/Qwen2.5-0.5B-Instruct"),
     comm_ip="localhost",
     comm_port=8964,
     program_name="research"

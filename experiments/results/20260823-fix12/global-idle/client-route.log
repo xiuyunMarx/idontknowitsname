@@ -1,0 +1,418 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:31.899 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:31.919 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:31.919 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:31.928 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:33.921 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:33.940 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:33.940 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:33.949 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:36.010 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:36.029 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:36.029 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:36.039 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:37.997 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:38.016 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:38.016 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:38.026 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:40.066 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:40.085 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:40.085 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:40.095 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:42.111 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:42.129 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:42.129 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:42.138 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:44.207 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:44.226 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:44.226 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:44.235 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:46.350 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:46.369 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:46.369 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:46.378 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2026-08-23 21:10:48.394 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:48.412 | WARNING  | jaclang.byllm.llm:_connect:272 - InterceptorLLM: cannot reach guard server at localhost:8966 ([Errno 111] Connection refused)
+2026-08-23 21:10:48.412 | WARNING  | jaclang.byllm.llm:_fallback:334 - InterceptorLLM: falling back to direct model (guard server not connected)
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+
+[1;31mProvider List: https://docs.litellm.ai/docs/providers[0m
+
+2026-08-23 21:10:48.421 | ERROR    | jaclang.byllm.llm:_raise_mapped_provider_error:206 - LLM call failed with BadRequestError: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+✖ Error: Error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=Qwen/Qwen2.5-0.5B-Instruct
+ Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers
+  348 |             error_str = f"LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model={model}\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+  349 |             # maps to openai.NotFoundError, this is raised when openai does not recognize the llm
+  350 |             raise litellm.exceptions.BadRequestError(  # type: ignore
+      |            ^
+  351 |                 message=error_str,
+  352 |                 model=model,
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:350
+  at get_llm_provider() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/litellm_core_utils/get_llm_provider_logic.py:373
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:1039
+  at completion() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/main.py:3241
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1161
+  at wrapper() /home/xiaoyu/miniconda3/envs/jaseci/lib/python3.13/site-packages/litellm/utils.py:1283
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:230
+  at model_call_no_stream() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:233
+  at dispatch_no_streaming() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:1381
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:931
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/model.impl.jac:104
+  at _fallback() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:338
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:55
+  ... [internal runtime calls]
+  at route_visit() /home/xiaoyu/jaseci/jac/jaclang/byllm/visit_routing.jac:361
+  ... [internal runtime calls]
+  at route() /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:92
+  ... [internal runtime calls]
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/route_wire.jac:109
+  ... [internal runtime calls]

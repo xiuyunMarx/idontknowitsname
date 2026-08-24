@@ -31,7 +31,8 @@ class _CallState:
 
 class GuardServer:
     def __init__(
-        self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True
+        self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True,
+        spec_policy: str = "global",
     ):
         self._num_workers = num_workers
         self._engine = engine
@@ -41,9 +42,11 @@ class GuardServer:
         self._calls: Dict[Tuple[int, int], _CallState] = {}
         self._last_call: Dict[int, _CallState] = {}
         self._done: Dict[int, set[str]] = {}
+        self._warm_tokens: Dict[str, int] = {}  # callsite_uuid -> prompt tokens last prefilled
         self._generation_slots = asyncio.Semaphore(num_workers)
         self._speculate = RoutingSpeculate(engine)
         self._proactive_prefill = proactive_prefill
+        self._spec_policy = spec_policy  # "global" | "newest" (ablation: pre-multi-tenant behavior)
         self._engine_idle_interval = 0.01
 
     def add_program(self, program_name: str, src_path: str, port: int) -> None:
@@ -76,36 +79,78 @@ class GuardServer:
     async def monitor_idle(self) -> None:
         while True:
             await asyncio.sleep(self._engine_idle_interval)
-            if not await self._engine.is_engine_idle() or not self._calls:
-                continue
-            
-            # The in-flight call's own next turn comes first.
-            for candidate in reversed(list(self._calls.values())):
-                if await self._warm_tool_turn(candidate):
-                    break
-
-            if not await self._engine.is_engine_idle():
+            if not self._calls or not self._engine.has_prefill_room(1):
                 continue
 
-            state = next(reversed(self._calls.values()))
+            # Speculation is best-effort: a failed tick must never kill serving.
+            try:
+                states = list(self._calls.values())
+                if self._spec_policy == "newest":
+                    states = states[-1:]
+
+                # Every in-flight call's own next turn comes first: those bytes are certain.
+                for state in reversed(states):
+                    if not await self._warm_tool_turn(state):
+                        break
+                else:
+                    await self._warm_successors(states)
+            except Exception as exc:
+                console_error(f"[guard] speculation tick failed: {exc!r}")
+
+    async def _warm_tool_turn(self, state: _CallState) -> bool:
+        """Prefill the in-flight call's pending tool-calling turn.
+        False only when the token budget is exhausted for this tick."""
+        text = state.pending_tool_text
+        if text is None:
+            return True
+        tag = f"toolturn-{state.site.callsite_uuid}-{len(state.messages)}"
+        if tag in state.prefilled_sites:
+            return True
+        prompt = self._engine.render(
+            state.messages
+            + [
+                {"role": "assistant", "content": text},
+                {"role": "user", "content": "<tool_result>"},
+            ]
+        )
+        # The transcript is resident from the call's own turns; the uncached tail
+        # is the assistant text plus the stub (the text's tokens are actually in
+        # cache from decode, so this over-counts a little — the safe direction).
+        cost = max(0, self._engine.count_tokens(prompt) - self._engine.count_tokens(self._engine.render(state.messages)))
+        if not self._engine.has_prefill_room(cost):
+            return False
+        await self._engine.prefill(prompt, f"prefill-{tag}-{uuid.uuid4().hex}", cost)
+        state.prefilled_sites.add(tag)
+        return True
+
+    async def _warm_successors(self, states: List[_CallState]) -> None:
+        queues = []
+        for state in reversed(states):
             program = self._programs[state.request.program_name]  # type: ignore[index]
-
             if state.site.is_visit:
                 # Probed once per call: the ranked plan is cached on the state so
                 # subsequent idle ticks reuse it instead of re-probing the router.
                 if state.route_plan is None:
                     state.route_plan = await self._speculate.sort_candidate_calls(state, program)
-                successors = state.route_plan
+                sites = state.route_plan
             else:
-                successors = [
+                sites = [
                     site
                     for key in program.next_calls(state.site)
                     for site in program.sites_of(key)
                 ]
+            pending = [s for s in sites if s.callsite_uuid not in state.prefilled_sites]
+            if pending:
+                queues.append((state, program, pending))
 
-            for site in successors:
-                if site.callsite_uuid in state.prefilled_sites:
-                    continue
+        # One site per call per round, newest call first, so no tenant's long
+        # successor list starves the others.
+        while queues:
+            for entry in list(queues):
+                state, program, pending = entry
+                site = pending.pop(0)
+                if not pending:
+                    queues.remove(entry)
                 constants = {
                     name: repr(info["spec"]["value"])
                     for name, info in program.ready_params(
@@ -115,31 +160,15 @@ class GuardServer:
                 }
                 site.incremental_prompt(constants)
                 prompt = self._engine.render(site.get_ready_prompt())
+                tokens = self._engine.count_tokens(prompt)
+                cost = max(0, tokens - self._warm_tokens.get(site.callsite_uuid, 0))
+                if not self._engine.has_prefill_room(cost):
+                    return
                 await self._engine.prefill(
-                    prompt, f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}"
+                    prompt, f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
                 )
+                self._warm_tokens[site.callsite_uuid] = tokens
                 state.prefilled_sites.add(site.callsite_uuid)
-                if not await self._engine.is_engine_idle():
-                    break
-
-    async def _warm_tool_turn(self, state: _CallState) -> bool:
-        """Prefill the in-flight call's tool calling assitant tokens."""
-        text = state.pending_tool_text
-        if text is None:
-            return False
-        tag = f"toolturn-{state.site.callsite_uuid}-{len(state.messages)}"
-        if tag in state.prefilled_sites:
-            return False
-        prompt = self._engine.render(
-            state.messages
-            + [
-                {"role": "assistant", "content": text},
-                {"role": "user", "content": "<tool_result>"},
-            ]
-        )
-        await self._engine.prefill(prompt, f"prefill-{tag}-{uuid.uuid4().hex}")
-        state.prefilled_sites.add(tag)
-        return True
 
     async def monitor_task(self) -> None:
         """Keep draining transport events; long-running calls get their own task."""
@@ -315,12 +344,14 @@ class GuardServer:
                         item = program.provenance[consumer][parameter]["kind"] == "ret_item"
                         if item and not (isinstance(value, (list, tuple)) and value):
                             continue
-                        # ret_item serves one list element per iteration; only the
-                        # first iteration is warmable, so bind its element.
+                        # A ret_item consumer serves one element per iteration, and
+                        # self-edges are pruned from the topology, so only the first
+                        # iteration is ever warmable — bind its element.
                         view = repr(value[0]) if item else repr(value)
                         for consumer_site in program.sites_of(consumer):
                             consumer_site.incremental_prompt({parameter: view})
                             state.prefilled_sites.discard(consumer_site.callsite_uuid)
+                            self._warm_tokens.pop(consumer_site.callsite_uuid, None)
 
                 await backend.send(
                     {"type": "final", "call": call_id, "output": output, "text": text}
@@ -352,6 +383,7 @@ class GuardServer:
             if self._last_call.get(id(backend)) is state:
                 self._last_call.pop(id(backend), None)
             site.clear_bindings()
+            self._warm_tokens.pop(site.callsite_uuid, None)
 
     async def _retire(self, backend: InterceptorLLMBackend) -> None:
         """Close the window the previous frame left open on this connection.
@@ -366,6 +398,7 @@ class GuardServer:
         if previous.request.type == "generate":
             self._calls.pop((id(backend), previous.request.id), None)  # type: ignore[arg-type]
             previous.site.clear_bindings()
+            self._warm_tokens.pop(previous.site.callsite_uuid, None)
         else:
             await previous.inbox.put(None)
 
@@ -400,7 +433,7 @@ class GuardServer:
                     "text": await self._complete(
                         request.messages,
                         self._sampling_params(request),
-                        f"generate-{request.id}",
+                        f"{request.program_name}:generate:{request.id}",
                     ),
                 })
                 return
@@ -419,7 +452,7 @@ class GuardServer:
                 text = await self._complete(
                     request.messages,
                     self._sampling_params(request, site),
-                    f"generate-{request.id}",
+                    f"{request.program_name}:{site.key}:{request.id}",
                 )
             except Exception:
                 self._calls.pop((id(backend), request.id), None)
