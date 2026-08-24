@@ -4,7 +4,7 @@ import random
 import statistics
 import time
 import uuid
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.inputs import TokensPrompt
@@ -27,9 +27,15 @@ class ModelEngine:
             )
         )
         self.sp = SamplingParams(temperature=0.7)
-        self.max_prefill_tokens: Dict[int, int] = {}  # decode concurrency -> safe in-flight prefill tokens
+        # decode concurrency -> uncached speculative tokens one engine step may carry
+        # without pushing TBT past the profiled slack. Interference is a per-step
+        # quantity: a speculative request of c uncached tokens lands whole in one
+        # step (c << max_num_batched_tokens), so bounding c bounds that step.
+        self.spec_tokens_per_step: Dict[int, int] = {}
+        self.profile_curve: List[Dict[str, float]] = []  # raw (b, n) -> TBT sweep, kept for plots
         self._decode_tasks = 0
-        self._prefill_tokens = 0  # estimated tokens of all in-flight prefills, real and speculative
+        self._real_prefills = 0  # real requests still before their first token
+        self._spec_inflight = False  # at most one speculative request at a time
 
     def tokenize(self, prompt: str) -> List[int]:
         return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
@@ -37,17 +43,24 @@ class ModelEngine:
     def count_tokens(self, prompt: str) -> int:
         return len(self.tokenize(prompt))
 
-    def has_prefill_room(self, tokens: int) -> bool:
-        """Admit a prefill of `tokens` when the engine is free, or when the profiled
-        token budget for the current decode concurrency still has room for it."""
-        return (
-            not self.engine.output_processor.has_unfinished_requests()
-            or self._prefill_tokens + tokens <= self.max_prefill_tokens.get(self._decode_tasks, 0)
-        )
+    def spec_allowance(self) -> int:
+        """Uncached tokens the next speculative request may carry right now.
+        Idle engine: unbounded 
+        A real prefill in flight already owns the step: nothing.
+        Otherwise the decode-only batch has compute slack up to the profiled per-step figure for its concurrency."""
+        if self._spec_inflight:
+            return 0
+        if not self.engine.output_processor.has_unfinished_requests():
+            return 1 << 30
+        if self._real_prefills > 0:
+            return 0
+        return self.spec_tokens_per_step.get(self._decode_tasks, 0)
 
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
-            json.dump({"model": self.model_name, "max_prefill_tokens": self.max_prefill_tokens}, f)
+            json.dump({"model": self.model_name, "unit": "tokens_per_step",
+                       "spec_tokens_per_step": self.spec_tokens_per_step,
+                       "curve": self.profile_curve}, f, indent=1)
 
     def load_profile(self, path: str) -> bool:
         try:
@@ -55,9 +68,11 @@ class ModelEngine:
                 data = json.load(f)
         except (OSError, json.JSONDecodeError):
             return False
-        if data.get("model") != self.model_name:
+        # Older profiles budgeted in-flight tokens; that unit does not bound a step.
+        if data.get("model") != self.model_name or data.get("unit") != "tokens_per_step":
             return False
-        self.max_prefill_tokens = {int(k): int(v) for k, v in data["max_prefill_tokens"].items()}
+        self.spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
+        self.profile_curve = data.get("curve", [])
         return True
 
     def render(self, messages: List[Dict[str, str]]) -> str:
@@ -74,15 +89,14 @@ class ModelEngine:
         first_token_at = started
         first_token = True
         out_tokens = 0
-        cost = self.count_tokens(prompt)
-        self._prefill_tokens += cost  # A real call prefills until its first token, then decodes.
+        self._real_prefills += 1  # A real call prefills until its first token, then decodes.
         try:
             async for output in self.engine.generate(
                 prompt, sampling_params or self.sp, request_id
             ):
                 if output.outputs:
                     if first_token:
-                        self._prefill_tokens -= cost
+                        self._real_prefills -= 1
                         self._decode_tasks += 1
                         first_token = False
                         first_token_at = time.perf_counter()
@@ -92,7 +106,7 @@ class ModelEngine:
         finally:
             # Exactly one decrement per increment, whichever phase we ended in.
             if first_token:
-                self._prefill_tokens -= cost
+                self._real_prefills -= 1
             else:
                 self._decode_tasks -= 1
                 console_debug(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
@@ -109,14 +123,14 @@ class ModelEngine:
             prefill_prompt = TokensPrompt(prompt_token_ids=prefill_prompt)
         else:
             cost = self.count_tokens(prefill_prompt) if cost is None else cost
-        self._prefill_tokens += cost
+        self._spec_inflight = True
         try:
             async for _ in self.engine.generate(
                 prefill_prompt, sampling_params, request_id, priority=1
             ):
                 pass
         finally:
-            self._prefill_tokens -= cost
+            self._spec_inflight = False
         print(
             f"[prefill] {request_id} cost_tokens={cost} duration_ms={(time.perf_counter() - started) * 1000:.2f}",
             flush=True,
@@ -125,179 +139,142 @@ class ModelEngine:
     async def probe(self, prompt: str, request_id: str, cost: int = 64) -> Dict[int, Logprob]:
         """Greedy one-token probe; returns the top logprobs at the first position.
         The prompt rides the router's own just-computed prefix, so its uncached
-        cost is a few think-block tokens — billed as a small nominal `cost`."""
+        cost is a few think-block tokens."""
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
-        self._prefill_tokens += cost
+        self._spec_inflight = True
         try:
             async for output in self.engine.generate(prompt, sampling_params, request_id, priority=1):
                 if output.outputs and output.outputs[0].logprobs:
                     return output.outputs[0].logprobs[0]
         finally:
-            self._prefill_tokens -= cost
+            self._spec_inflight = False
         return {}
 
-    @staticmethod
-    def _random_prompt(num_words: int) -> str:
-        """Create an effectively uncached prompt for a profiling request."""
-        return " ".join(f"{random.getrandbits(32):08x}" for _ in range(num_words))
+    def _random_ids(self, num_tokens: int) -> List[int]:
+        """Exactly `num_tokens` ids no earlier request has seen — an uncached prompt
+        of known length (a random string tokenizes to an unpredictable count)."""
+        vocab = len(self.engine.get_tokenizer())  # type: ignore[arg-type]
+        return [random.randrange(1000, vocab - 1000) for _ in range(num_tokens)]
 
     async def _measure_tbt(
         self,
         num_decode_tasks: int,
-        num_prefill_tasks: int,
+        step_tokens: int,
         *,
         decode_tokens: int,
-        prefill_words: int,
         warmup_tokens: int,
-    ) -> float:
-        """Return median per-stream TBT under sustained prefill pressure."""
-        if num_decode_tasks < 1 or num_prefill_tasks < 0:
-            raise ValueError("num_decode_tasks must be >= 1 and num_prefill_tasks >= 0")
+    ) -> Dict[str, float]:
+        """TBT of `num_decode_tasks` decode streams while one speculative request of
+        `step_tokens` uncached tokens at a time is injected back-to-back — the
+        production pattern (`prefill` is awaited one at a time, priority 1).
+        Returns pooled mean and p95 gap in ms, and the injector's duty (requests
+        completed per decode step) so the curve shows how many steps were hit."""
+        if num_decode_tasks < 1 or step_tokens < 0:
+            raise ValueError("num_decode_tasks must be >= 1 and step_tokens >= 0")
 
-        stop_prefill = asyncio.Event()
+        stop = asyncio.Event()
         decode_started = asyncio.Event()
         started_count = 0
-        started_lock = asyncio.Lock()
+        injected = 0
 
         async def decode_worker(index: int) -> List[float]:
             nonlocal started_count
-            sampling = SamplingParams(
-                max_tokens=decode_tokens, temperature=0.0, ignore_eos=True
-            )
+            sampling = SamplingParams(max_tokens=decode_tokens, temperature=0.0, ignore_eos=True)
             timestamps: List[float] = []
-            request_id = f"profile-decode-{index}-{uuid.uuid4().hex}"
             async for _ in self.engine.generate(
-                self._random_prompt(24), sampling, request_id
+                TokensPrompt(prompt_token_ids=self._random_ids(24)), sampling,
+                f"profile-decode-{index}-{uuid.uuid4().hex}",
             ):
                 timestamps.append(time.perf_counter())
                 if len(timestamps) == 1:
-                    async with started_lock:
-                        started_count += 1
-                        if started_count == num_decode_tasks:
-                            decode_started.set()
-            return [
-                timestamps[i] - timestamps[i - 1]
-                for i in range(warmup_tokens + 1, len(timestamps))
-            ]
+                    started_count += 1
+                    if started_count == num_decode_tasks:
+                        decode_started.set()
+            return [timestamps[i] - timestamps[i - 1] for i in range(warmup_tokens + 1, len(timestamps))]
 
-        async def prefill_worker(index: int) -> None:
+        async def injector() -> None:
+            nonlocal injected
             await decode_started.wait()
-            if stop_prefill.is_set():
-                return
-            sampling = SamplingParams(
-                max_tokens=1, temperature=0.0, ignore_eos=True
-            )
-            while not stop_prefill.is_set():
-                request_id = f"profile-prefill-{index}-{uuid.uuid4().hex}"
+            sampling = SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True)
+            while not stop.is_set():
                 async for _ in self.engine.generate(
-                    self._random_prompt(prefill_words), sampling, request_id
+                    TokensPrompt(prompt_token_ids=self._random_ids(step_tokens)), sampling,
+                    f"profile-spec-{uuid.uuid4().hex}", priority=1,
                 ):
                     pass
+                injected += 1
 
-        decoders = [
-            asyncio.create_task(decode_worker(i)) for i in range(num_decode_tasks)
-        ]
-        prefills = [
-            asyncio.create_task(prefill_worker(i)) for i in range(num_prefill_tasks)
-        ]
+        decoders = [asyncio.create_task(decode_worker(i)) for i in range(num_decode_tasks)]
+        inj = asyncio.create_task(injector()) if step_tokens > 0 else None
         try:
             gaps_by_stream = await asyncio.gather(*decoders)
         finally:
-            stop_prefill.set()
-            decode_started.set()  # release workers if a decoder failed at startup
-            if prefills:
-                await asyncio.gather(*prefills, return_exceptions=True)
+            stop.set()
+            decode_started.set()  # release the injector if a decoder failed at startup
+            if inj is not None:
+                await asyncio.gather(inj, return_exceptions=True)
 
-        # Give each decode stream equal weight.
-        stream_tbts = [statistics.median(gaps) for gaps in gaps_by_stream if gaps]
-        if len(stream_tbts) != num_decode_tasks:
-            raise RuntimeError(
-                "not enough generated tokens to measure TBT; increase decode_tokens"
-            )
-        return statistics.median(stream_tbts)
+        gaps = sorted(g for stream in gaps_by_stream for g in stream)
+        if len(gaps) < num_decode_tasks * 4:
+            raise RuntimeError("not enough generated tokens to measure TBT; increase decode_tokens")
+        steps = decode_tokens - warmup_tokens - 1
+        return {
+            "tbt_mean_ms": statistics.mean(gaps) * 1000,
+            "tbt_p95_ms": gaps[min(len(gaps) - 1, int(0.95 * len(gaps)))] * 1000,
+            "duty": injected / steps,
+        }
 
     async def _profile(
         self,
         *,
         tbt_slack: float = 0.10,
         max_decode_tasks: int = 16,
-        max_prefill_tasks: int = 8,
+        step_tokens: Tuple[int, ...] = (16, 32, 48, 64, 96, 128, 192, 256),
         decode_tokens: int = 128,
-        prefill_words: int = 512,
         warmup_tokens: int = 8,
+        stat: str = "tbt_mean_ms",
     ) -> None:
-        """Find the safe in-flight prefill token budget for each decode concurrency.
+        """Find, per decode concurrency b, the largest uncached token count N one
+        speculative request may carry while `stat` TBT stays within `tbt_slack`
+        of the unloaded baseline. The unit is tokens per engine step: the request
+        lands whole in one step, so N bounds that step's extra compute.
 
-        For each number of concurrent decode requests, measure unloaded TBT and
-        then add sustained prefill workers one at a time. A count is safe when
-        median TBT remains within ``tbt_slack`` of baseline; the budget is that
-        count times the worker's token length. When not even one worker is safe,
-        retry a single worker with halved prompts — token granularity often
-        admits a small budget where task granularity says zero.
+        `stat` is the gate; `aggregate.py`'s no-harm check uses the mean, so the
+        default matches it. The median is deliberately not offered: an injector
+        that hits fewer than half the steps leaves it untouched.
         """
         if tbt_slack < 0:
             raise ValueError("tbt_slack must be >= 0")
-        if max_decode_tasks < 1 or max_prefill_tasks < 1:
-            raise ValueError("max_decode_tasks and max_prefill_tasks must be >= 1")
+        if max_decode_tasks < 1:
+            raise ValueError("max_decode_tasks must be >= 1")
         if decode_tokens <= warmup_tokens + 2:
             raise ValueError("decode_tokens must exceed warmup_tokens by at least 3")
+        if stat not in ("tbt_mean_ms", "tbt_p95_ms"):
+            raise ValueError("stat must be tbt_mean_ms or tbt_p95_ms")
 
-        self.max_prefill_tokens.clear()
-        chunk_tokens = self.count_tokens(self._random_prompt(prefill_words))
+        self.spec_tokens_per_step.clear()
+        self.profile_curve.clear()
 
         # Exclude model/CUDA first-request initialization from the baseline.
-        await self._measure_tbt(
-            1,
-            0,
-            decode_tokens=max(16, warmup_tokens + 3),
-            prefill_words=prefill_words,
-            warmup_tokens=min(warmup_tokens, 4),
-        )
+        await self._measure_tbt(1, 0, decode_tokens=max(16, warmup_tokens + 3),
+                                warmup_tokens=min(warmup_tokens, 4))
 
-        for num_decodes in range(1, max_decode_tasks + 1):
-            baseline = await self._measure_tbt(
-                num_decodes,
-                0,
-                decode_tokens=decode_tokens,
-                prefill_words=prefill_words,
-                warmup_tokens=warmup_tokens,
-            )
-            tbt_limit = baseline * (1.0 + tbt_slack)
-            safe_prefills = 0
-
-            for num_prefills in range(1, max_prefill_tasks + 1):
-                measured = await self._measure_tbt(
-                    num_decodes,
-                    num_prefills,
-                    decode_tokens=decode_tokens,
-                    prefill_words=prefill_words,
-                    warmup_tokens=warmup_tokens,
-                )
-                if measured > tbt_limit:
+        for b in range(1, max_decode_tasks + 1):
+            base = await self._measure_tbt(b, 0, decode_tokens=decode_tokens, warmup_tokens=warmup_tokens)
+            self.profile_curve.append({"b": b, "n": 0, **base})
+            limit = base[stat] * (1.0 + tbt_slack)
+            safe = 0
+            for n in step_tokens:
+                m = await self._measure_tbt(b, n, decode_tokens=decode_tokens, warmup_tokens=warmup_tokens)
+                self.profile_curve.append({"b": b, "n": n, **m})
+                print(f"[profile] b={b} n={n} tbt_mean={m['tbt_mean_ms']:.2f}ms "
+                      f"(+{m['tbt_mean_ms'] / base['tbt_mean_ms'] - 1:.1%}) "
+                      f"tbt_p95={m['tbt_p95_ms']:.2f}ms duty={m['duty']:.2f}", flush=True)
+                if m[stat] > limit:
                     break
-                safe_prefills = num_prefills
-
-            budget = safe_prefills * chunk_tokens
-            if safe_prefills == 0:
-                words = prefill_words // 2
-                while words >= 32:
-                    measured = await self._measure_tbt(
-                        num_decodes,
-                        1,
-                        decode_tokens=decode_tokens,
-                        prefill_words=words,
-                        warmup_tokens=warmup_tokens,
-                    )
-                    if measured <= tbt_limit:
-                        budget = self.count_tokens(self._random_prompt(words))
-                        break
-                    words //= 2
-
-            self.max_prefill_tokens[num_decodes] = budget
-            print(
-                f"[profile] decode_tasks={num_decodes} "
-                f"baseline_tbt={baseline * 1_000:.2f}ms "
-                f"budget_tokens={budget}"
-            )
-            if budget == 0:
+                safe = n
+            self.spec_tokens_per_step[b] = safe
+            print(f"[profile] decode_tasks={b} baseline_tbt={base['tbt_mean_ms']:.2f}ms "
+                  f"p95={base['tbt_p95_ms']:.2f}ms spec_tokens_per_step={safe}", flush=True)
+            if safe == 0:
                 break

@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -10,15 +11,18 @@ from vllm.sampling_params import SamplingParams
 from runtime.engine import ModelEngine
 from runtime.routing_speculate import RoutingSpeculate
 from utils.jac_static_parser import ProgramTopology, ByLLMCallsite
-from utils.interceptor_receiver import InterceptorLLMBackend, ByLLMRequest
+from utils.interceptor_receiver import InterceptorLLMBackend, ClientSession, ByLLMRequest
 from console_helper.debug_output import console_debug, console_log, console_warn, console_error
 
 _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
 
+Bindings = Dict[str, str]  # param name -> repr, insertion order = warm prefix order
+WarmKey = Tuple[str, Tuple[Tuple[str, str], ...]]  # (callsite uuid, bindings) = the warmed bytes
+
 
 @dataclass
 class _CallState:
-    backend: InterceptorLLMBackend
+    session: ClientSession
     request: ByLLMRequest
     site: ByLLMCallsite
     messages: list[dict[str, str]]
@@ -30,20 +34,49 @@ class _CallState:
     inbox: asyncio.Queue[Optional[ByLLMRequest]] = field(default_factory=asyncio.Queue)
 
 
+@dataclass
+class _SessionState:
+    """Everything the server remembers about one running program instance.
+
+    A callsite object is a compile-time template shared by every instance of
+    the program; the values that flow into its parameters at run time belong
+    here, keyed by callsite uuid. Two instances of the same program therefore
+    never see each other's arguments."""
+    done: set[str] = field(default_factory=set)  # callsite keys served in this instance
+    bindings: Dict[str, Bindings] = field(default_factory=dict)  # callsite uuid -> ready params
+    last_call: Optional[_CallState] = None  # final sent, next frame not yet seen
+
+
 class GuardServer:
+    SPEC_FEATURES = frozenset({"const", "ret", "toolturn", "probe"})
+
     def __init__(
         self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True,
         spec_policy: str = "global", spec_chunk: int = 128,
+        spec_features: Optional[set] = None, spec_order: str = "static",
     ):
+        # Ablation switches. Features are the compile-time facts speculation may
+        # use beyond the may-run-next topology itself: const/ret parameter
+        # provenance, the in-flight call's own tool turn, and the route probe.
+        # With none of them, only each successor's invariant (anchor) is warmed.
+        self._spec_features = self.SPEC_FEATURES if spec_features is None else set(spec_features)
+        unknown = self._spec_features - self.SPEC_FEATURES
+        if unknown:
+            raise ValueError(f"unknown spec features {sorted(unknown)}")
+        if spec_order not in ("static", "random"):
+            raise ValueError("spec_order must be static or random")
+        self._spec_order = spec_order  # random: shuffle successor order (predictor ablation)
         self._num_workers = num_workers
         self._engine = engine
         self._programs: Dict[str, ProgramTopology] = {}
         self._llm_backend: Dict[str, InterceptorLLMBackend] = {}
         self._task_queue: asyncio.Queue = asyncio.Queue()
-        self._calls: Dict[Tuple[int, int], _CallState] = {}
-        self._last_call: Dict[int, _CallState] = {}
-        self._done: Dict[int, set[str]] = {}
-        self._warm_tokens: Dict[str, int] = {}  # callsite_uuid -> prompt tokens last prefilled
+        self._sessions: Dict[int, _SessionState] = {}  # session id -> instance state
+        self._calls: Dict[Tuple[int, int], _CallState] = {}  # (session id, call id) -> in flight
+        # Warm state is a property of the bytes, not of who asked for them: two
+        # instances warming the same successor with the same bindings share one
+        # entry, so the second does not re-issue what the first already prefilled.
+        self._warm_tokens: Dict[WarmKey, int] = {}
         self._generation_slots = asyncio.Semaphore(num_workers)
         self._speculate = RoutingSpeculate(engine)
         self._proactive_prefill = proactive_prefill
@@ -78,10 +111,43 @@ class GuardServer:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
 
+    # ---- per-instance state -------------------------------------------------
+
+    def _session(self, session: ClientSession) -> _SessionState:
+        return self._sessions.setdefault(session.session_id, _SessionState())
+
+    @staticmethod
+    def _warm_key(site: ByLLMCallsite, bindings: Bindings) -> WarmKey:
+        return site.callsite_uuid, tuple(bindings.items())
+
+    def _forget_site(self, sess: _SessionState, site: ByLLMCallsite) -> None:
+        """Drop an instance's bindings for a site once it has been served (or the
+        instance is gone) and the warm entry those bytes had."""
+        bindings = sess.bindings.pop(site.callsite_uuid, None)
+        if bindings is not None:
+            self._warm_tokens.pop(self._warm_key(site, bindings), None)
+
+    async def _drop_session(self, session: ClientSession) -> None:
+        """The instance's connection closed: release every call waiting on it and
+        every warm entry its bindings named."""
+        sess = self._sessions.pop(session.session_id, None)
+        for key in [k for k in self._calls if k[0] == session.session_id]:
+            state = self._calls.pop(key)
+            await state.inbox.put(None)
+        if sess is None:
+            return
+        program = self._programs.get(session.program_name)
+        for site_uuid, bindings in sess.bindings.items():
+            self._warm_tokens.pop((site_uuid, tuple(bindings.items())), None)
+        console_debug(f"[guard] dropped {session.tag}"
+                      + (f" ({len(sess.done)} sites served)" if program else ""))
+
+    # ---- speculation ---------------------------------------------------------
+
     async def monitor_idle(self) -> None:
         while True:
             await asyncio.sleep(self._engine_idle_interval)
-            if not self._calls or not self._engine.has_prefill_room(1):
+            if not self._calls or self._engine.spec_allowance() <= 0:
                 continue
 
             # Speculation is best-effort: a failed tick must never kill serving.
@@ -101,10 +167,9 @@ class GuardServer:
 
     async def _warm_tool_turn(self, state: _CallState) -> bool:
         """Prefill the in-flight call's pending tool-calling turn in chunks of at
-        most spec_chunk uncached tokens, resuming across ticks.
-        False only when the token budget is exhausted for this tick."""
+        most spec_chunk uncached tokens, resuming across ticks. False only when the token budget is exhausted for this tick."""
         text = state.pending_tool_text
-        if text is None:
+        if text is None or "toolturn" not in self._spec_features:
             return True
         tag = f"toolturn-{state.site.callsite_uuid}-{len(state.messages)}"
         if tag in state.prefilled_sites:
@@ -124,8 +189,9 @@ class GuardServer:
         else:
             warmed = self._engine.count_tokens(self._engine.render(state.messages))
         while warmed < len(ids):
-            cost = min(self._spec_chunk, len(ids) - warmed)
-            if not self._engine.has_prefill_room(cost):
+            # The step's slack, not a fixed chunk, sizes each request under load.
+            cost = min(self._spec_chunk, self._engine.spec_allowance(), len(ids) - warmed)
+            if cost <= 0:
                 state.turn_warm = (tag, warmed)
                 return False
             await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost)
@@ -142,7 +208,9 @@ class GuardServer:
                 # Probed once per call: the ranked plan is cached on the state so
                 # subsequent idle ticks reuse it instead of re-probing the router.
                 if state.route_plan is None:
-                    state.route_plan = await self._speculate.sort_candidate_calls(state, program)
+                    state.route_plan = await self._speculate.sort_candidate_calls(
+                        state, program, rank="probe" in self._spec_features
+                    )
                 sites = state.route_plan
             else:
                 sites = [
@@ -150,6 +218,8 @@ class GuardServer:
                     for key in program.next_calls(state.site)
                     for site in program.sites_of(key)
                 ]
+            if self._spec_order == "random":
+                sites = random.sample(sites, len(sites))
             pending = [s for s in sites if s.callsite_uuid not in state.prefilled_sites]
             if pending:
                 queues.append((state, program, pending))
@@ -162,67 +232,76 @@ class GuardServer:
             for entry in list(queues):
                 state, program, pending = entry
                 site = pending[0]
-                constants = {
-                    name: repr(info["spec"]["value"])
-                    for name, info in program.ready_params(
-                        site.key, state.done, via=state.site.key
-                    ).items()
-                    if info["ready"] and info["spec"]["kind"] == "const"
-                }
-                site.incremental_prompt(constants)
-                ids = self._engine.tokenize(self._engine.render(site.get_ready_prompt()))
-                warmed = self._warm_tokens.get(site.callsite_uuid, 0)
+                sess = self._session(state.session)
+                bindings = sess.bindings.setdefault(site.callsite_uuid, {})
+                if "const" in self._spec_features:
+                    constants = {
+                        name: repr(info["spec"]["value"])
+                        for name, info in program.ready_params(
+                            site.key, state.done, via=state.site.key
+                        ).items()
+                        if info["ready"] and info["spec"]["kind"] == "const"
+                    }
+                    site.incremental_prompt(bindings, constants)
+                ids = self._engine.tokenize(self._engine.render(site.get_ready_prompt(bindings)))
+                key = self._warm_key(site, bindings)
+                warmed = self._warm_tokens.get(key, 0)
                 if warmed < len(ids):
-                    cost = min(self._spec_chunk, len(ids) - warmed)
-                    if not self._engine.has_prefill_room(cost):
+                    cost = min(self._spec_chunk, self._engine.spec_allowance(), len(ids) - warmed)
+                    if cost <= 0:
                         return
                     await self._engine.prefill(
                         ids[: warmed + cost], f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
                     )
                     warmed += cost
-                    self._warm_tokens[site.callsite_uuid] = warmed
+                    self._warm_tokens[key] = warmed
                 if warmed >= len(ids):
                     pending.pop(0)
                     state.prefilled_sites.add(site.callsite_uuid)
                     if not pending:
                         queues.remove(entry)
 
+    # ---- transport events ----------------------------------------------------
+
     async def monitor_task(self) -> None:
         """Keep draining transport events; long-running calls get their own task."""
         while True:
-            backend, request = await self._task_queue.get()
+            session, request = await self._task_queue.get()
             try:
                 if request.type == "register":
                     if request.program_name not in self._programs:
                         raise ValueError(f"unknown program {request.program_name!r}")
-                    self._llm_backend[request.program_name] = backend
-                    self._done[id(backend)] = set()
+                    self._sessions[session.session_id] = _SessionState()
+                    continue
+
+                if request.type == "disconnect":
+                    await self._drop_session(session)
                     continue
 
                 if request.type == "call":
                     # A new call is the protocol's implicit acknowledgement of
                     # the preceding final response on this connection.
-                    await self._retire(backend)
-                    asyncio.create_task(self._run_call(backend, request))
+                    await self._retire(session)
+                    asyncio.create_task(self._run_call(session, request))
                     continue
 
                 if request.type in ("tool_result", "reject"):
                     if request.call is None:
                         raise ValueError(f"{request.type} has no call id")
-                    state = self._calls.get((id(backend), int(request.call)))
+                    state = self._calls.get((session.session_id, int(request.call)))
                     if state is None:
                         raise ValueError(f"unknown call id {request.call}")
                     await state.inbox.put(request)
                     continue
 
                 if request.type == "generate":
-                    await self._retire(backend)
-                    asyncio.create_task(self._process_generate(backend, request))
+                    await self._retire(session)
+                    asyncio.create_task(self._process_generate(session, request))
                     continue
 
                 raise ValueError(f"unsupported request type {request.type!r}")
             except Exception as exc:
-                await backend.send(
+                await session.send(
                     {"type": "error", "id": request.id, "error": str(exc)}
                 )
 
@@ -271,15 +350,15 @@ class GuardServer:
         return call
 
     async def _run_call(
-        self, backend: InterceptorLLMBackend, request: ByLLMRequest
+        self, session: ClientSession, request: ByLLMRequest
     ) -> None:
         try:
-            await self._process_request(backend, request)
+            await self._process_request(session, request)
         except Exception as exc:
-            await backend.send({"type": "error", "id": request.id, "error": str(exc)})
+            await session.send({"type": "error", "id": request.id, "error": str(exc)})
 
     async def _process_request(
-        self, backend: InterceptorLLMBackend, request: ByLLMRequest
+        self, session: ClientSession, request: ByLLMRequest
     ) -> None:
         if request.program_name is None or request.key is None:
             raise ValueError("call request is missing program_name or key")
@@ -287,17 +366,16 @@ class GuardServer:
         if program is None:
             raise ValueError(f"unknown program {request.program_name!r}")
 
+        sess = self._session(session)
         site = program.site_of(request.key, request.site)
-        messages = site.assemble_prompt(request.args or {}, request.nest_scope_desc)
-        call_id:int = request.id  #type: ignore
-        state = _CallState(
-            backend,
-            request,
-            site,
-            messages,
-            self._done.setdefault(id(backend), set()),
+        # This instance's warmed bindings render first so the served prompt
+        # extends the prefix that was prefilled for it.
+        messages = site.assemble_prompt(
+            request.args or {}, request.nest_scope_desc, sess.bindings.get(site.callsite_uuid)
         )
-        state_key = (id(backend), call_id)
+        call_id:int = request.id  #type: ignore
+        state = _CallState(session, request, site, messages, sess.done)
+        state_key = (session.session_id, call_id)
         if state_key in self._calls:
             raise ValueError(f"duplicate call id {call_id}")
         self._calls[state_key] = state
@@ -306,15 +384,12 @@ class GuardServer:
         max_iterations = int(call_params.get("max_react_iterations") or 8)
         retries_left = int(call_params.get("max_output_retries") or 2)
         sampling = self._sampling_params(request, site)
+        tag = f"{request.program_name}:{site.key}:s{session.session_id}c{call_id}"
 
         try:
             iterations = 0
             while True:
-                text = await self._complete(
-                    state.messages,
-                    sampling,
-                    f"{request.program_name}:{site.key}:{call_id}",
-                )
+                text = await self._complete(state.messages, sampling, tag)
 
                 if site.decl.tools:
                     tool_call = self._parse_tool_call(text)
@@ -325,7 +400,7 @@ class GuardServer:
                         if iterations > max_iterations:
                             raise RuntimeError("maximum ReAct iterations exceeded")
                         state.pending_tool_text = text
-                        await backend.send(
+                        await session.send(
                             {
                                 "type": "tool_call",
                                 "call": call_id,
@@ -356,7 +431,7 @@ class GuardServer:
 
                 state.done.add(site.key)
                 ok, value = site.decl.parse_response(output)
-                if ok:
+                if ok and "ret" in self._spec_features:
                     for consumer, parameter in program.consumers_of(site.key):
                         item = program.provenance[consumer][parameter]["kind"] == "ret_item"
                         if item and not (isinstance(value, (list, tuple)) and value):
@@ -366,14 +441,19 @@ class GuardServer:
                         # iteration is ever warmable — bind its element.
                         view = repr(value[0]) if item else repr(value)
                         for consumer_site in program.sites_of(consumer):
-                            consumer_site.incremental_prompt({parameter: view})
+                            # The bytes change, so the old warm entry no longer
+                            # describes anything; the new bindings get a fresh key.
+                            self._forget_site(sess, consumer_site)
+                            consumer_site.incremental_prompt(
+                                sess.bindings.setdefault(consumer_site.callsite_uuid, {}),
+                                {parameter: view},
+                            )
                             state.prefilled_sites.discard(consumer_site.callsite_uuid)
-                            self._warm_tokens.pop(consumer_site.callsite_uuid, None)
 
-                await backend.send(
+                await session.send(
                     {"type": "final", "call": call_id, "output": output, "text": text}
                 )
-                self._last_call[id(backend)] = state
+                sess.last_call = state
 
                 event = await state.inbox.get()
                 if event is None:
@@ -394,28 +474,27 @@ class GuardServer:
                     ]
                 )
         except Exception as exc:
-            await backend.send({"type": "error", "id": call_id, "error": str(exc)})
+            await session.send({"type": "error", "id": call_id, "error": str(exc)})
         finally:
             self._calls.pop(state_key, None)
-            if self._last_call.get(id(backend)) is state:
-                self._last_call.pop(id(backend), None)
-            site.clear_bindings()
-            self._warm_tokens.pop(site.callsite_uuid, None)
+            if sess.last_call is state:
+                sess.last_call = None
+            self._forget_site(sess, site)
 
-    async def _retire(self, backend: InterceptorLLMBackend) -> None:
+    async def _retire(self, session: ClientSession) -> None:
         """Close the window the previous frame left open on this connection.
 
         A `final` (or a routing `result`) is only acknowledged by the client's next
         frame, and the gap between them — client executing local code, engine idle —
         is exactly when monitor_idle speculates. So the state stays registered until
         the next frame arrives, and this is what drops it."""
-        previous = self._last_call.pop(id(backend), None)
-        if previous is None:
+        sess = self._sessions.get(session.session_id)
+        if sess is None or sess.last_call is None:
             return
+        previous, sess.last_call = sess.last_call, None
         if previous.request.type == "generate":
-            self._calls.pop((id(backend), previous.request.id), None)  # type: ignore[arg-type]
-            previous.site.clear_bindings()
-            self._warm_tokens.pop(previous.site.callsite_uuid, None)
+            self._calls.pop((session.session_id, previous.request.id), None)  # type: ignore[arg-type]
+            self._forget_site(sess, previous.site)
         else:
             await previous.inbox.put(None)
 
@@ -437,48 +516,43 @@ class GuardServer:
             return None
 
     async def _process_generate(
-        self, backend: InterceptorLLMBackend, request: ByLLMRequest
+        self, session: ClientSession, request: ByLLMRequest
     ) -> None:
         try:
             if request.id is None or request.messages is None:
                 raise ValueError("generate request is missing id or messages")
             site = self._route_site(request)
             if site is None:
-                await backend.send({
+                await session.send({
                     "type": "result",
                     "id": request.id,
                     "text": await self._complete(
                         request.messages,
                         self._sampling_params(request),
-                        f"{request.program_name}:generate:{request.id}",
+                        f"{request.program_name}:generate:s{session.session_id}c{request.id}",
                     ),
                 })
                 return
-            state = _CallState(
-                backend,
-                request,
-                site,
-                list(request.messages),
-                self._done.setdefault(id(backend), set()),
-            )
+            sess = self._session(session)
+            state = _CallState(session, request, site, list(request.messages), sess.done)
             # Registered before generation so that the idle window *after* the
             # router answers finds it as the current call and speculates on the
             # node abilities the chosen candidate may run.
-            self._calls[(id(backend), request.id)] = state
+            self._calls[(session.session_id, request.id)] = state
             try:
                 text = await self._complete(
                     request.messages,
                     self._sampling_params(request, site),
-                    f"{request.program_name}:{site.key}:{request.id}",
+                    f"{request.program_name}:{site.key}:s{session.session_id}c{request.id}",
                 )
             except Exception:
-                self._calls.pop((id(backend), request.id), None)
+                self._calls.pop((session.session_id, request.id), None)
                 raise
             state.done.add(site.key)
-            await backend.send({"type": "result", "id": request.id, "text": text})
-            self._last_call[id(backend)] = state
+            await session.send({"type": "result", "id": request.id, "text": text})
+            sess.last_call = state
         except Exception as exc:
-            await backend.send({"type": "error", "id": request.id, "error": str(exc)})
+            await session.send({"type": "error", "id": request.id, "error": str(exc)})
 
     def show_info(self, program_name: str):
         if program_name not in self._programs:

@@ -125,7 +125,9 @@ class ByLLMCallsite:
         # A visit decl is already one-per-location, so its key is the whole identity.
         self.callsite_uuid: str = decl.key if stmt is not None else f"{decl.key}@{call.loc.first_line}:{call.loc.col_start}"
         self.consumers: List[Tuple[str, str]] = []  # (consumer decl key, param) fed by this site's return
-        self.bound_args: Dict[str, str] = {}  # ready param reprs; insertion order = warm prefix order
+        # A callsite is an immutable compile-time template. Ready parameter reprs
+        # ("bindings": name -> repr, insertion order = warm prefix order) belong to
+        # the running workflow instance and are passed in by the server.
         self._invariant_system: Optional[str] = None
         self._invariant_user: Optional[str] = None
 
@@ -178,16 +180,17 @@ class ByLLMCallsite:
             self._invariant_user = "\n".join(lines)
         return self._invariant_user
 
-    def incremental_prompt(self, known_args: Dict[str, str]) -> None:
-        """Bind ready parameter reprs into this site's warm state. A rebind (retried
-        producer, fresher output) overwrites in place — dict insertion order survives
-        an overwrite, so the param keeps its warm-prefix position.
+    def incremental_prompt(self, bindings: Dict[str, str], known_args: Dict[str, str]) -> None:
+        """Bind ready parameter reprs into `bindings`, one instance's warm state for
+        this site. A rebind (retried producer, fresher output) overwrites in place —
+        dict insertion order survives an overwrite, so the param keeps its
+        warm-prefix position.
         A routing site binds zones instead of params — they are the observations
         (walker, current node, candidate list) that stand in for arguments there."""
         names = set(self.decl.zones) if self.is_visit else {p["name"] for p in self.decl.params}
         for name, view in known_args.items():
             if name in names:
-                self.bound_args[name] = view
+                bindings[name] = view
 
     def _visit_zone_lines(self, values: Dict[str, str]) -> List[str]:
         """Bound routing zones, in the order route_visit will emit them. Zones are
@@ -198,21 +201,22 @@ class ByLLMCallsite:
                 out.append(f"{ROUTE_ZONE_LABEL[zone]}\n{values[zone]}")
         return out
 
-    def get_ready_prompt(self) -> List[Dict[str, str]]:
-        """[system, user-prefix] of what is known now — invariant plus the bound bindings in bind order. 
-        The server prefills the KV cache with exactly this."""
+    def get_ready_prompt(self, bindings: Dict[str, str]) -> List[Dict[str, str]]:
+        """[system, user-prefix] of what is known now — invariant plus `bindings` in
+        bind order. The server prefills the KV cache with exactly this."""
         if self.is_visit:
-            parts = [self.render_invariant_prompt()] + self._visit_zone_lines(self.bound_args)
+            parts = [self.render_invariant_prompt()] + self._visit_zone_lines(bindings)
             user = "\n\n".join(part for part in parts if part)
         else:
             user = "\n".join([self.render_invariant_prompt()]
-                              + [f"{n} = {v}" for n, v in self.bound_args.items()])
+                              + [f"{n} = {v}" for n, v in bindings.items()])
         return [
             {"role": "system", "content": self.invariant_system},
             {"role": "user", "content": user},
         ]
 
-    def _render_full_prompt(self, args: Dict[str, str], self_view: Optional[str] = None) -> str:
+    def _render_full_prompt(self, args: Dict[str, str], self_view: Optional[str],
+                            bindings: Dict[str, str]) -> str:
         """Serve-path user content as an extension of the warmed prefix: bound params
         first, in bind order with their bound bytes (a conflicting request value wins
         in place — correctness first, cache past that point is lost), then the
@@ -223,32 +227,30 @@ class ByLLMCallsite:
         this rendering is the parity check that the warm prefix is a real prefix."""
         if self.is_visit:
             parts = [self.render_invariant_prompt()] + self._visit_zone_lines(
-                {**self.bound_args, **{k: v for k, v in args.items() if k in self.decl.zones}}
+                {**bindings, **{k: v for k, v in args.items() if k in self.decl.zones}}
             )
             return "\n\n".join(part for part in parts if part)
         lines = [self.render_invariant_prompt()]
-        for name, bound in self.bound_args.items():
+        for name, bound in bindings.items():
             lines.append(f"{name} = {args.get(name, bound)}")
         for p in self.decl.params:
             name = p["name"]
-            if name in args and name not in self.bound_args:
+            if name in args and name not in bindings:
                 lines.append(f"{name} = {args[name]}")
         zones = ["\n".join(lines)]
         if self_view is not None and self.decl.owner_sem:
             zones.append(f"self = {self_view} ---- {self.decl.owner_sem}")
         return "\n\n".join(zones)
 
-    def assemble_prompt(self, args: Dict[str, str], self_view: Optional[str] = None) -> List[Dict[str, str]]:
-        """[system, user] messages for one call frame; already-bound params keep their
-        warmed position and bytes (see _render_full_prompt)."""
+    def assemble_prompt(self, args: Dict[str, str], self_view: Optional[str] = None,
+                        bindings: Optional[Dict[str, str]] = None) -> List[Dict[str, str]]:
+        """[system, user] messages for one call frame; params already bound in this
+        instance's `bindings` keep their warmed position and bytes (see
+        _render_full_prompt)."""
         return [
             {"role": "system", "content": self.invariant_system},
-            {"role": "user", "content": self._render_full_prompt(args, self_view)},
+            {"role": "user", "content": self._render_full_prompt(args, self_view, bindings or {})},
         ]
-
-    def clear_bindings(self) -> None:
-        """Reset warm state after the call is served (or speculation is abandoned)."""
-        self.bound_args.clear()
 
 class ProgramTopology:
     def __init__(self, program_name: str, src_path: str):

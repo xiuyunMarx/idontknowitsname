@@ -1,0 +1,11 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+DECISION: escalate_case(post: str, category: str) -> str --- Write the escalation ticket for a post that may be a threat or harassment. Check the author's history first, then state the risk and the recommended action.
+      post: str ---- the reported post text
+      category: str ---- the category the classifier assigned
+category = 'threat'
+post = 'I know where you live and you will regret posting that.'
+author = 'author_of_post'
+history = 'Author has 2 prior warnings for spam, none in the last 90 days, account age 3 years.'
+
+escalation_ticket = f"Escalate case: Post '{post}' by author '{author}' is classified as a {category}. The author has a history of spamming and has received 2 prior warnings. Given the nature of the post, there is a high risk of harassment. Recommend immediate action to block the author and monitor the account for further threats or harassment."
+AUDIT: Escalate case: Post 'I know where you live and you will regret posting that.' by author 'author_of_post' is classified as a threat. The author has a history of spamming and has received 2 prior warnings. Given the nature of the post, there is a high risk of harassment. Recommend immediate action to block the author and monitor the account for further threats or harassment.

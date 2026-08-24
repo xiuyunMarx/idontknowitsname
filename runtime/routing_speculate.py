@@ -68,23 +68,24 @@ class RoutingSpeculate:
 
         return out
 
-    async def sort_candidate_calls(self, state: _CallState, program: ProgramTopology) -> List[ByLLMCallsite]:
-        """Every candidate's first byLLM callsites, most likely route first."""
+    async def sort_candidate_calls(
+        self, state: _CallState, program: ProgramTopology, rank: bool = True
+    ) -> List[ByLLMCallsite]:
+        """Every candidate's first byLLM callsites, most likely route first.
+        `rank=False` skips the probe and keeps the candidates' listed order."""
         parsed = self._parse_visit(state, program)
         if parsed is None:
             return []
         _, candidate_nodes, first_callsites_by_handle = parsed
 
-        if len(candidate_nodes) > 1:
-            # enable_thinking=False only appends an empty think block after the
-            # generation prompt, so the real call's prompt stays an exact prefix
-            # and the probe's first sampled token is the answer, not reasoning.
+        if rank and len(candidate_nodes) > 1:
+            # enable_thinking=False 
             tokenizer = self.engine.engine.get_tokenizer()
             probe_prompt = tokenizer.apply_chat_template(
-                state.messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
+                state.messages, tokenize=False, add_generation_prompt=True, enable_thinking=False #type: ignore
             )
             top = await self.engine.probe(
-                probe_prompt, f"probe-{state.site.callsite_uuid}-{uuid.uuid4().hex}"
+                probe_prompt, f"probe-{state.site.callsite_uuid}-{uuid.uuid4().hex}" #type: ignore
             )
             scores = {node["handle"]: float("-inf") for node in candidate_nodes}
             for token_id, info in top.items():

@@ -1,6 +1,7 @@
 """Dedicated TCP receiver for one InterceptorLLM client (asyncio).
 
-One InterceptorLLMBackend serves exactly one Jac program; multi-tenancy lives a
+One InterceptorLLMBackend serves one Jac program and any number of its running
+instances (each connection is a ClientSession); multi-tenancy lives a
 layer above (one backend per program), so every message still carries the
 tenant identity (program_name, pid).
 
@@ -21,7 +22,8 @@ every message is a 4-byte big-endian length followed by a UTF-8 JSON body.
 The backend is a pure transport endpoint: it parses every frame into a typed
 `byLLMRequest` (bad frames are answered with an error frame and never reach the
 queue), validates `register`, then puts `(backend, request)` on the shared
-queue and goes back to reading.
+queue and goes back to reading. A closed connection is reported as a
+`disconnect` pseudo-request so the server can drop that session's state.
 The guard server consumes the queue, keeps the per-call conversation state
 (keyed by backend + call id — a `tool_result`/`reject` arrives as its own queue
 event), and replies through `await backend.send(frame)`; a `generate` reply
@@ -36,6 +38,7 @@ async engine, or it freezes every backend on the loop.
 """
 
 import asyncio
+import itertools
 import json
 import struct
 
@@ -122,80 +125,103 @@ class ByLLMRequest:
             out[f] = self.nest_scope_desc if f == "self" else getattr(self, f)
         return out
 
+class ClientSession:
+    """One connected InterceptorLLM client — one running instance of a program.
+
+    The guard server keys every piece of per-workflow state (in-flight calls,
+    completed callsites, parameter bindings) by the session, so any number of
+    instances of the same program can run concurrently through one backend.
+    The session ends with the connection; the server sees that as a
+    `disconnect` pseudo-request on the queue."""
+
+    _ids = itertools.count(1)
+
+    def __init__(self, backend: "InterceptorLLMBackend", reader: asyncio.StreamReader,
+                 writer: asyncio.StreamWriter) -> None:
+        self.backend = backend
+        self.program_name = backend.program_name
+        self.session_id = next(ClientSession._ids)
+        self.pid = -1  # filled in by the register frame
+        self._reader, self._writer = reader, writer
+
+    @property
+    def tag(self) -> str:
+        return f"{self.program_name}#{self.session_id}"
+
+    async def send(self, msg: dict) -> None:
+        """Guard-server side of the interface: push one frame to this client."""
+        data = json.dumps(msg).encode("utf-8")
+        self._writer.write(struct.pack(">I", len(data)) + data)
+        await self._writer.drain()
+
+    async def recv(self) -> dict | None:
+        """One framed message; None means the client closed the connection."""
+        try:
+            header = await self._reader.readexactly(4)
+            body = await self._reader.readexactly(struct.unpack(">I", header)[0])
+        except asyncio.IncompleteReadError:
+            return None
+        return json.loads(body.decode("utf-8"))
+
+
 class InterceptorLLMBackend:
+    """Listener for one program: accepts any number of client sessions."""
+
     def __init__(self, program_name: str, queue: asyncio.Queue,
                  comm_ip: str = "localhost", comm_port: int = 8964) -> None:
         self.program_name = program_name
         self._queue = queue
         self._addr = (comm_ip, comm_port)
         self._server: asyncio.Server | None = None
-        self._reader: asyncio.StreamReader | None = None
-        self._writer: asyncio.StreamWriter | None = None
-        self._fatal = False
-
-    async def send(self, msg: dict) -> None:
-        """Guard-server side of the interface: push one frame to the client."""
-        data = json.dumps(msg).encode("utf-8")
-        self._writer.write(struct.pack(">I", len(data)) + data)  #type: ignore
-        await self._writer.drain()  #type: ignore
-
-    async def recv(self) -> dict | None:
-        """One framed message; None means the client closed the connection."""
-        try:
-            header = await self._reader.readexactly(4)  #type: ignore
-            body = await self._reader.readexactly(struct.unpack(">I", header)[0])  #type: ignore
-        except asyncio.IncompleteReadError:
-            return None
-        return json.loads(body.decode("utf-8"))
+        self.sessions: Dict[int, ClientSession] = {}
 
     async def listen(self) -> None:
-        """Serve the dedicated client forever; re-accepts if the program restarts."""
         self._server = await asyncio.start_server(self._handle, self._addr[0], self._addr[1])
         console_log(f"InterceptorLLMBackend for {self.program_name!r} listening on {self._addr[0]}:{self._addr[1]}")
         async with self._server:
-            try:
-                await self._server.serve_forever()
-            except asyncio.CancelledError:
-                if not self._fatal:
-                    raise  # external cancellation (shutdown), not ours
+            await self._server.serve_forever()
 
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        if self._writer is not None:
-            console_warn("Rejecting second connection: this backend is dedicated to one client")
-            writer.close()
-            return
+        session = ClientSession(self, reader, writer)
         peer = writer.get_extra_info("peername")
-        console_log(f"Accepted connection from {peer}")
-        self._reader, self._writer = reader, writer
+        console_log(f"Accepted connection from {peer} as {session.tag}")
+        self.sessions[session.session_id] = session
+        registered = False
         try:
-            await self._pump()
+            registered = await self._pump(session)
         except (ConnectionError, OSError) as e:
-            console_warn(f"Client connection dropped: {e}")
-        except RuntimeError:
-            self._fatal = True  # program-name mismatch is fatal to this backend
-            self._server.close()  #type: ignore
+            console_warn(f"{session.tag}: connection dropped: {e}")
         finally:
-            self._reader = self._writer = None
+            self.sessions.pop(session.session_id, None)
             writer.close()
-            console_log(f"Client {peer} disconnected")
+            console_log(f"{session.tag} disconnected")
+            if registered:
+                await self._queue.put((session, ByLLMRequest(type="disconnect", pid=session.pid,
+                                                             program_name=self.program_name)))
 
-    async def _pump(self) -> None:
-        """Read frames, parse them into ByLLMRequest, hand each to the guard server."""
+    async def _pump(self, session: ClientSession) -> bool:
+        """Read frames, parse them into ByLLMRequest, hand each to the guard server.
+        Returns whether the session ever registered (so the server has state to drop)."""
+        registered = False
         while True:
-            msg = await self.recv()
+            msg = await session.recv()
             if msg is None:
-                return
+                return registered
             try:
                 req = ByLLMRequest.from_frame(msg)
             except ValueError as e:
-                console_error(f"Bad frame from client: {e}")
-                await self.send({"type": "error", "error": str(e), "id": msg.get("id")})
+                console_error(f"{session.tag}: bad frame: {e}")
+                await session.send({"type": "error", "error": str(e), "id": msg.get("id")})
                 continue
             if req.type == "register":
                 if req.program_name != self.program_name:
-                    console_error(f"Program name mismatch: expected {self.program_name!r}, got {req.program_name!r}")
-                    raise RuntimeError()
-                console_log(f"Registered {req.program_name!r} (pid {req.pid}, model {req.model_name!r})")
+                    # Wrong port for this program: refuse this client only.
+                    console_error(f"{session.tag}: program name mismatch: expected {self.program_name!r}, got {req.program_name!r}")
+                    await session.send({"type": "error", "error": f"backend serves {self.program_name!r}", "id": None})
+                    return registered
+                session.pid = req.pid
+                registered = True
+                console_log(f"Registered {req.program_name!r} (pid {req.pid}, model {req.model_name!r}) as {session.tag}")
             else:
-                console_debug(f"{req.type} from {req.program_name!r} pid {req.pid} key={req.key!r}")
-            await self._queue.put((self, req))
+                console_debug(f"{req.type} from {session.tag} key={req.key!r}")
+            await self._queue.put((session, req))
