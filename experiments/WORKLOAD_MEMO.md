@@ -60,23 +60,24 @@ From the Jac UniIR the pass extracts, per program:
 every δ = 10 ms:
   if no in-flight calls or not room(1): continue tick
   S ← all in-flight call states, all tenants        # newest-only under ablation
-  # 1. certain bytes first: each call's own pending tool turn
+  # 1. certain bytes first: each call's own pending tool turn (also chunked,
+  #    resuming across ticks; the transcript itself is already resident)
   for s in S, newest first:
-      if s has a pending tool turn not yet warmed:
-          c ← tokens(transcript + assistant_text + result_stub) − tokens(transcript)
-          if not room(c): end tick
-          prefill(turn_prompt, cost = c, priority = low)
+      if s has a pending tool turn not yet fully warmed:
+          warm its uncached tail in CHUNK-token slices while room holds,
+          else end tick
   # 2. successors, round-robin across calls so no tenant starves
   for each s: pending(s) ← successors(s) minus already-warmed
       successors(s) = probe-ranked route plan       if s is a visit call
                       sites of may-run-next(s.site) otherwise
-  while any pending, one site per call per round, newest call first:
-      bind ready const params into site
-      p ← render(site warm prefix)
-      c ← max(0, tokens(p) − warmed_tokens[site])   # only the uncached delta
-      if not room(c): end tick
-      prefill(p, cost = c, priority = low)
-      warmed_tokens[site] ← tokens(p)
+  while any pending, one CHUNK per call per round, newest call first:
+      site ← head of pending(s); bind ready const params into it
+      ids ← tokenize(render(site warm prefix))
+      c ← min(CHUNK, |ids| − warmed_tokens[site])   # CHUNK = 128 tokens
+      if not room(c): end tick                       # resumes next tick
+      prefill(ids[: warmed_tokens[site] + c], cost = c, priority = low)
+      warmed_tokens[site] += c
+      if warmed_tokens[site] ≥ |ids|: pop site from pending(s)
 
 on producer return, for every (consumer, param) with ret/ret_item provenance:
       bind repr of the (first element of the) value into consumer sites,
@@ -85,10 +86,30 @@ on producer return, for every (consumer, param) with ret/ret_item provenance:
 room(c) ≡ engine empty ∨ inflight_prefill_tokens + c ≤ B[decode_concurrency]
 ```
 
+**Cross-tenant scheduling.** All tenants share one speculation loop, and each
+tick considers every in-flight call, not just the most recent one. Ordering is
+newest call first — the call that just produced output is the one whose
+successors are most imminent — but allocation is round-robin: one chunk per
+call per round, so a tenant with a long successor list (a 5-way visit fan-out,
+a deep chain) cannot monopolize the window and starve the others. The
+predecessor policy, speculating only on the most recently admitted call, is
+kept as an ablation (`--spec-policy newest`); under seven concurrent tenants
+it leaves every older tenant's successors cold, and switching to global
+round-robin raised cold-start cache hits from 45% to 68% at unchanged TBT in
+the 0.5B load experiment.
+
 Real calls and speculative prefills charge the same in-flight token pool; a
 speculative prefill is admitted only for its estimated uncached delta, so a
 nearly-resident extension (a tool turn over a just-computed transcript) is
 almost free while a cold invariant is charged in full.
+
+The chunk cap is the collision bound: a chunk is submitted as the token-id
+prefix `ids[:warmed+c]` of the full warm prompt (an exact token prefix by
+construction, so the blocks it caches are hit verbatim later), and since every
+speculative request computes at most CHUNK uncached tokens, a real request
+arriving mid-speculation waits at most one small chunk before the priority
+scheduler serves it. This is what makes it safe to keep the token budget open
+while decodes are in flight instead of speculating only on an empty engine.
 
 ### Routing speculation (visit calls)
 
@@ -128,8 +149,9 @@ true idle.)
    client will send. Values not derivable server-side (user objects/enums,
    payloads the client itself rejects) are skipped, never guessed.
 3. **Speculation is best-effort and isolated.** A failed tick logs and
-   continues; low scheduler priority plus the profiled token budget bound the
-   interference with real decodes.
+   continues; low scheduler priority, the profiled token budget, and the
+   per-request chunk cap together bound the interference with real decodes
+   and with arriving real prefills.
 
 Known limitations: a callsite's binding state is shared across concurrent
 calls to the same decl (last writer wins); `ret_item` warms only the first
@@ -286,14 +308,14 @@ open the gate under load (+51% speculative volume) but its collisions with
 arriving real prefills cost +15% TBT and 230-414 ms tail TTFTs; the pure idle
 gate is harmless but stays shut exactly when the bytes are needed most.
 
-### What this points at next
+### Collision-bounded budget speculation (implemented, validation pending)
 
-1. **Register-time warming.** Entry-callsite invariants are compile-time
-   bytes; every program is registered at boot, before any call. Warming them
-   during boot idle would cover the burst's first calls — the one part of the
-   cold start that in-flight-driven speculation structurally cannot reach,
-   and in the multi cell it is most of the deficit.
-2. **Collision-bounded budget speculation.** Cap each speculative prefill
-   chunk (e.g. ≤128 tokens, resuming across ticks) so an in-flight chunk can
-   only delay an arriving real prefill by a bounded amount, then re-enable
-   the token budget under concurrency.
+The response to the bracket above: every speculative prefill is capped at
+CHUNK = 128 uncached tokens and resumes across ticks, so an in-flight chunk
+delays an arriving real prefill by a bounded amount, and the token budget can
+stay enabled under concurrency. Verified mechanically on 0.5B with the budget
+active: a 677-token warm target lands as a 5×128+37 chunk sequence (later
+chunks ~5 ms each), rebinding invalidates and re-chunks correctly, and the
+serve hits 656/700 cached. Quantifying the TBT/TTFT trade-off under
+concurrent load on a 3B-class model needs hardware with prefill slack at that
+size; this GPU has none.

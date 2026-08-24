@@ -25,6 +25,7 @@ class _CallState:
     done: set[str]
     prefilled_sites: set[str] = field(default_factory=set)
     pending_tool_text: Optional[str] = None  # assistant turn awaiting a tool_result
+    turn_warm: Optional[Tuple[str, int]] = None  # (tool-turn tag, tokens warmed so far)
     route_plan: Optional[List[ByLLMCallsite]] = None  # visit successors, ranked once per call
     inbox: asyncio.Queue[Optional[ByLLMRequest]] = field(default_factory=asyncio.Queue)
 
@@ -32,7 +33,7 @@ class _CallState:
 class GuardServer:
     def __init__(
         self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True,
-        spec_policy: str = "global",
+        spec_policy: str = "global", spec_chunk: int = 128,
     ):
         self._num_workers = num_workers
         self._engine = engine
@@ -47,6 +48,7 @@ class GuardServer:
         self._speculate = RoutingSpeculate(engine)
         self._proactive_prefill = proactive_prefill
         self._spec_policy = spec_policy  # "global" | "newest" (ablation: pre-multi-tenant behavior)
+        self._spec_chunk = spec_chunk  # max uncached tokens per speculative prefill request
         self._engine_idle_interval = 0.01
 
     def add_program(self, program_name: str, src_path: str, port: int) -> None:
@@ -98,7 +100,8 @@ class GuardServer:
                 console_error(f"[guard] speculation tick failed: {exc!r}")
 
     async def _warm_tool_turn(self, state: _CallState) -> bool:
-        """Prefill the in-flight call's pending tool-calling turn.
+        """Prefill the in-flight call's pending tool-calling turn in chunks of at
+        most spec_chunk uncached tokens, resuming across ticks.
         False only when the token budget is exhausted for this tick."""
         text = state.pending_tool_text
         if text is None:
@@ -106,20 +109,28 @@ class GuardServer:
         tag = f"toolturn-{state.site.callsite_uuid}-{len(state.messages)}"
         if tag in state.prefilled_sites:
             return True
-        prompt = self._engine.render(
+        ids = self._engine.tokenize(self._engine.render(
             state.messages
             + [
                 {"role": "assistant", "content": text},
                 {"role": "user", "content": "<tool_result>"},
             ]
-        )
-        # The transcript is resident from the call's own turns; the uncached tail
-        # is the assistant text plus the stub (the text's tokens are actually in
-        # cache from decode, so this over-counts a little — the safe direction).
-        cost = max(0, self._engine.count_tokens(prompt) - self._engine.count_tokens(self._engine.render(state.messages)))
-        if not self._engine.has_prefill_room(cost):
-            return False
-        await self._engine.prefill(prompt, f"prefill-{tag}-{uuid.uuid4().hex}", cost)
+        ))
+        # The transcript is resident from the call's own turns; chunks cover only
+        # the tail (the assistant text over-counts a little — its tokens are in
+        # cache from decode — which only errs safe).
+        if state.turn_warm and state.turn_warm[0] == tag:
+            warmed = state.turn_warm[1]
+        else:
+            warmed = self._engine.count_tokens(self._engine.render(state.messages))
+        while warmed < len(ids):
+            cost = min(self._spec_chunk, len(ids) - warmed)
+            if not self._engine.has_prefill_room(cost):
+                state.turn_warm = (tag, warmed)
+                return False
+            await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost)
+            warmed += cost
+        state.turn_warm = None
         state.prefilled_sites.add(tag)
         return True
 
@@ -143,14 +154,14 @@ class GuardServer:
             if pending:
                 queues.append((state, program, pending))
 
-        # One site per call per round, newest call first, so no tenant's long
-        # successor list starves the others.
+        # One chunk per call per round, newest call first, so no tenant's long
+        # successor list starves the others; capping each speculative request at
+        # spec_chunk uncached tokens bounds how long an arriving real prefill
+        # can wait behind speculation.
         while queues:
             for entry in list(queues):
                 state, program, pending = entry
-                site = pending.pop(0)
-                if not pending:
-                    queues.remove(entry)
+                site = pending[0]
                 constants = {
                     name: repr(info["spec"]["value"])
                     for name, info in program.ready_params(
@@ -159,16 +170,22 @@ class GuardServer:
                     if info["ready"] and info["spec"]["kind"] == "const"
                 }
                 site.incremental_prompt(constants)
-                prompt = self._engine.render(site.get_ready_prompt())
-                tokens = self._engine.count_tokens(prompt)
-                cost = max(0, tokens - self._warm_tokens.get(site.callsite_uuid, 0))
-                if not self._engine.has_prefill_room(cost):
-                    return
-                await self._engine.prefill(
-                    prompt, f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
-                )
-                self._warm_tokens[site.callsite_uuid] = tokens
-                state.prefilled_sites.add(site.callsite_uuid)
+                ids = self._engine.tokenize(self._engine.render(site.get_ready_prompt()))
+                warmed = self._warm_tokens.get(site.callsite_uuid, 0)
+                if warmed < len(ids):
+                    cost = min(self._spec_chunk, len(ids) - warmed)
+                    if not self._engine.has_prefill_room(cost):
+                        return
+                    await self._engine.prefill(
+                        ids[: warmed + cost], f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
+                    )
+                    warmed += cost
+                    self._warm_tokens[site.callsite_uuid] = warmed
+                if warmed >= len(ids):
+                    pending.pop(0)
+                    state.prefilled_sites.add(site.callsite_uuid)
+                    if not pending:
+                        queues.remove(entry)
 
     async def monitor_task(self) -> None:
         """Keep draining transport events; long-running calls get their own task."""

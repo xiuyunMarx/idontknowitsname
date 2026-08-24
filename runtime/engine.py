@@ -7,6 +7,7 @@ import uuid
 from typing import Dict, List
 
 from vllm.engine.arg_utils import AsyncEngineArgs
+from vllm.inputs import TokensPrompt
 from vllm.logprobs import Logprob
 from vllm.sampling_params import SamplingParams
 from vllm.v1.engine.async_llm import AsyncLLM
@@ -30,8 +31,11 @@ class ModelEngine:
         self._decode_tasks = 0
         self._prefill_tokens = 0  # estimated tokens of all in-flight prefills, real and speculative
 
+    def tokenize(self, prompt: str) -> List[int]:
+        return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
+
     def count_tokens(self, prompt: str) -> int:
-        return len(self.engine.get_tokenizer().encode(prompt))  # type: ignore[union-attr]
+        return len(self.tokenize(prompt))
 
     def has_prefill_room(self, tokens: int) -> bool:
         """Admit a prefill of `tokens` when the engine is free, or when the profiled
@@ -94,11 +98,17 @@ class ModelEngine:
                 console_debug(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
         return text
 
-    async def prefill(self, prefill_prompt: str, request_id: str, cost: int | None = None) -> None:
-        """`cost` is the caller's estimate of uncached tokens; defaults to full length."""
+    async def prefill(self, prefill_prompt: str | List[int], request_id: str, cost: int | None = None) -> None:
+        """`cost` is the caller's estimate of uncached tokens; defaults to full length.
+        A token-id list warms exactly that prefix of a longer prompt's tokens —
+        how chunked speculation bounds each request to a small uncached slice."""
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True)
         started = time.perf_counter()
-        cost = self.count_tokens(prefill_prompt) if cost is None else cost
+        if isinstance(prefill_prompt, list):
+            cost = len(prefill_prompt) if cost is None else cost
+            prefill_prompt = TokensPrompt(prompt_token_ids=prefill_prompt)
+        else:
+            cost = self.count_tokens(prefill_prompt) if cost is None else cost
         self._prefill_tokens += cost
         try:
             async for _ in self.engine.generate(
@@ -270,7 +280,7 @@ class ModelEngine:
             budget = safe_prefills * chunk_tokens
             if safe_prefills == 0:
                 words = prefill_words // 2
-                while words >= 64:
+                while words >= 32:
                     measured = await self._measure_tbt(
                         num_decodes,
                         1,
