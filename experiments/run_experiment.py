@@ -95,8 +95,8 @@ TENANTS = [
 ]
 
 
-def start_server(extra: list, log_path: str) -> subprocess.Popen:
-    cmd = [sys.executable, "start_server.py", "--model", MODEL, "--workers", "8"]
+def start_server(extra: list, log_path: str, model: str = MODEL) -> subprocess.Popen:
+    cmd = [sys.executable, "start_server.py", "--model", model, "--workers", "8"]
     for name, f, port, _, _ in TENANTS:
         cmd += ["--program", f"{name}:jac_programs/{f}:{port}"]
     cmd += extra

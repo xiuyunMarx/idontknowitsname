@@ -1,0 +1,168 @@
+INFO 08-23 21:41:01 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-23 21:41:01 [model.py:1678] Using max model len 8192
+INFO 08-23 21:41:01 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-23 21:41:01 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=3580645) INFO 08-23 21:41:03 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-3B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-3B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-3B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=3580645) INFO 08-23 21:41:03 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:44669 backend=nccl
+[rank0]:[W823 21:41:03.694412340 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=3580645) INFO 08-23 21:41:03 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=3580645) INFO 08-23 21:41:04 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-3B-Instruct...
+(EngineCore pid=3580645) INFO 08-23 21:41:04 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=3580645) INFO 08-23 21:41:04 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=3580645) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=3580645) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=3580645) Loading safetensors checkpoint shards:   0% Completed | 0/2 [00:00<?, ?it/s]
+(EngineCore pid=3580645) Loading safetensors checkpoint shards:  50% Completed | 1/2 [00:00<00:00,  2.22it/s]
+(EngineCore pid=3580645) Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:00<00:00,  2.63it/s]
+(EngineCore pid=3580645) Loading safetensors checkpoint shards: 100% Completed | 2/2 [00:00<00:00,  2.56it/s]
+(EngineCore pid=3580645) 
+(EngineCore pid=3580645) INFO 08-23 21:41:05 [default_loader.py:384] Loading weights took 0.83 seconds
+(EngineCore pid=3580645) INFO 08-23 21:41:06 [gpu_model_runner.py:4820] Model loading took 5.79 GiB memory and 1.665457 seconds
+(EngineCore pid=3580645) INFO 08-23 21:41:09 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/5300590300/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=3580645) INFO 08-23 21:41:09 [backends.py:1111] Dynamo bytecode transform time: 2.54 s
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.939 s
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/3e595a63125dba515a8dafc94d5369806e385ea75b788021d0366b54eddb6fcc/rank_0_0/model
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [monitor.py:48] torch.compile took 3.69 s in total
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=3580645) INFO 08-23 21:41:10 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=3580645) INFO 08-23 21:41:11 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.26 GiB total
+(EngineCore pid=3580645) INFO 08-23 21:41:11 [gpu_worker.py:436] Available KV cache memory: 15.02 GiB
+(EngineCore pid=3580645) INFO 08-23 21:41:11 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9109 to maintain the same effective KV cache size.
+(EngineCore pid=3580645) INFO 08-23 21:41:11 [kv_cache_utils.py:1319] GPU KV cache size: 437,584 tokens
+(EngineCore pid=3580645) INFO 08-23 21:41:11 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 53.42x
+(EngineCore pid=3580645) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   9%|▊         | 3/35 [00:00<00:01, 22.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:01, 22.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  26%|██▌       | 9/35 [00:00<00:01, 22.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:00, 23.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 15/35 [00:00<00:00, 24.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████▏    | 18/35 [00:00<00:00, 26.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:00<00:00, 27.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  74%|███████▍  | 26/35 [00:00<00:00, 29.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▌ | 30/35 [00:01<00:00, 30.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  97%|█████████▋| 34/35 [00:01<00:00, 32.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 27.87it/s]
+(EngineCore pid=3580645) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  21%|██        | 4/19 [00:00<00:00, 32.69it/s]Capturing CUDA graphs (decode, FULL):  42%|████▏     | 8/19 [00:00<00:00, 33.30it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 12/19 [00:00<00:00, 34.92it/s]Capturing CUDA graphs (decode, FULL):  84%|████████▍ | 16/19 [00:00<00:00, 35.71it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 35.30it/s]
+(EngineCore pid=3580645) INFO 08-23 21:41:13 [gpu_model_runner.py:6046] Graph capturing finished in 2 secs, took 0.35 GiB
+(EngineCore pid=3580645) INFO 08-23 21:41:13 [gpu_worker.py:597] CUDA graph pool memory: 0.35 GiB (actual), 0.26 GiB (estimated), difference: 0.09 GiB (25.4%).
+(EngineCore pid=3580645) INFO 08-23 21:41:14 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.70 seconds
+[32m[LOG][0m InterceptorLLMBackend for 'operations' listening on localhost:8965
+[32m[LOG][0m InterceptorLLMBackend for 'pipeline' listening on localhost:8968
+[32m[LOG][0m InterceptorLLMBackend for 'research' listening on localhost:8964
+[32m[LOG][0m InterceptorLLMBackend for 'route' listening on localhost:8966
+[32m[LOG][0m InterceptorLLMBackend for 'support_email' listening on localhost:8967
+[32m[LOG][0m InterceptorLLMBackend for 'moderation' listening on localhost:8969
+[32m[LOG][0m InterceptorLLMBackend for 'dispatch' listening on localhost:8970
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 44910)
+[32m[LOG][0m Registered 'pipeline' (pid 3581118, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='extract_fields'
+WARNING 08-23 21:41:16 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[36m[DEBUG][0m [serve] pipeline:extract_fields:1-2fbed7dbcbba4c3e895d4d589f42e768 duration_ms=83.69 cached_tokens=0 prompt_tokens=145
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 39272)
+[32m[LOG][0m Registered 'route' (pid 3581120, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m generate from 'route' pid 3581120 key='__visit@route_wire.jac:92'
+[36m[DEBUG][0m [serve] route:__visit@route_wire.jac:92:1-adde2beeb86948dfb6c51fb6cac00c41 duration_ms=42.59 cached_tokens=0 prompt_tokens=201
+[36m[DEBUG][0m [decode] route:__visit@route_wire.jac:92:1-adde2beeb86948dfb6c51fb6cac00c41 decode_ms=70.16 output_tokens=8
+[36m[DEBUG][0m generate from 'route' pid 3581120 key='__visit@route_wire.jac:92'
+[36m[DEBUG][0m [serve] route:__visit@route_wire.jac:92:2-e398ba2ae6f44df6bce42a24b74445f2 duration_ms=52.04 cached_tokens=176 prompt_tokens=444
+[36m[DEBUG][0m [decode] route:__visit@route_wire.jac:92:2-e398ba2ae6f44df6bce42a24b74445f2 decode_ms=39.59 output_tokens=5
+[36m[DEBUG][0m [decode] pipeline:extract_fields:1-2fbed7dbcbba4c3e895d4d589f42e768 decode_ms=398.04 output_tokens=38
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='validate_fields'
+[36m[DEBUG][0m [serve] pipeline:validate_fields:2-fb7027882f024f37ae8d8df49971ea83 duration_ms=18.79 cached_tokens=48 prompt_tokens=137
+[36m[DEBUG][0m [decode] pipeline:validate_fields:2-fb7027882f024f37ae8d8df49971ea83 decode_ms=8.98 output_tokens=2
+[36m[DEBUG][0m call from 'route' pid 3581120 key='resolve_billing'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 43380)
+[32m[LOG][0m Registered 'moderation' (pid 3581186, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m [serve] route:resolve_billing:3-324be0b5cc5c49589dc8187b4c9fbc31 duration_ms=41.43 cached_tokens=32 prompt_tokens=380
+[36m[DEBUG][0m call from 'moderation' pid 3581186 key='classify_content'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 50680)
+[32m[LOG][0m Registered 'support_email' (pid 3581185, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='classify_record'
+[36m[DEBUG][0m [serve] moderation:classify_content:1-a25d33cf661c46f79b27283b4c1a6026 duration_ms=31.87 cached_tokens=48 prompt_tokens=116
+[36m[DEBUG][0m [decode] moderation:classify_content:1-a25d33cf661c46f79b27283b4c1a6026 decode_ms=9.65 output_tokens=2
+[36m[DEBUG][0m [serve] pipeline:classify_record:3-01c16dac80d54337b750da74d73e18fe duration_ms=42.84 cached_tokens=48 prompt_tokens=136
+[36m[DEBUG][0m call from 'support_email' pid 3581185 key='classify_email'
+[36m[DEBUG][0m [decode] pipeline:classify_record:3-01c16dac80d54337b750da74d73e18fe decode_ms=9.32 output_tokens=2
+[36m[DEBUG][0m [serve] support_email:classify_email:1-259fb02449124cb28238b89c68e41e71 duration_ms=32.86 cached_tokens=48 prompt_tokens=127
+[36m[DEBUG][0m [decode] support_email:classify_email:1-259fb02449124cb28238b89c68e41e71 decode_ms=9.93 output_tokens=2
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='summarize_record'
+[36m[DEBUG][0m call from 'moderation' pid 3581186 key='draft_warning'
+[36m[DEBUG][0m [serve] pipeline:summarize_record:4-350a9176ce6a4c5787947587fe1ff990 duration_ms=31.65 cached_tokens=48 prompt_tokens=154
+[36m[DEBUG][0m [serve] moderation:draft_warning:2-da7f7ad815994d16a41939eea92eb489 duration_ms=35.01 cached_tokens=48 prompt_tokens=142
+[36m[DEBUG][0m [decode] route:resolve_billing:3-324be0b5cc5c49589dc8187b4c9fbc31 decode_ms=279.76 output_tokens=27
+[36m[DEBUG][0m call from 'support_email' pid 3581185 key='compose_reply'
+[36m[DEBUG][0m [serve] support_email:compose_reply:2-5e75c92dfb69492499966250c1c336cf duration_ms=82.14 cached_tokens=112 prompt_tokens=711
+[36m[DEBUG][0m [decode] moderation:draft_warning:2-da7f7ad815994d16a41939eea92eb489 decode_ms=200.89 output_tokens=16
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 55396)
+[32m[LOG][0m Registered 'operations' (pid 3581205, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m call from 'moderation' pid 3581186 key='log_decision'
+[36m[DEBUG][0m [decode] pipeline:summarize_record:4-350a9176ce6a4c5787947587fe1ff990 decode_ms=381.05 output_tokens=33
+[36m[DEBUG][0m [serve] route:resolve_billing:3-22a3b206e5e74fe3adb68c63b29beb63 duration_ms=33.80 cached_tokens=400 prompt_tokens=449
+[36m[DEBUG][0m [decode] support_email:compose_reply:2-5e75c92dfb69492499966250c1c336cf decode_ms=213.57 output_tokens=22
+[36m[DEBUG][0m [serve] moderation:log_decision:3-4adecfc81f7b40b29073c7990b532a5b duration_ms=36.59 cached_tokens=48 prompt_tokens=115
+[36m[DEBUG][0m call from 'operations' pid 3581205 key='collect_metrics'
+[36m[DEBUG][0m [serve] operations:collect_metrics:1-096dbd8929194b17afa731900d351153 duration_ms=46.65 cached_tokens=112 prompt_tokens=351
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='translate_summary'
+[36m[DEBUG][0m [serve] pipeline:translate_summary:5-0a549dc77f934c1bbd66d4482217fe63 duration_ms=27.93 cached_tokens=48 prompt_tokens=120
+[36m[DEBUG][0m [decode] moderation:log_decision:3-4adecfc81f7b40b29073c7990b532a5b decode_ms=186.13 output_tokens=17
+[36m[DEBUG][0m call from 'support_email' pid 3581185 key='polish_reply'
+[36m[DEBUG][0m [serve] support_email:polish_reply:3-af3a4abc278248a09c0eefaaec4010a6 duration_ms=35.92 cached_tokens=48 prompt_tokens=127
+[32m[LOG][0m Client ('127.0.0.1', 43380) disconnected
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 46372)
+[32m[LOG][0m Registered 'dispatch' (pid 3581260, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m [decode] operations:collect_metrics:1-096dbd8929194b17afa731900d351153 decode_ms=357.31 output_tokens=35
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 52970)
+[32m[LOG][0m Registered 'research' (pid 3581262, model 'Qwen/Qwen2.5-3B-Instruct')
+[36m[DEBUG][0m generate from 'dispatch' pid 3581260 key='__visit@dispatch_router.jac:126'
+[36m[DEBUG][0m [decode] route:resolve_billing:3-22a3b206e5e74fe3adb68c63b29beb63 decode_ms=461.41 output_tokens=43
+[36m[DEBUG][0m [decode] support_email:polish_reply:3-af3a4abc278248a09c0eefaaec4010a6 decode_ms=204.06 output_tokens=21
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m call from 'research' pid 3581262 key='investigate'
+[36m[DEBUG][0m [serve] dispatch:__visit@dispatch_router.jac:126:1-050f6beda31c4078a004da56a5de1ed1 duration_ms=47.68 cached_tokens=32 prompt_tokens=294
+[36m[DEBUG][0m [serve] route:resolve_billing:3-0325f5b8c8d14a6b8de2e1ee6d2fa653 duration_ms=58.41 cached_tokens=480 prompt_tokens=516
+[36m[DEBUG][0m [serve] research:investigate:1-6556cb8576b94a989a79eaca25f28f20 duration_ms=61.93 cached_tokens=112 prompt_tokens=383
+[32m[LOG][0m Client ('127.0.0.1', 50680) disconnected
+[36m[DEBUG][0m [decode] pipeline:translate_summary:5-0a549dc77f934c1bbd66d4482217fe63 decode_ms=468.40 output_tokens=41
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m call from 'pipeline' pid 3581118 key='format_output'
+[36m[DEBUG][0m [decode] research:investigate:1-6556cb8576b94a989a79eaca25f28f20 decode_ms=186.71 output_tokens=19
+[36m[DEBUG][0m [serve] operations:collect_metrics:1-faf2d0efdaaf448fac98986d777f1d80 duration_ms=31.61 cached_tokens=384 prompt_tokens=411
+[36m[DEBUG][0m [serve] pipeline:format_output:6-80dc9c1525644af2909c448adb24c40c duration_ms=43.73 cached_tokens=48 prompt_tokens=186
+[36m[DEBUG][0m [decode] dispatch:__visit@dispatch_router.jac:126:1-050f6beda31c4078a004da56a5de1ed1 decode_ms=392.22 output_tokens=35
+[36m[DEBUG][0m generate from 'dispatch' pid 3581260 key='__visit@dispatch_router.jac:126'
+[36m[DEBUG][0m [serve] dispatch:__visit@dispatch_router.jac:126:2-a91fd5b4239c43efb57175b9f09e9f74 duration_ms=55.57 cached_tokens=272 prompt_tokens=589
+[36m[DEBUG][0m [decode] dispatch:__visit@dispatch_router.jac:126:2-a91fd5b4239c43efb57175b9f09e9f74 decode_ms=41.42 output_tokens=5
+[36m[DEBUG][0m [decode] route:resolve_billing:3-0325f5b8c8d14a6b8de2e1ee6d2fa653 decode_ms=497.48 output_tokens=43
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m [serve] research:investigate:1-a575e5a6997b40c38be2f6649277ca60 duration_ms=24.76 cached_tokens=400 prompt_tokens=427
+[36m[DEBUG][0m call from 'dispatch' pid 3581260 key='resolve_database'
+[36m[DEBUG][0m call from 'route' pid 3581120 key='summarize'
+[36m[DEBUG][0m [serve] dispatch:resolve_database:3-59cec1cecacb4ca8a3047cf21b1ece36 duration_ms=53.06 cached_tokens=112 prompt_tokens=398
+[36m[DEBUG][0m [serve] route:summarize:4-d235e833fa43415aa8c2237d971c27b6 duration_ms=59.19 cached_tokens=48 prompt_tokens=137
+[36m[DEBUG][0m [decode] research:investigate:1-a575e5a6997b40c38be2f6649277ca60 decode_ms=276.61 output_tokens=25
+[36m[DEBUG][0m [decode] operations:collect_metrics:1-faf2d0efdaaf448fac98986d777f1d80 decode_ms=641.98 output_tokens=57
+[36m[DEBUG][0m [decode] dispatch:resolve_database:3-59cec1cecacb4ca8a3047cf21b1ece36 decode_ms=200.25 output_tokens=20
+[36m[DEBUG][0m [decode] route:summarize:4-d235e833fa43415aa8c2237d971c27b6 decode_ms=313.28 output_tokens=32
+[36m[DEBUG][0m [decode] pipeline:format_output:6-80dc9c1525644af2909c448adb24c40c decode_ms=828.41 output_tokens=77
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m [serve] research:investigate:1-e9cccc3919594ca29fedb1ea26c8f13f duration_ms=17.76 cached_tokens=448 prompt_tokens=482
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m tool_result from None pid -1 key=None
+[36m[DEBUG][0m [serve] dispatch:resolve_database:3-d8f0490a8c974ebfb997cef48e76fd9c duration_ms=25.96 cached_tokens=416 prompt_tokens=456
+[36m[DEBUG][0m [serve] operations:collect_metrics:1-07a027d324c940e7949dcc4ee4c04756 duration_ms=32.24 cached_tokens=416 prompt_tokens=496
+[32m[LOG][0m Client ('127.0.0.1', 39272) disconnected
+[32m[LOG][0m Client ('127.0.0.1', 44910) disconnected
+[36m[DEBUG][0m [decode] dispatch:resolve_database:3-d8f0490a8c974ebfb997cef48e76fd9c decode_ms=209.04 output_tokens=21
+[36m[DEBUG][0m [decode] operations:collect_metrics:1-07a027d324c940e7949dcc4ee4c04756 decode_ms=382.05 output_tokens=39
+[36m[DEBUG][0m call from 'dispatch' pid 3581260 key='debrief'
+[36m[DEBUG][0m [decode] research:investigate:1-e9cccc3919594ca29fedb1ea26c8f13f decode_ms=500.96 output_tokens=50
+[36m[DEBUG][0m [serve] dispatch:debrief:4-57b1c6916f0b49078b63d3abe8ee4a51 duration_ms=27.49 cached_tokens=48 prompt_tokens=118
+[36m[DEBUG][0m call from 'operations' pid 3581205 key='analyze_metrics'
+[36m[DEBUG][0m call from 'research' pid 3581262 key='draft_answer'
+[36m[DEBUG][0m [serve] operations:analyze_metrics:2-9049b83f9e6e4aaa88497cd69a7b29ab duration_ms=52.50 cached_tokens=112 prompt_tokens=403
+[36m[DEBUG][0m [serve] research:draft_answer:2-4f0eebfc22114875b3b2cdc4b79bca0a duration_ms=34.59 cached_tokens=48 prompt_tokens=152
+[36m[DEBUG][0m [decode] dispatch:debrief:4-57b1c6916f0b49078b63d3abe8ee4a51 decode_ms=257.79 output_tokens=25
+[36m[DEBUG][0m [decode] operations:analyze_metrics:2-9049b83f9e6e4aaa88497cd69a7b29ab decode_ms=67.30 output_tokens=7
+[32m[LOG][0m Client ('127.0.0.1', 46372) disconnected
+[36m[DEBUG][0m call from 'operations' pid 3581205 key='write_report'
+[36m[DEBUG][0m [serve] operations:write_report:3-cef433dc1bec45f8a539100e6c39ce30 duration_ms=33.61 cached_tokens=48 prompt_tokens=145
+[36m[DEBUG][0m [decode] research:draft_answer:2-4f0eebfc22114875b3b2cdc4b79bca0a decode_ms=307.30 output_tokens=33
+[36m[DEBUG][0m call from 'research' pid 3581262 key='audit_answer'
+[36m[DEBUG][0m [serve] research:audit_answer:3-7380c283d9c846748aa5038e017591e6 duration_ms=33.31 cached_tokens=48 prompt_tokens=128
+[36m[DEBUG][0m [decode] research:audit_answer:3-7380c283d9c846748aa5038e017591e6 decode_ms=119.27 output_tokens=13
+[32m[LOG][0m Client ('127.0.0.1', 52970) disconnected
+[36m[DEBUG][0m [decode] operations:write_report:3-cef433dc1bec45f8a539100e6c39ce30 decode_ms=724.58 output_tokens=78
+[32m[LOG][0m Client ('127.0.0.1', 55396) disconnected
+(EngineCore pid=3580645) INFO 08-23 21:41:21 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=3580645) INFO 08-23 21:41:21 [core.py:1233] Shutdown complete

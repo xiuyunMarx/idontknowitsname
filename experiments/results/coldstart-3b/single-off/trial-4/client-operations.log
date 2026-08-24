@@ -1,0 +1,16 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+✖ Error: Error: guard server error: maximum ReAct iterations exceeded
+  105 |             msg = self._recv_msg();
+  106 |             if msg.get("type") == "error" {
+  107 |                 raise RuntimeError(f"guard server error: {msg.get('error')}");
+      |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  108 |             }
+  109 |             if msg.get("call") != call_id {
+  at _invoke_react_loop() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:107
+  at _invoke_typed_retry() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:570
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/basellm.impl.jac:505
+  at invoke() /home/xiaoyu/jaseci/jac/jaclang/byllm/llm.impl/interceptorLLM.impl.jac:67
+  ... [internal runtime calls]
+  at collect_metrics() /home/xiaoyu/proactive_prefill/jac_programs/operations_agent.jac:33
+  at <module> /home/xiaoyu/proactive_prefill/jac_programs/operations_agent.jac:64
+  ... [internal runtime calls]
