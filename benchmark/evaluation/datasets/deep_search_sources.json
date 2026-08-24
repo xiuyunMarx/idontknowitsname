@@ -1,0 +1,95 @@
+{
+ "tasks": [
+  {
+   "id": "dr-mini-00",
+   "cluster": "mini",
+   "kind": "mini",
+   "task": "Assess whether prefix caching or prefill-decode disaggregation is the better lever for cutting time to first token in multi-step agent workloads.",
+   "rubric": {
+    "papers": [],
+    "pages": [],
+    "metrics": [],
+    "sources": []
+   }
+  },
+  {
+   "id": "dr-mini-01",
+   "cluster": "mini",
+   "kind": "mini",
+   "task": "Explain what changed in LLM serving between Orca's iteration-level scheduling and Sarathi's chunked prefill, and what each change cost.",
+   "rubric": {
+    "papers": [],
+    "pages": [],
+    "metrics": [],
+    "sources": []
+   }
+  },
+  {
+   "id": "dr-mini-02",
+   "cluster": "mini",
+   "kind": "mini",
+   "task": "Determine whether the measured time-to-first-token reduction in the local benchmark is explained by the change in cached prompt tokens.",
+   "rubric": {
+    "papers": [],
+    "pages": [],
+    "metrics": [],
+    "sources": []
+   }
+  },
+  {
+   "id": "dr-mini-03",
+   "cluster": "mini",
+   "kind": "mini",
+   "task": "Weigh the evidence for and against speculative decoding as a way to reduce time to first token.",
+   "rubric": {
+    "papers": [],
+    "pages": [],
+    "metrics": [],
+    "sources": []
+   }
+  },
+  {
+   "id": "dr-mini-04",
+   "cluster": "mini",
+   "kind": "mini",
+   "task": "Compare how vLLM and SGLang reuse KV cache across requests, and say which agent workloads benefit most from each.",
+   "rubric": {
+    "papers": [],
+    "pages": [],
+    "metrics": [],
+    "sources": []
+   }
+  }
+ ],
+ "web": {
+  "PagedAttention in vLLM": "vLLM manages the KV cache with PagedAttention, which stores attention keys and values in fixed-size blocks that need not be contiguous in memory, the way an operating system pages virtual memory. Blocks can be shared between sequences, so memory fragmentation drops and more requests fit on one GPU. The design was published by Kwon et al. at SOSP 2023.",
+  "Automatic prefix caching": "Automatic prefix caching keeps the KV blocks of prompt prefixes that have already been computed and reuses them for later requests that begin with the same tokens. Reuse is exact and token-aligned: the served token prefix has to match block by block, so a single differing token ends the reuse at that point. Workloads with long shared system prompts see the largest time-to-first-token reduction.",
+  "Chunked prefill": "Chunked prefill splits one long prefill into several smaller pieces that are scheduled together with ongoing decode steps, instead of running the whole prefill as one blocking step. Decode stalls shrink because no single prefill monopolizes a step, at the cost of a small increase in time between tokens. The technique comes from the Sarathi line of work.",
+  "Continuous batching": "Continuous batching, also called iteration-level scheduling, admits and retires requests at every model step rather than once per batch. A finished sequence leaves the batch immediately and a queued request takes its slot, which raises throughput substantially over static batching. Orca introduced the technique at OSDI 2022.",
+  "Prefill and decode disaggregation": "Prefill is compute bound and decode is memory bandwidth bound, and running both phases on the same replica makes them interfere. Disaggregated serving assigns the two phases to separate replicas and transfers the KV cache between them, which stabilizes tail latency at the cost of the transfer. Splitwise and DistServe both report goodput gains from this split.",
+  "Speculative decoding": "Speculative decoding runs a small draft model to propose several tokens ahead, then verifies them in one pass of the target model, accepting the longest prefix that matches. It reduces the number of target model steps per generated token, so it shortens decode time. It does not shorten prefill, so its effect on time to first token is indirect.",
+  "Serving latency metrics": "Time to first token, or TTFT, measures the interval from a request being admitted to the first output token, and is dominated by prefill work and queueing. Time between tokens, or TBT, measures the interval between successive output tokens during decode. Throughput and goodput count completed tokens or requests per second under a latency target.",
+  "KV reuse in agent workloads": "Agentic workflows repeat a long invariant context on every step: the system persona, the tool schemas, and the function signature stay identical while only a few argument bytes change. That repetition is what a prefix cache exploits, and it is why multi-step agents show higher cache hit rates than single-turn chat traffic."
+ },
+ "papers": {
+  "vllm-sosp23": "Efficient Memory Management for Large Language Model Serving with PagedAttention (SOSP 2023, Kwon et al.). Introduces PagedAttention and the vLLM serving engine. KV cache is stored in non-contiguous blocks with an indirection table, which lowers memory waste and lets sequences share blocks. Reported throughput gains of two to four times over prior systems at the same latency.",
+  "orca-osdi22": "Orca: A Distributed Serving System for Transformer-Based Generative Models (OSDI 2022, Yu et al.). Introduces iteration-level scheduling and selective batching so that requests join and leave a batch between model steps. Throughput improves greatly at the same latency compared with request-level batching.",
+  "sarathi-serve": "Sarathi-Serve: Taming Throughput-Latency Tradeoff in LLM Inference (2023-2024). Proposes chunked prefills and stall-free batching, splitting long prefills into fixed token budgets that ride alongside decode iterations. Shows that the throughput-latency tradeoff can be tuned by the chunk size.",
+  "splitwise-isca24": "Splitwise: Efficient Generative LLM Inference Using Phase Splitting (ISCA 2024). Runs the prompt phase and the token phase on separate machine pools, transferring the KV cache over fast interconnect, and reports higher throughput under the same power and cost budget.",
+  "distserve-osdi24": "DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized LLM Serving (OSDI 2024). Places prefill and decode on different GPUs and co-optimizes parallelism per phase, reporting large goodput improvements under tight TTFT and TBT targets.",
+  "sglang-radix": "SGLang: Efficient Execution of Structured Language Model Programs. Introduces RadixAttention, which keeps a radix tree of KV cache prefixes across requests so that structured programs with shared prefixes reuse cached tokens automatically, together with a front-end language for such programs."
+ },
+ "metrics": {
+  "ttft_ms_baseline": "TTFT per successor call, baseline condition, milliseconds: 34.61, 30.39, 37.58, 19.02",
+  "ttft_ms_proactive": "TTFT per successor call, proactive prefill condition, milliseconds: 30.26, 12.84, 29.44, 16.08",
+  "cached_prompt_tokens": "Prefix-cache hits per successor call, baseline then proactive: 32 to 96, 48 to 96, 112 to 352, 48 to 112",
+  "tbt_ms": "Mean time between tokens, single-task mode: baseline 9.13, speculative during decode 9.90, speculative only while idle 9.21"
+ },
+ "sources": {
+  "prefix-cache": "Prefix cache reuse is exact and token-aligned: the served token sequence must match the cached one block by block, so a prompt that differs in one early token gets no reuse after that token.",
+  "chunked-prefill": "Chunked prefill lowers decode stalls and raises mean time between tokens slightly; it does not by itself reduce the number of prompt tokens that must be computed.",
+  "disaggregation": "Phase disaggregation removes prefill-decode interference but adds a KV cache transfer between replicas, so its benefit depends on interconnect bandwidth.",
+  "speculative-decoding": "Speculative decoding shortens decode by proposing tokens with a draft model; it leaves the prefill phase, and therefore time to first token, essentially unchanged.",
+  "continuous-batching": "Iteration-level scheduling changes when requests enter and leave a batch; it raises throughput but does not remove prompt computation for a cold prefix."
+ }
+}

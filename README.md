@@ -53,7 +53,7 @@ Start the proactive server:
 
 ```bash
 python start_server.py \
-  --model Qwen/Qwen2.5-3B-Instruct \
+  --model Qwen/Qwen2.5-7B-Instruct \
   --program research:jac_programs/research_agent.jac:8964 \
   --program operations:jac_programs/operations_agent.jac:8965
 ```
@@ -81,7 +81,7 @@ The matched baseline keeps vLLM APC enabled but disables proactive idle serving:
 ```bash
 python start_server.py \
   --no-prefill \
-  --model Qwen/Qwen2.5-3B-Instruct \
+  --model Qwen/Qwen2.5-7B-Instruct \
   --program research:jac_programs/research_agent.jac:8964 \
   --program operations:jac_programs/operations_agent.jac:8965
 ```

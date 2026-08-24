@@ -1,0 +1,344 @@
+INFO 08-24 16:44:42 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 16:44:42 [model.py:1678] Using max model len 8192
+INFO 08-24 16:44:42 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 16:44:42 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=619823) INFO 08-24 16:44:44 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=619823) INFO 08-24 16:44:44 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:39759 backend=nccl
+[rank0]:[W824 16:44:44.210744057 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=619823) INFO 08-24 16:44:44 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=619823) INFO 08-24 16:44:44 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=619823) INFO 08-24 16:44:45 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=619823) INFO 08-24 16:44:45 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=619823) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=619823) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=619823) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=619823) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.35it/s]
+(EngineCore pid=619823) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.23it/s]
+(EngineCore pid=619823) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.20it/s]
+(EngineCore pid=619823) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=619823) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=619823) 
+(EngineCore pid=619823) INFO 08-24 16:44:47 [default_loader.py:384] Loading weights took 1.85 seconds
+(EngineCore pid=619823) INFO 08-24 16:44:48 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.672017 seconds
+(EngineCore pid=619823) INFO 08-24 16:44:50 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=619823) INFO 08-24 16:44:50 [backends.py:1111] Dynamo bytecode transform time: 2.23 s
+(EngineCore pid=619823) INFO 08-24 16:44:51 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.583 s
+(EngineCore pid=619823) INFO 08-24 16:44:51 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=619823) INFO 08-24 16:44:51 [monitor.py:48] torch.compile took 2.97 s in total
+(EngineCore pid=619823) INFO 08-24 16:44:51 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=619823) INFO 08-24 16:44:52 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=619823) INFO 08-24 16:44:52 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=619823) INFO 08-24 16:44:53 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=619823) INFO 08-24 16:44:53 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=619823) INFO 08-24 16:44:53 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=619823) INFO 08-24 16:44:53 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=619823) INFO 08-24 16:44:53 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=619823) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 13.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 17.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.48it/s]
+(EngineCore pid=619823) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.11it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.28it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 24.92it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 28.34it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.22it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 28.72it/s]
+(EngineCore pid=619823) INFO 08-24 16:44:56 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=619823) INFO 08-24 16:44:56 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=619823) INFO 08-24 16:44:56 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.94 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
+WARNING 08-24 16:44:56 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 425 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 443 ms
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54288) as hover#1
+[32m[LOG][0m Registered 'hover' (pid 620058, model 'Qwen/Qwen2.5-7B-Instruct') as hover#1
+[36m[DEBUG][0m call from hover#1 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s1c1-12e61e399f104e9cb357bbdf26ef31ff duration_ms=34.90 cached_tokens=0 prompt_tokens=123
+[prefill] prefill-SearchData.plan_query@235:25-4f2a63e8d51b4d2fa2c310b8902ef4d3 cost_tokens=48 duration_ms=57.35
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 50916) as intercode_sql#2
+[32m[LOG][0m Registered 'intercode_sql' (pid 620060, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#2
+[prefill] prefill-SearchData.plan_query@235:25-75c03c29af9d42778efe74f256c54099 cost_tokens=48 duration_ms=58.84
+[36m[DEBUG][0m call from intercode_sql#2 key='generate_sql'
+[prefill] prefill-SearchData.plan_query@235:25-ddecc4332e7f41419a4580409136f95f cost_tokens=48 duration_ms=20.96 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s2c1-cf5567f23ca248f88f99eebe8c7fc8d7 duration_ms=214.97 cached_tokens=32 prompt_tokens=822
+[prefill] prefill-diagnose@367:30-d1da1108083846ce9c56c072e11e5e02 cost_tokens=48 duration_ms=55.81
+[prefill] prefill-SearchData.plan_query@235:25-a86d557bcd4341818ce39d3f6ccd928c cost_tokens=48 duration_ms=58.38
+[prefill] prefill-diagnose@367:30-47efd022a3ea4906a00af4b7da1778ef cost_tokens=48 duration_ms=57.75
+[prefill] prefill-SearchData.plan_query@235:25-77ca16b72f734303a9383de9bea2c523 cost_tokens=5 duration_ms=59.01
+[prefill] prefill-diagnose@367:30-538bc44ff86e4ee9a85284d5848c227d cost_tokens=48 duration_ms=57.61
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s2c1-cf5567f23ca248f88f99eebe8c7fc8d7 decode_ms=332.62 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s2c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "Documents"}}'
+[prefill] prefill-diagnose@367:30-f638098f16234c2d85b3930466e775f9 cost_tokens=48 duration_ms=57.69
+[prefill] prefill-diagnose@367:30-09cc2a20fde343ef8934376c44c272aa cost_tokens=48 duration_ms=57.19
+[prefill] prefill-diagnose@367:30-cf408127cbc64feca849d55886019040 cost_tokens=48 duration_ms=57.32
+[prefill] prefill-diagnose@367:30-3fc37dcc2f2a4517a8d675714bedcf1f cost_tokens=48 duration_ms=57.10
+[prefill] prefill-diagnose@367:30-5503fd02bb5145bab719cfc1eae3a7eb cost_tokens=48 duration_ms=57.18
+[prefill] prefill-diagnose@367:30-fe4d47a3862840bea50918173be6767f cost_tokens=48 duration_ms=56.80
+[36m[DEBUG][0m call from intercode_sql#2 key='diagnose'
+[prefill] prefill-diagnose@367:30-73a77202798d4b9e81116307ff4dcffb cost_tokens=48 duration_ms=44.14 aborted=1
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s1c1-12e61e399f104e9cb357bbdf26ef31ff decode_ms=1055.28 output_tokens=47
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s1c1 typed_ok=True output='Southern California Logistics Airport is located in California.\nVictorville is a city in California.\nThe distance between Southern California Logistics Airport '
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s2c2-069c1f3621a3429c9ebe50c0a2f0c705 duration_ms=86.58 cached_tokens=336 prompt_tokens=507
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 51864) as deep_search#3
+[32m[LOG][0m Registered 'deep_search' (pid 620084, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#3
+[prefill] prefill-revise_sql@369:24-22430aae2d504ccdabd7aff0b7fa7641 cost_tokens=48 duration_ms=49.20
+[prefill] prefill-SearchData.plan_query@235:25-18956b30852b4c75a5086629e3dc97fa cost_tokens=48 duration_ms=58.10
+[prefill] prefill-revise_sql@369:24-af5e191a3fdb45629ac4e1035f8667fd cost_tokens=48 duration_ms=58.84
+[prefill] prefill-SearchData.plan_query@235:25-c71724f1c72549868c7bd69f51dbee57 cost_tokens=48 duration_ms=58.65
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s2c2-069c1f3621a3429c9ebe50c0a2f0c705 decode_ms=254.90 output_tokens=14
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s2c2 typed_ok=True output='<tool_call>{"name": "show_schema", "arguments": {}}'
+[36m[DEBUG][0m call from deep_search#3 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-revise_sql@369:24-2392d23772cb4c0da9d0b2c40e99e98d cost_tokens=48 duration_ms=45.29 aborted=1
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s3c1-d66f6471d8b041159e4079cebe53ec5e duration_ms=114.07 cached_tokens=48 prompt_tokens=340
+[36m[DEBUG][0m call from intercode_sql#2 key='revise_sql'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c2-3f52a5ae843c4a5e8786450d3d32cdb2 duration_ms=112.54 cached_tokens=144 prompt_tokens=222
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s2c3-c457e867115c4579915f9dd5491a0c3a duration_ms=150.07 cached_tokens=144 prompt_tokens=587
+[prefill] prefill-diagnose@367:30-d6962d23a6c74b1f92098da6c316e6b4 cost_tokens=48 duration_ms=49.79
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s2c3-c457e867115c4579915f9dd5491a0c3a decode_ms=96.79 output_tokens=6
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s2c3 typed_ok=True output='SELECT COUNT(*) FROM Documents'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-3247f60c17904e3daee1581b4ca62645 cost_tokens=48 duration_ms=57.74
+[prefill] prefill-__visit@deep_search.jac:380-590aff7a0d444ec1bb01b4355335af76 cost_tokens=48 duration_ms=58.47
+[prefill] prefill-diagnose@367:30-e1aa6b03e8904979abe0f1f064721fde cost_tokens=48 duration_ms=57.59
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c2-3f52a5ae843c4a5e8786450d3d32cdb2 decode_ms=407.00 output_tokens=17
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c2 typed_ok=True output='"What entity is the direction from Victorville to Southern California Logistics Airport dependent on?"'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-00906c9558814323ad8b5cf89a7f812f cost_tokens=48 duration_ms=57.43
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[prefill] prefill-__visit@deep_search.jac:380-8f686ce2ceb849ada3ff97bfae7d9a8f cost_tokens=48 duration_ms=5.70 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c3-20d4543bab0246b9869082d1fe60761e duration_ms=149.43 cached_tokens=112 prompt_tokens=510
+[36m[DEBUG][0m call from intercode_sql#2 key='finalize'
+[prefill] prefill-SearchData.reason_hop@238:26-3698b95047d84e3c844c96186844eb4f cost_tokens=48 duration_ms=1.13 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s2c4-73a4f27ade3e4810915f645b6b1856b3 duration_ms=62.59 cached_tokens=48 prompt_tokens=154
+[prefill] prefill-SearchData.reason_hop@238:26-87010f111b944cb188e3690b7272734b cost_tokens=48 duration_ms=57.13
+[prefill] prefill-__visit@deep_search.jac:380-6f24cc586f0d4a7a842ab5e24db89c7d cost_tokens=48 duration_ms=58.71
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s2c4-73a4f27ade3e4810915f645b6b1856b3 decode_ms=137.58 output_tokens=8
+[36m[DEBUG][0m [final] intercode_sql:finalize:s2c4 typed_ok=True output='We have 14 templates.'
+[prefill] prefill-SearchData.reason_hop@238:26-81e9fc76d806423b903a8aa58cb5d80f cost_tokens=48 duration_ms=59.33
+[prefill] prefill-__visit@deep_search.jac:380-b692e33774904c04913e3dfef522894e cost_tokens=10 duration_ms=59.34
+[32m[LOG][0m intercode_sql#2 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#2 (4 sites served)
+[prefill] prefill-SearchData.reason_hop@238:26-828aae6342cd458a9dd88fc5874f9a08 cost_tokens=48 duration_ms=58.31
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c3-20d4543bab0246b9869082d1fe60761e decode_ms=424.56 output_tokens=22
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-8fd705e3909f4e8581e0354a6a96c583 cost_tokens=47 duration_ms=58.60
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c4-3d666b9fc102414bad3081e8239bfaaa duration_ms=62.49 cached_tokens=160 prompt_tokens=238
+[prefill] prefill-SummarizeData.assess_gap@252:23-88297d0cd72c4413aa40b63fe4a9fdb1 cost_tokens=48 duration_ms=54.99
+[prefill] prefill-SummarizeData.assess_gap@252:23-b29246bf8e1047e6b12fa17a185aa83b cost_tokens=48 duration_ms=57.67
+[prefill] prefill-SummarizeData.assess_gap@252:23-f28edaa961a7447796f4c9194a6a27ab cost_tokens=48 duration_ms=58.67
+[prefill] prefill-SummarizeData.assess_gap@252:23-2a94b6fa0c4d4e71b1211898da52498c cost_tokens=48 duration_ms=59.22
+[prefill] prefill-SummarizeData.assess_gap@252:23-7e4224efd9e747c084fe735bfd14eae2 cost_tokens=9 duration_ms=59.41
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c4-3d666b9fc102414bad3081e8239bfaaa decode_ms=758.15 output_tokens=40
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c4 typed_ok=True output='The passages establish that Southern California Logistics Airport is 8 miles northwest of Victorville, California. The next hop must follow the entity that dete'
+[prefill] prefill-SummarizeData.assess_gap@252:23-e4caa53c49584d519ff34b487076bced cost_tokens=48 duration_ms=54.94
+[prefill] prefill-SummarizeData.assess_gap@252:23-15b53a0578834fcabe9f6b88206d6869 cost_tokens=48 duration_ms=58.16
+[prefill] prefill-SummarizeData.assess_gap@252:23-b92b0e699d834e999d4ee02e4d583f8f cost_tokens=48 duration_ms=58.36
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[prefill] prefill-SummarizeData.assess_gap@252:23-d6f315e7593047a3a663a6a8c2f50090 cost_tokens=48 duration_ms=30.13 aborted=1
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s3c1-d66f6471d8b041159e4079cebe53ec5e decode_ms=2278.26 output_tokens=106
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s3c1 typed_ok=True output='["What specific prefill-decode disaggregation techniques were used in the ttft_ms_vs_queue_depth series?", "What are the service level objectives (SLO) for hold'
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c5-acc2ae06a54f4a048e167659bbf3860a duration_ms=59.61 cached_tokens=176 prompt_tokens=261
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c2-f149102c5d4c47589332317087d99e1f duration_ms=142.99 cached_tokens=96 prompt_tokens=448
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c5-acc2ae06a54f4a048e167659bbf3860a decode_ms=120.23 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c5 typed_ok=True output='nothing missing'
+[prefill] prefill-WebSearchAgent.web_research@291:32-30dca42c6ca54cdc99600ead633f054d cost_tokens=48 duration_ms=55.84
+[prefill] prefill-SearchData.plan_query@235:25-4c378751e3574fbfaaf05687a3367562 cost_tokens=48 duration_ms=57.84
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[prefill] prefill-WebSearchAgent.web_research@291:32-3e98fdefb6c84cf0ba23e65fa084fa95 cost_tokens=48 duration_ms=4.57 aborted=1
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c2-f149102c5d4c47589332317087d99e1f decode_ms=258.62 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c6-445fc6be8c4149e58ec6e34563cc7bfc duration_ms=64.56 cached_tokens=144 prompt_tokens=225
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c3-b576010c96a2400eb5d40605e630219b duration_ms=148.63 cached_tokens=416 prompt_tokens=719
+[prefill] prefill-WebSearchAgent.web_research@291:32-0f7948631e7e458ea811ba8cbecbf724 cost_tokens=48 duration_ms=57.28
+[prefill] prefill-SearchData.retrieve_evidence@236:28-52cb6d53c115409d81925b1839273ea8 cost_tokens=48 duration_ms=57.20
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c6-445fc6be8c4149e58ec6e34563cc7bfc decode_ms=313.85 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c6 typed_ok=True output="'Southern California Logistics Airport is located in which county?'"
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[prefill] prefill-WebSearchAgent.web_research@291:32-f5aea47181be4df3b43960e3dfac186d cost_tokens=48 duration_ms=24.31 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c7-9000596d98df4708bb97d308d1acac01 duration_ms=54.03 cached_tokens=464 prompt_tokens=504
+[prefill] prefill-SearchData.reason_hop@238:26-fa3db0ce86084f78872e37b6c3e704ec cost_tokens=48 duration_ms=50.83
+[prefill] prefill-WebSearchAgent.web_research@291:32-0aaf46d64bff483f8cd09c2647da7ed3 cost_tokens=48 duration_ms=58.04
+[prefill] prefill-SearchData.reason_hop@238:26-cacbab0e30a84ba2804d62c5abe788bf cost_tokens=48 duration_ms=58.00
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c3-b576010c96a2400eb5d40605e630219b decode_ms=490.20 output_tokens=26
+[prefill] prefill-WebSearchAgent.web_research@291:32-1fc007f06f8941f994f73cc6c7b693c0 cost_tokens=48 duration_ms=58.33
+[prefill] prefill-SearchData.reason_hop@238:26-6cf1c7d3f95a4ed4a0566a541f204dfe cost_tokens=48 duration_ms=58.12
+[prefill] prefill-WebSearchAgent.web_research@291:32-a75ec6f825ed4924bb9f82c36b65874a cost_tokens=48 duration_ms=58.25
+[prefill] prefill-SearchData.reason_hop@238:26-098252c5d4974f8fb74d5804fe74f232 cost_tokens=41 duration_ms=58.75
+[36m[DEBUG][0m call from deep_search#3 key='WebSearchAgent.web_research'
+[prefill] prefill-WebSearchAgent.web_research@291:32-948722056d114229a0b00670d22e9784 cost_tokens=48 duration_ms=28.28 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s3c4-04b9406a70a94650bed46619e9c47dc1 duration_ms=133.98 cached_tokens=288 prompt_tokens=575
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c7-9000596d98df4708bb97d308d1acac01 decode_ms=614.73 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport is located in which county?"}}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-315a8509fbc94e7781f106d00ca2907b cost_tokens=48 duration_ms=45.79
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-8452964f1005481da7a9758e01068e37 cost_tokens=48 duration_ms=57.72
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6bb4027ec2434458bd069ec124821603 cost_tokens=48 duration_ms=58.32
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c96b0bac8ee546eab939bc138346e7c3 cost_tokens=48 duration_ms=58.55
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f762d1efab0b4d21bfeeb8ef5390d1aa cost_tokens=48 duration_ms=8.03 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c8-a1a26b2d7a7543779fbc6ddf73842a3e duration_ms=62.33 cached_tokens=176 prompt_tokens=277
+[prefill] prefill-SummarizeData.assess_gap@252:23-20b552bc315c420c9f7483ca7a07b93c cost_tokens=48 duration_ms=56.94
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-fdcacc747c2b4c088ce0cc224cb5e3a1 cost_tokens=48 duration_ms=57.74
+[prefill] prefill-SummarizeData.assess_gap@252:23-ff71d8eb52434e29aa605191c36d9a1a cost_tokens=48 duration_ms=58.46
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-eb566cd35c8c41f5bccffd13d87f528d cost_tokens=48 duration_ms=58.66
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s3c4-04b9406a70a94650bed46619e9c47dc1 decode_ms=580.18 output_tokens=30
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s3c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation techniques"}}'
+[prefill] prefill-SummarizeData.assess_gap@252:23-be7a3fa5899742749637c7e1589102a4 cost_tokens=48 duration_ms=58.56
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-40cfac7857064f4ebcb3f2d84aecf646 cost_tokens=48 duration_ms=58.01
+[prefill] prefill-SummarizeData.assess_gap@252:23-3a46efda922f4469ae25b34a2c08e2a5 cost_tokens=5 duration_ms=59.42
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5a3f03817b414415b3bd01785e85d395 cost_tokens=48 duration_ms=58.12
+[36m[DEBUG][0m call from deep_search#3 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-ef3898a96b7b4e92b4bdb6df5f1e83ea cost_tokens=48 duration_ms=8.27 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s3c5-48496d41d7ac4e28bfbae9a200b748d0 duration_ms=148.55 cached_tokens=112 prompt_tokens=582
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-14c32d012ec14f85893e525983d6e2ae cost_tokens=48 duration_ms=51.27
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-8f511ac308c742c18c479f1f46cf9b38 cost_tokens=48 duration_ms=59.19
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c8-a1a26b2d7a7543779fbc6ddf73842a3e decode_ms=786.97 output_tokens=36
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c8 typed_ok=True output='The passages establish that Southern California Logistics Airport is located in San Bernardino County. The next hop must follow the entity that determines the d'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-e5ee87d7529648de9cef65d56f8507f2 cost_tokens=43 duration_ms=58.87
+[prefill] prefill-FactCheckAgent.fact_check@333:33-060bb68bc9fd42b7a9d1e329db71e725 cost_tokens=48 duration_ms=58.15
+[prefill] prefill-FactCheckAgent.fact_check@333:33-336cbbefdc5e48d38210fe431fe49275 cost_tokens=48 duration_ms=57.76
+[prefill] prefill-FactCheckAgent.fact_check@333:33-7c550109ae2b44d98a8711e2d8c72e15 cost_tokens=48 duration_ms=58.24
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-0f9178644a7840fcb424440d5fc3deca cost_tokens=48 duration_ms=6.59 aborted=1
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c9-a42713e20b9a425ab9227e3428073143 duration_ms=62.87 cached_tokens=144 prompt_tokens=257
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c9-a42713e20b9a425ab9227e3428073143 decode_ms=38.67 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c9 typed_ok=True output='nothing missing'
+[prefill] prefill-SearchData.plan_query@235:25-4110822f028348e890e2941e918e6da6 cost_tokens=48 duration_ms=56.46
+[prefill] prefill-FactCheckAgent.fact_check@333:33-03a8d23b0e7f48d6b6386aad72c1d3ec cost_tokens=48 duration_ms=58.08
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s3c5-48496d41d7ac4e28bfbae9a200b748d0 decode_ms=562.84 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s3c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation"}}'
+[prefill] prefill-SearchData.plan_query@235:25-0147f44d281a41eaa12d3c8ac7dcdf40 cost_tokens=48 duration_ms=59.09
+[prefill] prefill-FactCheckAgent.fact_check@333:33-26b032a2f72d458bb55a643b65149578 cost_tokens=128 duration_ms=32.28
+[prefill] prefill-SearchData.plan_query@235:25-1baebb0e543b4e6c9cdbe0d851b006e4 cost_tokens=108 duration_ms=21.76
+[36m[DEBUG][0m call from hover#1 key='Verdict.verify_claim'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-e84f800f1f4f429286b5f8efc7bea70c cost_tokens=128 duration_ms=11.82 aborted=1
+[36m[DEBUG][0m call from deep_search#3 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s1c10-9a6c089ea6c24a3b8a3c1ab060f2dd28 duration_ms=137.41 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s3c6-086c3481e9b84a7e941f8459db1dd161 duration_ms=91.45 cached_tokens=512 prompt_tokens=582
+[prefill] prefill-FactCheckAgent.fact_check@333:33-45e1772befa54e2f8ebe61f0fc9a62ac cost_tokens=48 duration_ms=50.08
+[prefill] prefill-Verdict.synthesize_answer@279:26-b96bf2675f554bf9b1759a30bdf522bf cost_tokens=48 duration_ms=57.86
+[prefill] prefill-FactCheckAgent.fact_check@333:33-22dd8f15502b4a7e99f80ede74f6ed35 cost_tokens=48 duration_ms=58.43
+[prefill] prefill-Verdict.synthesize_answer@279:26-20ec6763220c414ca2f04978adad3537 cost_tokens=48 duration_ms=58.35
+[prefill] prefill-FactCheckAgent.fact_check@333:33-382ee1b03ba14ed29cdfc2310af670a5 cost_tokens=48 duration_ms=58.35
+[prefill] prefill-Verdict.synthesize_answer@279:26-820c5b02fe90457084cfb7bb2d6acddc cost_tokens=48 duration_ms=58.46
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d8db371dd6ba48cd87a32a3edd5291d0 cost_tokens=24 duration_ms=58.37
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s3c6-086c3481e9b84a7e941f8459db1dd161 decode_ms=432.90 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s3c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[prefill] prefill-Verdict.synthesize_answer@279:26-3e1378e9c0b041b1a5ac2f15b731a9d2 cost_tokens=33 duration_ms=57.93
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-bb8c8334911949eda1a5e0575f656c15 cost_tokens=48 duration_ms=57.86
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-07e735d2cc114336a88543ab74779fba cost_tokens=48 duration_ms=57.55
+[36m[DEBUG][0m call from deep_search#3 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-35e88607e6324b1fa105c7cb3c2ef8f7 cost_tokens=48 duration_ms=48.69 aborted=1
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s3c7-6ddc0e240f734b17b08a7c1354c28565 duration_ms=90.18 cached_tokens=224 prompt_tokens=422
+[prefill] prefill-__visit@deep_search.jac:380-ec95d90bfa414bee9aaa97c41311b561 cost_tokens=48 duration_ms=53.27
+[prefill] prefill-__visit@deep_search.jac:380-e8407be517d24a2bbcbaa8f5a2467b85 cost_tokens=48 duration_ms=58.40
+[prefill] prefill-__visit@deep_search.jac:380-b472b8eeaefb436897868466954895ba cost_tokens=10 duration_ms=59.53
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s3c7-6ddc0e240f734b17b08a7c1354c28565 decode_ms=2072.18 output_tokens=108
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s3c7 typed_ok=True output='["What specific prefill-decode disaggregation techniques are discussed in the web search results and how do they relate to the ttft_ms_vs_queue_depth metric ser'
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c8-02160cc5fbb24fa1b94d5d19cebfdbdd duration_ms=93.50 cached_tokens=304 prompt_tokens=525
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s1c10-9a6c089ea6c24a3b8a3c1ab060f2dd28 decode_ms=3031.77 output_tokens=152
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s1c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Southern California Logistics Airport is 8 miles northwest of Victorville, California.", "su'
+[36m[DEBUG][0m call from hover#1 key='Verdict.synthesize_answer'
+[prefill] prefill-WebSearchAgent.web_research@291:32-0743371efd3741d9a09da532c3fc4eb9 cost_tokens=48 duration_ms=24.10 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s1c11-73626df9321b4d7e820a34fc285c2542 duration_ms=101.88 cached_tokens=128 prompt_tokens=354
+[prefill] prefill-WebSearchAgent.web_research@291:32-63b766ff265c482a85c55b6b65b09ff2 cost_tokens=48 duration_ms=53.41
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c8-02160cc5fbb24fa1b94d5d19cebfdbdd decode_ms=262.88 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[prefill] prefill-WebSearchAgent.web_research@291:32-125800e18d0e4462973b39c7d9427214 cost_tokens=48 duration_ms=21.54 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c9-6d0c9d6fb686424db1c714ff50dd65da duration_ms=139.40 cached_tokens=496 prompt_tokens=796
+[prefill] prefill-WebSearchAgent.web_research@291:32-3d3585811e8b4efea4f785648458ee97 cost_tokens=48 duration_ms=56.53
+[prefill] prefill-WebSearchAgent.web_research@291:32-05a2853adacd457e9cba02939ee404dd cost_tokens=48 duration_ms=57.88
+[prefill] prefill-WebSearchAgent.web_research@291:32-301ce5117362492cb7b9bf5e163c83a4 cost_tokens=48 duration_ms=58.31
+[prefill] prefill-WebSearchAgent.web_research@291:32-7d9c7db2d27c42328406910af7bc0cbc cost_tokens=48 duration_ms=57.85
+[prefill] prefill-WebSearchAgent.web_research@291:32-a6f7b5b648944c0889489a9681c1aca4 cost_tokens=48 duration_ms=58.26
+[prefill] prefill-WebSearchAgent.web_research@291:32-b91222f44555444c82ad351aa724c6cd cost_tokens=48 duration_ms=58.19
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s1c11-73626df9321b4d7e820a34fc285c2542 decode_ms=690.88 output_tokens=32
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s1c11 typed_ok=True output='NOT_SUPPORTED The passages establish that Southern California Logistics Airport is located in San Bernardino County, but do not provide information about the di'
+[prefill] prefill-WebSearchAgent.web_research@291:32-0a897ead77c246c29478a80cc1672150 cost_tokens=48 duration_ms=58.45
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c9-6d0c9d6fb686424db1c714ff50dd65da decode_ms=493.11 output_tokens=26
+[prefill] prefill-WebSearchAgent.web_research@291:32-56651f6b585a49328e01e45b27aa7aab cost_tokens=48 duration_ms=57.46
+[prefill] prefill-WebSearchAgent.web_research@291:32-d0cb0c7c510b4959828323c2844d843b cost_tokens=84 duration_ms=32.83
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-1823b85d96f04322bffc9ea6384129ec cost_tokens=128 duration_ms=22.15
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-38cde9ac82fa4852bb3318225bd449d2 cost_tokens=128 duration_ms=22.27
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-51bdb96b503b4c9eb856426a85dcd008 cost_tokens=128 duration_ms=22.47
+[32m[LOG][0m hover#1 disconnected
+[36m[DEBUG][0m [guard] dropped hover#1 (7 sites served)
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-06b557e1cc474a3fabae26e0fa2f31b3 cost_tokens=128 duration_ms=32.04
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-3fa5b65aac184abcaddbea741a6e6699 cost_tokens=13 duration_ms=22.93
+[36m[DEBUG][0m call from deep_search#3 key='WebSearchAgent.web_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b4f2ea940c844f23b83ff386c327df66 cost_tokens=128 duration_ms=6.62 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s3c10-cc2a2242cb014c6b9521f3564122c483 duration_ms=48.20 cached_tokens=496 prompt_tokens=577
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-16d4550a471a4915a64c81a078c2e7bb cost_tokens=48 duration_ms=51.91
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-02888ee909774ad8a69327eae7eb3fef cost_tokens=48 duration_ms=57.32
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f21992714e674328b8ffdf1889b73cd9 cost_tokens=48 duration_ms=57.28
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-68cb4aaed64d4eaf904eb25f380054db cost_tokens=48 duration_ms=57.84
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2c8312800a414dc8b2b514205c8afb98 cost_tokens=48 duration_ms=57.47
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b486224935a041f3a86fff457fb2fae5 cost_tokens=48 duration_ms=57.97
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-06f11d336c7246d4b2ead36deb0d8fdd cost_tokens=48 duration_ms=57.09
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4507666594b746fa9f5c90b99330629d cost_tokens=48 duration_ms=57.95
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-65922be500e440718b03e3706b462901 cost_tokens=48 duration_ms=57.89
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s3c10-cc2a2242cb014c6b9521f3564122c483 decode_ms=589.10 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s3c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefill-decode disaggregation ttft_ms_vs_queue_depth metric series"}}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-57864789881b4d6a8b2ffd47d6524d73 cost_tokens=48 duration_ms=58.65
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-3350ec4acefe467b92ea9796722727eb cost_tokens=45 duration_ms=40.12
+[prefill] prefill-FactCheckAgent.fact_check@333:33-65ac80f416c74616abeacee69c92b0c3 cost_tokens=128 duration_ms=21.93
+[prefill] prefill-FactCheckAgent.fact_check@333:33-450a6b1381564471a08a0a926f98dd0e cost_tokens=128 duration_ms=21.83
+[prefill] prefill-FactCheckAgent.fact_check@333:33-2f6b2908d2bf4546b891dc5cfea09582 cost_tokens=128 duration_ms=22.13
+[prefill] prefill-FactCheckAgent.fact_check@333:33-f59452b3de404082b000cc9ebd440f4e cost_tokens=106 duration_ms=31.86
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-c466fb84e4fe414ca403e290a231b594 cost_tokens=128 duration_ms=21.44
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-a1bb4f25c3ad4946b3f2a8cba024ceee cost_tokens=128 duration_ms=20.85
+[36m[DEBUG][0m call from deep_search#3 key='PaperSearchAgent.paper_research'
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-5963aac3b3184da982b1123bca0793fa cost_tokens=15 duration_ms=19.39 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s3c11-151772db1d2c45fd98ac687504f5ef6f duration_ms=37.47 cached_tokens=512 prompt_tokens=584
+[prefill] prefill-WebSearchAgent.web_research@291:32-117ae7e4ce4f4d2cbd0cf3b1ed0d64e1 cost_tokens=48 duration_ms=50.83
+[prefill] prefill-WebSearchAgent.web_research@291:32-fe2b9421d48a4e02a6fc690cc3f03df0 cost_tokens=48 duration_ms=57.97
+[prefill] prefill-WebSearchAgent.web_research@291:32-6fec20ba05b44716bc39c7756d24270f cost_tokens=48 duration_ms=58.14
+[prefill] prefill-WebSearchAgent.web_research@291:32-1f96fafcd1974410a9a891a407e76af3 cost_tokens=48 duration_ms=58.34
+[prefill] prefill-WebSearchAgent.web_research@291:32-81959827955343c1b5a19622ec0809b9 cost_tokens=48 duration_ms=58.48
+[prefill] prefill-WebSearchAgent.web_research@291:32-cb9d3a2bc6654ed9a409c6d823e0df10 cost_tokens=48 duration_ms=57.89
+[prefill] prefill-WebSearchAgent.web_research@291:32-6be403d1544d4d23b0b8ddfaf228b23e cost_tokens=48 duration_ms=58.36
+[prefill] prefill-WebSearchAgent.web_research@291:32-61d8bf5f9c7f4fc9a17db7b2f83bc2ab cost_tokens=48 duration_ms=57.98
+[prefill] prefill-WebSearchAgent.web_research@291:32-b16648f4ae23488abf141fef0d6c85ee cost_tokens=22 duration_ms=58.68
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-7d19338b1d8840ba80c29caacf938440 cost_tokens=15 duration_ms=58.71
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s3c11-151772db1d2c45fd98ac687504f5ef6f decode_ms=648.65 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s3c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefill-decode disaggregation ttft_ms_vs_queue_depth metric series service level objective"}}'
+[prefill] prefill-DeepResearch.summarize@388:24-28fb5a5005e844bbbebc654b8eb3fc27 cost_tokens=48 duration_ms=58.17
+[prefill] prefill-DeepResearch.summarize@388:24-7fc6332f26c8434d98124eb6df720673 cost_tokens=128 duration_ms=52.91
+[prefill] prefill-DeepResearch.summarize@388:24-b6e9a367704948cf87391c9b181dc0b0 cost_tokens=104 duration_ms=30.99
+[prefill] prefill-DeepResearch.build_report@391:23-eed127d6ec0d4652862ff5084e7b5b1c cost_tokens=105 duration_ms=21.36
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-35e5194deda14264be1d43ff54babd3c cost_tokens=128 duration_ms=21.78
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-1b77b5734bb648f29aa542868746a64a cost_tokens=128 duration_ms=20.84
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-89a2439c7e52442eba79406d497bab31 cost_tokens=18 duration_ms=20.87
+[36m[DEBUG][0m call from deep_search#3 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s3c12-f291ebddede34c4081ad9cba76eefbf6 duration_ms=36.24 cached_tokens=512 prompt_tokens=584
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-c95f5e6b3f954163a72299e27d8a18d3 cost_tokens=48 duration_ms=54.23
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-61d8a10adab348639030ef3ab5ac2b75 cost_tokens=48 duration_ms=58.00
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-ed0f5ce019a0452dab967e1890c8232b cost_tokens=48 duration_ms=57.90
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-76bb347682384115b1e5e536ca67bbb8 cost_tokens=48 duration_ms=57.55
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-94c4850e7c024b1fa5c74f0649481873 cost_tokens=48 duration_ms=58.05
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-6e47eed47b034ab498979bfe67f0d418 cost_tokens=48 duration_ms=57.81
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-59e07a451a9d420c896a2fd16abc0e5f cost_tokens=48 duration_ms=58.61
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s3c12-f291ebddede34c4081ad9cba76eefbf6 decode_ms=430.47 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s3c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-d5d02b02be264b72b11a782bf924988a cost_tokens=48 duration_ms=58.05
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-ee8e4350201e4ef68a5377de7893ac39 cost_tokens=31 duration_ms=22.50
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-0f5e04d169f047f4969106bd04d36bb8 cost_tokens=128 duration_ms=21.45
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-8ac18c46588d491a94982e77be11d13c cost_tokens=128 duration_ms=21.66
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-86760cf6749e4905a07beb525ca1174d cost_tokens=7 duration_ms=21.44
+[prefill] prefill-DeepResearch.summarize@388:24-592d6b990dd54ed6b7a1241e1a234083 cost_tokens=128 duration_ms=21.19
+[prefill] prefill-DeepResearch.summarize@388:24-770a9e89e4e848969016df91ff68dfee cost_tokens=93 duration_ms=20.85
+[36m[DEBUG][0m call from deep_search#3 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s3c13-efefbaafa33948feadfa204688c6a4ab duration_ms=50.98 cached_tokens=208 prompt_tokens=339
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s3c13-efefbaafa33948feadfa204688c6a4ab decode_ms=2842.43 output_tokens=146
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s3c13 typed_ok=True output='The research task is to determine if the series "ttft_ms_vs_queue_depth" supports the claim that prefill-decode disaggregation helps in holding tail latency und'
+[36m[DEBUG][0m call from deep_search#3 key='DeepResearch.build_report'
+[prefill] prefill-DeepResearch.build_report@391:23-375c5cf7442240b8a33bb6bad413f85f cost_tokens=128 duration_ms=2.59 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s3c14-fe8cba72f7da4ca997ce9a675f979fd5 duration_ms=67.64 cached_tokens=96 prompt_tokens=254
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s3c14-fe8cba72f7da4ca997ce9a675f979fd5 decode_ms=4373.16 output_tokens=224
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s3c14 typed_ok=False output='{\n  "title": "Research Report on \'ttft_ms_vs_queue_depth\'",\n  "mainText": "The research task is to determine if the series \'ttft_ms_vs_queue_depth\' supports the'
+[36m[DEBUG][0m reject from deep_search#3 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s3c14 feedback='Failed to convert LLM output to \'ResearchReport\': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value="The re'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s3c14-ce8c5136fd5c4d8f9f19f251387b65a2 duration_ms=48.51 cached_tokens=464 prompt_tokens=564
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s3c14-ce8c5136fd5c4d8f9f19f251387b65a2 decode_ms=4373.40 output_tokens=224
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s3c14 typed_ok=False output='{\n  "title": "Research Report on \'ttft_ms_vs_queue_depth\'",\n  "mainText": "The research task is to determine if the series \'ttft_ms_vs_queue_depth\' supports the'
+[32m[LOG][0m deep_search#3 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#3 (7 sites served)
+(EngineCore pid=619823) INFO 08-24 16:45:25 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=619823) INFO 08-24 16:45:25 [core.py:1233] Shutdown complete

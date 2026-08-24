@@ -1,0 +1,179 @@
+INFO 08-24 15:56:23 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 15:56:23 [model.py:1678] Using max model len 8192
+INFO 08-24 15:56:23 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 15:56:23 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=563017) INFO 08-24 15:56:24 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=563017) INFO 08-24 15:56:25 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:33775 backend=nccl
+[rank0]:[W824 15:56:25.033914439 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=563017) INFO 08-24 15:56:25 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=563017) INFO 08-24 15:56:25 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=563017) INFO 08-24 15:56:26 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=563017) INFO 08-24 15:56:26 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=563017) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=563017) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=563017) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=563017) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.36it/s]
+(EngineCore pid=563017) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.21it/s]
+(EngineCore pid=563017) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.18it/s]
+(EngineCore pid=563017) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.23it/s]
+(EngineCore pid=563017) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.23it/s]
+(EngineCore pid=563017) 
+(EngineCore pid=563017) INFO 08-24 15:56:28 [default_loader.py:384] Loading weights took 1.86 seconds
+(EngineCore pid=563017) INFO 08-24 15:56:29 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.666452 seconds
+(EngineCore pid=563017) INFO 08-24 15:56:31 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=563017) INFO 08-24 15:56:31 [backends.py:1111] Dynamo bytecode transform time: 2.21 s
+(EngineCore pid=563017) INFO 08-24 15:56:32 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.592 s
+(EngineCore pid=563017) INFO 08-24 15:56:32 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=563017) INFO 08-24 15:56:32 [monitor.py:48] torch.compile took 2.97 s in total
+(EngineCore pid=563017) INFO 08-24 15:56:32 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=563017) INFO 08-24 15:56:32 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=563017) INFO 08-24 15:56:32 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=563017) INFO 08-24 15:56:33 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=563017) INFO 08-24 15:56:34 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=563017) INFO 08-24 15:56:34 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=563017) INFO 08-24 15:56:34 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=563017) INFO 08-24 15:56:34 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=563017) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 13.89it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 18.04it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.60it/s]
+(EngineCore pid=563017) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.47it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.64it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 25.05it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 28.35it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.31it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 28.87it/s]
+(EngineCore pid=563017) INFO 08-24 15:56:36 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=563017) INFO 08-24 15:56:36 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=563017) INFO 08-24 15:56:36 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.93 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
+WARNING 08-24 15:56:37 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 430 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 448 ms
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 48036) as hover#1
+[32m[LOG][0m Registered 'hover' (pid 563389, model 'Qwen/Qwen2.5-7B-Instruct') as hover#1
+[36m[DEBUG][0m call from hover#1 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s1c1-d2cdb695dfd74df88619a22de31f2979 duration_ms=34.89 cached_tokens=0 prompt_tokens=123
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 41872) as intercode_sql#2
+[32m[LOG][0m Registered 'intercode_sql' (pid 563401, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#2
+[36m[DEBUG][0m call from intercode_sql#2 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s2c1-e496e89322d545c08c0cef2980c8249d duration_ms=213.03 cached_tokens=32 prompt_tokens=822
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s2c1-e496e89322d545c08c0cef2980c8249d decode_ms=327.20 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s2c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "Documents"}}'
+[36m[DEBUG][0m call from intercode_sql#2 key='diagnose'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s2c2-dfb1d0a908164be1932ce4c973734873 duration_ms=87.43 cached_tokens=336 prompt_tokens=507
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s1c1-d2cdb695dfd74df88619a22de31f2979 decode_ms=1081.60 output_tokens=47
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s1c1 typed_ok=True output='Southern California Logistics Airport is located in California.\nVictorville is a city in California.\nThe distance between Southern California Logistics Airport '
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 51972) as deep_search#3
+[32m[LOG][0m Registered 'deep_search' (pid 563426, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#3
+[36m[DEBUG][0m call from deep_search#3 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s3c1-8527e6e4df8c4cfcabc5cd14e33053d5 duration_ms=132.97 cached_tokens=48 prompt_tokens=340
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c2-a1dfaf2f01ac4826b19ce35abd0966f9 duration_ms=116.36 cached_tokens=48 prompt_tokens=222
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c2-a1dfaf2f01ac4826b19ce35abd0966f9 decode_ms=309.11 output_tokens=17
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c2 typed_ok=True output='"What entity is the direction from Victorville to Southern California Logistics Airport dependent on?"'
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s2c2-dfb1d0a908164be1932ce4c973734873 decode_ms=888.58 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s2c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only supports SELECT statements. The provided S'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c3-f748cfefcfc64d1f9d383dc13503d5b9 duration_ms=147.48 cached_tokens=112 prompt_tokens=510
+[36m[DEBUG][0m call from intercode_sql#2 key='revise_sql'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s2c3-979af8d09b224e6d90e067787edff62d duration_ms=164.87 cached_tokens=48 prompt_tokens=614
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s2c3-979af8d09b224e6d90e067787edff62d decode_ms=96.93 output_tokens=6
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s2c3 typed_ok=True output='SELECT COUNT(*) FROM Documents'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c3-f748cfefcfc64d1f9d383dc13503d5b9 decode_ms=515.94 output_tokens=22
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport"}}'
+[36m[DEBUG][0m call from intercode_sql#2 key='finalize'
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s2c4-baa9355e7e384f37b1740b5f4fac3fab duration_ms=63.88 cached_tokens=48 prompt_tokens=154
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c4-070a55e83d184e11a4e520c136e8327a duration_ms=99.00 cached_tokens=48 prompt_tokens=238
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s2c4-baa9355e7e384f37b1740b5f4fac3fab decode_ms=175.15 output_tokens=8
+[36m[DEBUG][0m [final] intercode_sql:finalize:s2c4 typed_ok=True output='We have 14 templates.'
+[32m[LOG][0m intercode_sql#2 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#2 (4 sites served)
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c4-070a55e83d184e11a4e520c136e8327a decode_ms=753.21 output_tokens=40
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c4 typed_ok=True output='The passages establish that Southern California Logistics Airport is 8 miles northwest of Victorville, California. The next hop must follow the entity that dete'
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c5-e503e15cbe314fa389d6ac73fef7d7dc duration_ms=88.87 cached_tokens=48 prompt_tokens=261
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c5-e503e15cbe314fa389d6ac73fef7d7dc decode_ms=38.39 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s3c1-8527e6e4df8c4cfcabc5cd14e33053d5 decode_ms=2458.10 output_tokens=111
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s3c1 typed_ok=True output='["What specific prefill-decode disaggregation techniques were used in the ttft_ms_vs_queue_depth series?", "What are the service level objectives (SLO) for hold'
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c2-d9143a50855048afaaeb5fc3e5756bb5 duration_ms=126.54 cached_tokens=0 prompt_tokens=452
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c6-e52092a0cbef46b2b2faeb7511934ddd duration_ms=55.99 cached_tokens=144 prompt_tokens=225
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c2-d9143a50855048afaaeb5fc3e5756bb5 decode_ms=301.12 output_tokens=16
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c6-e52092a0cbef46b2b2faeb7511934ddd decode_ms=232.95 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c6 typed_ok=True output="'Southern California Logistics Airport is located in which county?'"
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c3-1a55c3b044dd4061b68347e394c6a610 duration_ms=137.53 cached_tokens=432 prompt_tokens=727
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c7-2edd2b1be7ed4ba09a73057a1bd0fc9d duration_ms=133.49 cached_tokens=464 prompt_tokens=504
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c3-1a55c3b044dd4061b68347e394c6a610 decode_ms=485.98 output_tokens=26
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c7-2edd2b1be7ed4ba09a73057a1bd0fc9d decode_ms=525.01 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport is located in which county?"}}'
+[36m[DEBUG][0m call from deep_search#3 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s3c4-9d6a3e0afe944391b3035788973e3e79 duration_ms=117.15 cached_tokens=112 prompt_tokens=580
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c8-93c110255d7b490681db4101cb6c0987 duration_ms=88.44 cached_tokens=176 prompt_tokens=277
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s3c4-9d6a3e0afe944391b3035788973e3e79 decode_ms=722.52 output_tokens=38
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s3c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation techniques service level objectives SLO numerical'
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c8-93c110255d7b490681db4101cb6c0987 decode_ms=673.99 output_tokens=36
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c8 typed_ok=True output='The passages establish that Southern California Logistics Airport is located in San Bernardino County. The next hop must follow the entity that determines the d'
+[36m[DEBUG][0m call from deep_search#3 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s3c5-cdbda5be2543488bb65e7cb9c02ec7f9 duration_ms=117.64 cached_tokens=112 prompt_tokens=587
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c9-1c5f1bf20c1845469a9c0ea0c6914254 duration_ms=145.22 cached_tokens=144 prompt_tokens=257
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c9-1c5f1bf20c1845469a9c0ea0c6914254 decode_ms=38.98 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m call from hover#1 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s1c10-d2dc2cda58ff49c0a8e4ef547c7a8b47 duration_ms=143.78 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s3c5-cdbda5be2543488bb65e7cb9c02ec7f9 decode_ms=744.52 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s3c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation tail latency service level objective"}}'
+[36m[DEBUG][0m call from deep_search#3 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s3c6-5c3dd76cd0244f848dbea3c84c2c9308 duration_ms=147.00 cached_tokens=112 prompt_tokens=587
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s3c6-5c3dd76cd0244f848dbea3c84c2c9308 decode_ms=423.63 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s3c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m call from deep_search#3 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s3c7-1c3a7f48bb0846cfbc523c3b4b9a0ff4 duration_ms=89.67 cached_tokens=224 prompt_tokens=435
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s3c7-1c3a7f48bb0846cfbc523c3b4b9a0ff4 decode_ms=678.14 output_tokens=36
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s3c7 typed_ok=True output='["What specific numerical results from the metric series ttft_ms_vs_queue_depth show the impact of prefill-decode disaggregation on tail latency under a service'
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c8-1bbcc699dd29466ab228000d9f66104f duration_ms=92.49 cached_tokens=288 prompt_tokens=473
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c8-1bbcc699dd29466ab228000d9f66104f decode_ms=173.64 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#3 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s3c9-afbc1c6b8b004b0590661d5e25bad18d duration_ms=137.64 cached_tokens=448 prompt_tokens=742
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s3c9-afbc1c6b8b004b0590661d5e25bad18d decode_ms=386.27 output_tokens=21
+[36m[DEBUG][0m call from deep_search#3 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s3c10-3f4be0d22c3d45d8af80a399bf24d291 duration_ms=60.00 cached_tokens=416 prompt_tokens=512
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s1c10-d2dc2cda58ff49c0a8e4ef547c7a8b47 decode_ms=3197.23 output_tokens=152
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s1c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Southern California Logistics Airport is 8 miles northwest of Victorville, California.", "su'
+[36m[DEBUG][0m call from hover#1 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s1c11-d2bf6c8998ae4a639dd0c59df6b9bfc9 duration_ms=133.06 cached_tokens=48 prompt_tokens=354
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s3c10-3f4be0d22c3d45d8af80a399bf24d291 decode_ms=503.79 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s3c10 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m call from deep_search#3 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s3c11-092c80b938b3422ea2be57deeb26d3c5 duration_ms=59.87 cached_tokens=416 prompt_tokens=512
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s1c11-d2bf6c8998ae4a639dd0c59df6b9bfc9 decode_ms=611.78 output_tokens=32
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s1c11 typed_ok=True output='NOT_SUPPORTED The passages establish that Southern California Logistics Airport is located in San Bernardino County, but do not provide information about the di'
+[32m[LOG][0m hover#1 disconnected
+[36m[DEBUG][0m [guard] dropped hover#1 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s3c11-092c80b938b3422ea2be57deeb26d3c5 decode_ms=647.82 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s3c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation tail latency service level objective"}}'
+[36m[DEBUG][0m call from deep_search#3 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s3c12-6d8f1c643b564863aafbce8ec0275d45 duration_ms=101.70 cached_tokens=112 prompt_tokens=479
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s3c12-6d8f1c643b564863aafbce8ec0275d45 decode_ms=428.68 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s3c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m call from deep_search#3 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s3c13-1cbd3f951ac2473fb2ddaed9119e0e0b duration_ms=99.71 cached_tokens=48 prompt_tokens=369
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s3c13-1cbd3f951ac2473fb2ddaed9119e0e0b decode_ms=3350.97 output_tokens=172
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s3c13 typed_ok=True output='The research task is to determine if the series "ttft_ms_vs_queue_depth" supports the claim that prefill-decode disaggregation aids in maintaining tail latency '
+[36m[DEBUG][0m call from deep_search#3 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s3c14-8d3e6a64fc7e468fb30b5456f2201fb0 duration_ms=81.60 cached_tokens=48 prompt_tokens=280
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s3c14-8d3e6a64fc7e468fb30b5456f2201fb0 decode_ms=4747.34 output_tokens=243
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s3c14 typed_ok=False output='{\n  "title": "Analysis of \'ttft_ms_vs_queue_depth\' Series",\n  "mainText": "The research task is to determine if the series \'ttft_ms_vs_queue_depth\' supports the'
+[36m[DEBUG][0m reject from deep_search#3 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s3c14 feedback='Failed to convert LLM output to \'ResearchReport\': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value="The se'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s3c14-50f2af9636f841d28497a770c3942b79 duration_ms=49.00 cached_tokens=512 prompt_tokens=611
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s3c14-50f2af9636f841d28497a770c3942b79 decode_ms=4747.00 output_tokens=243
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s3c14 typed_ok=False output='{\n  "title": "Analysis of \'ttft_ms_vs_queue_depth\' Series",\n  "mainText": "The research task is to determine if the series \'ttft_ms_vs_queue_depth\' supports the'
+[32m[LOG][0m deep_search#3 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#3 (8 sites served)
+(EngineCore pid=563017) INFO 08-24 15:57:06 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=563017) INFO 08-24 15:57:06 [core.py:1233] Shutdown complete

@@ -23,7 +23,7 @@ We make the following contributions:
 
 
 # Design 
-Based on our observations, we build the a compile-runtime co-design
+Based on our observations, we build the a compile-runtime co-design system that substantially exploit compile-time colected information and guide the model which mitigate the cold start TTFT.
 
 
 # Evaluation

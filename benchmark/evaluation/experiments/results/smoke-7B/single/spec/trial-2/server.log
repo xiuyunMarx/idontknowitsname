@@ -1,0 +1,363 @@
+INFO 08-24 16:01:54 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 16:01:54 [model.py:1678] Using max model len 8192
+INFO 08-24 16:01:54 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 16:01:54 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=570418) INFO 08-24 16:01:56 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=570418) INFO 08-24 16:01:57 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:44893 backend=nccl
+[rank0]:[W824 16:01:57.877996860 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=570418) INFO 08-24 16:01:57 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=570418) INFO 08-24 16:01:57 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=570418) INFO 08-24 16:01:58 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=570418) INFO 08-24 16:01:58 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=570418) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=570418) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=570418) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=570418) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.37it/s]
+(EngineCore pid=570418) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.23it/s]
+(EngineCore pid=570418) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.19it/s]
+(EngineCore pid=570418) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=570418) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=570418) 
+(EngineCore pid=570418) INFO 08-24 16:02:00 [default_loader.py:384] Loading weights took 1.85 seconds
+(EngineCore pid=570418) INFO 08-24 16:02:00 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.641892 seconds
+(EngineCore pid=570418) INFO 08-24 16:02:03 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=570418) INFO 08-24 16:02:03 [backends.py:1111] Dynamo bytecode transform time: 2.20 s
+(EngineCore pid=570418) INFO 08-24 16:02:03 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.579 s
+(EngineCore pid=570418) INFO 08-24 16:02:03 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=570418) INFO 08-24 16:02:03 [monitor.py:48] torch.compile took 2.95 s in total
+(EngineCore pid=570418) INFO 08-24 16:02:04 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=570418) INFO 08-24 16:02:04 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=570418) INFO 08-24 16:02:04 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=570418) INFO 08-24 16:02:05 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=570418) INFO 08-24 16:02:05 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=570418) INFO 08-24 16:02:05 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=570418) INFO 08-24 16:02:05 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=570418) INFO 08-24 16:02:05 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=570418) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 14.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 18.04it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.62it/s]
+(EngineCore pid=570418) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 23.91it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.05it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 24.80it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 28.16it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.04it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 28.53it/s]
+(EngineCore pid=570418) INFO 08-24 16:02:08 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=570418) INFO 08-24 16:02:08 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=570418) INFO 08-24 16:02:08 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.90 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
+WARNING 08-24 16:02:09 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 424 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 442 ms
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 52910) as hover#1
+[32m[LOG][0m Registered 'hover' (pid 570626, model 'Qwen/Qwen2.5-7B-Instruct') as hover#1
+[36m[DEBUG][0m call from hover#1 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s1c1-b9c13d73c6b14e019fb946a34ad965de duration_ms=58.55 cached_tokens=0 prompt_tokens=137
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s1c1-b9c13d73c6b14e019fb946a34ad965de decode_ms=764.72 output_tokens=40
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s1c1 typed_ok=True output="The founder and director of the People's Union for Civil Liberties is X.\nX was posthumously awarded The Bharat Ratna.\nThe Bharat Ratna is the highest Indian civ"
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c2-26c689b544cc4cd39a0418eb30cbc927 duration_ms=53.32 cached_tokens=48 prompt_tokens=229
+[prefill] prefill-SearchData.retrieve_evidence@236:28-73f46e5f323d42698ded35896df9192a cost_tokens=48 duration_ms=46.69
+[prefill] prefill-SearchData.retrieve_evidence@236:28-7f7ae8b25cfc497f94e3097eb5b43732 cost_tokens=48 duration_ms=57.92
+[prefill] prefill-SearchData.retrieve_evidence@236:28-f76d8cbeae2f4e20b22e57390d7be20a cost_tokens=48 duration_ms=58.22
+[prefill] prefill-SearchData.retrieve_evidence@236:28-f892273ebe8546a89bc5608f7af00785 cost_tokens=48 duration_ms=58.03
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c2-26c689b544cc4cd39a0418eb30cbc927 decode_ms=293.96 output_tokens=16
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c2 typed_ok=True output="Who is the founder and director of the People's Union for Civil Liberties?"
+[prefill] prefill-SearchData.retrieve_evidence@236:28-12c750ad68144e7fa9101a439029533b cost_tokens=48 duration_ms=58.26
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-4938761942a04e35a3d3e7911f9559a5 cost_tokens=128 duration_ms=5.29 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c3-bfff8f3ad9694c3a87549f34e79e4f08 duration_ms=116.13 cached_tokens=240 prompt_tokens=522
+[prefill] prefill-SearchData.reason_hop@238:26-f90197af2cdb46b4936467c6997ddaf3 cost_tokens=48 duration_ms=49.12
+[prefill] prefill-SearchData.reason_hop@238:26-53707f2349af4a64acd87cc1b38a9cb4 cost_tokens=48 duration_ms=58.13
+[prefill] prefill-SearchData.reason_hop@238:26-a4ab9571f4784dc1985947caf9febd4c cost_tokens=48 duration_ms=58.81
+[prefill] prefill-SearchData.reason_hop@238:26-1e2a033a02524bd9a44333214497340c cost_tokens=45 duration_ms=58.73
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c3-bfff8f3ad9694c3a87549f34e79e4f08 decode_ms=626.70 output_tokens=33
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is the founder and director of the People\'s Union for Civil Liberties?"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-6f9ba267fb574517a1991da213c739d0 cost_tokens=128 duration_ms=37.36
+[prefill] prefill-SearchData.reason_hop@238:26-c9090da7e8bb4a36b4b5856703aafd7f cost_tokens=81 duration_ms=21.49
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c4-46b8c6a07c9148f7963e7530c9244234 duration_ms=34.72 cached_tokens=192 prompt_tokens=262
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c4-46b8c6a07c9148f7963e7530c9244234 decode_ms=623.84 output_tokens=33
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c4 typed_ok=True output="The passages establish that the founder and director of the People's Union for Civil Liberties is George Fernandes. Therefore, the next hop must follow George F"
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c5-9126b1afdd294730b01532cc2d828674 duration_ms=60.27 cached_tokens=48 prompt_tokens=261
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c5-9126b1afdd294730b01532cc2d828674 decode_ms=760.62 output_tokens=40
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c5 typed_ok=True output="The evidence still does not establish: The founder and director of the People's Union for Civil Liberties is George Fernandes. The entity that would settle this"
+[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c6-2f72e8b086a14db48cfbf00393ae024a duration_ms=32.24 cached_tokens=144 prompt_tokens=268
+[prefill] prefill-SearchData.retrieve_evidence@236:28-fd338e7ce5f242c7adb2b8c4706e6e0e cost_tokens=48 duration_ms=51.04
+[prefill] prefill-SearchData.retrieve_evidence@236:28-930d24a91fcd412aa711b282f8ed0a55 cost_tokens=48 duration_ms=57.57
+[prefill] prefill-SearchData.retrieve_evidence@236:28-5489e2da41724f838240c69fa0d59936 cost_tokens=48 duration_ms=57.98
+[prefill] prefill-SearchData.retrieve_evidence@236:28-5ce442c3026b4e3dbd974b7f677eb9cd cost_tokens=48 duration_ms=57.79
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c6-2f72e8b086a14db48cfbf00393ae024a decode_ms=293.81 output_tokens=16
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c6 typed_ok=True output="Who is the founder and director of the People's Union for Civil Liberties?"
+[prefill] prefill-SearchData.retrieve_evidence@236:28-9c63892e21104044ae91bbb7ed27b709 cost_tokens=39 duration_ms=58.67
+[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.reason_hop@238:26-2fa20bfa110f407095a11228e5a385d7 cost_tokens=128 duration_ms=5.42 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c7-e352b7c0db60492d9d23264d8d954368 duration_ms=35.78 cached_tokens=512 prompt_tokens=522
+[prefill] prefill-SearchData.reason_hop@238:26-8513df4cf8a943099ed18ace5b9ff7c7 cost_tokens=48 duration_ms=51.03
+[prefill] prefill-SearchData.reason_hop@238:26-19c212a2a5ba421cbc401b3ffde34bbe cost_tokens=48 duration_ms=58.28
+[prefill] prefill-SearchData.reason_hop@238:26-53d4f19dd7e140c08a52ac34e6da8e42 cost_tokens=48 duration_ms=58.10
+[prefill] prefill-SearchData.reason_hop@238:26-97abb35b0cde409592b9173f022500a5 cost_tokens=45 duration_ms=59.20
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c7-e352b7c0db60492d9d23264d8d954368 decode_ms=626.93 output_tokens=33
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is the founder and director of the People\'s Union for Civil Liberties?"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-2a0b8c6a4dd744629a0ddc5c77b30ad3 cost_tokens=128 duration_ms=37.63
+[prefill] prefill-SearchData.reason_hop@238:26-5b14c1732eed46bfb7bd2cb65debf064 cost_tokens=81 duration_ms=21.38
+[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c8-a06cc13b28184f9987e29776ccc30081 duration_ms=24.93 cached_tokens=256 prompt_tokens=294
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c8-a06cc13b28184f9987e29776ccc30081 decode_ms=683.88 output_tokens=36
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c8 typed_ok=True output='The passages establish that George Fernandes was posthumously awarded The Bharat Ratna, the highest Indian civilian award. Therefore, the next hop must follow G'
+[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c9-7636a580df9549d084dd44d1d72daffa duration_ms=31.23 cached_tokens=144 prompt_tokens=264
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c9-7636a580df9549d084dd44d1d72daffa decode_ms=332.40 output_tokens=18
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c9 typed_ok=True output="The founder and director of the People's Union for Civil Liberties is George Fernandes."
+[36m[DEBUG][0m call from hover#1 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s1c10-2e431cdfc1e14362908a0f5185344128 duration_ms=117.15 cached_tokens=112 prompt_tokens=552
+[prefill] prefill-Verdict.synthesize_answer@279:26-6b9d55289bf94d15ba9ab9eff49d5b9e cost_tokens=48 duration_ms=57.17
+[prefill] prefill-Verdict.synthesize_answer@279:26-39190a55488d47b186e70dfee15e1b24 cost_tokens=48 duration_ms=58.38
+[prefill] prefill-Verdict.synthesize_answer@279:26-965ac329e1a44a0789525c1e441ae6ed cost_tokens=48 duration_ms=59.14
+[prefill] prefill-Verdict.synthesize_answer@279:26-90fb5b857d50429e8999992287baa283 cost_tokens=33 duration_ms=58.93
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s1c10-2e431cdfc1e14362908a0f5185344128 decode_ms=3096.74 output_tokens=159
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s1c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "The founder and director of the People\'s Union for Civil Liberties was posthumously awarded '
+[36m[DEBUG][0m call from hover#1 key='Verdict.synthesize_answer'
+[prefill] prefill-Verdict.synthesize_answer@279:26-dcf932f1d1fb442ca1489b092f08474c cost_tokens=128 duration_ms=2.83 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s1c11-04c4173e7b004897886c192f632bb7eb duration_ms=81.69 cached_tokens=128 prompt_tokens=376
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s1c11-04c4173e7b004897886c192f632bb7eb decode_ms=704.55 output_tokens=37
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s1c11 typed_ok=True output="NOT_SUPPORTED The evidence digest indicates that George Fernandes, not the founder and director of the People's Union for Civil Liberties, was posthumously awar"
+[32m[LOG][0m hover#1 disconnected
+[36m[DEBUG][0m [guard] dropped hover#1 (7 sites served)
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 36004) as deep_search#2
+[32m[LOG][0m Registered 'deep_search' (pid 570794, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#2
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c1-f95759d9e5464eb3b331a1978d072d6e duration_ms=108.70 cached_tokens=48 prompt_tokens=328
+[prefill] prefill-__visit@deep_search.jac:380-d9540c74386c43f0943b131097ca6584 cost_tokens=48 duration_ms=55.65
+[prefill] prefill-__visit@deep_search.jac:380-e293d42652b44bb89b2654818ed44a52 cost_tokens=48 duration_ms=58.88
+[prefill] prefill-__visit@deep_search.jac:380-aa2763b775af4b60b34e827e60512db6 cost_tokens=10 duration_ms=59.44
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c9f62997107541ba85895e6d6f378b18 cost_tokens=48 duration_ms=57.36
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-661e1baaf19544c08291565a67e63b3e cost_tokens=48 duration_ms=57.65
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f226faf3edea49e290abbdd6a185dc51 cost_tokens=48 duration_ms=57.66
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-476630a56b2348d0b08cbbe6586d92e8 cost_tokens=48 duration_ms=57.94
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-38e192791bfe47ba98f1bb2d28c693fe cost_tokens=48 duration_ms=58.19
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-498d6e9b1e5f407192abdc0f3ec43eda cost_tokens=48 duration_ms=58.08
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-7cfe6bcbe70144ab9ed73cb88f61a374 cost_tokens=48 duration_ms=58.12
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c1-f95759d9e5464eb3b331a1978d072d6e decode_ms=627.81 output_tokens=33
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c1 typed_ok=True output='["What published work introduced chunked prefill?", "What problem did the introduced work solve?", "What background does a reader need before understanding the '
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-26caa99c79f34f538974f873c86546f4 cost_tokens=48 duration_ms=52.00 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c2-98015a4bea0b475f915426f884a21311 duration_ms=108.86 cached_tokens=96 prompt_tokens=362
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-c9eac296827d44ae9d9d4d1a43136172 cost_tokens=48 duration_ms=56.25
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c2-98015a4bea0b475f915426f884a21311 decode_ms=228.27 output_tokens=10
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-6633254d14ac4ee5a5bea30f37ce4953 cost_tokens=48 duration_ms=57.70
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-21778407e699489eb61b7e627cbf0ed5 cost_tokens=128 duration_ms=1.71 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c3-f59e0444773243f891dce72aab9e348b duration_ms=119.82 cached_tokens=336 prompt_tokens=631
+[prefill] prefill-WebSearchAgent.web_research@291:32-132c4167fc6645d4aee9edbe281bcf97 cost_tokens=48 duration_ms=56.87
+[prefill] prefill-WebSearchAgent.web_research@291:32-5308f4062cc94a7895a09be7c7f77110 cost_tokens=48 duration_ms=57.84
+[prefill] prefill-WebSearchAgent.web_research@291:32-88ddfa892bb94bd091e20db8f4f3e096 cost_tokens=48 duration_ms=58.30
+[prefill] prefill-WebSearchAgent.web_research@291:32-99723385286a4869b59e6f9ab7cf1d5e cost_tokens=48 duration_ms=58.63
+[prefill] prefill-WebSearchAgent.web_research@291:32-01077ad2dab44c3f89397835850aebf8 cost_tokens=48 duration_ms=59.19
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c3-f59e0444773243f891dce72aab9e348b decode_ms=393.72 output_tokens=21
+[prefill] prefill-WebSearchAgent.web_research@291:32-9716d8e45e7749b6afd6e0c76b2498a2 cost_tokens=48 duration_ms=58.65
+[prefill] prefill-WebSearchAgent.web_research@291:32-d873b95cd16f46048ef35e451481c01c cost_tokens=128 duration_ms=33.27
+[prefill] prefill-WebSearchAgent.web_research@291:32-f27c4a2874ee41d8901a3faac63518c6 cost_tokens=25 duration_ms=21.62
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-9fa6fae6d7ee4dd59770c3b10c7693b8 cost_tokens=128 duration_ms=31.59
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-359ce63ad54149ff814f20d87d605bc3 cost_tokens=128 duration_ms=32.00
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-6787fbdbfceb401e90e6ec23866d1bc9 cost_tokens=98 duration_ms=31.57
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a509703d5b064dafa37d8d5025a54dff cost_tokens=128 duration_ms=21.38
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4b482377cee54cae82a44d0cc3441363 cost_tokens=128 duration_ms=9.31 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c4-37a2500351014f7488dd1d18abd9e002 duration_ms=34.35 cached_tokens=432 prompt_tokens=496
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-01406740a8f24c92934c1e25d1ab4dd2 cost_tokens=48 duration_ms=49.97
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d09aab9344954d6990acc6e3af2d55ec cost_tokens=48 duration_ms=57.87
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5bf1f078a734490e864f44104f54a5f9 cost_tokens=48 duration_ms=58.09
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c21c6ff14a614a439c0b42c80c9d77e0 cost_tokens=48 duration_ms=57.89
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-afe441b4505a49e3a12de280c9f1cd11 cost_tokens=48 duration_ms=57.97
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-7516f3ba98cf495cbbd9fe8c195e9a14 cost_tokens=48 duration_ms=58.35
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c4-37a2500351014f7488dd1d18abd9e002 decode_ms=392.83 output_tokens=21
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill"}}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-18067d27d1844abd8d7091c6f9ccbba6 cost_tokens=34 duration_ms=58.32
+[prefill] prefill-FactCheckAgent.fact_check@333:33-e7ff66edfc8241189bbaf587aa23650b cost_tokens=128 duration_ms=21.69
+[prefill] prefill-FactCheckAgent.fact_check@333:33-97d19410b0ae41f580a390bf70713a26 cost_tokens=128 duration_ms=32.03
+[prefill] prefill-FactCheckAgent.fact_check@333:33-53e9e78aeaf64eac895b5247d4d1db04 cost_tokens=128 duration_ms=32.47
+[prefill] prefill-FactCheckAgent.fact_check@333:33-85b25f288ec94771913666a47ceb19bd cost_tokens=31 duration_ms=21.37
+[prefill] prefill-DeepResearch.summarize@388:24-2a241ed288324a1f8b248f1e596196b7 cost_tokens=128 duration_ms=34.38
+[prefill] prefill-DeepResearch.summarize@388:24-0e7a41f7e5ff45519400f6b1b8d17ef7 cost_tokens=91 duration_ms=30.79
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[prefill] prefill-DeepResearch.build_report@391:23-1f2d96f8abb14939a76857fa38d8d575 cost_tokens=105 duration_ms=8.61 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c5-d5a38e448d944c70a40f8d0b231a01b9 duration_ms=35.06 cached_tokens=432 prompt_tokens=489
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-0fdb225b5c614be598a7a51e0306df9f cost_tokens=48 duration_ms=49.83
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-e369370a187d466aaf9f18092424edfa cost_tokens=48 duration_ms=58.25
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-1d2c84bbe5c44749b31fdc2ad8ed26b1 cost_tokens=48 duration_ms=57.87
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-49f30c547e1246c495087facc195a4ed cost_tokens=48 duration_ms=58.17
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-d4457f987db04e02af2025866e72b15b cost_tokens=48 duration_ms=58.09
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-bb81cc1eec96478b86c31be822fceb53 cost_tokens=48 duration_ms=57.98
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-cda9b5ed9cf748ad86f923191fde65c8 cost_tokens=48 duration_ms=58.23
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c5-d5a38e448d944c70a40f8d0b231a01b9 decode_ms=451.95 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced chunked prefill"}}'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-e624c83ad81b43079a9f7070e88d6159 cost_tokens=48 duration_ms=58.40
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-cb963d5e86b544d8b9416f3256c51844 cost_tokens=31 duration_ms=22.35
+[prefill] prefill-DeepResearch.summarize@388:24-800fad6fddb0469aa310aab1c1324378 cost_tokens=128 duration_ms=21.54
+[prefill] prefill-DeepResearch.summarize@388:24-c95a5666700b4b3fad4c957616beb332 cost_tokens=94 duration_ms=20.97
+[prefill] prefill-DeepResearch.build_report@391:23-f2c451a8bd724ccdbff6e5450296f1a2 cost_tokens=105 duration_ms=21.59
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c6-eaf4e932d6e64e8c846a86b5f133654f duration_ms=22.88 cached_tokens=400 prompt_tokens=463
+[prefill] prefill-WebSearchAgent.web_research@291:32-674c8c6769994d92a766ef434860e4c5 cost_tokens=48 duration_ms=45.71
+[prefill] prefill-WebSearchAgent.web_research@291:32-58b26f044d1b45a29eeeb01cd63d53d6 cost_tokens=48 duration_ms=57.99
+[prefill] prefill-WebSearchAgent.web_research@291:32-bba6856e823f4238b496d7f82e4f20f2 cost_tokens=48 duration_ms=58.01
+[prefill] prefill-WebSearchAgent.web_research@291:32-95668b0fce664236b7e96fa0c4895d76 cost_tokens=48 duration_ms=57.75
+[prefill] prefill-WebSearchAgent.web_research@291:32-8fed5d79e4414ecda3cbb1dae5f6655a cost_tokens=48 duration_ms=57.87
+[prefill] prefill-WebSearchAgent.web_research@291:32-04e13494b9834d118e34defd5d7d955b cost_tokens=48 duration_ms=57.87
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c6-eaf4e932d6e64e8c846a86b5f133654f decode_ms=410.58 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
+[prefill] prefill-WebSearchAgent.web_research@291:32-dcd0ce9a68144b2895c3e9397effa05e cost_tokens=48 duration_ms=58.05
+[prefill] prefill-WebSearchAgent.web_research@291:32-dc81c1d4da8147bebeb978ab5c0b34ee cost_tokens=70 duration_ms=39.92
+[prefill] prefill-DeepResearch.summarize@388:24-209a8373bdb548ffa0f7392703541719 cost_tokens=128 duration_ms=21.63
+[prefill] prefill-DeepResearch.summarize@388:24-5b3516e9b5c347518bc793103fc8164d cost_tokens=92 duration_ms=20.90
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c7-a1a57eae83b04294a055539541614217 duration_ms=54.62 cached_tokens=224 prompt_tokens=395
+[prefill] prefill-__visit@deep_search.jac:380-ef3667b129db4ca19390169ef1ce3323 cost_tokens=48 duration_ms=53.79
+[prefill] prefill-__visit@deep_search.jac:380-d76541a9812b41f3b449502733e61629 cost_tokens=48 duration_ms=58.48
+[prefill] prefill-__visit@deep_search.jac:380-8dcf1069de884b8bb2061995092e95f8 cost_tokens=10 duration_ms=59.26
+[prefill] prefill-FactCheckAgent.fact_check@333:33-8428761dd4154f1794ac35917c3a1f49 cost_tokens=48 duration_ms=56.66
+[prefill] prefill-FactCheckAgent.fact_check@333:33-50c915032f45430087026f2e77464b57 cost_tokens=48 duration_ms=58.18
+[prefill] prefill-FactCheckAgent.fact_check@333:33-e659b67220e1455397d7382fdba45f05 cost_tokens=48 duration_ms=58.55
+[prefill] prefill-FactCheckAgent.fact_check@333:33-cea1f670a86246e692b60c524c8ae535 cost_tokens=48 duration_ms=58.06
+[prefill] prefill-FactCheckAgent.fact_check@333:33-6cdd350239d146059e815829602893c6 cost_tokens=48 duration_ms=58.20
+[prefill] prefill-FactCheckAgent.fact_check@333:33-9efe3724626145d3be8bf55c514bbc5e cost_tokens=48 duration_ms=57.95
+[prefill] prefill-FactCheckAgent.fact_check@333:33-65345627e8be49c49c0680ae220b6780 cost_tokens=48 duration_ms=58.03
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c7-a1a57eae83b04294a055539541614217 decode_ms=647.86 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c7 typed_ok=True output='["What published work introduced chunked prefill and what problem did it solve?", "What background does a reader need before understanding the introduced chunke'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-5dd03afff93f4992ba9f843c0bb293e3 cost_tokens=44 duration_ms=59.09
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-b2e865175c7c42f0bcfd8244f44be4c2 cost_tokens=128 duration_ms=5.65 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c8-972df6dc37604cc096b8b4fd0da913d5 duration_ms=67.26 cached_tokens=288 prompt_tokens=430
+[prefill] prefill-WebSearchAgent.web_research@291:32-6fac5b0e2e064827867f75148f68b7bb cost_tokens=48 duration_ms=56.93
+[prefill] prefill-WebSearchAgent.web_research@291:32-b14031169723454086011bd3eaaf54cb cost_tokens=48 duration_ms=57.95
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c8-972df6dc37604cc096b8b4fd0da913d5 decode_ms=215.56 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-WebSearchAgent.web_research@291:32-03648bbeab934fd797df8ae6be327f89 cost_tokens=48 duration_ms=40.83 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c9-98689f16ddc3471582f53fef45db9e3a duration_ms=120.58 cached_tokens=400 prompt_tokens=701
+[prefill] prefill-WebSearchAgent.web_research@291:32-748f4293f9424f8495dfb0dbc62d3212 cost_tokens=48 duration_ms=57.37
+[prefill] prefill-WebSearchAgent.web_research@291:32-4318cabb05954356a6d67e974a28e208 cost_tokens=48 duration_ms=58.16
+[prefill] prefill-WebSearchAgent.web_research@291:32-8a12cf78bb414533a87fa028cac5a60e cost_tokens=48 duration_ms=58.19
+[prefill] prefill-WebSearchAgent.web_research@291:32-c1935f8da6b94963938864fcab8f174d cost_tokens=48 duration_ms=58.53
+[prefill] prefill-WebSearchAgent.web_research@291:32-c4b15b1dbb1d4c86b04f6943d0c90e6a cost_tokens=48 duration_ms=58.59
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c9-98689f16ddc3471582f53fef45db9e3a decode_ms=394.49 output_tokens=21
+[prefill] prefill-WebSearchAgent.web_research@291:32-c96d620778fe4485ac64d5bf26d08e51 cost_tokens=48 duration_ms=58.57
+[prefill] prefill-WebSearchAgent.web_research@291:32-436c50ee8f8b4c75b2cd69dc0d22caa5 cost_tokens=58 duration_ms=21.60
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-d772565173fe4c61bfbc959c0b4c7482 cost_tokens=128 duration_ms=21.67
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-fda3e378997647cbbca3b81845ffbd49 cost_tokens=128 duration_ms=22.09
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-dae61e4836ef4532a72e2c9bec68e702 cost_tokens=128 duration_ms=22.83
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-a5de9ca6c86041bea1f4cc5ab37cb39a cost_tokens=67 duration_ms=21.57
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6482deefb58a41a89504451308dfae13 cost_tokens=128 duration_ms=21.72
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a2deb00b385d40b29a66b3cfbd31cb28 cost_tokens=128 duration_ms=21.72
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-518e88311161454bb7e89625035264c8 cost_tokens=128 duration_ms=21.75
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6c98e14f935c47c19218ac45fadc9bae cost_tokens=67 duration_ms=4.01 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c10-d7ae9c342fbc4836880bd85e61d3fb39 duration_ms=38.45 cached_tokens=432 prompt_tokens=490
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a46468d6d132404c84abded9162f5345 cost_tokens=48 duration_ms=54.47
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-036bb9f063a047acb1a6c8e49e22ed10 cost_tokens=19 duration_ms=58.64
+[prefill] prefill-FactCheckAgent.fact_check@333:33-f771528500044cef947fe128784c63f5 cost_tokens=48 duration_ms=57.34
+[prefill] prefill-FactCheckAgent.fact_check@333:33-f32a98d866944253be2cd2b62d24fade cost_tokens=48 duration_ms=58.28
+[prefill] prefill-FactCheckAgent.fact_check@333:33-e1d1094ae6134e338d62bf46fc85893d cost_tokens=48 duration_ms=58.16
+[prefill] prefill-FactCheckAgent.fact_check@333:33-7acb1c2045b74a92b8495c21637f4166 cost_tokens=48 duration_ms=58.48
+[prefill] prefill-FactCheckAgent.fact_check@333:33-46b33830a60b4fefbadc4bc1f6a6b971 cost_tokens=48 duration_ms=57.95
+[prefill] prefill-FactCheckAgent.fact_check@333:33-57af166979fe4a2f96d95abf1fd5c395 cost_tokens=48 duration_ms=58.29
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c10-d7ae9c342fbc4836880bd85e61d3fb39 decode_ms=531.00 output_tokens=28
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced chunked prefill problem solved background reader"}}'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-57805029c77c42ba97df96c933a12b19 cost_tokens=48 duration_ms=58.24
+[prefill] prefill-FactCheckAgent.fact_check@333:33-6e19a81fadd24345b5bc7e7c45b27ed7 cost_tokens=80 duration_ms=39.23
+[prefill] prefill-DeepResearch.summarize@388:24-c834e6645e8745e2a6c9d533c44021b0 cost_tokens=128 duration_ms=21.58
+[prefill] prefill-DeepResearch.summarize@388:24-ba6b970666224bb38624e8dae3c8fe41 cost_tokens=98 duration_ms=20.70
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c11-75578dd0584e4fc8b1d5771c5161a928 duration_ms=34.92 cached_tokens=432 prompt_tokens=497
+[prefill] prefill-WebSearchAgent.web_research@291:32-352b8ccb2f7241318743207868b3c975 cost_tokens=48 duration_ms=51.32
+[prefill] prefill-WebSearchAgent.web_research@291:32-c7e795c8d7b04190b9b3efa9af6f85e1 cost_tokens=48 duration_ms=58.03
+[prefill] prefill-WebSearchAgent.web_research@291:32-582438fde4f54acc8270c970411a7e55 cost_tokens=48 duration_ms=58.17
+[prefill] prefill-WebSearchAgent.web_research@291:32-34c195019579467da9990a80579e0615 cost_tokens=48 duration_ms=58.20
+[prefill] prefill-WebSearchAgent.web_research@291:32-b2a33963c7d74673975b23a20832168f cost_tokens=48 duration_ms=57.83
+[prefill] prefill-WebSearchAgent.web_research@291:32-ddc5d08929014015ab00878ee7f184f6 cost_tokens=48 duration_ms=58.02
+[prefill] prefill-WebSearchAgent.web_research@291:32-4617c459d1324f45bdd7675ea85c2c83 cost_tokens=48 duration_ms=57.92
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c11-75578dd0584e4fc8b1d5771c5161a928 decode_ms=449.59 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill introduced problem background"}}'
+[prefill] prefill-WebSearchAgent.web_research@291:32-6162f8c743c34f6fa7970abed9ca8908 cost_tokens=48 duration_ms=57.97
+[prefill] prefill-WebSearchAgent.web_research@291:32-ac9641534a35422b8f688a10ce71239f cost_tokens=22 duration_ms=22.09
+[prefill] prefill-DeepResearch.summarize@388:24-caba7754c7db48c09523af27510aada6 cost_tokens=128 duration_ms=21.60
+[prefill] prefill-DeepResearch.summarize@388:24-bcf762642dfd470e8c2b3627a9214204 cost_tokens=94 duration_ms=21.86
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c12-47b16b78a67f481b8ebe268c301a00b4 duration_ms=23.57 cached_tokens=400 prompt_tokens=464
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-36ffd69759f04c89a2e9a30a073303c6 cost_tokens=48 duration_ms=57.08
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-aea40d3d90c14792b2fe5b9d28ac25e9 cost_tokens=48 duration_ms=58.19
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-33530bcb9516469aaf079b3995a0addd cost_tokens=48 duration_ms=58.05
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-202386d84e774308a1e8c85781130787 cost_tokens=48 duration_ms=57.76
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-3460551fe82d46deb9d95423f79ff9a8 cost_tokens=48 duration_ms=58.05
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-cd97d03ae509492cb1c78c678d3d4022 cost_tokens=48 duration_ms=58.09
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c12-47b16b78a67f481b8ebe268c301a00b4 decode_ms=411.63 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-980a3574462a46318e6b91fc07af0004 cost_tokens=48 duration_ms=57.56
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-4a959734fab64547a379d882d0d05f48 cost_tokens=79 duration_ms=40.07
+[prefill] prefill-DeepResearch.summarize@388:24-dd693b48b6234e63b13c75a5663248de cost_tokens=128 duration_ms=21.76
+[prefill] prefill-DeepResearch.summarize@388:24-cea5e6de594e4a8d8eba7275183e3894 cost_tokens=92 duration_ms=22.06
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s2c13-7cb52f83d3974034adbba4282bbfd306 duration_ms=34.43 cached_tokens=208 prompt_tokens=313
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s2c13-7cb52f83d3974034adbba4282bbfd306 decode_ms=2490.19 output_tokens=128
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s2c13 typed_ok=True output='The research task was to identify which published work introduced chunked prefill, the problem it addressed, and the background knowledge necessary for understa'
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-4b2328a66b5c4275abe5bb2f05670118 duration_ms=67.87 cached_tokens=96 prompt_tokens=236
+[prefill] prefill-DeepResearch.summarize@388:24-63be66b7d5db4c29b4b4a26743615189 cost_tokens=48 duration_ms=46.51
+[prefill] prefill-DeepResearch.summarize@388:24-f46321859b8e458d98e840a0954c48b4 cost_tokens=48 duration_ms=57.80
+[prefill] prefill-DeepResearch.summarize@388:24-7beafd32eea74bb78d7dfa8b79e39eb3 cost_tokens=48 duration_ms=57.88
+[prefill] prefill-DeepResearch.summarize@388:24-ac8a291112724224ae1344629529ca35 cost_tokens=48 duration_ms=58.06
+[prefill] prefill-DeepResearch.summarize@388:24-5ba00b1e3eec46b28b0bc309f4430ba2 cost_tokens=2 duration_ms=58.69
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-4b2328a66b5c4275abe5bb2f05670118 decode_ms=3780.51 output_tokens=194
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill Introduction",\n  "mainText": "The research task was to identify which published work introduced chunked prefill'
+[36m[DEBUG][0m reject from deep_search#2 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s2c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-966a251a0d0f4f109d0e41f3f1308bfb duration_ms=48.63 cached_tokens=416 prompt_tokens=514
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-966a251a0d0f4f109d0e41f3f1308bfb decode_ms=3787.48 output_tokens=194
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill Introduction",\n  "mainText": "The research task was to identify which published work introduced chunked prefill'
+[32m[LOG][0m deep_search#2 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#2 (7 sites served)
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 36702) as intercode_sql#3
+[32m[LOG][0m Registered 'intercode_sql' (pid 571162, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#3
+[36m[DEBUG][0m call from intercode_sql#3 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s3c1-46ba71421f4a4a67a7101d918bada794 duration_ms=284.89 cached_tokens=112 prompt_tokens=1451
+[prefill] prefill-diagnose@367:30-b6a1a35a74d6423a8b0d30bb21aad45d cost_tokens=48 duration_ms=50.61
+[prefill] prefill-diagnose@367:30-0f2534977ac9418eb03fe1603382836d cost_tokens=48 duration_ms=58.98
+[prefill] prefill-diagnose@367:30-14d296e917264c21815cef3b4a503b85 cost_tokens=48 duration_ms=58.85
+[prefill] prefill-diagnose@367:30-acdaa895f07f4a899e69811f26cea42c cost_tokens=48 duration_ms=58.99
+[prefill] prefill-diagnose@367:30-6f529dc8eeb046babb97c07b7fcc926a cost_tokens=48 duration_ms=58.88
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s3c1-46ba71421f4a4a67a7101d918bada794 decode_ms=338.24 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s3c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "dogs"}}'
+[prefill] prefill-diagnose@367:30-e8cc62e0f1824a0e9d4b1680f666f201 cost_tokens=48 duration_ms=58.74
+[prefill] prefill-diagnose@367:30-ebfe42f39a8640d69d474bd9772245a9 cost_tokens=128 duration_ms=21.75
+[prefill] prefill-diagnose@367:30-4c57b93e49ab4c20b461599a108e1f60 cost_tokens=128 duration_ms=21.59
+[prefill] prefill-diagnose@367:30-f082080247204964a93bb98f57b7ab7d cost_tokens=128 duration_ms=21.06
+[prefill] prefill-diagnose@367:30-5c61c619b20249f68f9808746f7b41d5 cost_tokens=100 duration_ms=31.80
+[prefill] prefill-revise_sql@369:24-17d78ffffe5346d6a7fc81cb0cf1b420 cost_tokens=128 duration_ms=34.23
+[prefill] prefill-revise_sql@369:24-c936f7206a3e4683bbfb9dc213e7a7a5 cost_tokens=43 duration_ms=20.89
+[prefill] prefill-finalize@374:23-35078ae4e8004f52b1467fdf6487e09f cost_tokens=128 duration_ms=35.30
+[prefill] prefill-finalize@374:23-3da3572a731545d4a9fadaae2741d65a cost_tokens=13 duration_ms=21.67
+[36m[DEBUG][0m call from intercode_sql#3 key='diagnose'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s3c2-88a158af45164ecaa605c4c8e9977472 duration_ms=22.69 cached_tokens=464 prompt_tokens=509
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s3c2-88a158af45164ecaa605c4c8e9977472 decode_ms=999.77 output_tokens=52
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s3c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL s'
+[prefill] prefill-revise_sql@369:24-d04d602881b743adbcfb7bda8b07e477 cost_tokens=128 duration_ms=35.99
+[prefill] prefill-revise_sql@369:24-aba0e5ceddba438499291c7528bacdc6 cost_tokens=78 duration_ms=21.61
+[36m[DEBUG][0m call from intercode_sql#3 key='revise_sql'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s3c3-f210b3a525314e5a8978312d8967bb66 duration_ms=243.77 cached_tokens=192 prompt_tokens=1254
+[prefill] prefill-diagnose@367:30-d472575884c54605810026e853b3f36f cost_tokens=48 duration_ms=47.41
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s3c3-f210b3a525314e5a8978312d8967bb66 decode_ms=118.09 output_tokens=7
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s3c3 typed_ok=True output='SELECT MAX(age) FROM dogs'
+[prefill] prefill-diagnose@367:30-7cf8aae03754495499a8ca1d2fdda74b cost_tokens=48 duration_ms=58.75
+[prefill] prefill-diagnose@367:30-ee51667ed17c4a599da7fadfa3d77a4e cost_tokens=128 duration_ms=39.46
+[prefill] prefill-diagnose@367:30-831b020450144e9f97afe173c138d7e3 cost_tokens=128 duration_ms=21.65
+[prefill] prefill-diagnose@367:30-4ffed955285c4ce3818e46208178cb01 cost_tokens=128 duration_ms=21.89
+[prefill] prefill-diagnose@367:30-a3b5800663a14ae0a28064d23324247a cost_tokens=89 duration_ms=21.13
+[prefill] prefill-finalize@374:23-ac93cb15be334a7cbe194287c4480797 cost_tokens=128 duration_ms=21.40
+[prefill] prefill-finalize@374:23-82a9d598270442c3bc351c5f37e451b7 cost_tokens=2 duration_ms=21.01
+[36m[DEBUG][0m call from intercode_sql#3 key='finalize'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s3c4-878e7387a28c4bfca6a3f93f1d0e4073 duration_ms=21.65 cached_tokens=112 prompt_tokens=156
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s3c4-878e7387a28c4bfca6a3f93f1d0e4073 decode_ms=195.62 output_tokens=11
+[36m[DEBUG][0m [final] intercode_sql:finalize:s3c4 typed_ok=True output="The age of the oldest dog is '9'."
+[32m[LOG][0m intercode_sql#3 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#3 (4 sites served)
+(EngineCore pid=570418) INFO 08-24 16:02:48 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=570418) INFO 08-24 16:02:48 [core.py:1233] Shutdown complete

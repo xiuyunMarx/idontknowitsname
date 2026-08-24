@@ -37,7 +37,9 @@ async def main() -> None:
     args = parser.parse_args()
 
     engine = ModelEngine(args.model, gpu_memory_utilization=args.gpu_mem, max_model_len=args.max_model_len)
-    profile_path = f"profile-{args.model.rsplit('/', 1)[-1]}.json"
+    # The profile lives next to this file, whatever the working directory is.
+    profile_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                f"profile-{args.model.rsplit('/', 1)[-1]}.json")
     if args.profile:
         await engine._profile(tbt_slack=args.profile_slack, stat=args.profile_stat)
         engine.save_profile(profile_path)

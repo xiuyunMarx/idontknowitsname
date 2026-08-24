@@ -4,7 +4,7 @@ import random
 import statistics
 import time
 import uuid
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.inputs import TokensPrompt
@@ -19,7 +19,7 @@ class ModelEngine:
         self.model_name = model_name
         self.engine = AsyncLLM.from_engine_args(
             AsyncEngineArgs(
-                model=model_name,
+                model=model_name, #type: ignore[arg-type]
                 gpu_memory_utilization=gpu_memory_utilization,
                 max_model_len=max_model_len,
                 enable_prefix_caching=True,
@@ -27,33 +27,31 @@ class ModelEngine:
             )
         )
         self.sp = SamplingParams(temperature=0.7)
-        # decode concurrency -> uncached speculative tokens one engine step may carry
-        # without pushing TBT past the profiled slack. Interference is a per-step
-        # quantity: a speculative request of c uncached tokens lands whole in one
-        # step (c << max_num_batched_tokens), so bounding c bounds that step.
-        self.spec_tokens_per_step: Dict[int, int] = {}
+        self.spec_tokens_per_step: Dict[int, int] = {} # uncached speculative prefill tokens one engine step may carry
         self.profile_curve: List[Dict[str, float]] = []  # raw (b, n) -> TBT sweep, kept for plots
         self._decode_tasks = 0
         self._real_prefills = 0  # real requests still before their first token
         self._spec_inflight = False  # at most one speculative request at a time
+        self._spec_task: Optional[asyncio.Task] = None  # consumer task of the speculative request in flight
 
     def tokenize(self, prompt: str) -> List[int]:
         return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
 
-    def count_tokens(self, prompt: str) -> int:
-        return len(self.tokenize(prompt))
-
     def spec_allowance(self) -> int:
         """Uncached tokens the next speculative request may carry right now.
-        Idle engine: unbounded 
         A real prefill in flight already owns the step: nothing.
-        Otherwise the decode-only batch has compute slack up to the profiled per-step figure for its concurrency."""
-        if self._spec_inflight:
+        Idle engine: unbounded.
+        Otherwise the decode-only batch has compute slack up to the profiled per-step figure for its concurrency.
+
+        The real-prefill test comes before the idle test on purpose: a real
+        request is counted here from the moment generate() is entered, whereas
+        the engine's own view of it lags admission (AsyncLLM.add_request awaits
+        before the output processor registers the request), so an idle-looking
+        engine may already have a real request on the way."""
+        if self._spec_inflight or self._real_prefills > 0:
             return 0
         if not self.engine.output_processor.has_unfinished_requests():
             return 1 << 30
-        if self._real_prefills > 0:
-            return 0
         return self.spec_tokens_per_step.get(self._decode_tasks, 0)
 
     def save_profile(self, path: str) -> None:
@@ -90,6 +88,7 @@ class ModelEngine:
         first_token = True
         out_tokens = 0
         self._real_prefills += 1  # A real call prefills until its first token, then decodes.
+        self.kill_speculation()  # the step belongs to this request now
         try:
             async for output in self.engine.generate(
                 prompt, sampling_params or self.sp, request_id
@@ -112,43 +111,96 @@ class ModelEngine:
                 console_debug(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
         return text
 
-    async def prefill(self, prefill_prompt: str | List[int], request_id: str, cost: int | None = None) -> None:
+    def kill_speculation(self) -> bool:
+        """Abort the speculative request in flight, if any. Called on every real admission."""
+        task = self._spec_task
+        if task is None or task.done():
+            return False
+        task.cancel()
+        return True
+
+    async def _speculative(self, prompt: Any, sampling_params: SamplingParams, request_id: str) -> Any:
+        """Run one priority-1 request to completion and return its last output,
+        or None if kill_speculation() aborted it. The request is consumed in a
+        task of its own so a real admission can cancel exactly that request:
+        AsyncLLM.generate aborts the request when its consumer is cancelled."""
+        async def consume():
+            last = None
+            async for out in self.engine.generate(prompt, sampling_params, request_id, priority=1):
+                last = out
+            return last
+
+        self._spec_inflight = True
+        self._spec_task = task = asyncio.create_task(consume())
+        try:
+            return await task
+        except asyncio.CancelledError:
+            me = asyncio.current_task()
+            if not task.cancelled() or (me is not None and me.cancelling()):
+                raise  # the caller itself is being cancelled (shutdown), not the request
+            return None
+        finally:
+            self._spec_inflight = False
+            self._spec_task = None
+
+    async def prefill(self, prefill_prompt: str | List[int], request_id: str, cost: int | None = None) -> bool:
         """`cost` is the caller's estimate of uncached tokens; defaults to full length.
-        A token-id list warms exactly that prefix of a longer prompt's tokens —
-        how chunked speculation bounds each request to a small uncached slice."""
+        Returns False when a real admission killed the request before it completed;
+        the caller must not count those tokens as warm."""
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True)
-        started = time.perf_counter()
+        start_time = time.perf_counter_ns()
         if isinstance(prefill_prompt, list):
             cost = len(prefill_prompt) if cost is None else cost
-            prefill_prompt = TokensPrompt(prompt_token_ids=prefill_prompt)
-        else:
-            cost = self.count_tokens(prefill_prompt) if cost is None else cost
-        self._spec_inflight = True
-        try:
-            async for _ in self.engine.generate(
-                prefill_prompt, sampling_params, request_id, priority=1
-            ):
-                pass
-        finally:
-            self._spec_inflight = False
+            prefill_prompt = TokensPrompt(prompt_token_ids=prefill_prompt) #type: ignore[call-arg]
+        elif cost is None:
+            cost = len(self.tokenize(prefill_prompt))
+        done = await self._speculative(prefill_prompt, sampling_params, request_id) is not None
+        # An aborted request keeps its cost in the log line: it may have spent a step
+        # before the abort landed, so the spend accounting errs conservative.
         print(
-            f"[prefill] {request_id} cost_tokens={cost} duration_ms={(time.perf_counter() - started) * 1000:.2f}",
+            f"[prefill] {request_id} cost_tokens={cost} duration_ms={(time.perf_counter_ns() - start_time) / 1e6:.2f}"
+            + ("" if done else " aborted=1"),
             flush=True,
         )
+        return done
 
-    async def probe(self, prompt: str, request_id: str, cost: int = 64) -> Dict[int, Logprob]:
+    async def probe(self, prompt: str, request_id: str, cost: int = 64) -> Optional[Dict[int, Logprob]]:
         """Greedy one-token probe; returns the top logprobs at the first position.
         The prompt rides the router's own just-computed prefix, so its uncached
-        cost is a few think-block tokens."""
+        cost is a few think-block tokens. None when a real prefill owns the step
+        or a real admission killed the probe: the caller should probe again later."""
+        if self._real_prefills > 0:
+            return None
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
-        self._spec_inflight = True
-        try:
-            async for output in self.engine.generate(prompt, sampling_params, request_id, priority=1):
-                if output.outputs and output.outputs[0].logprobs:
-                    return output.outputs[0].logprobs[0]
-        finally:
-            self._spec_inflight = False
+        output = await self._speculative(prompt, sampling_params, request_id)
+        if output is None:
+            return None
+        if output.outputs and output.outputs[0].logprobs:
+            return output.outputs[0].logprobs[0]
         return {}
+
+    async def warmup(self) -> None:
+        """Bring a fresh process to the already-serving state the cold-start regime
+        assumes, before any tenant can connect. The first request of a process pays
+        CUDA/kernel initialisation, the first chat-template render, and AsyncLLM's
+        one-off get_supported_tasks RPC (the only await on the admission path that
+        yields before the engine sees the request). Random token ids keep the
+        prefix cache free of anything a real prompt could hit."""
+        started = time.perf_counter()
+        self.render([{"role": "system", "content": "warmup"}, {"role": "user", "content": "warmup"}])
+        decode = SamplingParams(max_tokens=4, temperature=0.0, ignore_eos=True)
+        for n in (64, 512):  # a short and a long prefill, each followed by a few decode steps
+            async for _ in self.engine.generate(
+                TokensPrompt(prompt_token_ids=self._random_ids(n)), decode, f"warmup-real-{n}-{uuid.uuid4().hex}"  # type: ignore[call-arg]
+            ):
+                pass
+        await self._speculative(TokensPrompt(prompt_token_ids=self._random_ids(64)),  # type: ignore[call-arg]
+                                SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True),
+                                f"warmup-spec-{uuid.uuid4().hex}")
+        await self._speculative(TokensPrompt(prompt_token_ids=self._random_ids(64)),  # type: ignore[call-arg]
+                                SamplingParams(max_tokens=1, temperature=0.0, logprobs=20),
+                                f"warmup-probe-{uuid.uuid4().hex}")
+        print(f"[warmup] engine ready in {(time.perf_counter() - started) * 1000:.0f} ms", flush=True)
 
     def _random_ids(self, num_tokens: int) -> List[int]:
         """Exactly `num_tokens` ids no earlier request has seen — an uncached prompt

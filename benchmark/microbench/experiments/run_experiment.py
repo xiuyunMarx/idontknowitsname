@@ -30,8 +30,9 @@ import sys
 import threading
 import time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL = os.environ.get("MODEL") or "Qwen/Qwen2.5-0.5B-Instruct"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # benchmark/microbench: jac programs, graph DBs
+REPO = os.path.dirname(os.path.dirname(ROOT))  # repository root: start_server.py and profile-<model>.json
+MODEL = os.environ.get("MODEL") or "Qwen/Qwen2.5-7B-Instruct"
 SEED = 20260823
 
 CONDITIONS = {
@@ -96,7 +97,7 @@ TENANTS = [
 
 
 def start_server(extra: list, log_path: str, model: str = MODEL) -> subprocess.Popen:
-    cmd = [sys.executable, "start_server.py", "--model", model, "--workers", "8"]
+    cmd = [sys.executable, os.path.join(REPO, "start_server.py"), "--model", model, "--workers", "8"]
     for name, f, port, _, _ in TENANTS:
         cmd += ["--program", f"{name}:jac_programs/{f}:{port}"]
     cmd += extra
@@ -189,7 +190,7 @@ def run_condition(cond: str, rounds: int, out_root: str) -> None:
 
 
 def ensure_profile(out_root: str) -> None:
-    path = os.path.join(ROOT, f"profile-{MODEL.rsplit('/', 1)[-1]}.json")
+    path = os.path.join(REPO, f"profile-{MODEL.rsplit('/', 1)[-1]}.json")
     if os.path.exists(path):
         return
     print(f"[profile] {path} missing, running the interference sweep once")

@@ -59,8 +59,14 @@ server.add_program("research", "jac_programs/research_agent.jac", 8964)
 await server.serve()
 ```
 
-`GuardServer.serve()` starts every TCP listener, the incoming-event monitor, and,
-unless disabled, the engine-idle monitor. Registration verifies the program name,
+`GuardServer.serve()` first warms the process (chat template compiled, every
+callsite's invariant prefix tokenized, a few random-token requests through the
+engine so CUDA initialisation and AsyncLLM's one-off RPCs are paid), then starts
+every TCP listener, the incoming-event monitor, and, unless disabled, the
+engine-idle monitor. `listening on` is printed only after the warmup, so a
+harness that waits for it starts tenants against an already-serving engine.
+A real admission kills the speculative request in flight (`kill_speculation`):
+a queued one is dropped, one already in a running step finishes that step. Registration verifies the program name,
 associates the backend connection with the configured topology, and initializes
 its completed-call set.
 
@@ -108,6 +114,19 @@ Important queries:
 - `site_of(key, site)` resolves the exact invocation site, falling back to the
   declaration's first site when source location is absent or unmatched.
 - `next_calls(key)` returns an over-approximated set of reachable successor keys.
+  Inside one ability body control flow is followed: the first byLLM call of
+  what comes next, through branches (each branch's first call; a call-free
+  branch continues past the `if`), loops (back edge to the loop body's first
+  call, then the loop's exit) and `return`. Across abilities the graph is followed: the
+  **last** byLLM call of a body (one after which no unconditional byLLM call
+  remains) is succeeded by the **first** byLLM call of the abilities that fire
+  when the walker arrives at the nodes the body visited — plain `visit` and
+  `visit ... by llm()` alike, node-side (`can x with W entry` in the node) and
+  walker-side (`can x with N entry` in the walker). The walker's queue order is
+  kept: a body's first unconditional visit is dequeued first; an ability reached
+  by visit V is followed by V's other candidate types (a `select>1` router) and
+  by the targets of the visits after V in the same body; the walker's exit
+  abilities close every traversal.
 - `ready_params(consumer, done, via=None)` reports parameter readiness. Constants
   and fields are statically ready; `ret` and `ret_item` become ready when their
   producer key is in `done`, `ret_any` when any of its producers is. `via` names
@@ -128,7 +147,8 @@ in the order `route_visit` will emit them.
   the edge expression's node filter, else every node type whose entry abilities
   can fire for this walker.
 - `next_calls(visit_key)` returns the **first byLLM call of each candidate
-  node's firing entry ability**
+  node's firing arrival abilities** (node side and walker side), reached
+  through the enclosing body's queue order as described above.
 - Provenance carries a `binding`: `walker` for walker state (`self.x` in a walker
   ability, `visitor.x` in a node ability) and `node` for node state (`here.x` in
   a walker ability, `self.x` in a node ability). Walker state rides through a

@@ -1,0 +1,109 @@
+# Evaluation-tenant smoke: `smoke-7B-xvisit`
+
+trials=[0, 1, 2]; cells=['off', 'spec']
+
+## single
+
+### per-cell totals
+
+| cell | trials | serves | warm fraction | mean TBT ms | spec prefills/trial | aborted/trial | spec tokens/trial |
+|---|---|---|---|---|---|---|---|
+| off | 3 | 90 | 38.9% | 19.52 | 0 | 0 | 0 |
+| spec | 3 | 90 | 60.5% | 19.74 | 229 | 8 | 15093 |
+
+### per tenant (workflows with rc=0; uncached = prompt − cached, summed over the workflow)
+
+| tenant | cell | n | calls/workflow | uncached tok/workflow | ΣTTFT ms | wall s |
+|---|---|---|---|---|---|---|
+| hover | off | 3 | 11.0 | 2456 | 760 | 12.4 |
+| hover | spec | 3 | 11.0 | 1428 | 552 | 13.7 |
+| deep_search | off | 3 | 15.0 | 3929 | 1302 | 25.6 |
+| deep_search | spec | 3 | 15.0 | 2367 | 985 | 26.0 |
+| intercode_sql | off | 3 | 4.0 | 2176 | 510 | 6.5 |
+| intercode_sql | spec | 3 | 4.0 | 1744 | 431 | 6.4 |
+
+### single: spec vs off, paired per (trial, tenant)
+
+| tenant | pairs (same sequence / all) | Δuncached tok/workflow (base−cell) | ΔΣTTFT ms (base−cell) | ΣTTFT ratio |
+|---|---|---|---|---|
+| hover | 3 / 3 | +1028 | +207.3 | 1.38x |
+| deep_search | 2 / 3 | +1562 | +317.5 | 1.32x |
+| intercode_sql | 3 / 3 | +432 | +79.8 | 1.19x |
+| **all** | | **+1007** | **+201.5** [+134.5, +266.8] | **1.31x** |
+
+### single: per callsite (mean uncached tokens / mean TTFT ms)
+
+| callsite | n | off | spec |
+|---|---|---|---|
+| deep_search:DataAnalysisAgent.data_research | 8 | 299 / 85 | 72 / 42 |
+| deep_search:DeepResearch.build_report | 12 | 171 / 68 | 152 / 66 |
+| deep_search:DeepResearch.summarize | 6 | 282 / 98 | 131 / 39 |
+| deep_search:FactCheckAgent.fact_check | 5 | 214 / 68 | 65 / 27 |
+| deep_search:PaperSearchAgent.paper_research | 12 | 276 / 80 | 69 / 38 |
+| deep_search:ResearchSupervisor.decompose_task | 12 | 241 / 84 | 224 / 82 |
+| deep_search:WebSearchAgent.web_research | 11 | 274 / 76 | 68 / 41 |
+| deep_search:__visit | 24 | 295 / 108 | 268 / 105 |
+| hover:HoverAgent.decompose_claim | 6 | 142 / 51 | 142 / 51 |
+| hover:SearchData.plan_query | 12 | 167 / 54 | 86 / 32 |
+| hover:SearchData.reason_hop | 12 | 154 / 48 | 73 / 31 |
+| hover:SearchData.retrieve_evidence | 12 | 268 / 85 | 188 / 80 |
+| hover:SummarizeData.assess_gap | 12 | 196 / 57 | 85 / 35 |
+| hover:Verdict.synthesize_answer | 6 | 281 / 101 | 278 / 103 |
+| hover:Verdict.verify_claim | 6 | 463 / 121 | 144 / 42 |
+| intercode_sql:diagnose | 6 | 265 / 77 | 46 / 24 |
+| intercode_sql:finalize | 6 | 114 / 31 | 40 / 26 |
+| intercode_sql:generate_sql | 6 | 922 / 208 | 922 / 207 |
+| intercode_sql:revise_sql | 6 | 875 / 194 | 736 / 173 |
+
+## multi
+
+### per-cell totals
+
+| cell | trials | serves | warm fraction | mean TBT ms | spec prefills/trial | aborted/trial | spec tokens/trial |
+|---|---|---|---|---|---|---|---|
+| off | 3 | 90 | 37.8% | 21.45 | 0 | 0 | 0 |
+| spec | 3 | 90 | 47.6% | 21.91 | 150 | 20 | 7747 |
+
+### per tenant (workflows with rc=0; uncached = prompt − cached, summed over the workflow)
+
+| tenant | cell | n | calls/workflow | uncached tok/workflow | ΣTTFT ms | wall s |
+|---|---|---|---|---|---|---|
+| hover | off | 3 | 11.0 | 2455 | 1104 | 15.1 |
+| hover | spec | 3 | 11.0 | 2003 | 1115 | 14.3 |
+| deep_search | off | 3 | 15.0 | 3924 | 1648 | 24.0 |
+| deep_search | spec | 3 | 15.0 | 3253 | 1497 | 25.1 |
+| intercode_sql | off | 3 | 4.0 | 2274 | 661 | 7.4 |
+| intercode_sql | spec | 3 | 4.0 | 2112 | 655 | 7.2 |
+
+### multi: spec vs off, paired per (trial, tenant)
+
+| tenant | pairs (same sequence / all) | Δuncached tok/workflow (base−cell) | ΔΣTTFT ms (base−cell) | ΣTTFT ratio |
+|---|---|---|---|---|
+| hover | 3 / 3 | +452 | -11.2 | 0.99x |
+| deep_search | 2 / 3 | +672 | +151.1 | 1.10x |
+| intercode_sql | 3 / 3 | +162 | +5.9 | 1.01x |
+| **all** | | **+429** | **+48.6** [-47.3, +135.0] | **1.04x** |
+
+### multi: per callsite (mean uncached tokens / mean TTFT ms)
+
+| callsite | n | off | spec |
+|---|---|---|---|
+| deep_search:DataAnalysisAgent.data_research | 8 | 289 / 122 | 73 / 66 |
+| deep_search:DeepResearch.build_report | 12 | 149 / 68 | 141 / 68 |
+| deep_search:DeepResearch.summarize | 6 | 290 / 119 | 232 / 104 |
+| deep_search:FactCheckAgent.fact_check | 5 | 273 / 112 | 206 / 79 |
+| deep_search:PaperSearchAgent.paper_research | 12 | 270 / 101 | 264 / 100 |
+| deep_search:ResearchSupervisor.decompose_task | 12 | 238 / 109 | 242 / 107 |
+| deep_search:WebSearchAgent.web_research | 11 | 299 / 100 | 196 / 98 |
+| deep_search:__visit | 24 | 291 / 133 | 275 / 126 |
+| hover:HoverAgent.decompose_claim | 6 | 131 / 57 | 131 / 74 |
+| hover:SearchData.plan_query | 12 | 160 / 96 | 102 / 87 |
+| hover:SearchData.reason_hop | 12 | 152 / 72 | 109 / 103 |
+| hover:SearchData.retrieve_evidence | 12 | 228 / 103 | 236 / 125 |
+| hover:SummarizeData.assess_gap | 12 | 198 / 111 | 139 / 79 |
+| hover:Verdict.synthesize_answer | 6 | 373 / 138 | 246 / 112 |
+| hover:Verdict.verify_claim | 6 | 476 / 144 | 455 / 141 |
+| intercode_sql:diagnose | 6 | 265 / 117 | 228 / 120 |
+| intercode_sql:finalize | 6 | 113 / 61 | 93 / 64 |
+| intercode_sql:generate_sql | 6 | 1013 / 242 | 1013 / 254 |
+| intercode_sql:revise_sql | 6 | 884 / 240 | 779 / 216 |

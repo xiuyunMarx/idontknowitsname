@@ -52,9 +52,13 @@ class RoutingSpeculate:
 
         out: List[ByLLMCallsite] = []
         seen: set[str] = set()
-        walker = state.site.decl.owner_arch
+        abilities: list = []
+        for walker in state.site.decl.walkers or [state.site.decl.owner_arch]:
+            for ability in program._arrival_abilities(archetype, walker):
+                if ability not in abilities:
+                    abilities.append(ability)
 
-        for ability in program._entry_slots(archetype, walker):
+        for ability in abilities:
             for key in program._first_call_in(ability):
                 sites = program.sites_of(key)
 
@@ -69,10 +73,11 @@ class RoutingSpeculate:
         return out
 
     async def sort_candidate_calls(
-        self, state: _CallState, program: ProgramTopology, rank: bool = True
-    ) -> List[ByLLMCallsite]:
+        self, state: _CallState, program: ProgramTopology, rank: bool = False
+    ) -> Optional[List[ByLLMCallsite]]:
         """Every candidate's first byLLM callsites, most likely route first.
-        `rank=False` skips the probe and keeps the candidates' listed order."""
+        `rank=False` skips the probe and keeps the candidates' listed order.
+        None when the probe was killed by a real admission"""
         parsed = self._parse_visit(state, program)
         if parsed is None:
             return []
@@ -87,6 +92,8 @@ class RoutingSpeculate:
             top = await self.engine.probe(
                 probe_prompt, f"probe-{state.site.callsite_uuid}-{uuid.uuid4().hex}" #type: ignore
             )
+            if top is None:
+                return None
             scores = {node["handle"]: float("-inf") for node in candidate_nodes}
             for token_id, info in top.items():
                 text = (info.decoded_token or tokenizer.decode([token_id])).strip()

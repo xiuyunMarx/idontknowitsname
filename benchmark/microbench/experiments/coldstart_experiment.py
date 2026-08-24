@@ -72,7 +72,9 @@ def run_trial(mode: str, cell: str, trial: int, model: str, tool_scale: float,
               out_root: str, results: list, status: list) -> None:
     out_dir = os.path.join(out_root, mode, cell, f"trial-{trial}")
     os.makedirs(out_dir, exist_ok=True)
-    for db in glob.glob(os.path.join(ROOT, ".jac", "data", "*.db")):
+    # jac keeps a program's graph DB in a .jac/ directory next to the source.
+    for db in glob.glob(os.path.join(ROOT, "jac_programs", ".jac", "data", "*.db")) \
+            + glob.glob(os.path.join(ROOT, ".jac", "data", "*.db")):
         os.remove(db)
 
     log_path = os.path.join(out_dir, "server.log")
@@ -120,7 +122,7 @@ def main() -> None:
     parser.add_argument("--modes", default="single,multi")
     parser.add_argument("--tool-scale", type=float, default=1.0,
                         help="multiplier on every fixed tool/inter-call sleep in the Jac programs")
-    parser.add_argument("--model", default=os.environ.get("MODEL") or "Qwen/Qwen2.5-3B-Instruct")
+    parser.add_argument("--model", default=os.environ.get("MODEL") or "Qwen/Qwen2.5-7B-Instruct")
     parser.add_argument("--out", default=os.path.join(ROOT, "experiments", "results",
                                                       time.strftime("coldstart-%Y%m%d-%H%M%S")))
     args = parser.parse_args()

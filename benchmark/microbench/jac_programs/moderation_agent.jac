@@ -5,7 +5,7 @@ import from jaclang.byllm.llm { InterceptorLLM }
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
 
 glob llm = InterceptorLLM(
-    model_name=str(os.environ.get("MODEL") or "Qwen/Qwen2.5-0.5B-Instruct"),
+    model_name=str(os.environ.get("MODEL") or "Qwen/Qwen2.5-7B-Instruct"),
     comm_ip="localhost",
     comm_port=8969,
     program_name="moderation"

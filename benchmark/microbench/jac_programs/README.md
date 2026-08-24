@@ -4,7 +4,7 @@ Start the proactive-prefill server:
 
 ```bash
 python start_server.py \
-  --model Qwen/Qwen2.5-0.5B-Instruct \
+  --model Qwen/Qwen2.5-7B-Instruct \
   --program research:jac_programs/research_agent.jac:8964 \
   --program operations:jac_programs/operations_agent.jac:8965 \
   --program route:jac_programs/route_wire.jac:8966 \
@@ -20,7 +20,7 @@ TICKET="Our export job fails with a 500 after the last release." jac run jac_pro
 ```
 
 Every tenant's `glob llm` takes the model from `$MODEL` (default
-`Qwen/Qwen2.5-0.5B-Instruct`); it must name the same model the server runs.
+`Qwen/Qwen2.5-7B-Instruct`); it must name the same model the server runs.
 
 Four more tenants diversify the load for the multi-tenant experiments
 (`experiments/run_experiment.py`), each stressing an axis the first three do not:

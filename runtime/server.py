@@ -2,6 +2,7 @@ import asyncio
 import json
 import random
 import re
+import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -94,6 +95,7 @@ class GuardServer:
     async def serve(self) -> None:
         if not self._llm_backend:
             raise RuntimeError("no programs registered")
+        await self._warmup()
 
         tasks = [
             asyncio.create_task(self.monitor_task()),
@@ -110,6 +112,20 @@ class GuardServer:
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+
+    async def _warmup(self) -> None:
+        """Reach the already-serving state before listeners open: compile the chat
+        template, tokenize every callsite's invariant prefix (what a speculation
+        tick renders), and run the engine's warmup. `listening on` is printed by
+        the listeners, so a harness waiting for it also waits for this."""
+        started = time.perf_counter()
+        sites = 0
+        for program in self._programs.values():
+            for site in program.callsites:
+                self._engine.tokenize(self._engine.render(site.get_ready_prompt({})))
+                sites += 1
+        await self._engine.warmup()
+        console_log(f"[guard] warmup done: {sites} callsites rendered, {(time.perf_counter() - started) * 1000:.0f} ms")
 
     # ---- per-instance state -------------------------------------------------
 
@@ -187,14 +203,16 @@ class GuardServer:
         if state.turn_warm and state.turn_warm[0] == tag:
             warmed = state.turn_warm[1]
         else:
-            warmed = self._engine.count_tokens(self._engine.render(state.messages))
+            warmed = len(self._engine.tokenize(self._engine.render(state.messages)))
         while warmed < len(ids):
             # The step's slack, not a fixed chunk, sizes each request under load.
             cost = min(self._spec_chunk, self._engine.spec_allowance(), len(ids) - warmed)
             if cost <= 0:
                 state.turn_warm = (tag, warmed)
                 return False
-            await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost)
+            if not await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost):
+                state.turn_warm = (tag, warmed)  # killed by a real admission: resume here next tick
+                return False
             warmed += cost
         state.turn_warm = None
         state.prefilled_sites.add(tag)
@@ -208,9 +226,17 @@ class GuardServer:
                 # Probed once per call: the ranked plan is cached on the state so
                 # subsequent idle ticks reuse it instead of re-probing the router.
                 if state.route_plan is None:
+                    # The probe is a speculative request like any other: it needs
+                    # a step it may use, and None means a real admission killed it
+                    # (or owns the step), so the plan stays unranked until a
+                    # later tick probes again.
+                    if self._engine.spec_allowance() <= 0:
+                        continue
                     state.route_plan = await self._speculate.sort_candidate_calls(
                         state, program, rank="probe" in self._spec_features
                     )
+                    if state.route_plan is None:
+                        continue
                 sites = state.route_plan
             else:
                 sites = [
@@ -250,9 +276,10 @@ class GuardServer:
                     cost = min(self._spec_chunk, self._engine.spec_allowance(), len(ids) - warmed)
                     if cost <= 0:
                         return
-                    await self._engine.prefill(
+                    if not await self._engine.prefill(
                         ids[: warmed + cost], f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
-                    )
+                    ):
+                        return  # killed by a real admission; progress so far stays recorded
                     warmed += cost
                     self._warm_tokens[key] = warmed
                 if warmed >= len(ids):
@@ -431,6 +458,7 @@ class GuardServer:
 
                 state.done.add(site.key)
                 ok, value = site.decl.parse_response(output)
+                console_debug(f"[final] {tag} typed_ok={ok} output={str(output)[:160]!r}")
                 if ok and "ret" in self._spec_features:
                     for consumer, parameter in program.consumers_of(site.key):
                         item = program.provenance[consumer][parameter]["kind"] == "ret_item"
@@ -460,6 +488,7 @@ class GuardServer:
                     return
                 if event.type != "reject":
                     raise ValueError("only reject is valid after final")
+                console_debug(f"[reject] {tag} feedback={str(event.feedback)[:160]!r}")
                 state.done.discard(site.key)
                 if retries_left <= 0:
                     raise RuntimeError("maximum output retries exceeded")

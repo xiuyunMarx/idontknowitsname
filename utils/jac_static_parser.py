@@ -12,6 +12,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from utils.utils import (SYSTEM_PERSONA, TOOL_INSTRUCTION, FIELD_EXPR_RE, LOOP_STMTS, ROUTE_SYSTEM, ROUTE_ZONE_LABEL, ROUTE_LAYOUT_DEFAULT, ROUTE_LAYOUT_CACHE, norm, clean_type, json_type_of, literal_of, params_of, extract_llm_call, finish_tool_schema, format_tools_for_prompt, schema_entry, render_bindings)
 
+# Statements whose byllm calls are not certain to run: an enclosing body may end without them.
+CONDITIONAL_STMTS = LOOP_STMTS + tuple(getattr(uni, n) for n in ("IfStmt", "TryStmt", "MatchStmt") if hasattr(uni, n))
+
 VISIT_PREFIX = "__visit@"
 
 # The builtin names a return-type annotation may eval to. A user obj/enum name
@@ -73,6 +76,7 @@ class ByLLMDecl:
     owner_kind: str = ""  # "walker" | "node" | "obj" | ""
     zones: List[str] = field(default_factory=list)  # visit only: runtime zone order (see route_layout)
     candidates: List[str] = field(default_factory=list)  # visit only: node archetypes the router may pick
+    walkers: List[str] = field(default_factory=list)  # visit only: walker archetypes that can be running the visit
     reponse_format: Optional[Dict[str, Any]] = None  # expanded response_format (None for str returns / tools)
     return_type_obj: Optional[Any] = None  # materialized Python type translated from Jac obj/enum defs
     param_type_objs: Dict[str, Any] = field(default_factory=dict)  # param name -> materialized type (drives the schema zone)
@@ -431,6 +435,7 @@ class ProgramTopology:
             owner_kind=self._arch_kind(owner),
             zones=list(route_layout()),
             candidates=self._candidate_nodes(stmt, ability),
+            walkers=self._ability_walkers(ability) if ability is not None else [],
         )
 
     def _candidate_nodes(self, stmt: uni.VisitStmt, ability: Optional[uni.Ability]) -> List[str]:
@@ -448,8 +453,11 @@ class ProgramTopology:
         ]
         if named:
             return sorted(set(named) | {sub for name in named for sub in self._subtypes(name)})
-        walker = ability.method_owner.name.value if ability is not None and ability.method_owner is not None else ""
-        walker_isa = {walker} | self._supertypes(walker) if walker else set()
+        # The walker running this visit is the ability's owner when the ability is
+        # the walker's, and the `with <W> entry` trigger when it is the node's.
+        walker_isa: set = set()
+        for walker in (self._ability_walkers(ability) if ability is not None else []):
+            walker_isa |= {walker} | self._supertypes(walker)
         out: List[str] = []
         for name, arch in archs.items():
             if self._arch_kind(arch) != "node":
@@ -611,40 +619,164 @@ class ProgramTopology:
                 out.append(k)
         return out
 
-    def _next_keys(self, call: uni.UniNode) -> Tuple[List[str], Optional[uni.Ability]]:
-        """byllm keys reachable after `call` completes, scanning forward in control flow.
-
-        Over-approximation on purpose: every byllm call in any later statement at any
-        enclosing level counts (branch precision dropped — a spurious edge only wastes
-        a speculative prefill; a missed edge costs a cold TTFT). Loop parents add their
-        contained calls as back-edges. Second value = enclosing Ability whose body can
-        end, i.e. the caller's continuation decides what runs next."""
+    def _leading_calls(self, node: uni.UniNode) -> List[str]:
+        """byllm calls that run first when `node` (a statement or expression) is
+        evaluated: those with no byllm call nested inside their own arguments."""
         out: List[str] = []
-        cur: uni.UniNode = call
+        calls = ([node] if isinstance(node, uni.FuncCall) else []) + list(node.get_all_sub_nodes(uni.FuncCall))
+        for c in calls:
+            keys = self._resolve_call(c)
+            if not keys:
+                continue
+            if any(self._resolve_call(inner) for inner in c.get_all_sub_nodes(uni.FuncCall)):
+                continue  # an argument makes a byllm call first
+            for k in keys:
+                if k not in out:
+                    out.append(k)
+        return out
+
+    def _first_calls(self, stmts: List[uni.UniNode]) -> Tuple[List[str], bool, bool]:
+        """(byllm keys that can run first in the statement sequence `stmts`,
+        whether control can fall off the end of the sequence without making any
+        byllm call, whether it can leave the enclosing body — `return`,
+        `disengage` — without one). Branches contribute their own first calls; a
+        call-free branch, a missing `else`, or a loop that may run zero times lets
+        the scan continue to the following statement."""
+        out: List[str] = []
+        exits = False
+
+        def add(keys: List[str]) -> None:
+            for k in keys:
+                if k not in out:
+                    out.append(k)
+
+        for st in stmts:
+            keys, falls, ex = self._first_calls_stmt(st)
+            add(keys)
+            exits = exits or ex
+            if not falls:
+                return out, False, exits
+            if isinstance(st, uni.CtrlStmt):
+                return out, True, exits  # break/continue: control leaves the sequence
+        return out, True, exits
+
+    def _first_calls_stmt(self, st: uni.UniNode) -> Tuple[List[str], bool, bool]:
+        def merge(a: List[str], b: List[str]) -> List[str]:
+            return a + [k for k in b if k not in a]
+
+        if isinstance(st, uni.VisitStmt):
+            if self._visit_by(st) is not None:
+                key = visit_key(st.loc.mod_path, st.loc.first_line)
+                known = key in self.get_decls()
+                return ([key] if known else []), not known, False
+            return [], True, False  # a plain visit only enqueues
+        if isinstance(st, (uni.ReturnStmt, uni.DisengageStmt)):
+            keys = self._leading_calls(st)
+            return keys, False, not keys  # the body ends here (after the call, if any)
+        if isinstance(st, uni.IfStmt):  # ElseIf included
+            keys, falls, ex = self._first_calls(st.body)
+            eb = st.else_body
+            if eb is None:
+                return keys, True, ex
+            k2, f2, e2 = self._first_calls_stmt(eb) if isinstance(eb, uni.IfStmt) else self._first_calls(eb.body)
+            return merge(keys, k2), falls or f2, ex or e2
+        if isinstance(st, LOOP_STMTS):
+            keys, _, ex = self._first_calls(st.body)  # zero iterations are possible
+            eb = getattr(st, "else_body", None)
+            if eb is not None:
+                k2, f2, e2 = self._first_calls(eb.body)
+                return merge(keys, k2), f2, ex or e2
+            return keys, True, ex
+        if isinstance(st, uni.TryStmt):
+            keys, falls, ex = self._first_calls(st.body)
+            for exc in st.excepts or []:
+                k2, f2, e2 = self._first_calls(exc.body)
+                keys, falls, ex = merge(keys, k2), falls or f2, ex or e2
+            for tail in (getattr(st, "else_body", None), getattr(st, "finally_body", None)):
+                if tail is not None and falls:
+                    k2, falls, e2 = self._first_calls(tail.body)
+                    keys, ex = merge(keys, k2), ex or e2
+            return keys, falls, ex
+        if isinstance(st, uni.MatchStmt):
+            keys: List[str] = []
+            ex = False
+            for case in st.cases or []:
+                k2, _, e2 = self._first_calls(case.body)
+                keys, ex = merge(keys, k2), ex or e2
+            return keys, True, ex  # no case may match
+        keys = self._leading_calls(st)
+        return keys, not keys, False
+
+    @staticmethod
+    def _sequence_of(st: uni.UniNode) -> Tuple[Optional[List[uni.UniNode]], Optional[uni.UniNode]]:
+        """The statement list `st` belongs to and the node owning that list."""
+        owner = st.parent
+        for attr in ("body", "excepts", "cases"):
+            seq = getattr(owner, attr, None)
+            if isinstance(seq, list) and any(x is st for x in seq):
+                return seq, owner
+        return None, owner
+
+    def _next_keys(self, call: uni.UniNode) -> Tuple[List[str], Optional[uni.Ability]]:
+        """byllm keys that can run right after `call` completes, following control
+        flow within the enclosing body: the rest of the current statement (an
+        enclosing byllm call), then the first calls of what follows — through
+        branches (each branch's first call; a call-free branch continues past the
+        `if`), loops (back edge to the loop body's first call, then the loop's
+        exit) and `return`/`disengage`. Second value = the enclosing Ability when
+        its body's end is reachable from `call` without another byllm call, i.e.
+        when the caller's continuation decides what runs next; None otherwise."""
+        out: List[str] = []
+
+        def add(keys: List[str]) -> None:
+            for k in keys:
+                if k not in out:
+                    out.append(k)
+
+        # Inside the statement: an enclosing byllm call runs right after this one.
+        st: uni.UniNode = call
+        while st.parent is not None and not isinstance(st, uni.CodeBlockStmt):
+            st = st.parent
+            if isinstance(st, uni.FuncCall) and self._resolve_call(st):
+                add(self._resolve_call(st))
+                return out, None
+        ability = call.find_parent_of_type(uni.Ability)
+        exit_seen = False  # a `return`/`disengage` reachable without a call: the body ends there
         while True:
-            p = cur.parent
-            if p is None:
+            seq, owner = self._sequence_of(st)
+            if seq is not None:
+                keys, falls, ex = self._first_calls(seq[next(i for i, x in enumerate(seq) if x is st) + 1:])
+                add(keys)
+                exit_seen = exit_seen or ex
+                if not falls:
+                    break
+            if owner is None or isinstance(owner, (uni.ModuleCode, uni.Module)):
                 return out, None
-            if isinstance(p, uni.FuncCall):
-                for k in self._resolve_call(p):  # nested arg: the outer call runs right after
-                    if k not in out:
-                        out.append(k)
-            kids = list(getattr(p, "kid", None) or [])
-            if cur in kids:
-                for st in kids[kids.index(cur) + 1:]:
-                    if isinstance(st, uni.CodeBlockStmt) and not isinstance(st, uni.ElseIf):
-                        for k in self._calls_in(st):
-                            if k not in out:
-                                out.append(k)
-            if isinstance(p, LOOP_STMTS):
-                for k in self._calls_in(p):
-                    if k not in out:
-                        out.append(k)
-            if isinstance(p, uni.Ability):
-                return out, p
-            if isinstance(p, (uni.ModuleCode, uni.Module)):
-                return out, None
-            cur = p
+            if isinstance(owner, uni.Ability):
+                return out, owner
+            if isinstance(owner, LOOP_STMTS) and seq is not None and any(x is st for x in owner.body):
+                # The loop body ended: it may iterate again, or run its else and exit.
+                keys, _, ex = self._first_calls(owner.body)
+                add(keys)
+                exit_seen = exit_seen or ex
+                eb = getattr(owner, "else_body", None)
+                if eb is not None:
+                    keys, falls, ex = self._first_calls(eb.body)
+                    add(keys)
+                    exit_seen = exit_seen or ex
+                    if not falls:
+                        break
+                st = owner
+                continue
+            if isinstance(owner, (uni.ElseStmt, uni.ElseIf, uni.Except, uni.FinallyStmt, uni.MatchCase)):
+                # A branch ended: control continues after the whole if/try/match.
+                top = owner
+                while isinstance(top, (uni.ElseStmt, uni.ElseIf, uni.Except, uni.FinallyStmt, uni.MatchCase)):
+                    top = top.parent
+                st = top
+                continue
+            st = owner  # IfStmt / TryStmt / MatchStmt / anything else: continue after it
+        return out, (ability if exit_seen else None)
 
     def _continuation_keys(self, ability: uni.Ability, visited: set) -> List[str]:
         """What can run after `ability`'s body ends: the byllm calls following each of
@@ -746,46 +878,190 @@ class ProgramTopology:
             out.append(slot)
         return out
 
-    def _visit_successors(self, decl: ByLLMDecl) -> List[str]:
-        """Where a routing call hands control next: the first byllm call inside each
-        candidate node's firing entry ability. The router's answer picks one of them
-        at runtime, so all of them are may-run-next."""
-        out: List[str] = []
-        for cand in decl.candidates:
-            for slot in self._entry_slots(cand, decl.owner_arch):
-                for key in self._first_call_in(slot):
-                    if key not in out:
-                        out.append(key)
+    def _ability_walkers(self, ability: uni.Ability) -> List[str]:
+        """Walker archetypes that can be running when `ability` executes: the owner of
+        a walker ability, the `with <W> entry` triggers of a node ability ([] when a
+        node ability names no trigger — any walker)."""
+        owner = ability.method_owner
+        kind = self._arch_kind(owner)
+        if kind == "walker":
+            return [owner.name.value]
+        if kind == "node":
+            archs = self._archs()
+            return [t for t in self._trigger_names(ability) if self._arch_kind(archs.get(t)) == "walker"]
+        return []
+
+    def _ability_nodes(self, ability: uni.Ability) -> List[str]:
+        """Node archetypes `ability` runs on: the owner of a node ability, the
+        `with <T> entry` triggers of a walker ability."""
+        owner = ability.method_owner
+        kind = self._arch_kind(owner)
+        if kind == "node":
+            return [owner.name.value]
+        if kind == "walker":
+            return list(self._trigger_names(ability))
+        return []
+
+    def _arrival_abilities(self, arch_name: str, walker: str) -> List[uni.Ability]:
+        """Abilities that fire when `walker` arrives at a node of type `arch_name`:
+        the node's entry abilities the walker triggers (node side) and the walker's
+        entry abilities the node type triggers (walker side: `can x with <T> entry`
+        declared in the walker, T the node type or one of its supertypes)."""
+        out: List[uni.Ability] = list(self._entry_slots(arch_name, walker))
+        node_isa = {arch_name} | self._supertypes(arch_name)
+        archs = self._archs()
+        for wname in (({walker} | self._supertypes(walker)) if walker else set()):
+            arch = archs.get(wname)
+            if arch is None or self._arch_kind(arch) != "walker":
+                continue
+            for slot in arch.get_methods():
+                sig = slot.signature
+                if not isinstance(sig, uni.EventSignature) or sig.event.name != "KW_ENTRY":
+                    continue
+                trigs = self._trigger_names(slot)
+                if trigs and not (set(trigs) & node_isa):
+                    continue
+                if slot not in out:
+                    out.append(slot)
         return out
 
-    def _visits_reaching(self, ability: uni.Ability) -> List[ByLLMDecl]:
-        """Routing calls whose candidate set includes this ability's owner."""
-        owner = ability.method_owner
-        if owner is None:
-            return []
-        name = owner.name.value
-        return [d for d in self.get_decls().values()
-                if d.is_visit and (name in d.candidates or name == d.owner_arch)]
+    def _plain_visit_successors(self, stmt: uni.VisitStmt, exclude: set = frozenset()) -> List[str]:
+        """Where a plain `visit <edges>` hands control: the first byllm call of every
+        ability that fires when this walker arrives at one of its target node types.
+        The visit only enqueues — the walker dequeues once the enclosing body ends —
+        so these are continuation edges of the body, not forward-scan edges."""
+        ability = stmt.find_parent_of_type(uni.Ability)
+        walkers = self._ability_walkers(ability) if ability is not None else []
+        out: List[str] = []
+        for cand in self._candidate_nodes(stmt, ability):
+            if cand in exclude:
+                continue
+            for walker in walkers or [""]:
+                for slot in self._arrival_abilities(cand, walker):
+                    for key in self._first_call_in(slot):
+                        if key not in out:
+                            out.append(key)
+        return out
+
+    def _visit_successors(self, decl: ByLLMDecl, exclude: set = frozenset()) -> List[str]:
+        """Where a routing call hands control next: the first byllm call inside each
+        candidate node's firing arrival abilities (node side and walker side). The
+        router's answer picks one of them at runtime, so all of them are may-run-next.
+        `exclude` drops candidate node types (the sibling case: the type already
+        running does not follow itself)."""
+        out: List[str] = []
+        for cand in decl.candidates:
+            if cand in exclude:
+                continue
+            for walker in decl.walkers or [decl.owner_arch]:
+                for slot in self._arrival_abilities(cand, walker):
+                    for key in self._first_call_in(slot):
+                        if key not in out:
+                            out.append(key)
+        return out
+
+    def _visits_in(self, body: uni.UniNode) -> List[uni.VisitStmt]:
+        """Every visit under `body`, routing or plain, in source order — the order
+        in which the walker's queue receives their targets."""
+        return sorted(body.get_all_sub_nodes(uni.VisitStmt),
+                      key=lambda st: (st.loc.first_line, st.loc.col_start))
+
+    @staticmethod
+    def _ancestors(node: uni.UniNode, stop: uni.UniNode) -> List[uni.UniNode]:
+        out: List[uni.UniNode] = []
+        cur = node.parent
+        while cur is not None and cur is not stop:
+            out.append(cur)
+            cur = cur.parent
+        return out
+
+    def _conditional_within(self, st: uni.UniNode, body: uni.UniNode) -> bool:
+        """Whether `st` sits inside a branch or loop of `body` that may not execute."""
+        return any(isinstance(a, CONDITIONAL_STMTS) for a in self._ancestors(st, body))
+
+    def _exclusive(self, a: uni.UniNode, b: uni.UniNode, body: uni.UniNode) -> bool:
+        """Whether `a` and `b` lie in different branches of the same `if` in `body`:
+        one execution takes at most one of them."""
+        anc_a = self._ancestors(a, body)
+        anc_b = set(self._ancestors(b, body))
+        common = next((x for x in anc_a if x in anc_b), None)
+        if common is None or not isinstance(common, (uni.IfStmt, uni.ElseIf)):
+            return False
+        branch_a = next((x for x in [a] + anc_a if x.parent is common), None)
+        branch_b = next((x for x in [b] + list(self._ancestors(b, body)) if x.parent is common), None)
+        return branch_a is not branch_b
+
+    def _visit_candidates(self, st: uni.VisitStmt) -> List[str]:
+        """Node archetypes a visit may enqueue, routing or plain."""
+        if self._visit_by(st) is not None:
+            decl = self.get_decls().get(visit_key(st.loc.mod_path, st.loc.first_line))
+            return list(decl.candidates) if decl is not None else []
+        return self._candidate_nodes(st, st.find_parent_of_type(uni.Ability))
+
+    def _visit_targets(self, st: uni.VisitStmt, exclude: set = frozenset()) -> List[str]:
+        """First byllm calls of the arrival abilities a visit's targets fire."""
+        if self._visit_by(st) is not None:
+            decl = self.get_decls().get(visit_key(st.loc.mod_path, st.loc.first_line))
+            return self._visit_successors(decl, exclude) if decl is not None else []
+        return self._plain_visit_successors(st, exclude)
+
+    def _queue_head(self, visits: List[uni.VisitStmt], body: uni.UniNode) -> List[str]:
+        """What the walker dequeues first once `body` ends, given the visits it
+        issued in queue order: the first visit's targets, plus each following
+        visit's for as long as every earlier one sits in a branch the body may
+        have skipped."""
+        out: List[str] = []
+        for st in visits:
+            for key in self._visit_targets(st):
+                if key not in out:
+                    out.append(key)
+            if not self._conditional_within(st, body):
+                break
+        return out
 
     def _traversal_continuation(self, ability: uni.Ability, visited: set) -> List[str]:
         """What may run once a walker/node ability's body ends. Control returns to
-        the walker's traversal queue, not to a caller, so the continuation is: the
-        remaining candidates of whatever routing call reached this ability (a
-        `select>1` router queues several), then the walker's exit abilities."""
+        the walker's traversal queue, not to a caller. The queue holds, in order:
+        what this body itself enqueued (its first visit's targets run next); then,
+        if this ability was reached by a visit V of some body B, what V enqueued
+        alongside this node (a `select>1` router or a multi-type visit) and what
+        the visits after V in B enqueued; and when the queue is empty the
+        walker's exit abilities."""
         ident = self._ability_id(ability)
         if ident in visited:
             return []
         visited.add(ident)
         out: List[str] = []
-        for decl in self._visits_reaching(ability):
-            # select=1 queues exactly one node, so no sibling candidate follows it.
-            if decl.call_params.get("select") != 1:
-                for key in self._visit_successors(decl):
-                    if key not in out:
-                        out.append(key)
-            for key in self._exit_calls(decl.owner_arch) if decl.owner_arch else []:
+
+        def add(keys: List[str]) -> None:
+            for key in keys:
                 if key not in out:
                     out.append(key)
+
+        add(self._queue_head(self._visits_in(ability), ability))
+        here = set(self._ability_nodes(ability))
+        decls = self.get_decls()
+        for st in self._visits_in(self.module):
+            if not (here & set(self._visit_candidates(st))):
+                continue
+            body = st.find_parent_of_type(uni.Ability)
+            decl = decls.get(visit_key(st.loc.mod_path, st.loc.first_line)) if self._visit_by(st) is not None else None
+            # select=1 queues exactly one node, so no sibling candidate follows it.
+            # The type already running is not its own successor: a second node of
+            # the same type re-enters this very ability, whose prefix is resident.
+            if not (decl is not None and decl.call_params.get("select") == 1):
+                add(self._visit_targets(st, exclude=here))
+            if body is not None:
+                pos = (st.loc.first_line, st.loc.col_start)
+                later = [v for v in self._visits_in(body)
+                         if (v.loc.first_line, v.loc.col_start) > pos and not self._exclusive(st, v, body)]
+                add(self._queue_head(later, body))
+        # The traversal may end after this body: the walker's exit abilities run —
+        # unless this body is one of them already.
+        sig = ability.signature
+        if not (isinstance(sig, uni.EventSignature) and sig.event.name == "KW_EXIT"):
+            for walker in self._ability_walkers(ability):
+                add(self._exit_calls(walker))
         return out
 
     def _exit_calls(self, walker: str) -> List[str]:
@@ -806,9 +1082,10 @@ class ProgramTopology:
         for site in self.callsites:
             anchor = site.stmt if site.stmt is not None else site.call
             succ, escaped = self._next_keys(anchor)
-            # `visit` only enqueues: the rest of the ability body still runs before
-            # the walker dequeues, so the in-body successors come first.
-            if site.is_visit:
+            # `visit` only enqueues: its candidates run once the enclosing body ends,
+            # in queue order, which _traversal_continuation models. Only a visit
+            # outside any walker/node ability (a helper) needs its candidates here.
+            if site.is_visit and escaped is not None and self._arch_kind(escaped.method_owner) not in ("walker", "node"):
                 succ = succ + self._visit_successors(site.decl)
             if escaped is not None:
                 succ = succ + self._continuation_keys(escaped, set())
