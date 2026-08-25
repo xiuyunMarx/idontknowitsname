@@ -1,0 +1,566 @@
+INFO 08-24 17:43:36 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 17:43:36 [model.py:1678] Using max model len 8192
+INFO 08-24 17:43:36 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 17:43:36 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=692000) INFO 08-24 17:43:38 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=692000) INFO 08-24 17:43:38 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:60407 backend=nccl
+[rank0]:[W824 17:43:38.373948314 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=692000) INFO 08-24 17:43:38 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=692000) INFO 08-24 17:43:39 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=692000) INFO 08-24 17:43:39 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=692000) INFO 08-24 17:43:39 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=692000) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=692000) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=692000) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=692000) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.41it/s]
+(EngineCore pid=692000) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.22it/s]
+(EngineCore pid=692000) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.21it/s]
+(EngineCore pid=692000) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.25it/s]
+(EngineCore pid=692000) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.25it/s]
+(EngineCore pid=692000) 
+(EngineCore pid=692000) INFO 08-24 17:43:41 [default_loader.py:384] Loading weights took 1.84 seconds
+(EngineCore pid=692000) INFO 08-24 17:43:42 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.633429 seconds
+(EngineCore pid=692000) INFO 08-24 17:43:44 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=692000) INFO 08-24 17:43:44 [backends.py:1111] Dynamo bytecode transform time: 2.17 s
+(EngineCore pid=692000) INFO 08-24 17:43:45 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.558 s
+(EngineCore pid=692000) INFO 08-24 17:43:45 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=692000) INFO 08-24 17:43:45 [monitor.py:48] torch.compile took 2.88 s in total
+(EngineCore pid=692000) INFO 08-24 17:43:45 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=692000) INFO 08-24 17:43:46 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=692000) INFO 08-24 17:43:46 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=692000) INFO 08-24 17:43:46 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=692000) INFO 08-24 17:43:47 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=692000) INFO 08-24 17:43:47 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=692000) INFO 08-24 17:43:47 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=692000) INFO 08-24 17:43:47 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=692000) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 14.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 18.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 20.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.77it/s]
+(EngineCore pid=692000) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.70it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.74it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 25.34it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 28.73it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.63it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 29.16it/s]
+(EngineCore pid=692000) INFO 08-24 17:43:49 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=692000) INFO 08-24 17:43:49 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=692000) INFO 08-24 17:43:49 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.72 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static cache_isolation=instance
+WARNING 08-24 17:43:50 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 422 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 439 ms
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 50086) as intercode_sql#1
+[32m[LOG][0m Registered 'intercode_sql' (pid 692451, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#1
+[36m[DEBUG][0m call from intercode_sql#1 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s1c1-9ce8cd5d6d484d679adc94b222518439 duration_ms=151.38 cached_tokens=0 prompt_tokens=620
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s1c1-9ce8cd5d6d484d679adc94b222518439 decode_ms=333.77 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s1c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "people"}}'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58478) as deep_search#2
+[32m[LOG][0m Registered 'deep_search' (pid 692462, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#2
+[36m[DEBUG][0m call from intercode_sql#1 key='diagnose'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s1c2-a17abc3a3ea242b0be5ea1bf5763ccbb duration_ms=54.62 cached_tokens=336 prompt_tokens=512
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c1-52b7839031cc46988c4f2778a27aa928 duration_ms=131.76 cached_tokens=0 prompt_tokens=330
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s1c2-a17abc3a3ea242b0be5ea1bf5763ccbb decode_ms=830.96 output_tokens=40
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s1c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL w'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 50090) as intercode_sql#3
+[32m[LOG][0m Registered 'intercode_sql' (pid 692472, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#3
+[36m[DEBUG][0m call from intercode_sql#3 key='generate_sql'
+[36m[DEBUG][0m call from intercode_sql#1 key='revise_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s3c1-034961ac16e5428b9091eb165f7f1876 duration_ms=223.95 cached_tokens=0 prompt_tokens=923
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s1c3-07e3f8c3e5aa4153ac28ee1590d99513 duration_ms=244.27 cached_tokens=32 prompt_tokens=411
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c1-52b7839031cc46988c4f2778a27aa928 decode_ms=1013.87 output_tokens=40
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c1 typed_ok=True output='["What published work introduced prefill-decode disaggregation?", "What problem did the introduced prefill-decode disaggregation solve?", "What background does '
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c2-6523064a5b314e238abecaa7d880a524 duration_ms=131.48 cached_tokens=0 prompt_tokens=371
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s1c3-07e3f8c3e5aa4153ac28ee1590d99513 decode_ms=292.96 output_tokens=12
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s1c3 typed_ok=True output="SELECT Name FROM people WHERE Nationality != 'Russia'"
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c2-6523064a5b314e238abecaa7d880a524 decode_ms=173.49 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c3-4ae7e3da26714812be293e0fce5777dd duration_ms=137.16 cached_tokens=352 prompt_tokens=640
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s3c1-034961ac16e5428b9091eb165f7f1876 decode_ms=628.12 output_tokens=21
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s3c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "CAR_MAKERS"}}'
+[36m[DEBUG][0m call from intercode_sql#1 key='finalize'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s1c4-93a73e99d90f4bc285ba6452ac0fd31f duration_ms=65.17 cached_tokens=48 prompt_tokens=167
+[36m[DEBUG][0m call from intercode_sql#3 key='diagnose'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c3-4ae7e3da26714812be293e0fce5777dd decode_ms=399.29 output_tokens=21
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s3c2-2de475dcf6af47609065ad8461c63ebb duration_ms=78.98 cached_tokens=336 prompt_tokens=517
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s1c4-93a73e99d90f4bc285ba6452ac0fd31f decode_ms=383.25 output_tokens=19
+[36m[DEBUG][0m [final] intercode_sql:finalize:s1c4 typed_ok=True output='The name of a person who is not from Russia is "Teodor Salparov".'
+[32m[LOG][0m intercode_sql#1 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#1 (4 sites served)
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c4-b385a9afa7b14f28864d0d68c6f9acbe duration_ms=138.04 cached_tokens=32 prompt_tokens=505
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c4-b385a9afa7b14f28864d0d68c6f9acbe decode_ms=442.59 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefill-decode disaggregation introduced"}}'
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s3c2-2de475dcf6af47609065ad8461c63ebb decode_ms=869.09 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s3c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL s'
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m call from intercode_sql#3 key='revise_sql'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c5-faee2ec685de46bea508912751dddf8e duration_ms=115.48 cached_tokens=112 prompt_tokens=498
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s3c3-7dcc615c4d864214bf156a09257dbea5 duration_ms=207.06 cached_tokens=32 prompt_tokens=718
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c5-faee2ec685de46bea508912751dddf8e decode_ms=619.76 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefill-decode disaggregation introduced problem background"}}'
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c6-a9a4979a036e4305a789b821e1539f15 duration_ms=131.45 cached_tokens=112 prompt_tokens=472
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s3c3-7dcc615c4d864214bf156a09257dbea5 decode_ms=1010.34 output_tokens=49
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s3c3 typed_ok=True output='SELECT COUNTRIES.CountryName FROM CAR_MAKERS JOIN COUNTRIES ON CAR_MAKERS.Country = COUNTRIES.CountryId GROUP BY COUNTRIES.CountryName ORDER BY COUNT(CAR_MAKERS'
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c6-a9a4979a036e4305a789b821e1539f15 decode_ms=426.08 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "prefill-decode disaggregation"}}'
+[36m[DEBUG][0m call from intercode_sql#3 key='finalize'
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s3c4-dedfbd28b0004aedb5bea3fcecb1be3a duration_ms=53.32 cached_tokens=48 prompt_tokens=204
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c7-d98cd9f8727f4ed2b211725475f48a77 duration_ms=81.33 cached_tokens=224 prompt_tokens=403
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s3c4-dedfbd28b0004aedb5bea3fcecb1be3a decode_ms=264.87 output_tokens=13
+[36m[DEBUG][0m [final] intercode_sql:finalize:s3c4 typed_ok=True output="The country with the most car makers is 'japan'."
+[32m[LOG][0m intercode_sql#3 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#3 (4 sites served)
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c7-d98cd9f8727f4ed2b211725475f48a77 decode_ms=738.83 output_tokens=39
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c7 typed_ok=True output='["What published work introduced prefill-decode disaggregation and what problem did it solve?", "What background does a reader need before understanding the int'
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c8-9852b4c80bd5485cae785aa5d5f656f8 duration_ms=69.61 cached_tokens=288 prompt_tokens=443
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c8-9852b4c80bd5485cae785aa5d5f656f8 decode_ms=177.22 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c9-7b6a27b20e474724a7c546b96b7a6661 duration_ms=118.97 cached_tokens=416 prompt_tokens=712
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c9-7b6a27b20e474724a7c546b96b7a6661 decode_ms=389.92 output_tokens=21
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c10-23b31da59ddb4c3cbc5cf0549e6a3f7b duration_ms=31.72 cached_tokens=416 prompt_tokens=504
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c10-23b31da59ddb4c3cbc5cf0549e6a3f7b decode_ms=507.90 output_tokens=27
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c10 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefill-decode disaggregation introduced problem solution background"}}'
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c11-14293ed9cdf04ce2bb6becee094767de duration_ms=31.68 cached_tokens=400 prompt_tokens=497
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c11-14293ed9cdf04ce2bb6becee094767de decode_ms=508.49 output_tokens=27
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c11 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefill-decode disaggregation introduced problem solved background"}}'
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c12-f91385088fb34351bb625a225bc0149f duration_ms=31.84 cached_tokens=384 prompt_tokens=471
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c12-f91385088fb34351bb625a225bc0149f decode_ms=429.54 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "prefill-decode disaggregation"}}'
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s2c13-402872bf012e47d8baa56acfd9c2cc55 duration_ms=99.19 cached_tokens=48 prompt_tokens=318
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54372) as hover#4
+[32m[LOG][0m Registered 'hover' (pid 692582, model 'Qwen/Qwen2.5-7B-Instruct') as hover#4
+[36m[DEBUG][0m call from hover#4 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s4c1-d02cb4ff43c941b19753b61a4cd99721 duration_ms=73.43 cached_tokens=0 prompt_tokens=138
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s4c1-d02cb4ff43c941b19753b61a4cd99721 decode_ms=694.42 output_tokens=37
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s4c1 typed_ok=True output='Josephine Baker worked at a club in Paris.\nMarie-Jacques Perrier inherited the club from her father.\nThe club in Paris was known for a banana-themed costume.'
+[36m[DEBUG][0m call from hover#4 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s4c2-becc9e651c3e4803beb3eb9663337fc8 duration_ms=79.46 cached_tokens=48 prompt_tokens=227
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s4c2-becc9e651c3e4803beb3eb9663337fc8 decode_ms=405.59 output_tokens=22
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s4c2 typed_ok=True output='What club in Paris did Josephine Baker work at and was inherited by Marie-Jacques Perrier?'
+[36m[DEBUG][0m call from hover#4 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s4c3-c52d1d9b4e594d1ba92beab233a374bd duration_ms=149.81 cached_tokens=32 prompt_tokens=530
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s2c13-402872bf012e47d8baa56acfd9c2cc55 decode_ms=3683.84 output_tokens=182
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s2c13 typed_ok=True output='The research task was to identify which published work introduced prefill-decode disaggregation, the problem it solved, and the necessary background knowledge f'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s4c3-c52d1d9b4e594d1ba92beab233a374bd decode_ms=735.08 output_tokens=39
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s4c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What club in Paris did Josephine Baker work at and was inherited by Marie-Jacques Perrier?"}}'
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-9f15debad989493ab44bbf33a4861d0a duration_ms=80.89 cached_tokens=48 prompt_tokens=291
+[36m[DEBUG][0m call from hover#4 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s4c4-8675b22ecd664dd3a6669bc633702729 duration_ms=102.00 cached_tokens=48 prompt_tokens=275
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s4c4-8675b22ecd664dd3a6669bc633702729 decode_ms=1546.52 output_tokens=81
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s4c4 typed_ok=True output='The passages establish that Josephine Baker worked at the club Lido in Paris, which was inherited by Marie-Jacques Perrier. The evidence digest is updated to in'
+[36m[DEBUG][0m call from hover#4 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s4c5-b1891d0dec464926a8bd63b524f4eb7d duration_ms=126.12 cached_tokens=48 prompt_tokens=307
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s4c5-b1891d0dec464926a8bd63b524f4eb7d decode_ms=577.79 output_tokens=31
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s4c5 typed_ok=True output='Marie-Jacques Perrier inherited the club from her father. The entity that would settle this is a family history record or a legal document.'
+[36m[DEBUG][0m call from hover#4 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s4c6-6b19d19e71884d26831808b2f8eb8cd6 duration_ms=59.64 cached_tokens=144 prompt_tokens=257
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s4c6-6b19d19e71884d26831808b2f8eb8cd6 decode_ms=234.67 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s4c6 typed_ok=True output='Who was the father of Marie-Jacques Perrier?'
+[36m[DEBUG][0m call from hover#4 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s4c7-82d6c872d9e246e78d37b178cd4dc202 duration_ms=53.08 cached_tokens=464 prompt_tokens=521
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 53226) as intercode_sql#5
+[32m[LOG][0m Registered 'intercode_sql' (pid 692782, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#5
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 53230) as intercode_sql#6
+[32m[LOG][0m Registered 'intercode_sql' (pid 692783, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#6
+[36m[DEBUG][0m call from intercode_sql#5 key='generate_sql'
+[36m[DEBUG][0m call from intercode_sql#6 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s5c1-a7620afa142d4038ad76783988ec9b95 duration_ms=202.47 cached_tokens=0 prompt_tokens=822
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s6c1-5c5938ab4f544f7eaf34e310bd52744a duration_ms=333.03 cached_tokens=0 prompt_tokens=689
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s5c1-a7620afa142d4038ad76783988ec9b95 decode_ms=472.09 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s5c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "concert"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s4c7-82d6c872d9e246e78d37b178cd4dc202 decode_ms=861.54 output_tokens=30
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s4c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who was the father of Marie-Jacques Perrier?"}}'
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s6c1-5c5938ab4f544f7eaf34e310bd52744a decode_ms=371.24 output_tokens=20
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s6c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "AIRLINES"}}'
+[36m[DEBUG][0m call from hover#4 key='SearchData.reason_hop'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 44038) as hover#7
+[32m[LOG][0m Registered 'hover' (pid 692805, model 'Qwen/Qwen2.5-7B-Instruct') as hover#7
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s4c8-2a2fe71affd24325a8774e6094f4c2e0 duration_ms=82.26 cached_tokens=176 prompt_tokens=337
+[36m[DEBUG][0m call from intercode_sql#5 key='diagnose'
+[36m[DEBUG][0m call from hover#7 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m call from intercode_sql#6 key='diagnose'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s5c2-ff70a3b5d02d41ad878c869dd5d3dbe5 duration_ms=129.47 cached_tokens=336 prompt_tokens=520
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s7c1-b33a110688ae4620a42fd46b57784a1d duration_ms=127.49 cached_tokens=0 prompt_tokens=136
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58480) as deep_search#8
+[32m[LOG][0m Registered 'deep_search' (pid 692812, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#8
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s6c2-efebcc8cd64a437dbfd8e981c5849f6e duration_ms=124.50 cached_tokens=336 prompt_tokens=509
+[36m[DEBUG][0m call from deep_search#8 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s5c2-ff70a3b5d02d41ad878c869dd5d3dbe5 decode_ms=288.03 output_tokens=14
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s5c2 typed_ok=True output='<tool_call>{"name": "show_schema", "arguments": {}}'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s8c1-4df7f762a37c47a48d9a573c16683f51 duration_ms=141.01 cached_tokens=0 prompt_tokens=328
+[36m[DEBUG][0m call from intercode_sql#5 key='revise_sql'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s5c3-1df63f9f63534f08a66cc75fe5af0e6c duration_ms=152.42 cached_tokens=32 prompt_tokens=587
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s7c1-b33a110688ae4620a42fd46b57784a1d decode_ms=713.85 output_tokens=26
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s7c1 typed_ok=True output='Datian County is under jurisdiction of Dominion.\nThis area is located in Dominion.\nThe Yinma River flows through this area.'
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s6c2-efebcc8cd64a437dbfd8e981c5849f6e decode_ms=978.23 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s6c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only supports SELECT statements. The provided S'
+[36m[DEBUG][0m call from hover#7 key='SearchData.plan_query'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s8c1-4df7f762a37c47a48d9a573c16683f51 decode_ms=775.29 output_tokens=33
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s8c1 typed_ok=True output='["What published work introduced chunked prefill?", "What problem did the introduced work solve?", "What background does a reader need before understanding the '
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s7c2-c99f40e78df5458f9712a82afb602581 duration_ms=82.93 cached_tokens=48 prompt_tokens=214
+[36m[DEBUG][0m call from intercode_sql#6 key='revise_sql'
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-9f15debad989493ab44bbf33a4861d0a decode_ms=5806.19 output_tokens=258
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Prefill-Decode Disaggregation",\n  "mainText": "The research task was to identify which published work introduced prefill-decode'
+[36m[DEBUG][0m reject from deep_search#2 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s2c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s6c3-913f407ed4274d689b009ccccf2de8d8 duration_ms=207.82 cached_tokens=32 prompt_tokens=483
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c2-908184fe628a4b03be3b4699836bb17a duration_ms=206.51 cached_tokens=0 prompt_tokens=362
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-76476eb5b3de459693872adf67919eaa duration_ms=224.54 cached_tokens=544 prompt_tokens=634
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s7c2-c99f40e78df5458f9712a82afb602581 decode_ms=363.63 output_tokens=11
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s7c2 typed_ok=True output='What city is Datian County under jurisdiction of?'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s6c3-913f407ed4274d689b009ccccf2de8d8 decode_ms=149.41 output_tokens=8
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s6c3 typed_ok=True output='SELECT COUNT(*) FROM AIRLINES'
+[36m[DEBUG][0m call from hover#7 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c2-908184fe628a4b03be3b4699836bb17a decode_ms=188.51 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s7c3-764ec44f6b7748488b90ae72e338d958 duration_ms=151.77 cached_tokens=32 prompt_tokens=517
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c3-1bafde6f40d24da5b65f43bde06fb98b duration_ms=235.77 cached_tokens=336 prompt_tokens=631
+[36m[DEBUG][0m call from intercode_sql#6 key='finalize'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s6c4-59ab9f8e23c2495b877c22c754a01287 duration_ms=66.79 cached_tokens=48 prompt_tokens=156
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58490) as deep_search#9
+[32m[LOG][0m Registered 'deep_search' (pid 692844, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#9
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s6c4-59ab9f8e23c2495b877c22c754a01287 decode_ms=138.76 output_tokens=8
+[36m[DEBUG][0m [final] intercode_sql:finalize:s6c4 typed_ok=True output='We have 12 airlines.'
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s4c8-2a2fe71affd24325a8774e6094f4c2e0 decode_ms=2367.47 output_tokens=86
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s4c8 typed_ok=True output='The passages establish that Marie-Jacques Perrier\'s father was Louis Perrier. The evidence digest is updated to include this information: "Josephine Baker worke'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c3-1bafde6f40d24da5b65f43bde06fb98b decode_ms=406.62 output_tokens=21
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s5c3-1df63f9f63534f08a66cc75fe5af0e6c decode_ms=1673.10 output_tokens=66
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s5c3 typed_ok=True output="SELECT T3.Name, T3.Capacity FROM concert AS T1 JOIN stadium AS T3 ON T1.Stadium_ID = T3.Stadium_ID WHERE T1.Year > '2013' GROUP BY T3.Name, T3.Capacity ORDER BY"
+[32m[LOG][0m intercode_sql#6 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#6 (4 sites served)
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s7c3-764ec44f6b7748488b90ae72e338d958 decode_ms=623.24 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s7c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What city is Datian County under jurisdiction of?"}}'
+[36m[DEBUG][0m call from deep_search#9 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m call from hover#4 key='SummarizeData.assess_gap'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58506) as deep_search#10
+[32m[LOG][0m Registered 'deep_search' (pid 692850, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#10
+[36m[DEBUG][0m call from deep_search#8 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s9c1-27f3bb54eff243f9991944def1ae29aa duration_ms=128.47 cached_tokens=0 prompt_tokens=337
+[36m[DEBUG][0m call from hover#7 key='SearchData.reason_hop'
+[36m[DEBUG][0m call from intercode_sql#5 key='finalize'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s4c9-4245449f2a794fe98d10ae8ebefc5b03 duration_ms=247.27 cached_tokens=144 prompt_tokens=313
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s8c4-5449e40b2de640cfabc6b2481d37bab6 duration_ms=187.96 cached_tokens=32 prompt_tokens=496
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s4c9-4245449f2a794fe98d10ae8ebefc5b03 decode_ms=134.51 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s4c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s7c4-78311a842a8742888027900fa551b217 duration_ms=225.63 cached_tokens=48 prompt_tokens=251
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s5c4-a1e5ccd631564b07ac88b7dc01e39e32 duration_ms=153.75 cached_tokens=48 prompt_tokens=234
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c1-8015b1783d834843825af4b6ad906388 duration_ms=223.60 cached_tokens=0 prompt_tokens=343
+[36m[DEBUG][0m call from hover#4 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s4c10-b6dd1d366470458a83e2fc5a1b343e6c duration_ms=150.58 cached_tokens=112 prompt_tokens=601
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s8c4-5449e40b2de640cfabc6b2481d37bab6 decode_ms=669.18 output_tokens=21
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s8c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill"}}'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s9c1-27f3bb54eff243f9991944def1ae29aa decode_ms=985.66 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s9c1 typed_ok=True output='["What does the series kv_gb_vs_context_len show about the impact of sparse attention on serving hundred-thousand-token prompts within a memory budget?"]'
+[36m[DEBUG][0m generate from deep_search#9 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from deep_search#8 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s5c4-a1e5ccd631564b07ac88b7dc01e39e32 decode_ms=835.86 output_tokens=30
+[36m[DEBUG][0m [final] intercode_sql:finalize:s5c4 typed_ok=True output="The stadium with the most concerts after 2013 is 'Somerset Park' with a capacity of 11998."
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s9c2-1a8733913845401c94936a06a0d379df duration_ms=134.29 cached_tokens=0 prompt_tokens=370
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s7c4-78311a842a8742888027900fa551b217 decode_ms=957.39 output_tokens=32
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s7c4 typed_ok=True output='The passages establish that Datian County is under the jurisdiction of Shangrao City. Therefore, the next hop must follow Shangrao City.'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s8c5-a8b078a6336646968d27b2e588360f73 duration_ms=217.51 cached_tokens=112 prompt_tokens=489
+[32m[LOG][0m intercode_sql#5 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#5 (4 sites served)
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s9c2-1a8733913845401c94936a06a0d379df decode_ms=258.83 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#9 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from hover#7 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s9c3-40f7a6b8bb3c467eae4756babe150189 duration_ms=139.53 cached_tokens=352 prompt_tokens=639
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s7c5-98804a16776b4d4197d257a1bde8246a duration_ms=151.89 cached_tokens=48 prompt_tokens=245
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s8c5-a8b078a6336646968d27b2e588360f73 decode_ms=574.73 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s8c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced chunked prefill"}}'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s9c3-40f7a6b8bb3c467eae4756babe150189 decode_ms=336.51 output_tokens=16
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c1-8015b1783d834843825af4b6ad906388 decode_ms=1471.43 output_tokens=56
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c1 typed_ok=True output='["What are the published results comparing prefix caching and recomputing the prompt for time to first token in multi-step agent workloads?", "What is the measu'
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s7c5-98804a16776b4d4197d257a1bde8246a decode_ms=315.25 output_tokens=17
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s7c5 typed_ok=True output='Datian County is under jurisdiction of Dominion. This area is located in Dominion.'
+[36m[DEBUG][0m call from deep_search#8 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c2-e2dca06777c34af9946ef6bc257072f8 duration_ms=148.06 cached_tokens=0 prompt_tokens=401
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 44054) as hover#11
+[32m[LOG][0m Registered 'hover' (pid 692872, model 'Qwen/Qwen2.5-7B-Instruct') as hover#11
+[36m[DEBUG][0m call from deep_search#9 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m call from hover#7 key='SearchData.plan_query'
+[36m[DEBUG][0m call from hover#11 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s8c6-02c12e707a5349249fd3764ba48eb139 duration_ms=130.28 cached_tokens=112 prompt_tokens=463
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s9c4-0c992407d9b74c508df16c5e16d1e955 duration_ms=268.91 cached_tokens=32 prompt_tokens=504
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s7c6-a1fd923fd4c247e28a10367ccae3926b duration_ms=210.58 cached_tokens=144 prompt_tokens=230
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s11c1-b40f170fc01549b1bc15535f3c8920a1 duration_ms=205.81 cached_tokens=0 prompt_tokens=146
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c2-e2dca06777c34af9946ef6bc257072f8 decode_ms=438.12 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s7c6-a1fd923fd4c247e28a10367ccae3926b decode_ms=280.59 output_tokens=11
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s7c6 typed_ok=True output='What city is Datian County under jurisdiction of?'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c3-107e3f8a42b84b3db87f079e86497f69 duration_ms=140.83 cached_tokens=384 prompt_tokens=672
+[36m[DEBUG][0m call from hover#7 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s7c7-d81f8e70cff448699ef188055fc7cb26 duration_ms=56.10 cached_tokens=512 prompt_tokens=517
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s8c6-02c12e707a5349249fd3764ba48eb139 decode_ms=639.26 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s8c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s9c4-0c992407d9b74c508df16c5e16d1e955 decode_ms=500.17 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s9c4 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "kv_gb_vs_context_len"}}'
+[36m[DEBUG][0m call from deep_search#8 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c3-107e3f8a42b84b3db87f079e86497f69 decode_ms=397.84 output_tokens=21
+[36m[DEBUG][0m call from deep_search#9 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s8c7-0504c36c79304e0f8d4d2f1e0c4a8f7d duration_ms=87.69 cached_tokens=224 prompt_tokens=395
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s9c5-ad7e4f7041c3408fa04bf791499a9c1e duration_ms=184.61 cached_tokens=112 prompt_tokens=504
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c4-72546ef63d4c4ce4b025f8061a3436cc duration_ms=143.04 cached_tokens=32 prompt_tokens=528
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s7c7-d81f8e70cff448699ef188055fc7cb26 decode_ms=764.11 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s7c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What city is Datian County under jurisdiction of?"}}'
+[36m[DEBUG][0m call from hover#7 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s7c8-61a94684c32b4545a9f79178527a8d59 duration_ms=55.14 cached_tokens=240 prompt_tokens=282
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s9c5-ad7e4f7041c3408fa04bf791499a9c1e decode_ms=696.67 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s9c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "kv_gb_vs_context_len sparse attention memory budget hundred-thousand-token prompts"}}'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s8c7-0504c36c79304e0f8d4d2f1e0c4a8f7d decode_ms=913.08 output_tokens=37
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s8c7 typed_ok=True output='["What published work introduced chunked prefill and what problem did it solve?", "What background does a reader need before understanding the result of the chu'
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c8-7d74b77613974cf6b7d13f333965ed44 duration_ms=88.27 cached_tokens=288 prompt_tokens=433
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c4-72546ef63d4c4ce4b025f8061a3436cc decode_ms=752.93 output_tokens=37
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefix caching vs recomputing prompt time to first token multi-step agent workloads published results '
+[36m[DEBUG][0m call from deep_search#9 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s9c6-dcb63c7ab2c14a6192ce1fd839928de0 duration_ms=129.60 cached_tokens=112 prompt_tokens=471
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c5-b0af742de8e045f583ece505ce84a653 duration_ms=151.57 cached_tokens=112 prompt_tokens=535
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c8-7d74b77613974cf6b7d13f333965ed44 decode_ms=395.95 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s11c1-b40f170fc01549b1bc15535f3c8920a1 decode_ms=2196.04 output_tokens=85
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s11c1 typed_ok=True output='The Voluntary City: Choice, Community is a biography.\nThe biography is about the founder of the Regional Council of Negro Leadership.\nThe founder of the Regiona'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c9-e70d29967f404d1ea0e245803aa31208 duration_ms=140.59 cached_tokens=416 prompt_tokens=704
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s7c8-61a94684c32b4545a9f79178527a8d59 decode_ms=1149.43 output_tokens=44
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s7c8 typed_ok=True output='The passages establish that Datian County is under the jurisdiction of Shangrao City. Therefore, the next hop must follow Shangrao City and verify if Shangrao C'
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s9c6-dcb63c7ab2c14a6192ce1fd839928de0 decode_ms=594.18 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s9c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "kv_gb_vs_context_len"}}'
+[36m[DEBUG][0m call from hover#11 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s11c2-672a8c3da303450d9a6e0825fd17b550 duration_ms=100.48 cached_tokens=48 prompt_tokens=282
+[36m[DEBUG][0m call from hover#7 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m call from deep_search#9 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c9-e70d29967f404d1ea0e245803aa31208 decode_ms=443.34 output_tokens=21
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s7c9-623aea197a384998ba99c11e78e5f510 duration_ms=141.50 cached_tokens=176 prompt_tokens=257
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s9c7-aa12699675eb4c87800c2304d63933f8 duration_ms=140.44 cached_tokens=224 prompt_tokens=412
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c5-b0af742de8e045f583ece505ce84a653 decode_ms=784.07 output_tokens=30
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefix caching recomputing prompt multi-step agent time to first token"}}'
+[36m[DEBUG][0m call from deep_search#8 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s8c10-0c538fd1d6bb45ef994d134e08a05a93 duration_ms=66.10 cached_tokens=400 prompt_tokens=493
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s11c2-672a8c3da303450d9a6e0825fd17b550 decode_ms=330.19 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s11c2 typed_ok=True output='What is the founder of the Regional Council of Negro Leadership?'
+[36m[DEBUG][0m call from hover#11 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m call from deep_search#10 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s11c3-1f5a551cccca456fa97ea124a5ddf961 duration_ms=152.97 cached_tokens=32 prompt_tokens=529
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s10c6-afedd0bea0c14fa39378a0725328e934 duration_ms=201.01 cached_tokens=112 prompt_tokens=535
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s7c9-623aea197a384998ba99c11e78e5f510 decode_ms=563.52 output_tokens=19
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s7c9 typed_ok=True output='Datian County is under jurisdiction of Dominion.\nThis area is located in Dominion.\nnothing missing'
+[36m[DEBUG][0m call from hover#7 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s7c10-fff921230d934d51a73cad56cac3e459 duration_ms=151.92 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s8c10-0c538fd1d6bb45ef994d134e08a05a93 decode_ms=830.05 output_tokens=28
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s8c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced chunked prefill problem solved background needed"}}'
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s10c6-afedd0bea0c14fa39378a0725328e934 decode_ms=535.31 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s10c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_prefix_caching"}}'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s9c7-aa12699675eb4c87800c2304d63933f8 decode_ms=1039.72 output_tokens=38
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s9c7 typed_ok=True output='["What specific findings from the metric series \'kv_gb_vs_context_len\' support or contradict the claim that sparse attention aids in handling hundred-thousand-t'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s11c3-1f5a551cccca456fa97ea124a5ddf961 decode_ms=712.24 output_tokens=27
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s11c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "founder of the Regional Council of Negro Leadership"}}'
+[36m[DEBUG][0m generate from deep_search#9 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s9c8-7e5a4afc902241748786354cd9d2e047 duration_ms=87.54 cached_tokens=288 prompt_tokens=452
+[36m[DEBUG][0m call from deep_search#8 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-76476eb5b3de459693872adf67919eaa decode_ms=7431.93 output_tokens=258
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Prefill-Decode Disaggregation",\n  "mainText": "The research task was to identify which published work introduced prefill-decode'
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s4c10-b6dd1d366470458a83e2fc5a1b343e6c decode_ms=5765.72 output_tokens=207
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s4c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Josephine Baker worked at the club, that Marie-Jacques Perrier inherited from her father, in'
+[36m[DEBUG][0m call from hover#4 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s8c11-56f645f4b0a24195beb4cf4dcf68a83e duration_ms=58.61 cached_tokens=416 prompt_tokens=500
+[36m[DEBUG][0m call from hover#11 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c7-35101b999b764d76b9f6bde0dcb4fd21 duration_ms=99.94 cached_tokens=224 prompt_tokens=433
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s4c11-3f32f771d7d4492a9942951130420cf4 duration_ms=203.54 cached_tokens=48 prompt_tokens=476
+[32m[LOG][0m deep_search#2 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#2 (7 sites served)
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s11c4-076aa72cfbe94c978eba338832d58851 duration_ms=236.01 cached_tokens=48 prompt_tokens=262
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s9c8-7e5a4afc902241748786354cd9d2e047 decode_ms=486.86 output_tokens=16
+[36m[DEBUG][0m generate from deep_search#9 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s9c9-a1885f8ca99a443f904180fea7063fbb duration_ms=139.80 cached_tokens=432 prompt_tokens=727
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54360) as hover#12
+[32m[LOG][0m Registered 'hover' (pid 692979, model 'Qwen/Qwen2.5-7B-Instruct') as hover#12
+[36m[DEBUG][0m call from hover#12 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s8c11-56f645f4b0a24195beb4cf4dcf68a83e decode_ms=756.21 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s8c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill introduced problem solved background needed"}}'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s12c1-881062be48a04edca047244be8ffb990 duration_ms=80.16 cached_tokens=0 prompt_tokens=140
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s11c4-076aa72cfbe94c978eba338832d58851 decode_ms=652.84 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s11c4 typed_ok=True output="The passages establish that the founder of the Regional Council of Negro Leadership is the claim's subject. The next hop must follow this entity."
+[36m[DEBUG][0m call from deep_search#8 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s8c12-2e7cd64e9cc94d66b9bcd213bc8dc7f4 duration_ms=60.18 cached_tokens=384 prompt_tokens=467
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s9c9-a1885f8ca99a443f904180fea7063fbb decode_ms=544.28 output_tokens=26
+[36m[DEBUG][0m call from hover#11 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s11c5-3094007ab4304f64ab227713dd572029 duration_ms=125.02 cached_tokens=48 prompt_tokens=309
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s4c11-3f32f771d7d4492a9942951130420cf4 decode_ms=1082.67 output_tokens=43
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s4c11 typed_ok=True output='SUPPORTED: Josephine Baker worked at Lido, a club in Paris, which was inherited by Marie-Jacques Perrier from her father Louis Perrier, and was known for its ba'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s11c5-3094007ab4304f64ab227713dd572029 decode_ms=39.19 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s11c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m call from deep_search#9 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s9c10-4fa5564ae74145109594c67a79ee5f3b duration_ms=149.34 cached_tokens=112 prompt_tokens=504
+[32m[LOG][0m hover#4 disconnected
+[36m[DEBUG][0m [guard] dropped hover#4 (7 sites served)
+[36m[DEBUG][0m call from hover#11 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s11c6-4cd1de7a6da94610bc87981c1b20b8a8 duration_ms=81.73 cached_tokens=144 prompt_tokens=285
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c7-35101b999b764d76b9f6bde0dcb4fd21 decode_ms=1565.30 output_tokens=56
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c7 typed_ok=True output='["What published results compare prefix caching and recomputing the prompt for time to first token in multi-step agent workloads?", "What evidence from the meas'
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s8c12-2e7cd64e9cc94d66b9bcd213bc8dc7f4 decode_ms=624.96 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s8c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c8-674fa521c24e498b88f71bd1b206a75b duration_ms=93.90 cached_tokens=304 prompt_tokens=491
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s11c6-4cd1de7a6da94610bc87981c1b20b8a8 decode_ms=276.33 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s11c6 typed_ok=True output='What is the founder of the Regional Council of Negro Leadership?'
+[36m[DEBUG][0m call from hover#11 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m call from deep_search#8 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s11c7-93b4c2071eeb471c886cbca30024b510 duration_ms=54.01 cached_tokens=528 prompt_tokens=529
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s12c1-881062be48a04edca047244be8ffb990 decode_ms=1173.09 output_tokens=43
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s12c1 typed_ok=True output='L.P. Cookingham is the name of the institute.\nThe institute is located at the University of Missouri-Kansas City.\nThe institute is named after its founder.\nThe '
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s8c13-8600eaf45ac24fa1b90c59af118c0f97 duration_ms=132.53 cached_tokens=48 prompt_tokens=315
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c8-674fa521c24e498b88f71bd1b206a75b decode_ms=296.28 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c9-52a4d1f0489847a5ac336e64473b17f5 duration_ms=141.24 cached_tokens=464 prompt_tokens=762
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s9c10-4fa5564ae74145109594c67a79ee5f3b decode_ms=868.19 output_tokens=33
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s9c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "metric series kv_gb_vs_context_len sparse attention hundred-thousand-token prompts memory budget"}}'
+[36m[DEBUG][0m call from hover#12 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s12c2-52c5b55f42e44380aa1d9abba1657080 duration_ms=92.82 cached_tokens=48 prompt_tokens=234
+[36m[DEBUG][0m call from deep_search#9 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s9c11-2cff0f9e7b5a44b28117a841ea63f22b duration_ms=64.07 cached_tokens=400 prompt_tokens=511
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s11c7-93b4c2071eeb471c886cbca30024b510 decode_ms=729.86 output_tokens=27
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s11c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "founder of the Regional Council of Negro Leadership"}}'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c9-52a4d1f0489847a5ac336e64473b17f5 decode_ms=448.05 output_tokens=21
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s12c2-52c5b55f42e44380aa1d9abba1657080 decode_ms=326.65 output_tokens=17
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s12c2 typed_ok=True output="What is the name of the school's founder and an American tax preparation company?"
+[36m[DEBUG][0m call from hover#12 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m call from hover#11 key='SearchData.reason_hop'
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s12c3-c74faa32c42f4d309ffa345a328369ee duration_ms=193.98 cached_tokens=32 prompt_tokens=526
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s11c8-3d05f261a13a4acd876cf7855e99eb23 duration_ms=189.82 cached_tokens=256 prompt_tokens=289
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c10-d36a05f8f3cd42bfbe79569883029c3e duration_ms=188.94 cached_tokens=400 prompt_tokens=528
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s9c11-2cff0f9e7b5a44b28117a841ea63f22b decode_ms=633.40 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s9c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "sparse attention kv_gb_vs_context_len memory budget"}}'
+[36m[DEBUG][0m call from deep_search#9 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s9c12-0f27701fca09453f96bb0ad13c63c79c duration_ms=64.51 cached_tokens=400 prompt_tokens=511
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s12c3-c74faa32c42f4d309ffa345a328369ee decode_ms=527.61 output_tokens=27
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s12c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "L.P. Cookingham Institute of Urban Affairs"}}'
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s7c10-fff921230d934d51a73cad56cac3e459 decode_ms=3958.37 output_tokens=152
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s7c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Both this area and the city that Datian County is under jurisdiction of are located in Domin'
+[36m[DEBUG][0m call from hover#7 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c10-d36a05f8f3cd42bfbe79569883029c3e decode_ms=666.12 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefix caching vs recomputing prompt for time to first token multi-step agent workloads"}}'
+[36m[DEBUG][0m call from hover#12 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s7c11-f806b03eb8c74124b190bdc71fe204bd duration_ms=135.84 cached_tokens=48 prompt_tokens=374
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s12c4-4199d03391fb42fc90caa944187b4c37 duration_ms=114.22 cached_tokens=48 prompt_tokens=259
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c11-f0a20ace67fb4eccad07c563edd906d7 duration_ms=88.39 cached_tokens=400 prompt_tokens=535
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s9c12-0f27701fca09453f96bb0ad13c63c79c decode_ms=570.87 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s9c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "kv_gb_vs_context_len"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s11c8-3d05f261a13a4acd876cf7855e99eb23 decode_ms=1038.56 output_tokens=45
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s11c8 typed_ok=True output="The passages establish that the founder of the Regional Council of Negro Leadership is the claim's subject. The next hop must follow this entity and provide mor"
+[36m[DEBUG][0m call from deep_search#9 key='DeepResearch.summarize'
+[36m[DEBUG][0m call from hover#11 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s9c13-2a1e4c02419643ca9a967455bf5de10d duration_ms=130.14 cached_tokens=48 prompt_tokens=351
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s11c9-d788cede61954ed796ea16a60cc19239 duration_ms=162.83 cached_tokens=160 prompt_tokens=326
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s11c9-d788cede61954ed796ea16a60cc19239 decode_ms=39.40 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s11c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m call from hover#11 key='Verdict.verify_claim'
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c11-f0a20ace67fb4eccad07c563edd906d7 decode_ms=723.05 output_tokens=32
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefix caching recomputing prompt time to first token multi-step agent workloads"}}'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s11c10-ed799fbc9285459a825925cc79a37ea8 duration_ms=149.31 cached_tokens=112 prompt_tokens=614
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s7c11-f806b03eb8c74124b190bdc71fe204bd decode_ms=1072.50 output_tokens=41
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s7c11 typed_ok=True output='NOT_SUPPORTED. The evidence indicates that Datian County is under the jurisdiction of Shangrao City, but it does not confirm that Shangrao City or the area is l'
+[36m[DEBUG][0m call from deep_search#10 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s10c12-f5ae3c07b5f74d45bf2c0f9800095ecf duration_ms=84.05 cached_tokens=400 prompt_tokens=535
+[32m[LOG][0m hover#7 disconnected
+[36m[DEBUG][0m [guard] dropped hover#7 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s8c13-8600eaf45ac24fa1b90c59af118c0f97 decode_ms=3173.59 output_tokens=127
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s8c13 typed_ok=True output='The research task was to identify which published work introduced chunked prefill, the problem it addressed, and the background knowledge required for understan'
+[36m[DEBUG][0m call from deep_search#8 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s8c14-635ee821b1a64ab1a05ffe950249ac27 duration_ms=95.49 cached_tokens=48 prompt_tokens=235
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s11c10-ed799fbc9285459a825925cc79a37ea8 decode_ms=545.54 output_tokens=25
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s11c10 typed_ok=True output='<tool_call>{"name": "open_article", "arguments": {"title": "The Voluntary City: Choice, Community"}}'
+[36m[DEBUG][0m call from hover#11 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s10c12-f5ae3c07b5f74d45bf2c0f9800095ecf decode_ms=474.20 output_tokens=21
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s10c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_baseline"}}'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s11c11-66bb442454f545bd82051dcec740a3e7 duration_ms=94.73 cached_tokens=48 prompt_tokens=256
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s10c13-8b0c76508d5640e6b17498a9cee44f4b duration_ms=129.51 cached_tokens=48 prompt_tokens=341
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s12c4-4199d03391fb42fc90caa944187b4c37 decode_ms=2188.81 output_tokens=90
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s12c4 typed_ok=True output='The passages establish that L.P. Cookingham Institute of Urban Affairs is located at the University of Missouri-Kansas City. It also mentions that the school is'
+[36m[DEBUG][0m call from hover#12 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s12c5-777d5b816a6d4258a9b96ddc0ad9ae3c duration_ms=128.58 cached_tokens=48 prompt_tokens=325
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s12c5-777d5b816a6d4258a9b96ddc0ad9ae3c decode_ms=38.37 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s12c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s11c11-66bb442454f545bd82051dcec740a3e7 decode_ms=980.98 output_tokens=43
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s11c11 typed_ok=True output='The claim is supported. The evidence chain starts with "The Voluntary City: Choice, Community" which discusses the founder of the Regional Council of Negro Lead'
+[32m[LOG][0m hover#11 disconnected
+[36m[DEBUG][0m [guard] dropped hover#11 (7 sites served)
+[36m[DEBUG][0m call from hover#12 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s12c6-f14f21d92cc64c938c0a8b5d0a0d1b3d duration_ms=60.11 cached_tokens=144 prompt_tokens=237
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s12c6-f14f21d92cc64c938c0a8b5d0a0d1b3d decode_ms=195.52 output_tokens=11
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s12c6 typed_ok=True output="What is the name of the school's founder?"
+[36m[DEBUG][0m call from hover#12 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s12c7-85f91c3fda2d47029833dd86bb0d08e4 duration_ms=54.71 cached_tokens=464 prompt_tokens=520
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s12c7-85f91c3fda2d47029833dd86bb0d08e4 decode_ms=529.05 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s12c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What is the name of the school\'s founder?"}}'
+[36m[DEBUG][0m call from hover#12 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s12c8-94cf712431794afbb976fb50b8083607 duration_ms=81.57 cached_tokens=176 prompt_tokens=346
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s9c13-2a1e4c02419643ca9a967455bf5de10d decode_ms=3881.23 output_tokens=176
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s9c13 typed_ok=True output='The research task is to determine if the series "kv_gb_vs_context_len" supports the claim that sparse attention aids in serving hundred-thousand-token prompts w'
+[36m[DEBUG][0m call from deep_search#9 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s9c14-30c8aa67bfe842c6add927dfc23d5858 duration_ms=101.80 cached_tokens=48 prompt_tokens=284
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s8c14-635ee821b1a64ab1a05ffe950249ac27 decode_ms=4147.04 output_tokens=198
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s8c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill",\n  "mainText": "The research task was to identify which published work introduced chunked prefill, the problem'
+[36m[DEBUG][0m reject from deep_search#8 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s8c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s12c8-94cf712431794afbb976fb50b8083607 decode_ms=1669.73 output_tokens=84
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s12c8 typed_ok=True output='The passages establish that L.P. Cookingham Institute of Urban Affairs is located at the University of Missouri-Kansas City and is named after its founder, who '
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s8c14-a71f639647354e91b483c5711a4f56fe duration_ms=67.88 cached_tokens=432 prompt_tokens=519
+[36m[DEBUG][0m call from hover#12 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s12c9-633a6c2a9aab466783faa7b36d9d1fa8 duration_ms=93.28 cached_tokens=160 prompt_tokens=319
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s12c9-633a6c2a9aab466783faa7b36d9d1fa8 decode_ms=38.84 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s12c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m call from hover#12 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s12c10-bddcfec6396c4cb89cadcd907ab068b7 duration_ms=145.63 cached_tokens=112 prompt_tokens=607
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s10c13-8b0c76508d5640e6b17498a9cee44f4b decode_ms=5656.19 output_tokens=274
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s10c13 typed_ok=True output='The research task is to assess whether prefix caching or recomputing the prompt is the better lever for reducing time to first token (TTFT) in multi-step agent '
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-bbb5afc447b3451ba20f5ce38b636331 duration_ms=136.81 cached_tokens=48 prompt_tokens=392
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s8c14-a71f639647354e91b483c5711a4f56fe decode_ms=4077.79 output_tokens=198
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s8c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill",\n  "mainText": "The research task was to identify which published work introduced chunked prefill, the problem'
+[32m[LOG][0m deep_search#8 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#8 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s9c14-30c8aa67bfe842c6add927dfc23d5858 decode_ms=5439.30 output_tokens=267
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s9c14 typed_ok=False output='{\n  "title": "Evaluation of Sparse Attention\'s Impact on Memory Usage for Large Prompts",\n  "mainText": "The research task is to determine if the series \'kv_gb_'
+[36m[DEBUG][0m reject from deep_search#9 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s9c14 feedback='Failed to convert LLM output to \'ResearchReport\': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value="The \'k'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s9c14-dc7c17ee710141a7878cec8718e89a08 duration_ms=68.89 cached_tokens=544 prompt_tokens=638
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s12c10-bddcfec6396c4cb89cadcd907ab068b7 decode_ms=4215.17 output_tokens=211
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s12c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "L.P. Cookingham Institute of Urban Affairs, at the University of Missouri-Kansas City, is na'
+[36m[DEBUG][0m call from hover#12 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s12c11-b81d5f57e12e4df6bdc762132be6163c duration_ms=149.93 cached_tokens=48 prompt_tokens=479
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s12c11-b81d5f57e12e4df6bdc762132be6163c decode_ms=879.11 output_tokens=46
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s12c11 typed_ok=True output='The claim is SUPPORTED. The evidence chain shows that L.P. Cookingham Institute of Urban Affairs is located at the University of Missouri-Kansas City and is nam'
+[32m[LOG][0m hover#12 disconnected
+[36m[DEBUG][0m [guard] dropped hover#12 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-bbb5afc447b3451ba20f5ce38b636331 decode_ms=7026.17 output_tokens=355
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Evaluation of Prefix Caching vs. Prompt Recomputing for Reducing Time to First Token in Multi-Step Agent Workloads",\n  "mainText": "The research t'
+[36m[DEBUG][0m reject from deep_search#10 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s10c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-85454d707e804f2c95e2376ac6fbc02b duration_ms=69.00 cached_tokens=736 prompt_tokens=832
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s9c14-dc7c17ee710141a7878cec8718e89a08 decode_ms=5292.68 output_tokens=267
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s9c14 typed_ok=False output='{\n  "title": "Evaluation of Sparse Attention\'s Impact on Memory Usage for Large Prompts",\n  "mainText": "The research task is to determine if the series \'kv_gb_'
+[32m[LOG][0m deep_search#9 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#9 (8 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-85454d707e804f2c95e2376ac6fbc02b decode_ms=6965.00 output_tokens=355
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Evaluation of Prefix Caching vs. Prompt Recomputing for Reducing Time to First Token in Multi-Step Agent Workloads",\n  "mainText": "The research t'
+[32m[LOG][0m deep_search#10 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#10 (7 sites served)
+(EngineCore pid=692000) INFO 08-24 17:44:47 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=692000) INFO 08-24 17:44:47 [core.py:1233] Shutdown complete

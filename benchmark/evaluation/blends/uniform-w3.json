@@ -1,0 +1,740 @@
+{
+ "meta": {
+  "seed": 20260824,
+  "size": 12,
+  "trials": 3,
+  "mode": "multi",
+  "window_s": 3.0,
+  "arrival": "uniform",
+  "rate_per_s": null,
+  "jitter_s": null,
+  "tenants": [
+   "hover",
+   "intercode_sql",
+   "deep_search"
+  ],
+  "blend_ratio": [
+   0.3333333333333333,
+   0.3333333333333333,
+   0.3333333333333333
+  ],
+  "per_trial_counts": {
+   "hover": 4,
+   "intercode_sql": 4,
+   "deep_search": 4
+  },
+  "packs": {
+   "hover": {
+    "file": "datasets/hover_claims_30.json",
+    "cases": 30,
+    "sha1": "adcc59ee6ccf"
+   },
+   "intercode_sql": {
+    "file": "datasets/intercode_sql_30.json",
+    "cases": 30,
+    "sha1": "f4ac4d0d4f39"
+   },
+   "deep_search": {
+    "file": "datasets/deep_search_30.json",
+    "cases": 30,
+    "sha1": "d83b9b72d741"
+   }
+  }
+ },
+ "server": {
+  "programs": [
+   "hover:benchmark/evaluation/programs/HoVer.jac:8971",
+   "intercode_sql:benchmark/evaluation/programs/intercode_sql.jac:8973",
+   "deep_search:benchmark/evaluation/programs/deep_search.jac:8972"
+  ]
+ },
+ "trials": [
+  {
+   "trial": 0,
+   "entries": [
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 28,
+     "case_id": "dr-28-quantization",
+     "strata": {
+      "kind": "compare",
+      "cluster": "quantization"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "28"
+     },
+     "order": 0,
+     "start_offset_s": 0.0
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 19,
+     "case_id": "b4b98b5b-a4b5-456d-b689-bd07b4e59c4c",
+     "strata": {
+      "hops": 2,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "19"
+     },
+     "order": 1,
+     "start_offset_s": 0.273
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 12,
+     "case_id": "ic-sql-0140",
+     "strata": {
+      "hardness": "medium",
+      "db": "student_transcripts_tracking"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "12"
+     },
+     "order": 2,
+     "start_offset_s": 0.545
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 3,
+     "case_id": "dr-03-speculative-decoding",
+     "strata": {
+      "kind": "tradeoff",
+      "cluster": "speculative-decoding"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "3"
+     },
+     "order": 3,
+     "start_offset_s": 0.818
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 22,
+     "case_id": "ic-sql-0063",
+     "strata": {
+      "hardness": "hard",
+      "db": "tvshow"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "22"
+     },
+     "order": 4,
+     "start_offset_s": 1.091
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 23,
+     "case_id": "297bcedf-775c-4196-ae8c-d8e204b4b8c4",
+     "strata": {
+      "hops": 4,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "23"
+     },
+     "order": 5,
+     "start_offset_s": 1.364
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 29,
+     "case_id": "ic-sql-0441",
+     "strata": {
+      "hardness": "extra",
+      "db": "pets_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "29"
+     },
+     "order": 6,
+     "start_offset_s": 1.636
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 28,
+     "case_id": "02c09818-448d-41a1-8d8c-47169b7d4fe9",
+     "strata": {
+      "hops": 4,
+      "label": "NOT_SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "28"
+     },
+     "order": 7,
+     "start_offset_s": 1.909
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 24,
+     "case_id": "ic-sql-0211",
+     "strata": {
+      "hardness": "extra",
+      "db": "car_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "24"
+     },
+     "order": 8,
+     "start_offset_s": 2.182
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 10,
+     "case_id": "dr-10-multi-tenant",
+     "strata": {
+      "kind": "survey",
+      "cluster": "multi-tenant"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "10"
+     },
+     "order": 9,
+     "start_offset_s": 2.455
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 1,
+     "case_id": "dc7988b9-4a49-4019-b979-edfd8a08e060",
+     "strata": {
+      "hops": 2,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "1"
+     },
+     "order": 10,
+     "start_offset_s": 2.727
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 1,
+     "case_id": "dr-01-disaggregation",
+     "strata": {
+      "kind": "evidence",
+      "cluster": "disaggregation"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "1"
+     },
+     "order": 11,
+     "start_offset_s": 3.0
+    }
+   ]
+  },
+  {
+   "trial": 1,
+   "entries": [
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 27,
+     "case_id": "dr-27-speculative-decoding",
+     "strata": {
+      "kind": "applicability",
+      "cluster": "speculative-decoding"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "27"
+     },
+     "order": 0,
+     "start_offset_s": 0.0
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 7,
+     "case_id": "ic-sql-0398",
+     "strata": {
+      "hardness": "easy",
+      "db": "world_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "7"
+     },
+     "order": 1,
+     "start_offset_s": 0.273
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 5,
+     "case_id": "ic-sql-1010",
+     "strata": {
+      "hardness": "easy",
+      "db": "orchestra"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "5"
+     },
+     "order": 2,
+     "start_offset_s": 0.545
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 24,
+     "case_id": "dr-24-prefix-caching",
+     "strata": {
+      "kind": "provenance",
+      "cluster": "prefix-caching"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "24"
+     },
+     "order": 3,
+     "start_offset_s": 0.818
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 23,
+     "case_id": "dr-23-agent-evaluation",
+     "strata": {
+      "kind": "compare",
+      "cluster": "agent-evaluation"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "23"
+     },
+     "order": 4,
+     "start_offset_s": 1.091
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 29,
+     "case_id": "65f34c8f-f431-45af-ba85-20a3827864ca",
+     "strata": {
+      "hops": 4,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "29"
+     },
+     "order": 5,
+     "start_offset_s": 1.364
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 14,
+     "case_id": "ic-sql-0202",
+     "strata": {
+      "hardness": "medium",
+      "db": "world_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "14"
+     },
+     "order": 6,
+     "start_offset_s": 1.636
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 10,
+     "case_id": "0d1d432f-e20a-45fe-ba8e-29086a8ef545",
+     "strata": {
+      "hops": 4,
+      "label": "NOT_SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "10"
+     },
+     "order": 7,
+     "start_offset_s": 1.909
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 14,
+     "case_id": "c3f96852-c211-4370-aa78-d4666509fcd4",
+     "strata": {
+      "hops": 3,
+      "label": "NOT_SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "14"
+     },
+     "order": 8,
+     "start_offset_s": 2.182
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 25,
+     "case_id": "56901c7d-eb98-4608-bf96-a943fe57d905",
+     "strata": {
+      "hops": 2,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "25"
+     },
+     "order": 9,
+     "start_offset_s": 2.455
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 15,
+     "case_id": "ic-sql-0794",
+     "strata": {
+      "hardness": "medium",
+      "db": "world_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "15"
+     },
+     "order": 10,
+     "start_offset_s": 2.727
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 19,
+     "case_id": "dr-19-rag",
+     "strata": {
+      "kind": "provenance",
+      "cluster": "rag"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "19"
+     },
+     "order": 11,
+     "start_offset_s": 3.0
+    }
+   ]
+  },
+  {
+   "trial": 2,
+   "entries": [
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 0,
+     "case_id": "dr-00-prefix-caching",
+     "strata": {
+      "kind": "compare",
+      "cluster": "prefix-caching"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "0"
+     },
+     "order": 0,
+     "start_offset_s": 0.0
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 29,
+     "case_id": "dr-29-long-context",
+     "strata": {
+      "kind": "evidence",
+      "cluster": "long-context"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "29"
+     },
+     "order": 1,
+     "start_offset_s": 0.273
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 4,
+     "case_id": "ic-sql-0617",
+     "strata": {
+      "hardness": "easy",
+      "db": "flight_2"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "4"
+     },
+     "order": 2,
+     "start_offset_s": 0.545
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 3,
+     "case_id": "52e8f144-8613-4642-891f-168eadb74721",
+     "strata": {
+      "hops": 3,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "3"
+     },
+     "order": 3,
+     "start_offset_s": 0.818
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 13,
+     "case_id": "dr-13-disaggregation",
+     "strata": {
+      "kind": "provenance",
+      "cluster": "disaggregation"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "13"
+     },
+     "order": 4,
+     "start_offset_s": 1.091
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 27,
+     "case_id": "ic-sql-0127",
+     "strata": {
+      "hardness": "extra",
+      "db": "concert_singer"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "27"
+     },
+     "order": 5,
+     "start_offset_s": 1.364
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 25,
+     "case_id": "ic-sql-0500",
+     "strata": {
+      "hardness": "extra",
+      "db": "car_1"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "25"
+     },
+     "order": 6,
+     "start_offset_s": 1.636
+    },
+    {
+     "tenant": "deep_search",
+     "program_name": "deep_search",
+     "jac_file": "benchmark/evaluation/programs/deep_search.jac",
+     "port": 8972,
+     "case_index": 2,
+     "case_id": "dr-02-batching",
+     "strata": {
+      "kind": "provenance",
+      "cluster": "batching"
+     },
+     "env": {
+      "DEEP_TASK_INDEX": "2"
+     },
+     "order": 7,
+     "start_offset_s": 1.909
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 8,
+     "case_id": "8cd4dcab-adf9-4238-9476-dcb233f87a05",
+     "strata": {
+      "hops": 3,
+      "label": "NOT_SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "8"
+     },
+     "order": 8,
+     "start_offset_s": 2.182
+    },
+    {
+     "tenant": "intercode_sql",
+     "program_name": "intercode_sql",
+     "jac_file": "benchmark/evaluation/programs/intercode_sql.jac",
+     "port": 8973,
+     "case_index": 6,
+     "case_id": "ic-sql-0108",
+     "strata": {
+      "hardness": "easy",
+      "db": "poker_player"
+     },
+     "env": {
+      "SQL_TASK_INDEX": "6"
+     },
+     "order": 9,
+     "start_offset_s": 2.455
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 27,
+     "case_id": "95a8c10e-21ea-4222-abac-075a121b3f24",
+     "strata": {
+      "hops": 3,
+      "label": "SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "27"
+     },
+     "order": 10,
+     "start_offset_s": 2.727
+    },
+    {
+     "tenant": "hover",
+     "program_name": "hover",
+     "jac_file": "benchmark/evaluation/programs/HoVer.jac",
+     "port": 8971,
+     "case_index": 4,
+     "case_id": "538fdfd2-97df-4960-b8fd-405d3bf63569",
+     "strata": {
+      "hops": 4,
+      "label": "NOT_SUPPORTED"
+     },
+     "env": {
+      "HOVER_CLAIM_INDEX": "4"
+     },
+     "order": 11,
+     "start_offset_s": 3.0
+    }
+   ]
+  }
+ ],
+ "summary": {
+  "workflows": 36,
+  "per_tenant": {
+   "deep_search": 12,
+   "hover": 12,
+   "intercode_sql": 12
+  },
+  "distinct_cases": {
+   "deep_search": 12,
+   "hover": 12,
+   "intercode_sql": 12
+  },
+  "strata": {
+   "deep_search.cluster": {
+    "quantization": 1,
+    "speculative-decoding": 2,
+    "multi-tenant": 1,
+    "disaggregation": 2,
+    "prefix-caching": 2,
+    "agent-evaluation": 1,
+    "rag": 1,
+    "long-context": 1,
+    "batching": 1
+   },
+   "deep_search.kind": {
+    "compare": 3,
+    "tradeoff": 1,
+    "survey": 1,
+    "evidence": 2,
+    "applicability": 1,
+    "provenance": 4
+   },
+   "hover.hops": {
+    "2": 3,
+    "4": 5,
+    "3": 4
+   },
+   "hover.label": {
+    "SUPPORTED": 7,
+    "NOT_SUPPORTED": 5
+   },
+   "intercode_sql.db": {
+    "student_transcripts_tracking": 1,
+    "tvshow": 1,
+    "pets_1": 1,
+    "car_1": 2,
+    "world_1": 3,
+    "orchestra": 1,
+    "flight_2": 1,
+    "concert_singer": 1,
+    "poker_player": 1
+   },
+   "intercode_sql.hardness": {
+    "medium": 3,
+    "hard": 1,
+    "extra": 4,
+    "easy": 4
+   }
+  }
+ }
+}

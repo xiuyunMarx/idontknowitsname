@@ -1,0 +1,999 @@
+INFO 08-24 17:18:21 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 17:18:21 [model.py:1678] Using max model len 8192
+INFO 08-24 17:18:21 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 17:18:21 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=654567) INFO 08-24 17:18:22 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=654567) INFO 08-24 17:18:23 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:53349 backend=nccl
+[rank0]:[W824 17:18:23.915131266 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=654567) INFO 08-24 17:18:23 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=654567) INFO 08-24 17:18:23 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=654567) INFO 08-24 17:18:24 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=654567) INFO 08-24 17:18:24 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=654567) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=654567) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=654567) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=654567) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.39it/s]
+(EngineCore pid=654567) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.20it/s]
+(EngineCore pid=654567) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.19it/s]
+(EngineCore pid=654567) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=654567) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.24it/s]
+(EngineCore pid=654567) 
+(EngineCore pid=654567) INFO 08-24 17:18:26 [default_loader.py:384] Loading weights took 1.85 seconds
+(EngineCore pid=654567) INFO 08-24 17:18:26 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.606152 seconds
+(EngineCore pid=654567) INFO 08-24 17:18:29 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=654567) INFO 08-24 17:18:29 [backends.py:1111] Dynamo bytecode transform time: 2.16 s
+(EngineCore pid=654567) INFO 08-24 17:18:29 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.580 s
+(EngineCore pid=654567) INFO 08-24 17:18:29 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=654567) INFO 08-24 17:18:29 [monitor.py:48] torch.compile took 2.91 s in total
+(EngineCore pid=654567) INFO 08-24 17:18:29 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=654567) INFO 08-24 17:18:30 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=654567) INFO 08-24 17:18:30 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=654567) INFO 08-24 17:18:31 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=654567) INFO 08-24 17:18:31 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=654567) INFO 08-24 17:18:31 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=654567) INFO 08-24 17:18:31 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=654567) INFO 08-24 17:18:31 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=654567) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 13.93it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.31it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 17.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.52it/s]
+(EngineCore pid=654567) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.38it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.52it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 25.03it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 28.37it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.23it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 28.79it/s]
+(EngineCore pid=654567) INFO 08-24 17:18:34 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=654567) INFO 08-24 17:18:34 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=654567) INFO 08-24 17:18:34 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.88 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
+WARNING 08-24 17:18:35 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 426 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 444 ms
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54542) as intercode_sql#1
+[32m[LOG][0m Registered 'intercode_sql' (pid 654906, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#1
+[36m[DEBUG][0m call from intercode_sql#1 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s1c1-6352d444942a461cbfaa3308cee3f8b4 duration_ms=188.08 cached_tokens=0 prompt_tokens=820
+[prefill] prefill-diagnose@367:30-af57f96b103149539dee4d44c4071d83 cost_tokens=48 duration_ms=54.50
+[prefill] prefill-diagnose@367:30-f55cb41b67a348458fe41be3837fed09 cost_tokens=48 duration_ms=58.05
+[prefill] prefill-diagnose@367:30-de055a5a66804dd79e65e866aa55c8e7 cost_tokens=48 duration_ms=58.06
+[prefill] prefill-diagnose@367:30-bd380d52bf0b4daa99ae481ee894c53d cost_tokens=48 duration_ms=58.27
+[prefill] prefill-diagnose@367:30-8a3ecfe4699342989aee264991ac317e cost_tokens=48 duration_ms=58.09
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s1c1-6352d444942a461cbfaa3308cee3f8b4 decode_ms=353.83 output_tokens=19
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s1c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "conductor"}}'
+[prefill] prefill-diagnose@367:30-416505b58f6e4ddeb35a9f037ad52d55 cost_tokens=48 duration_ms=58.01
+[prefill] prefill-diagnose@367:30-92a8fdf3691c4e0dac13b56d27a59f44 cost_tokens=128 duration_ms=39.37
+[prefill] prefill-diagnose@367:30-4d40c064f1904c4d83da6b680a7ebe73 cost_tokens=128 duration_ms=21.73
+[prefill] prefill-diagnose@367:30-7bea6425426942849311cb8d0152b44d cost_tokens=128 duration_ms=21.27
+[prefill] prefill-diagnose@367:30-a96129993e0f45c3974671cc721765b6 cost_tokens=101 duration_ms=31.30
+[prefill] prefill-finalize@374:23-08b160b197d6481a8a75d62c0399b332 cost_tokens=128 duration_ms=31.08
+[prefill] prefill-finalize@374:23-4cde69f9626645d389b723f2d2bdc68f cost_tokens=14 duration_ms=21.47
+[36m[DEBUG][0m call from intercode_sql#1 key='diagnose'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s1c2-f08fd608b3d844ba88e0607db573811b duration_ms=22.77 cached_tokens=464 prompt_tokens=511
+[prefill] prefill-revise_sql@369:24-8515b59d07394318a23b5a287dff5506 cost_tokens=48 duration_ms=55.77
+[prefill] prefill-revise_sql@369:24-f4aec4ec334c4149ae684e5d6adf3254 cost_tokens=48 duration_ms=58.66
+[prefill] prefill-revise_sql@369:24-aa749c2f7f1546448b8e2d705f58593c cost_tokens=48 duration_ms=59.05
+[prefill] prefill-revise_sql@369:24-281a3de292cc465886ae91ab9f6f9d36 cost_tokens=28 duration_ms=58.66
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s1c2-f08fd608b3d844ba88e0607db573811b decode_ms=784.69 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s1c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL s'
+[prefill] prefill-revise_sql@369:24-c976579fcb5e49cca1e030a53968fc0f cost_tokens=128 duration_ms=38.42
+[prefill] prefill-revise_sql@369:24-4e4a2a472ab34deda75f91808300b32d cost_tokens=67 duration_ms=21.60
+[36m[DEBUG][0m call from intercode_sql#1 key='revise_sql'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s1c3-c6dc16abd53e4141a05d25290566f224 duration_ms=117.14 cached_tokens=176 prompt_tokens=613
+[prefill] prefill-diagnose@367:30-9d808ab5c64242c4a638c9c0f3a748fa cost_tokens=48 duration_ms=54.06
+[prefill] prefill-diagnose@367:30-63a690c7ef6a47fa8ad78823c15c433e cost_tokens=48 duration_ms=57.90
+[prefill] prefill-diagnose@367:30-f60819be338e4dc4a78bd841e264f4c4 cost_tokens=48 duration_ms=57.66
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s1c3-c6dc16abd53e4141a05d25290566f224 decode_ms=195.53 output_tokens=11
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s1c3 typed_ok=True output='SELECT COUNT(DISTINCT Nationality) FROM conductor'
+[prefill] prefill-diagnose@367:30-500fde9c4d2e4aa085e6be95d0611da4 cost_tokens=30 duration_ms=58.54
+[prefill] prefill-finalize@374:23-febf880ac4c14fd396d8bc7b7560bd59 cost_tokens=128 duration_ms=22.09
+[prefill] prefill-finalize@374:23-70af49c8d1f349e1b91f9d0595963f7d cost_tokens=6 duration_ms=21.89
+[36m[DEBUG][0m call from intercode_sql#1 key='finalize'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s1c4-5c99dc2f45a348fba248884892ed65a5 duration_ms=21.68 cached_tokens=128 prompt_tokens=161
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s1c4-5c99dc2f45a348fba248884892ed65a5 decode_ms=254.64 output_tokens=14
+[36m[DEBUG][0m [final] intercode_sql:finalize:s1c4 typed_ok=True output='The number of different nationalities conductors have is 3.'
+[32m[LOG][0m intercode_sql#1 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#1 (4 sites served)
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 57136) as deep_search#2
+[32m[LOG][0m Registered 'deep_search' (pid 654941, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#2
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c1-f871ecfe023e44939a10f7d38552857b duration_ms=98.35 cached_tokens=48 prompt_tokens=329
+[prefill] prefill-__visit@deep_search.jac:380-0d08dd8b868b4b95b4361bf460ba7d6e cost_tokens=48 duration_ms=55.21
+[prefill] prefill-__visit@deep_search.jac:380-486c7e5c5c24474e90865e320722720f cost_tokens=48 duration_ms=58.72
+[prefill] prefill-__visit@deep_search.jac:380-6a8f7c16be174d51a6f9dcd54710cda8 cost_tokens=10 duration_ms=58.87
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c1-f871ecfe023e44939a10f7d38552857b decode_ms=645.04 output_tokens=34
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c1 typed_ok=True output='["What published work introduced retrieval-augmented generation?", "What problem did the introduced work solve?", "What background does a reader need before und'
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c2-3114390fdef540338204ed4d3fe02c3c duration_ms=110.70 cached_tokens=96 prompt_tokens=364
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-5e815fd9ba2e43aa805fa4426a7f6a3d cost_tokens=48 duration_ms=56.10
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c2-3114390fdef540338204ed4d3fe02c3c decode_ms=222.53 output_tokens=10
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-1c7c5ab177f44b1197beba0bc2aa86ff cost_tokens=48 duration_ms=57.04
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-14a137f75ec2405eba200e260c9d0f5c cost_tokens=128 duration_ms=1.71 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c3-d9c7048add1448a998296a8125055d73 duration_ms=119.80 cached_tokens=336 prompt_tokens=633
+[prefill] prefill-WebSearchAgent.web_research@291:32-9611fedcb12843e4ac57de570600ed46 cost_tokens=48 duration_ms=56.67
+[prefill] prefill-WebSearchAgent.web_research@291:32-e15db85e933045ddbb15c1c39fe25717 cost_tokens=48 duration_ms=57.91
+[prefill] prefill-WebSearchAgent.web_research@291:32-d4ebc41d3186440c9bebcdeffa377703 cost_tokens=48 duration_ms=58.07
+[prefill] prefill-WebSearchAgent.web_research@291:32-9e96f6a64fed47908cedb7c9fd01727b cost_tokens=48 duration_ms=58.66
+[prefill] prefill-WebSearchAgent.web_research@291:32-c53b9df7d40241869fddfb1719b80560 cost_tokens=48 duration_ms=58.81
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c3-d9c7048add1448a998296a8125055d73 decode_ms=393.99 output_tokens=21
+[prefill] prefill-WebSearchAgent.web_research@291:32-3df0af0518724219bdbcdd3b5e7df421 cost_tokens=48 duration_ms=58.20
+[prefill] prefill-WebSearchAgent.web_research@291:32-f640113a16af432faa6115fa3b52e5e1 cost_tokens=128 duration_ms=33.05
+[prefill] prefill-WebSearchAgent.web_research@291:32-6de11a550f5d4cfdb85de7b7ffa158df cost_tokens=26 duration_ms=21.75
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-85fc146fbf30484fa84068aba5d60d7c cost_tokens=128 duration_ms=31.92
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-b49eaa650c81484394424dae4f9a131c cost_tokens=128 duration_ms=32.68
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-c5f0e3a7bc6c4be18100b62d3de631f8 cost_tokens=99 duration_ms=32.30
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-81f6a396a4154ae185b1d82a1ce432d7 cost_tokens=128 duration_ms=21.73
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a706b8a938eb4cb58bf3cb56511d80cf cost_tokens=128 duration_ms=6.52 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c4-f71ea4fe2207490f8664b24c6298f07b duration_ms=61.05 cached_tokens=432 prompt_tokens=498
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-edc99edfda754adb83638ae10ac74cf4 cost_tokens=48 duration_ms=56.14
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5ee46a66faef4521bcf0cb6d0b5b291a cost_tokens=48 duration_ms=57.70
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-7852d066a0a3412a997b01b243f66acc cost_tokens=48 duration_ms=57.79
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b77f4310ae294579a34e26a3e791d364 cost_tokens=48 duration_ms=57.76
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2483fb63d96c4ac58869bc54979a08eb cost_tokens=48 duration_ms=58.54
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-460f08b6966540e68b890d56c2fa787e cost_tokens=48 duration_ms=58.20
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-978bae45d6024ad7a5ec01c013a29e27 cost_tokens=35 duration_ms=58.10
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c4-f71ea4fe2207490f8664b24c6298f07b decode_ms=452.85 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "retrieval-augmented generation"}}'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-eb944dadcb584b46b0cdf64bb36b1dcd cost_tokens=48 duration_ms=57.72
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 41894) as hover#3
+[32m[LOG][0m Registered 'hover' (pid 654998, model 'Qwen/Qwen2.5-7B-Instruct') as hover#3
+[prefill] prefill-FactCheckAgent.fact_check@333:33-4a9d477526704608be886be495db656b cost_tokens=128 duration_ms=22.14
+[prefill] prefill-FactCheckAgent.fact_check@333:33-0be675915fdc49698b0d1df9fb69c687 cost_tokens=128 duration_ms=33.10
+[36m[DEBUG][0m call from hover#3 key='HoverAgent.decompose_claim'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-4c6715e770e74940a0fecec947f935ad cost_tokens=112 duration_ms=22.20 aborted=1
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s3c1-00501eee19a94e5bb289bb9b559f035c duration_ms=40.80 cached_tokens=48 prompt_tokens=154
+[prefill] prefill-SearchData.plan_query@235:25-11f752a261c4407c9d1c9cabac199601 cost_tokens=48 duration_ms=56.90
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-29523088d4fb4e0d87a9d4b44db9feee cost_tokens=48 duration_ms=7.01 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c5-becf969b1c2641baa141cdb566b260ae duration_ms=52.37 cached_tokens=432 prompt_tokens=491
+[prefill] prefill-SearchData.plan_query@235:25-d29fc46339d149bf9669eee4953e9969 cost_tokens=48 duration_ms=56.55
+[prefill] prefill-FactCheckAgent.fact_check@333:33-e001a1c3f82b40d29ebaf6ea35214e91 cost_tokens=48 duration_ms=58.03
+[prefill] prefill-SearchData.plan_query@235:25-8e854b71a27348998c050d2300268c4c cost_tokens=48 duration_ms=58.35
+[prefill] prefill-FactCheckAgent.fact_check@333:33-73883fcc5b62492295e7176eaca247ab cost_tokens=48 duration_ms=57.88
+[prefill] prefill-SearchData.plan_query@235:25-560b3acb58e64535a9cb3ee9ad332a1a cost_tokens=5 duration_ms=58.77
+[prefill] prefill-FactCheckAgent.fact_check@333:33-42db3eff01cf400f8b31a2e6929bddcc cost_tokens=16 duration_ms=57.34
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-88281c9be2a54729b5f291c44d48db4d cost_tokens=48 duration_ms=57.03
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-6ec20d283172400d8b59bda59f212c9d cost_tokens=48 duration_ms=57.33
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c5-becf969b1c2641baa141cdb566b260ae decode_ms=529.05 output_tokens=28
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "retrieval-augmented generation introduced work problem background"}}'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-f1114945981c4b60b641e4d1498f74d3 cost_tokens=48 duration_ms=58.17
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-2837da270e844754a9e6d067742f699e cost_tokens=48 duration_ms=56.88
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-3741c5b50cfb406a9baa56a416205060 cost_tokens=48 duration_ms=57.30
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-9c6732bca32c45f0a3df18c97c0c9281 cost_tokens=48 duration_ms=57.57
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-1db9f64798494cca9b7dac14a69af21a cost_tokens=48 duration_ms=30.44 aborted=1
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c6-c36ebbb9d1af41b08141ac228d3d06c3 duration_ms=62.67 cached_tokens=400 prompt_tokens=465
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-03d2daa39da149849bedd68f9fabdd5f cost_tokens=48 duration_ms=55.37
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-3ac8ae1827d6494d8a7d2188ff374e5c cost_tokens=48 duration_ms=57.43
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-d127a827746440c78b2cdc427c1d1919 cost_tokens=31 duration_ms=57.52
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s3c1-00501eee19a94e5bb289bb9b559f035c decode_ms=1129.00 output_tokens=58
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s3c1 typed_ok=True output='Minardi M189 was a Formula One car.  \nMinardi M189 was replaced by a newer model.  \nA Milan based company made the tires for the newer version.  \nJames Edward A'
+[prefill] prefill-WebSearchAgent.web_research@291:32-8bfe22017fb94f16bf47f1ac532a06dc cost_tokens=48 duration_ms=56.87
+[prefill] prefill-WebSearchAgent.web_research@291:32-acc4cd08c2404f62ab2ec08e2d86f9a1 cost_tokens=48 duration_ms=57.65
+[prefill] prefill-WebSearchAgent.web_research@291:32-0cb779a42bf149bea54a9c4ae3d8224b cost_tokens=48 duration_ms=57.58
+[prefill] prefill-WebSearchAgent.web_research@291:32-c0eb1308b21843d3925ebcbdec0e420e cost_tokens=48 duration_ms=58.18
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c6-c36ebbb9d1af41b08141ac228d3d06c3 decode_ms=448.83 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "retrieval-augmented generation"}}'
+[prefill] prefill-WebSearchAgent.web_research@291:32-5c1fc31163204314b48729bddbf19dcf cost_tokens=48 duration_ms=56.97
+[prefill] prefill-WebSearchAgent.web_research@291:32-bacecb9488e64673a5dba4aa6f5cf7a7 cost_tokens=128 duration_ms=22.58
+[prefill] prefill-WebSearchAgent.web_research@291:32-0f4feb773b784c0abf8030ff9d693959 cost_tokens=38 duration_ms=22.34
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-99f41e82cfd14441af20b27fd825366a cost_tokens=128 duration_ms=21.90
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-2d39a0ea72c64fdb8b41808dce14b72c cost_tokens=128 duration_ms=20.96
+[prefill] prefill-ResearchSupervisor.decompose_task@375:21-fbd1cb6eaf3248779432a28381e33f33 cost_tokens=8 duration_ms=21.88
+[prefill] prefill-DeepResearch.summarize@388:24-2f384936574341179a531e66d46d515e cost_tokens=128 duration_ms=34.72
+[36m[DEBUG][0m call from hover#3 key='SearchData.plan_query'
+[prefill] prefill-DeepResearch.summarize@388:24-d4c04315b80c40b189a70be2d881222d cost_tokens=94 duration_ms=3.46 aborted=1
+[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s3c2-2ddf7ed04f0040e5aa939eded23d2c24 duration_ms=58.62 cached_tokens=144 prompt_tokens=269
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c7-ab25fc453c7d4bcf897e54f2314f6620 duration_ms=93.93 cached_tokens=256 prompt_tokens=405
+[prefill] prefill-__visit@deep_search.jac:380-51de931997e84010b92751b46b222090 cost_tokens=48 duration_ms=54.16
+[prefill] prefill-SearchData.retrieve_evidence@236:28-f6485ebc147d41f195a66ff8994036a9 cost_tokens=48 duration_ms=57.25
+[prefill] prefill-__visit@deep_search.jac:380-2fc4701a32fe42aa804343afd105715d cost_tokens=48 duration_ms=57.62
+[prefill] prefill-SearchData.retrieve_evidence@236:28-0fd21bd1fda449f7ab5e472c03f9b4a9 cost_tokens=48 duration_ms=57.26
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 41910) as hover#4
+[32m[LOG][0m Registered 'hover' (pid 655030, model 'Qwen/Qwen2.5-7B-Instruct') as hover#4
+[prefill] prefill-__visit@deep_search.jac:380-27e7b34581f042e4a3234ebb53d82e5c cost_tokens=10 duration_ms=58.81
+[36m[DEBUG][0m call from hover#4 key='HoverAgent.decompose_claim'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-554c7adfb8b94ca686de6876b7f73225 cost_tokens=48 duration_ms=34.16 aborted=1
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s4c1-0e73cbf1be25497a8db4425108b8cdb5 duration_ms=43.96 cached_tokens=96 prompt_tokens=154
+[prefill] prefill-SearchData.plan_query@235:25-17a96881280f4e4bb2c2ae7ed8d83e58 cost_tokens=48 duration_ms=48.90
+[prefill] prefill-SearchData.retrieve_evidence@236:28-a32e9662827a4d4a99b218d711119b4e cost_tokens=48 duration_ms=57.92
+[prefill] prefill-SearchData.plan_query@235:25-39689c76417d4e44917dd4d231efa70e cost_tokens=48 duration_ms=57.95
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s3c2-2ddf7ed04f0040e5aa939eded23d2c24 decode_ms=680.65 output_tokens=34
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s3c2 typed_ok=True output='What Milan based company, for whom James Edward Arnold was one of the last presidents in Africa, made the tires for the newer Minardi M189 model?'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-bd2d70eaf11e4060b225713865f36feb cost_tokens=48 duration_ms=58.03
+[36m[DEBUG][0m call from hover#3 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.plan_query@235:25-18ce64e1a1ee4dc3a71743b25bf838dd cost_tokens=48 duration_ms=5.61 aborted=1
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c7-ab25fc453c7d4bcf897e54f2314f6620 decode_ms=748.66 output_tokens=35
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c7 typed_ok=True output='["What published work introduced retrieval-augmented generation?","What problem did the introduced work solve?","What background does a reader need before the r'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s3c3-ea1693a4499346ffbc34605495909728 duration_ms=136.12 cached_tokens=192 prompt_tokens=558
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c8-842360c5cf414326b8f3c7d1e840aa18 duration_ms=84.05 cached_tokens=304 prompt_tokens=441
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-ac6fd59dba764699ae32e8c87f69dbb6 cost_tokens=48 duration_ms=56.72
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c8-842360c5cf414326b8f3c7d1e840aa18 decode_ms=177.03 output_tokens=10
+[prefill] prefill-SearchData.reason_hop@238:26-561d05fd3c934f6bac003cbc23f26277 cost_tokens=48 duration_ms=58.78
+[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.plan_query@235:25-67972f2b305d4daf87eba3e9db23cc87 cost_tokens=48 duration_ms=1.75 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c9-a796aad91b26417a8e59f7c216818d2b duration_ms=138.40 cached_tokens=416 prompt_tokens=710
+[prefill] prefill-WebSearchAgent.web_research@291:32-52d86731b9484894af36a4ad846ae19b cost_tokens=48 duration_ms=56.97
+[prefill] prefill-SearchData.reason_hop@238:26-0b65932db8f44a7aa8028dc2d6bfeb53 cost_tokens=48 duration_ms=58.58
+[prefill] prefill-SearchData.plan_query@235:25-05a7b4a62d5241ba9e29828799366e1a cost_tokens=48 duration_ms=58.98
+[prefill] prefill-WebSearchAgent.web_research@291:32-90e8f0e4d6f2441ebfe33d18e5fac629 cost_tokens=48 duration_ms=58.14
+[prefill] prefill-SearchData.reason_hop@238:26-3394111ba40e413b88ddbe7bb192a3b0 cost_tokens=48 duration_ms=58.68
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c9-a796aad91b26417a8e59f7c216818d2b decode_ms=394.32 output_tokens=21
+[prefill] prefill-SearchData.plan_query@235:25-28fe6228d8174138b3249ac4172c4b5d cost_tokens=5 duration_ms=59.51
+[prefill] prefill-WebSearchAgent.web_research@291:32-60be94500a13489c85eb8e48e2af54aa cost_tokens=48 duration_ms=57.43
+[prefill] prefill-SearchData.reason_hop@238:26-b3ba1a210f2447d8a4da67b3a3f70c0b cost_tokens=48 duration_ms=58.75
+[prefill] prefill-WebSearchAgent.web_research@291:32-edb4f492d3154d81bd4513f0096afea5 cost_tokens=48 duration_ms=58.04
+[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
+[prefill] prefill-SearchData.reason_hop@238:26-067f64fa53f34c7ea6594805a0b7c701 cost_tokens=15 duration_ms=8.42 aborted=1
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s4c1-0e73cbf1be25497a8db4425108b8cdb5 decode_ms=1395.51 output_tokens=62
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s4c1 typed_ok=True output="Farmers' Alliance was the organized agrarian economic movement among American farmers.\nFarmers' Alliance was supported by a weekly left-wing political newspaper"
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c10-78c6055284cf4bbe8da73dbdc38b9841 duration_ms=65.49 cached_tokens=432 prompt_tokens=499
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s3c3-ea1693a4499346ffbc34605495909728 decode_ms=1110.09 output_tokens=51
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s3c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What Milan based company, for whom James Edward Arnold was one of the last presidents in Africa, made'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d57f0a62b4fa4977b82f05bb12135455 cost_tokens=48 duration_ms=49.84
+[prefill] prefill-SearchData.reason_hop@238:26-8cf7f43b003f4cfca6f20c503561ef92 cost_tokens=48 duration_ms=58.17
+[prefill] prefill-SearchData.plan_query@235:25-112b6cfb6eb9492f93a45f9cc25d800c cost_tokens=48 duration_ms=58.26
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-454054715c3b472f86794ca39f142be6 cost_tokens=48 duration_ms=58.10
+[36m[DEBUG][0m call from hover#3 key='SearchData.reason_hop'
+[prefill] prefill-SearchData.reason_hop@238:26-80c3d04055db4ad78ff934c25067b9ea cost_tokens=48 duration_ms=9.69 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s3c4-c76d3e876e7448728099cc48345da610 duration_ms=83.39 cached_tokens=160 prompt_tokens=315
+[36m[DEBUG][0m call from hover#4 key='SearchData.plan_query'
+[prefill] prefill-SummarizeData.assess_gap@252:23-9309338fb88a41caa53eaa0a8e6b100a cost_tokens=48 duration_ms=14.63 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s4c2-6ce0bcbc02c94d1584d2be4c55e26f2a duration_ms=64.39 cached_tokens=144 prompt_tokens=268
+[prefill] prefill-SearchData.retrieve_evidence@236:28-a5de28f6e3294f0eb053fa88b7cab5a7 cost_tokens=48 duration_ms=48.48
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c10-78c6055284cf4bbe8da73dbdc38b9841 decode_ms=495.47 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c10 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "retrieval-augmented generation"}}'
+[prefill] prefill-SummarizeData.assess_gap@252:23-54da834e89a0454384718b3d252a907f cost_tokens=48 duration_ms=57.50
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4438d2273318454299dcc54686438ec8 cost_tokens=48 duration_ms=57.62
+[prefill] prefill-SearchData.retrieve_evidence@236:28-ff5e564b11ae4e7cb0b4cb0e3118f452 cost_tokens=48 duration_ms=57.97
+[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
+[prefill] prefill-SummarizeData.assess_gap@252:23-64e94d71ee9744a7b4ab439bd9039be8 cost_tokens=48 duration_ms=49.88 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c11-19541a7ad8c642879823ecc4ff47df65 duration_ms=49.76 cached_tokens=432 prompt_tokens=492
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-13b32a21dce449ba89e062a9c65b728a cost_tokens=48 duration_ms=54.96
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s4c2-6ce0bcbc02c94d1584d2be4c55e26f2a decode_ms=413.47 output_tokens=22
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s4c2 typed_ok=True output='What publisher published the weekly left-wing political newspaper that was influenced by the thinking of Laurence Gronlund?'
+[36m[DEBUG][0m call from hover#4 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-a84b7904b1fc4ba889668f57cc2866fe cost_tokens=48 duration_ms=26.48 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s4c3-9e9714a7f6f74411a519c6fa83a067bf duration_ms=64.21 cached_tokens=464 prompt_tokens=546
+[prefill] prefill-SearchData.reason_hop@238:26-3b181d3ecfdb4f108f54230db9e3771e cost_tokens=48 duration_ms=56.98
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c7cdb14ee75d4ca39c87886d394f9797 cost_tokens=48 duration_ms=58.07
+[prefill] prefill-SummarizeData.assess_gap@252:23-d8fa6d13f3064c44ab7e8e6464d295e4 cost_tokens=48 duration_ms=58.35
+[prefill] prefill-SearchData.reason_hop@238:26-390cae17b1d4424392a62296351831b5 cost_tokens=48 duration_ms=58.85
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-99e507715dc746dba89a3c1251334414 cost_tokens=48 duration_ms=58.44
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c11-19541a7ad8c642879823ecc4ff47df65 decode_ms=504.58 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c11 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "What published work introduced retrieval-augmented generation"}}'
+[prefill] prefill-SummarizeData.assess_gap@252:23-825e2f689887403290321a63ea10c0dd cost_tokens=48 duration_ms=59.25
+[prefill] prefill-SearchData.reason_hop@238:26-f8e7b00af4014993b0154bbe839b7515 cost_tokens=48 duration_ms=58.77
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5532ffe67ebc43a79a9c67bb11418156 cost_tokens=48 duration_ms=57.97
+[prefill] prefill-SummarizeData.assess_gap@252:23-a6cd011b309e4207bcb9f50845ebf910 cost_tokens=48 duration_ms=58.29
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s4c3-9e9714a7f6f74411a519c6fa83a067bf decode_ms=552.49 output_tokens=29
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s4c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "weekly left-wing political newspaper influenced by Laurence Gronlund"}}'
+[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
+[prefill] prefill-SearchData.reason_hop@238:26-77ba3152df82463db4d1db10fd2ae305 cost_tokens=48 duration_ms=29.05 aborted=1
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c12-54569ec326a245afa16c6cffb4c727e7 duration_ms=65.19 cached_tokens=400 prompt_tokens=466
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-bc35a57a38eb40cda8d9e84f6b9ec86c cost_tokens=48 duration_ms=49.27
+[prefill] prefill-SearchData.reason_hop@238:26-b8893b18639e4833ae8adcb2694ebdec cost_tokens=48 duration_ms=57.48
+[36m[DEBUG][0m call from hover#4 key='SearchData.reason_hop'
+[prefill] prefill-SummarizeData.assess_gap@252:23-8a68d4b29ddb4d708bbe0f768a466d8d cost_tokens=25 duration_ms=14.90 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s4c4-307f505b9d2c42f5a22fda7e7f5dac57 duration_ms=54.79 cached_tokens=176 prompt_tokens=281
+[prefill] prefill-SummarizeData.assess_gap@252:23-4fdff508d9684276b3b19a1c7754e645 cost_tokens=48 duration_ms=50.65
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c35eb461d1e84c568ea957a6ab163046 cost_tokens=48 duration_ms=58.23
+[prefill] prefill-SummarizeData.assess_gap@252:23-232b39a822834a0f8e8f3005a51ea703 cost_tokens=25 duration_ms=58.18
+[prefill] prefill-SummarizeData.assess_gap@252:23-2c30b85202624d0599ca542f0d45d73f cost_tokens=48 duration_ms=58.54
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c12-54569ec326a245afa16c6cffb4c727e7 decode_ms=460.19 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "retrieval-augmented generation"}}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-44befe0949ea43c894e55edc29578186 cost_tokens=20 duration_ms=57.60
+[prefill] prefill-SummarizeData.assess_gap@252:23-5cfe62886f554e85b7500e0f91560abc cost_tokens=48 duration_ms=57.52
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-971d0c7e9f67481f9fcc2ba70ec8e68b cost_tokens=48 duration_ms=57.37
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54838) as intercode_sql#5
+[32m[LOG][0m Registered 'intercode_sql' (pid 655081, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#5
+[36m[DEBUG][0m call from intercode_sql#5 key='generate_sql'
+[prefill] prefill-SummarizeData.assess_gap@252:23-403a1d22fc814f7da9144facaac46e43 cost_tokens=48 duration_ms=59.10 aborted=1
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s5c1-d2955642de854bd6b5dec8ff1d87c4e9 duration_ms=181.50 cached_tokens=416 prompt_tokens=921
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s2c13-2f103e54bb014527983a1b03636f9ea1 duration_ms=171.19 cached_tokens=208 prompt_tokens=314
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s4c4-307f505b9d2c42f5a22fda7e7f5dac57 decode_ms=708.81 output_tokens=31
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s4c4 typed_ok=True output='The passages establish that there was a weekly left-wing political newspaper influenced by Laurence Gronlund. The next hop must follow the publisher of this new'
+[prefill] prefill-DeepResearch.build_report@391:23-36332e01ef194dca85185aaea1c8aa75 cost_tokens=48 duration_ms=54.11
+[prefill] prefill-SummarizeData.assess_gap@252:23-5e3b239f8d1c44189fbff2db34110fc2 cost_tokens=48 duration_ms=58.17
+[prefill] prefill-DeepResearch.build_report@391:23-279be61ce6bb4b5991619a6b15cfd152 cost_tokens=48 duration_ms=59.82
+[prefill] prefill-finalize@374:23-f36c62fbe712457786de24ddc8d8775c cost_tokens=48 duration_ms=59.49
+[36m[DEBUG][0m call from hover#4 key='SummarizeData.assess_gap'
+[prefill] prefill-SummarizeData.assess_gap@252:23-8eb1bb9fdf2b4da4a30d62e6327e60a4 cost_tokens=48 duration_ms=25.91 aborted=1
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s4c5-f02f58f6524d4a06948e77f6efefc26b duration_ms=88.97 cached_tokens=144 prompt_tokens=298
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s5c1-d2955642de854bd6b5dec8ff1d87c4e9 decode_ms=372.30 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s5c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "country"}}'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s4c5-f02f58f6524d4a06948e77f6efefc26b decode_ms=38.47 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s4c5 typed_ok=True output='nothing missing'
+[prefill] prefill-SearchData.plan_query@235:25-12382f07504d4bdf91a13bec37b87efe cost_tokens=48 duration_ms=51.28
+[prefill] prefill-DeepResearch.build_report@391:23-01e0282c41064c88870ebead03b7b525 cost_tokens=9 duration_ms=59.38
+[prefill] prefill-finalize@374:23-aa3e1244ad7c496d9f88401abdf870a2 cost_tokens=48 duration_ms=57.66
+[prefill] prefill-SearchData.plan_query@235:25-0c9255488e574045a1555e2da1c5a6dc cost_tokens=48 duration_ms=57.99
+[36m[DEBUG][0m call from hover#4 key='SearchData.plan_query'
+[prefill] prefill-finalize@374:23-4ca69ccab017413e8500e0de47500705 cost_tokens=48 duration_ms=10.06 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s4c6-30e9d308ca8648d3a836d21b69cc7a3f duration_ms=78.92 cached_tokens=144 prompt_tokens=271
+[36m[DEBUG][0m call from intercode_sql#5 key='diagnose'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-e749dc7189554a11abed4c0f9ebe6381 cost_tokens=48 duration_ms=50.72 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s5c2-bf4b4b16f5d84301bd1b4a822f3117b2 duration_ms=43.66 cached_tokens=464 prompt_tokens=512
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s3c4-c76d3e876e7448728099cc48345da610 decode_ms=2829.96 output_tokens=133
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s3c4 typed_ok=True output='The passages establish that a Milan-based company, for whom James Edward Arnold was one of the last presidents in Africa, made the tires for the newer Minardi M'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 43898) as hover#6
+[32m[LOG][0m Registered 'hover' (pid 655201, model 'Qwen/Qwen2.5-7B-Instruct') as hover#6
+[prefill] prefill-revise_sql@369:24-0409c9a8e35a4a2e82fe8757870130be cost_tokens=48 duration_ms=49.10
+[prefill] prefill-SearchData.retrieve_evidence@236:28-5262d3c45a544ae990a67406c3b4be67 cost_tokens=48 duration_ms=58.15
+[36m[DEBUG][0m call from hover#6 key='HoverAgent.decompose_claim'
+[prefill] prefill-revise_sql@369:24-e4432e528a874c1193abef7461a7903a cost_tokens=48 duration_ms=7.18 aborted=1
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s6c1-7ce5ec02065745598ac78a15626e3592 duration_ms=52.78 cached_tokens=96 prompt_tokens=150
+[36m[DEBUG][0m call from hover#3 key='SummarizeData.assess_gap'
+[prefill] prefill-SearchData.plan_query@235:25-887cbe43864946c29a6f072b9a6c15a3 cost_tokens=48 duration_ms=46.35 aborted=1
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s3c5-060223989b0245dea0164e351af4e8fc duration_ms=131.96 cached_tokens=144 prompt_tokens=402
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s5c2-bf4b4b16f5d84301bd1b4a822f3117b2 decode_ms=395.86 output_tokens=17
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s5c2 typed_ok=True output='<tool_call>{"name": "show_schema", "arguments": {"table": ""}}'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s4c6-30e9d308ca8648d3a836d21b69cc7a3f decode_ms=514.32 output_tokens=23
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s4c6 typed_ok=True output='What was the name of the weekly left-wing political newspaper published by the publisher influenced by Laurence Gronlund?'
+[prefill] prefill-SearchData.plan_query@235:25-bdda9e2468954ba08c1b210b6a49fae6 cost_tokens=48 duration_ms=54.90
+[36m[DEBUG][0m call from hover#4 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.plan_query@235:25-a097f97b26b646b7940400e17845f710 cost_tokens=48 duration_ms=5.54 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s4c7-c9a1287bf32a4e78a46b0807016eb594 duration_ms=65.23 cached_tokens=464 prompt_tokens=547
+[prefill] prefill-SearchData.reason_hop@238:26-7fcd20fc17d34ef2ace5968ecbf6280e cost_tokens=48 duration_ms=49.50
+[36m[DEBUG][0m call from intercode_sql#5 key='revise_sql'
+[prefill] prefill-SearchData.plan_query@235:25-bfb72ba42b3d49b0ae12fb78aa90056c cost_tokens=48 duration_ms=7.50 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s5c3-b788cc321d3a43698aa9ef76650133ec duration_ms=162.83 cached_tokens=144 prompt_tokens=689
+[prefill] prefill-diagnose@367:30-907ec4a0ed6e41448ff0fadee82fd89b cost_tokens=48 duration_ms=56.51
+[prefill] prefill-SearchData.reason_hop@238:26-fbb5364b3e584be0845e04522a8bb3a0 cost_tokens=48 duration_ms=59.52
+[prefill] prefill-SearchData.plan_query@235:25-2358cbb631d545fcb1b7347b09af7122 cost_tokens=48 duration_ms=59.34
+[prefill] prefill-SearchData.plan_query@235:25-4a9fa32bb2ef4ff99b69ca8fbf1ba8e5 cost_tokens=5 duration_ms=60.88
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54848) as intercode_sql#7
+[32m[LOG][0m Registered 'intercode_sql' (pid 655230, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#7
+[prefill] prefill-diagnose@367:30-6eff9b8f3d3d4da1b8ce8294df035172 cost_tokens=48 duration_ms=58.47
+[36m[DEBUG][0m call from intercode_sql#7 key='generate_sql'
+[prefill] prefill-SearchData.reason_hop@238:26-dbaf39aa9f974e26b4dbd9e6811a79fc cost_tokens=48 duration_ms=8.51 aborted=1
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s3c5-060223989b0245dea0164e351af4e8fc decode_ms=696.95 output_tokens=30
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s3c5 typed_ok=True output='Minardi M189 was a Formula One car. James Edward Arnold was one of the last presidents of the Milan based company in Africa.'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s7c1-788719d97950443e82c6510160b47bd3 duration_ms=164.49 cached_tokens=416 prompt_tokens=930
+[prefill] prefill-diagnose@367:30-b3898da6e8444da6a46844b0e0bd373e cost_tokens=48 duration_ms=57.81
+[36m[DEBUG][0m call from hover#3 key='SearchData.plan_query'
+[prefill] prefill-diagnose@367:30-c8df85f3e5f143fbb8b16d4386506d91 cost_tokens=48 duration_ms=13.00 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s3c6-122753d9d451496fbd7f74b81cd317e2 duration_ms=81.80 cached_tokens=144 prompt_tokens=298
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s4c7-c9a1287bf32a4e78a46b0807016eb594 decode_ms=894.60 output_tokens=33
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s4c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "weekly left-wing political newspaper published by the publisher influenced by Laurence Gronlund"}}'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s5c3-b788cc321d3a43698aa9ef76650133ec decode_ms=666.86 output_tokens=27
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s5c3 typed_ok=True output="SELECT COUNT(DISTINCT Language) FROM countrylanguage WHERE CountryCode = (SELECT Code FROM country WHERE Name = 'Aruba')"
+[prefill] prefill-SearchData.retrieve_evidence@236:28-ce9a48dc4198456da6147a013d79561b cost_tokens=48 duration_ms=57.06
+[prefill] prefill-diagnose@367:30-9e52d9edb4a04ee1a0f68cade21864d3 cost_tokens=48 duration_ms=58.61
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s6c1-7ce5ec02065745598ac78a15626e3592 decode_ms=1322.18 output_tokens=50
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s6c1 typed_ok=True output='Amy Jo Johnson played a part.\nKimberly Ann Hart is a fictitious character.\nThe franchise is built around a live action superhero television series.\nThe televisi'
+[prefill] prefill-diagnose@367:30-56e8f2b98a834ac9babc1f6f8ab06954 cost_tokens=48 duration_ms=58.93
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s7c1-788719d97950443e82c6510160b47bd3 decode_ms=373.73 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s7c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "country"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-947b8d74d6f24a51b2e861d169fdbd8c cost_tokens=48 duration_ms=58.83
+[36m[DEBUG][0m call from hover#4 key='SearchData.reason_hop'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-f94df651323f473287483e8123487ba0 cost_tokens=48 duration_ms=7.87 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s4c8-fea9d184659247a69ac8f5d27e065f0e duration_ms=83.73 cached_tokens=176 prompt_tokens=316
+[prefill] prefill-SummarizeData.assess_gap@252:23-789e4dd4eaef435b8f6170f16b4a1923 cost_tokens=48 duration_ms=47.45
+[36m[DEBUG][0m call from intercode_sql#5 key='finalize'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-882e79bf75ed422a8a7006ff89eead04 cost_tokens=48 duration_ms=5.10 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s5c4-9ae481bb5daa4b518b72b7383eb8c636 duration_ms=67.33 cached_tokens=112 prompt_tokens=178
+[prefill] prefill-SummarizeData.assess_gap@252:23-a6cbc7ee9364491dbe3e5124f0cbd0c6 cost_tokens=48 duration_ms=52.49
+[36m[DEBUG][0m call from hover#6 key='SearchData.plan_query'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-4090579b4d774dac89be39a5c416b7ae cost_tokens=48 duration_ms=44.79 aborted=1
+[36m[DEBUG][0m call from intercode_sql#7 key='diagnose'
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s2c13-2f103e54bb014527983a1b03636f9ea1 decode_ms=2695.63 output_tokens=114
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s2c13 typed_ok=True output='The research task is to identify which published work introduced retrieval-augmented generation, the problem it addressed, and the necessary background knowledg'
+[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s6c2-7ad161917ec04097ba7189adc70888a2 duration_ms=88.06 cached_tokens=144 prompt_tokens=253
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s7c2-3a8b6fd12547469492713a30fc35ffdf duration_ms=79.21 cached_tokens=480 prompt_tokens=521
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-b97d9e72d35a46d6beeca5ae54bdb7d9 duration_ms=117.55 cached_tokens=96 prompt_tokens=222
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s3c6-122753d9d451496fbd7f74b81cd317e2 decode_ms=722.22 output_tokens=32
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s3c6 typed_ok=True output='"What was the name of the Milan based company in Africa that James Edward Arnold was a president of and made tires for the newer Minardi F1 car?"'
+[36m[DEBUG][0m call from hover#3 key='SearchData.retrieve_evidence'
+[prefill] prefill-revise_sql@369:24-871d27e7f18c4f339722892ad67ce1bf cost_tokens=48 duration_ms=15.71 aborted=1
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s5c4-9ae481bb5daa4b518b72b7383eb8c636 decode_ms=331.53 output_tokens=14
+[36m[DEBUG][0m [final] intercode_sql:finalize:s5c4 typed_ok=True output='The total number of languages used in Aruba is 4.'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s3c7-fe86959346bf4ee590c1850fdc09bbcc duration_ms=66.01 cached_tokens=464 prompt_tokens=556
+[prefill] prefill-SearchData.reason_hop@238:26-8f354a343c454978a040c056ce2c8bfc cost_tokens=48 duration_ms=50.28
+[prefill] prefill-revise_sql@369:24-24b9cadd2592422ab1e613f8e0e0aaa3 cost_tokens=48 duration_ms=59.06
+[32m[LOG][0m intercode_sql#5 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#5 (4 sites served)
+[prefill] prefill-SearchData.retrieve_evidence@236:28-63fc1ab8b7574b09b9790766ec80f50d cost_tokens=48 duration_ms=58.70
+[prefill] prefill-SummarizeData.assess_gap@252:23-11ced29455f44c0390dc0292d377edf8 cost_tokens=48 duration_ms=58.89
+[prefill] prefill-SearchData.reason_hop@238:26-f1517792cc2a49ca87023c627ac8989a cost_tokens=48 duration_ms=58.96
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s4c8-fea9d184659247a69ac8f5d27e065f0e decode_ms=780.44 output_tokens=36
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s4c8 typed_ok=True output='The passages establish that there was a weekly left-wing political newspaper influenced by Laurence Gronlund, published by a publisher. The next hop must follow'
+[prefill] prefill-revise_sql@369:24-2bf8f10c00cf4adb8abae5bd1996ceab cost_tokens=48 duration_ms=59.05
+[prefill] prefill-SearchData.retrieve_evidence@236:28-54a7456480504e5e9fa2d645153bc221 cost_tokens=48 duration_ms=58.34
+[prefill] prefill-SummarizeData.assess_gap@252:23-a82d1b465f3e481ca3dd3a92cf08f725 cost_tokens=48 duration_ms=58.77
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s6c2-7ad161917ec04097ba7189adc70888a2 decode_ms=636.44 output_tokens=31
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s6c2 typed_ok=True output='Who is Amy Jo Johnson playing in the live action superhero television series that takes much of its footage from the Japanese tokusatsu "Super Sentai"?'
+[36m[DEBUG][0m call from hover#6 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.reason_hop@238:26-7f4634bfa7fa4af081405fcf5e4e43fd cost_tokens=48 duration_ms=25.54 aborted=1
+[36m[DEBUG][0m call from hover#4 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s6c3-e75017890e01481a917f0e5d3425bd84 duration_ms=65.64 cached_tokens=464 prompt_tokens=551
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s4c9-f11bb1bbc7be4ff7afe70efd9f37b9e9 duration_ms=94.29 cached_tokens=160 prompt_tokens=303
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s4c9-f11bb1bbc7be4ff7afe70efd9f37b9e9 decode_ms=38.84 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s4c9 typed_ok=True output='nothing missing'
+[prefill] prefill-SearchData.plan_query@235:25-7a0df0b05e13435689ca7284cf72db93 cost_tokens=48 duration_ms=51.32
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58140) as deep_search#8
+[32m[LOG][0m Registered 'deep_search' (pid 655261, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#8
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s7c2-3a8b6fd12547469492713a30fc35ffdf decode_ms=880.01 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s7c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only supports SELECT statements. The provided S'
+[prefill] prefill-SearchData.reason_hop@238:26-ca851cf2b2984dbdad08aea34c9bb308 cost_tokens=48 duration_ms=59.35
+[prefill] prefill-SearchData.reason_hop@238:26-600946d640ca497689c3c4bd0c6b00ff cost_tokens=48 duration_ms=58.54
+[prefill] prefill-revise_sql@369:24-1d13842c4723446ea495202a3b4add0b cost_tokens=48 duration_ms=58.50
+[36m[DEBUG][0m call from hover#4 key='Verdict.verify_claim'
+[prefill] prefill-SearchData.plan_query@235:25-33f40099d47c4c988359f7418573582b cost_tokens=48 duration_ms=8.19 aborted=1
+[36m[DEBUG][0m call from intercode_sql#7 key='revise_sql'
+[36m[DEBUG][0m call from deep_search#8 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s4c10-2beaccae15b647f9a12b7ee99d92c7c6 duration_ms=149.73 cached_tokens=112 prompt_tokens=591
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 54864) as intercode_sql#9
+[32m[LOG][0m Registered 'intercode_sql' (pid 655271, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#9
+[36m[DEBUG][0m call from intercode_sql#9 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s7c3-e3679087f6ad4f0eb6bc4b180260b25c duration_ms=297.07 cached_tokens=160 prompt_tokens=722
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s8c1-ccb608d14c4149068519a4e2acaad1cd duration_ms=191.73 cached_tokens=224 prompt_tokens=326
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s3c7-fe86959346bf4ee590c1850fdc09bbcc decode_ms=1329.86 output_tokens=49
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s3c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What was the name of the Milan based company in Africa that James Edward Arnold was a president of an'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s9c1-c4c17a72324e455ca431bec688481ea1 duration_ms=196.44 cached_tokens=416 prompt_tokens=916
+[prefill] prefill-diagnose@367:30-7c1f323307fd49989bb4f5cd8ee64661 cost_tokens=48 duration_ms=52.71
+[prefill] prefill-__visit@deep_search.jac:380-7befb6d274de40bd842bd65ceb091bb2 cost_tokens=48 duration_ms=60.73
+[prefill] prefill-diagnose@367:30-2442c796d43f4d5c812306dae396c13a cost_tokens=48 duration_ms=59.74
+[36m[DEBUG][0m call from hover#3 key='SearchData.reason_hop'
+[prefill] prefill-Verdict.synthesize_answer@279:26-748ac46de8e345558c2a2fabad0f0d87 cost_tokens=48 duration_ms=24.03 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s3c8-d42feb715a4745b5ac196fb219bb3bc6 duration_ms=138.96 cached_tokens=176 prompt_tokens=443
+[prefill] prefill-SummarizeData.assess_gap@252:23-5888c0ddb67b4b8192d96a922db571ff cost_tokens=48 duration_ms=55.19
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s9c1-c4c17a72324e455ca431bec688481ea1 decode_ms=424.17 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s9c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "country"}}'
+[prefill] prefill-diagnose@367:30-a5cea6fc11c94883a2897cf3fede6f9d cost_tokens=48 duration_ms=59.93
+[prefill] prefill-__visit@deep_search.jac:380-fe87e365bfb140fab7c44c7d4e50d867 cost_tokens=48 duration_ms=60.21
+[prefill] prefill-diagnose@367:30-99dabe4fb68b4c18b2b0de191f46bbce cost_tokens=48 duration_ms=59.79
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s6c3-e75017890e01481a917f0e5d3425bd84 decode_ms=1410.59 output_tokens=49
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s6c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is Amy Jo Johnson playing in the live action superhero television series that takes much of its f'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s8c1-ccb608d14c4149068519a4e2acaad1cd decode_ms=785.71 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s8c1 typed_ok=True output='["What published work introduced prefix caching?", "What problem did the introduced work solve?", "What background does a reader need before understanding the r'
+[prefill] prefill-Verdict.synthesize_answer@279:26-df6f46e2c21a4e83ae486ddac30ae78d cost_tokens=48 duration_ms=60.67
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.reason_hop@238:26-6fc244252312455c86d178b7c99bed65 cost_tokens=48 duration_ms=7.36 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c2-5a144ddb9f034240b265b742ded7a2e9 duration_ms=63.48 cached_tokens=256 prompt_tokens=358
+[36m[DEBUG][0m call from intercode_sql#9 key='diagnose'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s7c3-e3679087f6ad4f0eb6bc4b180260b25c decode_ms=937.68 output_tokens=38
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s7c3 typed_ok=True output="SELECT COUNT(DISTINCT Language) FROM countrylanguage WHERE CountryCode IN (SELECT Code FROM country WHERE IndepYear < 1930) AND IsOfficial = 'T'"
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s9c2-a6201ea35dff45c9aa30052b03ecbaf0 duration_ms=59.14 cached_tokens=480 prompt_tokens=507
+[36m[DEBUG][0m call from hover#6 key='SearchData.reason_hop'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c2-5a144ddb9f034240b265b742ded7a2e9 decode_ms=210.92 output_tokens=10
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s6c4-4ee0425a609b453e95dccb438ecbcf46 duration_ms=76.53 cached_tokens=176 prompt_tokens=307
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c3-be400c03c4984f5492564ba5358ccc6d duration_ms=138.11 cached_tokens=336 prompt_tokens=627
+[36m[DEBUG][0m call from intercode_sql#7 key='finalize'
+[prefill] prefill-WebSearchAgent.web_research@291:32-6bd05e10b9da4c0f85784d90a059596a cost_tokens=48 duration_ms=24.58 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s7c4-266f98fa5fdd47df9ed0665d8ec08b99 duration_ms=70.60 cached_tokens=128 prompt_tokens=199
+[prefill] prefill-WebSearchAgent.web_research@291:32-179babefb0b74c649ba3d88867ed7685 cost_tokens=48 duration_ms=57.42
+[prefill] prefill-SummarizeData.assess_gap@252:23-c9608bf5ecff4c1dab795ebead21136c cost_tokens=48 duration_ms=59.59
+[prefill] prefill-revise_sql@369:24-7ff6c2dccd5444cba543b6d65e6faa32 cost_tokens=48 duration_ms=60.54
+[prefill] prefill-SummarizeData.assess_gap@252:23-aaa4b1a8bedc4a27a02a9df06078d971 cost_tokens=48 duration_ms=60.61
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c3-be400c03c4984f5492564ba5358ccc6d decode_ms=419.80 output_tokens=21
+[prefill] prefill-Verdict.synthesize_answer@279:26-fad3869d38bd4901b1658834d843725c cost_tokens=48 duration_ms=60.62
+[prefill] prefill-WebSearchAgent.web_research@291:32-37bc9d19829e4e3c9dd369114a53f934 cost_tokens=48 duration_ms=59.83
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s7c4-266f98fa5fdd47df9ed0665d8ec08b99 decode_ms=385.58 output_tokens=20
+[36m[DEBUG][0m [final] intercode_sql:finalize:s7c4 typed_ok=True output='There are 40 distinct official languages for the countries founded before 1930.'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58144) as deep_search#10
+[32m[LOG][0m Registered 'deep_search' (pid 655322, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#10
+[prefill] prefill-SummarizeData.assess_gap@252:23-b8fa1b7976374d0f84c0d80dedc2851e cost_tokens=48 duration_ms=60.00
+[36m[DEBUG][0m call from deep_search#8 key='PaperSearchAgent.paper_research'
+[prefill] prefill-revise_sql@369:24-229e71e66a5d4afb9ae8c09e4cb87cce cost_tokens=48 duration_ms=43.71 aborted=1
+[32m[LOG][0m intercode_sql#7 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#7 (4 sites served)
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s9c2-a6201ea35dff45c9aa30052b03ecbaf0 decode_ms=925.34 output_tokens=40
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s9c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"output": "The query did not work because this environment runs SELECT statements only, not other types of stat'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s8c4-2084602f77bf46e6813e79d3b7761e98 duration_ms=69.72 cached_tokens=416 prompt_tokens=492
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-e30c887e3a9442ae87db7c05900798b5 cost_tokens=48 duration_ms=54.58
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-SummarizeData.assess_gap@252:23-ad582bbad5494b56807cb9ae3fb49993 cost_tokens=48 duration_ms=59.57 aborted=1
+[36m[DEBUG][0m call from intercode_sql#9 key='revise_sql'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c1-69a50b3e398343489c9446baf71a17a9 duration_ms=72.10 cached_tokens=224 prompt_tokens=325
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s9c3-678e5280eeb0416ab4f604ce4901cc9d duration_ms=166.58 cached_tokens=160 prompt_tokens=707
+[prefill] prefill-diagnose@367:30-3fe7cbc8b9c74191b5ca0b1e6b56b823 cost_tokens=48 duration_ms=56.37
+[prefill] prefill-__visit@deep_search.jac:380-97b6d625978640408e36cd019422309d cost_tokens=48 duration_ms=60.77
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-172720d9ca1441459cf84d83d36c60b1 cost_tokens=48 duration_ms=60.58
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s9c3-678e5280eeb0416ab4f604ce4901cc9d decode_ms=223.24 output_tokens=12
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s9c3 typed_ok=True output="SELECT COUNT(*) FROM country WHERE Continent = 'Asia'"
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s8c4-2084602f77bf46e6813e79d3b7761e98 decode_ms=566.41 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s8c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefix caching introduced work problem background"}}'
+[prefill] prefill-SummarizeData.assess_gap@252:23-b1873c7f2d8d4dac848b9699e14fc0a6 cost_tokens=48 duration_ms=60.80
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s6c4-4ee0425a609b453e95dccb438ecbcf46 decode_ms=1421.69 output_tokens=60
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s6c4 typed_ok=True output='The passages establish that Amy Jo Johnson played the character Kimberly Ann Hart in a live action superhero television series that takes much of its footage fr'
+[prefill] prefill-SummarizeData.assess_gap@252:23-3b8325a603274882ac82da25c7570961 cost_tokens=48 duration_ms=59.83
+[prefill] prefill-Verdict.synthesize_answer@279:26-bcd2f5c54fcb49ba92822bab8b7600bc cost_tokens=48 duration_ms=59.78
+[prefill] prefill-diagnose@367:30-62e613bc43b3465bac84e0001285f6ff cost_tokens=48 duration_ms=59.48
+[36m[DEBUG][0m call from deep_search#8 key='WebSearchAgent.web_research'
+[prefill] prefill-__visit@deep_search.jac:380-ed2c455014044e0d95a7cc334ff150ba cost_tokens=48 duration_ms=25.04 aborted=1
+[36m[DEBUG][0m call from hover#6 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s8c5-f476e6f81d8b436b99aba2f22e88834b duration_ms=67.41 cached_tokens=400 prompt_tokens=485
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s6c5-7ed7ec7ee64a4ae59e0ae629dbecbd65 duration_ms=102.14 cached_tokens=144 prompt_tokens=313
+[36m[DEBUG][0m call from intercode_sql#9 key='finalize'
+[prefill] prefill-SearchData.plan_query@235:25-1d63e80c000c4ec5927793d2e0c9603e cost_tokens=48 duration_ms=4.61 aborted=1
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s6c5-7ed7ec7ee64a4ae59e0ae629dbecbd65 decode_ms=39.32 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s6c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s9c4-de23bc6bc2c94e1d8068c99017c82cf7 duration_ms=53.59 cached_tokens=112 prompt_tokens=159
+[prefill] prefill-SearchData.plan_query@235:25-7e9d4418da9b4ea18d3163c933ba1fdf cost_tokens=48 duration_ms=50.49
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-b97d9e72d35a46d6beeca5ae54bdb7d9 decode_ms=4262.05 output_tokens=174
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Retrieval-Augmented Generation",\n  "mainText": "The research task is to identify which published work introduced retrieval-augm'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-06674b36c73f42a889e68aed4a40e0cd cost_tokens=48 duration_ms=59.96
+[36m[DEBUG][0m reject from deep_search#2 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s2c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The co"
+[prefill] prefill-__visit@deep_search.jac:380-c5e945042e1d45cb882bffbe7a133335 cost_tokens=48 duration_ms=2.19 aborted=1
+[36m[DEBUG][0m call from hover#6 key='SearchData.plan_query'
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s9c4-de23bc6bc2c94e1d8068c99017c82cf7 decode_ms=193.24 output_tokens=10
+[36m[DEBUG][0m [final] intercode_sql:finalize:s9c4 typed_ok=True output='There are 51 countries in Asia.'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-c7272f9eddef4f38a6df34e9fe463732 duration_ms=69.80 cached_tokens=384 prompt_tokens=480
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s6c6-0e24db492b3b49c5932b0a7b6bf33702 duration_ms=60.17 cached_tokens=144 prompt_tokens=256
+[prefill] prefill-SearchData.retrieve_evidence@236:28-3088010e02134509800f8ab9dc356f10 cost_tokens=48 duration_ms=55.18
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c1-69a50b3e398343489c9446baf71a17a9 decode_ms=1087.85 output_tokens=46
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c1 typed_ok=True output='["What published evidence exists on the effectiveness of speculative decoding for interactive assistants with short prompts and long answers?", "What is the mea'
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f7bc6475e11245d5a1bc2eb3fcc937db cost_tokens=48 duration_ms=27.51 aborted=1
+[32m[LOG][0m intercode_sql#9 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#9 (4 sites served)
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c2-01303b573a3d4021be93015681787213 duration_ms=64.80 cached_tokens=256 prompt_tokens=373
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s8c5-f476e6f81d8b436b99aba2f22e88834b decode_ms=593.56 output_tokens=27
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s8c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced prefix caching problem solved background reader understanding"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s6c6-0e24db492b3b49c5932b0a7b6bf33702 decode_ms=274.37 output_tokens=14
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s6c6 typed_ok=True output='What live action superhero television series features the character Kimberly Ann Hart?'
+[prefill] prefill-WebSearchAgent.web_research@291:32-0daa26d09f33453dab02fdba7c9cca38 cost_tokens=48 duration_ms=58.79
+[36m[DEBUG][0m call from hover#6 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-bbe73e5187bd49af9f562ccf949535bb cost_tokens=48 duration_ms=5.51 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s6c7-aa5646ce17cd4897ac7509be9ba1706e duration_ms=68.60 cached_tokens=464 prompt_tokens=534
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c2-01303b573a3d4021be93015681787213 decode_ms=235.28 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.reason_hop@238:26-47e959337fe848ceae6a274bca94d09e cost_tokens=48 duration_ms=35.12 aborted=1
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s3c8-d42feb715a4745b5ac196fb219bb3bc6 decode_ms=3028.01 output_tokens=133
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s3c8 typed_ok=True output='The passages establish that a Milan-based company, for whom James Edward Arnold was one of the last presidents in Africa, made the tires for the newer Minardi M'
+[36m[DEBUG][0m call from deep_search#8 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c3-9aa3e6a4d8fb46bc8cd8977a150f8a7b duration_ms=141.01 cached_tokens=352 prompt_tokens=644
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s8c6-95abe118ae5748da8eafd7af79e3ccdd duration_ms=140.52 cached_tokens=368 prompt_tokens=459
+[36m[DEBUG][0m call from hover#3 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s3c9-eb89a59262ad445ea0bb8b882647a9db duration_ms=48.79 cached_tokens=400 prompt_tokens=402
+[prefill] prefill-SearchData.plan_query@235:25-3501a9570649469daef4e22f593ce898 cost_tokens=48 duration_ms=59.29
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6bc69a50101f4e14a4728327c5484898 cost_tokens=48 duration_ms=59.96
+[prefill] prefill-WebSearchAgent.web_research@291:32-76794cd7133a461db7aafaaea3f55ff6 cost_tokens=48 duration_ms=60.25
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c3-9aa3e6a4d8fb46bc8cd8977a150f8a7b decode_ms=416.46 output_tokens=21
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s8c6-95abe118ae5748da8eafd7af79e3ccdd decode_ms=366.71 output_tokens=19
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s8c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "prefix-cache"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-61bfde8044a74003bb02a12600c2cd67 cost_tokens=48 duration_ms=60.17
+[prefill] prefill-Verdict.synthesize_answer@279:26-f6389d69f2fc4d8789ea92286944ef3e cost_tokens=33 duration_ms=59.68
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s6c7-aa5646ce17cd4897ac7509be9ba1706e decode_ms=698.89 output_tokens=31
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s6c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What live action superhero television series features the character Kimberly Ann Hart?"}}'
+[prefill] prefill-SearchData.plan_query@235:25-87b55fcd92bc436eacd1c18d19d5d09f cost_tokens=48 duration_ms=59.61
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5ef0889bd2b947a0a41731f68e9f3c23 cost_tokens=48 duration_ms=59.09
+[36m[DEBUG][0m call from deep_search#8 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-WebSearchAgent.web_research@291:32-2c1c622b45c944c28fac4fdd65fd1178 cost_tokens=48 duration_ms=3.76 aborted=1
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m call from hover#6 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s8c7-f6a5e81a748d4c8f8cf6a156972c7477 duration_ms=133.57 cached_tokens=240 prompt_tokens=395
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c4-894c8fb7eaf84cffad1df2d61607d7e1 duration_ms=130.10 cached_tokens=400 prompt_tokens=500
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s6c8-2ce359a2ae4d462693ffb7dfc13faef8 duration_ms=105.89 cached_tokens=176 prompt_tokens=331
+[prefill] prefill-SummarizeData.assess_gap@252:23-703a747a39604b7bbc32745ced0478d5 cost_tokens=48 duration_ms=49.47
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5a9b9291d5bb4321b3029f9cad34f34b cost_tokens=48 duration_ms=59.39
+[prefill] prefill-__visit@deep_search.jac:380-b14ca8da964246a5beddc5834d2ef1c7 cost_tokens=48 duration_ms=60.06
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s4c10-2beaccae15b647f9a12b7ee99d92c7c6 decode_ms=4858.44 output_tokens=198
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s4c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Farmers\' Alliance was the organized agrarian economic movement among American farmers. It wa'
+[36m[DEBUG][0m call from hover#4 key='Verdict.synthesize_answer'
+[prefill] prefill-SearchData.plan_query@235:25-26db8bbe0051484291b972434ccc5f20 cost_tokens=48 duration_ms=45.59 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s4c11-577b6482362c49648b1c80c1fc9f1ef2 duration_ms=136.72 cached_tokens=128 prompt_tokens=431
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s3c9-eb89a59262ad445ea0bb8b882647a9db decode_ms=1118.47 output_tokens=47
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s3c9 typed_ok=True output='Minardi M189 was a Formula One car.\nnothing missing\nThe entity that would settle the gap is the manufacturer of the newer Minardi M189 model and the company whe'
+[prefill] prefill-SummarizeData.assess_gap@252:23-d9d9cf53ab874db4b4565214ed38408e cost_tokens=48 duration_ms=52.08
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-8aa15671e4284ae2892c956595be1bc5 cost_tokens=48 duration_ms=58.78
+[prefill] prefill-__visit@deep_search.jac:380-99fb986140f942e88bf7afdd923e36c3 cost_tokens=48 duration_ms=59.91
+[prefill] prefill-SearchData.plan_query@235:25-fb8eb09532f342b3bd6a17c109182688 cost_tokens=48 duration_ms=59.11
+[36m[DEBUG][0m call from hover#3 key='Verdict.verify_claim'
+[prefill] prefill-SummarizeData.assess_gap@252:23-f1b81a4d0a9c4a989b888a1f9ed028b1 cost_tokens=48 duration_ms=26.68 aborted=1
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s8c7-f6a5e81a748d4c8f8cf6a156972c7477 decode_ms=715.69 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s8c7 typed_ok=True output='["What published work introduced prefix caching and what problem did it solve?", "What background does a reader need before understanding the introduced prefix '
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c4-894c8fb7eaf84cffad1df2d61607d7e1 decode_ms=715.92 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "effectiveness of speculative decoding for interactive assistants with short prompts and long answers"}'
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s3c10-1f8c63c42b234b7dae2505bcea976106 duration_ms=136.43 cached_tokens=400 prompt_tokens=690
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c8-8b2e7ef33193470dbed0c90cafa4e7ad duration_ms=168.62 cached_tokens=288 prompt_tokens=427
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c5-7f5d3e9a376a4ba3877e72ec96de0a0d duration_ms=57.63 cached_tokens=416 prompt_tokens=507
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5bb8f4d8a8bc4c828dd00f0c235302e3 cost_tokens=48 duration_ms=59.54
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c8-8b2e7ef33193470dbed0c90cafa4e7ad decode_ms=233.19 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#8 key='__visit@deep_search.jac:380'
+[prefill] prefill-WebSearchAgent.web_research@291:32-5ee9d0d68015466a9640fab4fcf3962c cost_tokens=48 duration_ms=21.39 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s8c9-f9b786fe975e46879587fcbbb76c16b1 duration_ms=142.17 cached_tokens=400 prompt_tokens=698
+[prefill] prefill-WebSearchAgent.web_research@291:32-808c3a6a885a4536b426854078968773 cost_tokens=48 duration_ms=58.21
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 48356) as deep_search#11
+[32m[LOG][0m Registered 'deep_search' (pid 655372, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#11
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-07d3e0b1105f49dfb65a0ecf813064d9 cost_tokens=48 duration_ms=59.73
+[prefill] prefill-Verdict.synthesize_answer@279:26-b6d07710b7064faf9c3bf69a77318342 cost_tokens=48 duration_ms=60.23
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c5-7f5d3e9a376a4ba3877e72ec96de0a0d decode_ms=587.92 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "speculative decoding interactive assistant short prompts long answers"}}'
+[prefill] prefill-SummarizeData.assess_gap@252:23-e2f386d8bc04481b8d5073f95914d71d cost_tokens=48 duration_ms=60.52
+[prefill] prefill-WebSearchAgent.web_research@291:32-1d9dc20c78e546388e270f6fa876e63b cost_tokens=48 duration_ms=59.31
+[36m[DEBUG][0m call from deep_search#11 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d0d5f58198fa41979a89fba4559a8311 cost_tokens=48 duration_ms=29.02 aborted=1
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s8c9-f9b786fe975e46879587fcbbb76c16b1 decode_ms=403.69 output_tokens=21
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s11c1-0e6741205aa6405e8de399bb3d7faf86 duration_ms=63.87 cached_tokens=224 prompt_tokens=343
+[36m[DEBUG][0m call from deep_search#10 key='DataAnalysisAgent.data_research'
+[prefill] prefill-__visit@deep_search.jac:380-d8e0bf9652964ddb9cc45aa79e83b0fc cost_tokens=48 duration_ms=43.00 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s10c6-4f254b18db6540d6a799c4b2d15623ec duration_ms=60.35 cached_tokens=416 prompt_tokens=507
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s6c8-2ce359a2ae4d462693ffb7dfc13faef8 decode_ms=1782.89 output_tokens=74
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s6c8 typed_ok=True output='The passages establish that Amy Jo Johnson played the character Kimberly Ann Hart in a live action superhero television series that takes much of its footage fr'
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s4c11-577b6482362c49648b1c80c1fc9f1ef2 decode_ms=1439.73 output_tokens=61
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s4c11 typed_ok=True output='SUPPORTED: The claim is supported by the evidence that there was a weekly left-wing political newspaper influenced by Laurence Gronlund, published by a publishe'
+[36m[DEBUG][0m call from deep_search#8 key='WebSearchAgent.web_research'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-0d29a283ab094a98a439fd9325251efa cost_tokens=48 duration_ms=36.91 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s8c10-4a8e11b524a748b9859c4b0fbba57f37 duration_ms=71.85 cached_tokens=400 prompt_tokens=485
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-942594983aa94d04b8cdfa6b1c68621a cost_tokens=48 duration_ms=56.71
+[36m[DEBUG][0m call from hover#6 key='SummarizeData.assess_gap'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-a2e7b9b4ef8f4d7f83aa94bf262b39db cost_tokens=48 duration_ms=53.98 aborted=1
+[32m[LOG][0m hover#4 disconnected
+[36m[DEBUG][0m [guard] dropped hover#4 (7 sites served)
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s3c10-1f8c63c42b234b7dae2505bcea976106 decode_ms=1305.30 output_tokens=56
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s3c10 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"output": "SUPPORTED The passages establish that a Milan-based company, for whom James Edward Arnold was one of'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s6c9-37bf8d34ee0a49bb93b9f7a44be1ad2d duration_ms=81.55 cached_tokens=192 prompt_tokens=326
+[36m[DEBUG][0m call from hover#3 key='Verdict.synthesize_answer'
+[prefill] prefill-SearchData.plan_query@235:25-3f441d18a9ac4addbccd206ef6f63831 cost_tokens=48 duration_ms=2.63 aborted=1
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s6c9-37bf8d34ee0a49bb93b9f7a44be1ad2d decode_ms=38.87 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s6c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s3c11-ad8f8f0bef9c4169bb1ccde41369f2f8 duration_ms=131.69 cached_tokens=128 prompt_tokens=383
+[prefill] prefill-SearchData.plan_query@235:25-c80c6c3c43394b508a09ec80646a3ce4 cost_tokens=48 duration_ms=54.65
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s10c6-4f254b18db6540d6a799c4b2d15623ec decode_ms=542.32 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s10c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_speculative"}}'
+[36m[DEBUG][0m call from hover#6 key='Verdict.verify_claim'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4b392351a40f443db4c37fedf995b1ce cost_tokens=48 duration_ms=49.39 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s6c10-949c511d7bdc40679312b01706458f02 duration_ms=93.21 cached_tokens=400 prompt_tokens=614
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s8c10-4a8e11b524a748b9859c4b0fbba57f37 decode_ms=592.40 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s8c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefix caching introduced problem solved background"}}'
+[prefill] prefill-Verdict.synthesize_answer@279:26-28a1c53971b74dcab5dfa8668a81839b cost_tokens=48 duration_ms=48.85
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-eda4b693033c4128b1d63863bdf4d067 cost_tokens=48 duration_ms=43.80 aborted=1
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c7-539bc84dc5704adf9b9cdb29fd1c58ee duration_ms=90.79 cached_tokens=224 prompt_tokens=404
+[prefill] prefill-__visit@deep_search.jac:380-595a97a76ffe41da9d547bb38f9d16a2 cost_tokens=48 duration_ms=56.00
+[36m[DEBUG][0m call from deep_search#8 key='PaperSearchAgent.paper_research'
+[prefill] prefill-Verdict.synthesize_answer@279:26-94804e2c44a646deb8e2fbbacc40efd5 cost_tokens=48 duration_ms=11.60 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s8c11-e8e5e51e771e4b09b946b8ad59c27f54 duration_ms=60.58 cached_tokens=416 prompt_tokens=492
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b9ec52fe15914fa6a00fff6b66d2f43b cost_tokens=48 duration_ms=56.63
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-c7272f9eddef4f38a6df34e9fe463732 decode_ms=4243.31 output_tokens=174
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Retrieval-Augmented Generation",\n  "mainText": "The research task is to identify which published work introduced retrieval-augm'
+[prefill] prefill-__visit@deep_search.jac:380-0c3cec9cd71746ccaa8f1f09b84e8bab cost_tokens=48 duration_ms=59.88
+[prefill] prefill-Verdict.synthesize_answer@279:26-e93f9a5ff50643ecb04ede385d14c67f cost_tokens=48 duration_ms=59.57
+[prefill] prefill-__visit@deep_search.jac:380-0a55ec6983a949d38598fccbb5637372 cost_tokens=10 duration_ms=60.40
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-ff57b08eea424746bb24e7a75276848d cost_tokens=48 duration_ms=58.93
+[32m[LOG][0m deep_search#2 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#2 (7 sites served)
+[prefill] prefill-Verdict.synthesize_answer@279:26-9c98c67f2de14a848799900e55f7897c cost_tokens=48 duration_ms=59.67
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2c46e3d965114a6b9d0648538d3305d5 cost_tokens=48 duration_ms=59.44
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s8c11-e8e5e51e771e4b09b946b8ad59c27f54 decode_ms=443.15 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s8c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefix caching introduced problem solved background"}}'
+[prefill] prefill-Verdict.synthesize_answer@279:26-eb4e27ee41ed4740b27a8a6ca307d5c0 cost_tokens=48 duration_ms=59.64
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-1ac71057d8c544bfaa4271a7a4adebb2 cost_tokens=48 duration_ms=58.74
+[prefill] prefill-Verdict.synthesize_answer@279:26-3cfab296383f4e9b9f57edd8fbcb93e4 cost_tokens=23 duration_ms=59.48
+[36m[DEBUG][0m call from deep_search#8 key='FactCheckAgent.fact_check'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d19541e8442645dc8350ae5ee3f38225 cost_tokens=48 duration_ms=45.08 aborted=1
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s3c11-ad8f8f0bef9c4169bb1ccde41369f2f8 decode_ms=1208.85 output_tokens=57
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s3c11 typed_ok=True output='SUPPORTED: The claim is supported by the evidence that a Milan-based company, for whom James Edward Arnold was one of the last presidents in Africa, made the ti'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s8c12-ee30ee56744c430fbf1f0430b9b0497d duration_ms=69.88 cached_tokens=384 prompt_tokens=459
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b25c595fbe42402c92405e6673110b5e cost_tokens=48 duration_ms=54.65
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4b5a4940df164f9db0b5062b8818ed64 cost_tokens=48 duration_ms=58.47
+[32m[LOG][0m hover#3 disconnected
+[36m[DEBUG][0m [guard] dropped hover#3 (7 sites served)
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-ac953070377f46689bf4f59f4ce6be4c cost_tokens=48 duration_ms=58.54
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s11c1-0e6741205aa6405e8de399bb3d7faf86 decode_ms=2038.99 output_tokens=91
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s11c1 typed_ok=True output='["What are the published results and measured series that can be used to assess the separation of model quality from systems performance?", "What are the specif'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4dca3f61a57d49bdba7355413ca6997f cost_tokens=48 duration_ms=59.01
+[36m[DEBUG][0m generate from deep_search#11 key='__visit@deep_search.jac:380'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-bd4bc33945b24d4387c660a03d73976e cost_tokens=16 duration_ms=7.53 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s11c2-5af532094bdf4d78a14b27bc63f9e17a duration_ms=85.34 cached_tokens=256 prompt_tokens=436
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s8c12-ee30ee56744c430fbf1f0430b9b0497d decode_ms=391.15 output_tokens=19
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s8c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "prefix-cache"}}'
+[prefill] prefill-WebSearchAgent.web_research@291:32-44b411e78144488ebad4c5fb3b702f0c cost_tokens=48 duration_ms=57.50
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b4f490c3c42e41589508929157635160 cost_tokens=16 duration_ms=58.67
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s11c2-5af532094bdf4d78a14b27bc63f9e17a decode_ms=217.11 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#11 key='__visit@deep_search.jac:380'
+[prefill] prefill-WebSearchAgent.web_research@291:32-d718de3f8fe84cee86af8af8e3deb520 cost_tokens=48 duration_ms=40.44 aborted=1
+[36m[DEBUG][0m call from deep_search#8 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s11c3-d619ebb8395943258ec643bd1b1c37a2 duration_ms=140.10 cached_tokens=416 prompt_tokens=707
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s8c13-91928a49a0774ba5b85629833b1025f1 duration_ms=142.49 cached_tokens=208 prompt_tokens=302
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c7-539bc84dc5704adf9b9cdb29fd1c58ee decode_ms=1668.33 output_tokens=77
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c7 typed_ok=True output='["What is the effectiveness of speculative decoding for interactive assistants with short prompts and long answers according to the web-search agent?", "Are the'
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-DeepResearch.build_report@391:23-474ba7e039e141e0801b9e3da403c8ed cost_tokens=48 duration_ms=25.75 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c8-9c1adbad9db64345b607a13ebd21ebf9 duration_ms=95.89 cached_tokens=272 prompt_tokens=483
+[prefill] prefill-WebSearchAgent.web_research@291:32-ed0a12c7c0004902a99aec7be2999d04 cost_tokens=48 duration_ms=57.53
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c8-9c1adbad9db64345b607a13ebd21ebf9 decode_ms=178.68 output_tokens=10
+[prefill] prefill-DeepResearch.build_report@391:23-02683572eb0e42b59c029ddb1fc5e2ae cost_tokens=48 duration_ms=59.38
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-WebSearchAgent.web_research@291:32-8f62a242f7ad47c6b55e19348aea09d1 cost_tokens=48 duration_ms=1.73 aborted=1
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s11c3-d619ebb8395943258ec643bd1b1c37a2 decode_ms=448.82 output_tokens=21
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c9-6db6f275cd934425954d43ecf4491a5a duration_ms=138.98 cached_tokens=464 prompt_tokens=752
+[36m[DEBUG][0m call from deep_search#11 key='WebSearchAgent.web_research'
+[prefill] prefill-WebSearchAgent.web_research@291:32-919e72ca0fc3458b99c2e64f4733e60e cost_tokens=48 duration_ms=45.48 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s11c4-1e28704fae7141c78c5a5ca5ba77a94f duration_ms=87.80 cached_tokens=400 prompt_tokens=563
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d15f578f8ea340988f5009afba792e7a cost_tokens=48 duration_ms=50.87
+[prefill] prefill-WebSearchAgent.web_research@291:32-76c31c0af6c44a088db9832517c00edd cost_tokens=48 duration_ms=59.14
+[prefill] prefill-DeepResearch.build_report@391:23-76b77ea791fc4de38e11e173ce701faf cost_tokens=48 duration_ms=59.96
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c9-6db6f275cd934425954d43ecf4491a5a decode_ms=432.53 output_tokens=21
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-33179a1072694464aee35dc2e36c4a01 cost_tokens=48 duration_ms=59.67
+[prefill] prefill-WebSearchAgent.web_research@291:32-3dfcfa48a68f41358ee022f2182963a0 cost_tokens=48 duration_ms=58.45
+[prefill] prefill-DeepResearch.build_report@391:23-63b57b63eefc4b068c09514c4bcfd926 cost_tokens=9 duration_ms=60.31
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-343b6d6e954b45ae97684d45d9ffbe7a cost_tokens=48 duration_ms=58.15
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[prefill] prefill-WebSearchAgent.web_research@291:32-f9ee0812fac74045ade015b452fe80d6 cost_tokens=48 duration_ms=26.77 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c10-e7375d6aa51a4b2fa8d1debb7fff91a0 duration_ms=84.66 cached_tokens=400 prompt_tokens=531
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-7c74440f07da45dcac4e00b6250506e8 cost_tokens=48 duration_ms=48.16
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f697babf712a40fa8f605fc3ebf73ca4 cost_tokens=48 duration_ms=58.74
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-4b9d523be32d4e2fa79a16d0aa378104 cost_tokens=48 duration_ms=58.80
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s11c4-1e28704fae7141c78c5a5ca5ba77a94f decode_ms=749.19 output_tokens=37
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s11c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published results measured series model quality systems performance assessment metrics end-to-end task'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2e52eaec5dad422988ca5be0e6db69c1 cost_tokens=48 duration_ms=58.83
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-798a7fc306de44ce9d6c1a831a3a1a9e cost_tokens=48 duration_ms=58.39
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-fd42e358ff5743d180492308303a63de cost_tokens=48 duration_ms=58.50
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b136fd2e09b54b9d8c47c39de3d17cc1 cost_tokens=48 duration_ms=58.39
+[36m[DEBUG][0m call from deep_search#11 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-391b1bf6f1be49f0b396a7633e317d7b cost_tokens=48 duration_ms=9.85 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s11c5-5085c826b7664e21b3e9fce79e9ed84f duration_ms=84.12 cached_tokens=400 prompt_tokens=570
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-964dfa5890464058ae019f25fdd9bd1a cost_tokens=48 duration_ms=48.36
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c10-e7375d6aa51a4b2fa8d1debb7fff91a0 decode_ms=630.60 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "effectiveness of speculative decoding for interactive assistants with short prompts and long answers"}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-72ee7bbe66504555a5607c85985265b1 cost_tokens=48 duration_ms=59.19
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6d92444f24ea487ea5e447cdcb428869 cost_tokens=48 duration_ms=58.98
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-6df7875991c1494fa8908510068b82c4 cost_tokens=48 duration_ms=58.82
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-3c44f82205614755b0752fb07dc4bedc cost_tokens=48 duration_ms=59.11
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-011b13a5a1b04bc19a2e74f0a6edd8fe cost_tokens=48 duration_ms=25.26 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c11-69a2fc6f7ce54de980c3d1d1153af534 duration_ms=90.44 cached_tokens=400 prompt_tokens=538
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-35c7e97888a541528fb772ac0d9b3e49 cost_tokens=48 duration_ms=55.56
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-7bca0b14a82b4cf2be09712a19492b05 cost_tokens=48 duration_ms=59.54
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a076891c3ad24173bcefd35edf33ee76 cost_tokens=48 duration_ms=59.11
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s11c5-5085c826b7664e21b3e9fce79e9ed84f decode_ms=635.91 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s11c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "model quality systems performance benchmark end-to-end task success per-call systems metrics"}}'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-90fdcebb63d64c1c85efe9a6ca1469d8 cost_tokens=28 duration_ms=59.43
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-1ebefce11e55406987ce122c05ac04b9 cost_tokens=48 duration_ms=58.84
+[prefill] prefill-FactCheckAgent.fact_check@333:33-afa23e0fa58e42d3ac33e19811e17c06 cost_tokens=48 duration_ms=59.13
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-600944d242dd473a949fa27cd51f8da1 cost_tokens=48 duration_ms=59.55
+[36m[DEBUG][0m call from deep_search#11 key='DataAnalysisAgent.data_research'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-db8174286cb3485fb97d2cb016d2910a cost_tokens=48 duration_ms=3.95 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s11c6-a993e671aa6a41349e4c331db5396613 duration_ms=71.31 cached_tokens=496 prompt_tokens=570
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s8c13-91928a49a0774ba5b85629833b1025f1 decode_ms=2667.84 output_tokens=121
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s8c13 typed_ok=True output='The research task was to identify which published work introduced prefix caching, the problem it addressed, and the necessary background knowledge for understan'
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c11-69a2fc6f7ce54de980c3d1d1153af534 decode_ms=517.24 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "speculative decoding interactive assistant short prompts long answers"}}'
+[36m[DEBUG][0m call from deep_search#8 key='DeepResearch.build_report'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-4a989ae910cc41bb923371166d73a70e cost_tokens=48 duration_ms=21.80 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s8c14-f1ee6ebea4cc4216afd7f071721dd257 duration_ms=85.40 cached_tokens=96 prompt_tokens=229
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d6215430392844d98ae2a2c175af271d cost_tokens=48 duration_ms=49.78
+[36m[DEBUG][0m call from deep_search#10 key='FactCheckAgent.fact_check'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-de1c30f50d9741a1b5b4cad08eff511d cost_tokens=14 duration_ms=56.65 aborted=1
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s10c12-633a5f090381436d92992d7dcb69a625 duration_ms=77.85 cached_tokens=368 prompt_tokens=505
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-aabf6f26a3184eb9a9c673ad4d1fd153 cost_tokens=14 duration_ms=51.14
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d587f5bc00a642d2ae17634fc2a67a78 cost_tokens=48 duration_ms=58.75
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s11c6-a993e671aa6a41349e4c331db5396613 decode_ms=461.17 output_tokens=21
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s11c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_baseline"}}'
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s6c10-949c511d7bdc40679312b01706458f02 decode_ms=4912.67 output_tokens=221
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s6c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Amy Jo Johnson played the part of fictitious character Kimberly Ann Hart, in the franchise b'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-7fb9cd64909744b995428f9f8c56d344 cost_tokens=48 duration_ms=59.22
+[36m[DEBUG][0m call from hover#6 key='Verdict.synthesize_answer'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-6ec35e47a03f49e18ca2ce600a3e7c40 cost_tokens=48 duration_ms=5.47 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s6c11-c7cae5cc53734ba3adacbaeba7f76263 duration_ms=134.93 cached_tokens=144 prompt_tokens=491
+[36m[DEBUG][0m call from deep_search#11 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-c1dcd32a3147425c9e718f43bdac2c46 cost_tokens=48 duration_ms=34.54 aborted=1
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 58840) as hover#12
+[32m[LOG][0m Registered 'hover' (pid 655429, model 'Qwen/Qwen2.5-7B-Instruct') as hover#12
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s11c7-aec5f588419549f98b7d73b026768183 duration_ms=94.62 cached_tokens=240 prompt_tokens=432
+[36m[DEBUG][0m call from hover#12 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s12c1-8b83f48ea5084a9a84441941cd1b9e53 duration_ms=55.88 cached_tokens=96 prompt_tokens=135
+[prefill] prefill-SearchData.plan_query@235:25-d6283588d5f64e13a101346bbbf325c6 cost_tokens=48 duration_ms=57.53
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s10c12-633a5f090381436d92992d7dcb69a625 decode_ms=617.75 output_tokens=26
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s10c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "speculative-decoding-interactive-assistants"}}'
+[prefill] prefill-__visit@deep_search.jac:380-72c22a7b854b4725aa4a556627394e25 cost_tokens=48 duration_ms=59.76
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-e37a94d361c54be5bcf18d9fff4c04ac cost_tokens=48 duration_ms=58.39
+[prefill] prefill-SearchData.plan_query@235:25-bb0dc65f65eb4a3fb8aa275e7990decf cost_tokens=48 duration_ms=58.76
+[prefill] prefill-__visit@deep_search.jac:380-8c0f155983484e4899965301ba5699c0 cost_tokens=48 duration_ms=58.94
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.summarize'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-f1973f5d644345b3ad67a8508888d75a cost_tokens=48 duration_ms=6.66 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s10c13-b2471287f64f40d2b995449851ff6406 duration_ms=86.19 cached_tokens=208 prompt_tokens=341
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s12c1-8b83f48ea5084a9a84441941cd1b9e53 decode_ms=449.85 output_tokens=22
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s12c1 typed_ok=True output='Bryan Douglas Caplan is an adjunct scholar.\nPatrick Michaels is a senior fellow in Washington D.C.'
+[prefill] prefill-DeepResearch.build_report@391:23-3661c6ec51fa4c83a31cb826a16cce7a cost_tokens=48 duration_ms=50.28
+[prefill] prefill-SearchData.plan_query@235:25-c8baccfec80846a6bfce410137cd71a2 cost_tokens=48 duration_ms=59.13
+[prefill] prefill-__visit@deep_search.jac:380-4b3790d584344cabad35522316878749 cost_tokens=10 duration_ms=60.08
+[prefill] prefill-DeepResearch.build_report@391:23-9bb3ccb681c5419795b75bfe2da36abd cost_tokens=48 duration_ms=58.82
+[prefill] prefill-SearchData.plan_query@235:25-2d38ad259da34e3784e217835091cf85 cost_tokens=48 duration_ms=59.33
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s6c11-c7cae5cc53734ba3adacbaeba7f76263 decode_ms=906.66 output_tokens=43
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s6c11 typed_ok=True output='SUPPORTED: Amy Jo Johnson played the character Kimberly Ann Hart in a live action superhero television series that takes much of its footage from the Japanese t'
+[prefill] prefill-DeepResearch.build_report@391:23-f6c83b7421f04b50834a9a3dd8515c6a cost_tokens=9 duration_ms=60.35
+[prefill] prefill-SearchData.plan_query@235:25-20633f01949a4997a31a4d65671ccae0 cost_tokens=48 duration_ms=58.06
+[36m[DEBUG][0m call from hover#12 key='SearchData.plan_query'
+[prefill] prefill-SearchData.plan_query@235:25-5582fb9c3f2d49de828dc69ad94b03ec cost_tokens=32 duration_ms=47.54 aborted=1
+[32m[LOG][0m hover#6 disconnected
+[36m[DEBUG][0m [guard] dropped hover#6 (7 sites served)
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s12c2-85e77e0f1e3143bcb4da34ed0362f903 duration_ms=52.47 cached_tokens=160 prompt_tokens=209
+[prefill] prefill-SearchData.retrieve_evidence@236:28-8f887d43c5384fb9a83f368a9bf7d105 cost_tokens=48 duration_ms=57.89
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s11c7-aec5f588419549f98b7d73b026768183 decode_ms=1066.94 output_tokens=53
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s11c7 typed_ok=True output='["What specific published results and measured series were found regarding the assessment of model quality and systems performance in the benchmark?", "How does'
+[36m[DEBUG][0m generate from deep_search#11 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-006b8be9821e4132b9370481843a89fe cost_tokens=48 duration_ms=46.18 aborted=1
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s11c8-d9c4a0ff30224925b2467783027730e4 duration_ms=94.01 cached_tokens=304 prompt_tokens=487
+[prefill] prefill-WebSearchAgent.web_research@291:32-68dffc8e494e48ba95d64d812e0f7012 cost_tokens=48 duration_ms=57.19
+[prefill] prefill-SearchData.retrieve_evidence@236:28-3b3f1e49dd894faa8b7a62c1875a0b7d cost_tokens=48 duration_ms=58.55
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s12c2-85e77e0f1e3143bcb4da34ed0362f903 decode_ms=397.52 output_tokens=19
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s12c2 typed_ok=True output='Who is the senior fellow in Washington D.C. that Bryan Douglas Caplan works with?'
+[36m[DEBUG][0m call from hover#12 key='SearchData.retrieve_evidence'
+[prefill] prefill-WebSearchAgent.web_research@291:32-8b75f56114f44918b2791de50fb410dd cost_tokens=48 duration_ms=25.55 aborted=1
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s11c8-d9c4a0ff30224925b2467783027730e4 decode_ms=217.37 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#11 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s12c3-3a5bb074eeb947269278bd6ae834f1b2 duration_ms=55.63 cached_tokens=464 prompt_tokens=524
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s11c9-f017ac55946447a48afb7d56e4149b30 duration_ms=143.87 cached_tokens=464 prompt_tokens=758
+[prefill] prefill-WebSearchAgent.web_research@291:32-e037ea97720b4bdfbf1319647ee1e6de cost_tokens=48 duration_ms=57.52
+[prefill] prefill-SearchData.reason_hop@238:26-214ed2bf7c6e4a67b4251c7b6083d9c8 cost_tokens=48 duration_ms=59.18
+[prefill] prefill-WebSearchAgent.web_research@291:32-fa812d9968c0411a80e2d95cb7a7c72b cost_tokens=48 duration_ms=59.07
+[prefill] prefill-SearchData.reason_hop@238:26-2ab6c87fb2e94680bb49d1deb965d0e8 cost_tokens=48 duration_ms=59.55
+[prefill] prefill-WebSearchAgent.web_research@291:32-a7945107e6664a9bb62ee86e3e3b1ad3 cost_tokens=48 duration_ms=59.05
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s11c9-f017ac55946447a48afb7d56e4149b30 decode_ms=398.27 output_tokens=21
+[prefill] prefill-SearchData.reason_hop@238:26-4d00e11fe3fd44a88b6f34d10cebd86c cost_tokens=48 duration_ms=59.23
+[prefill] prefill-WebSearchAgent.web_research@291:32-18efca7cb55c42e588bccc1fa7de21fa cost_tokens=48 duration_ms=58.23
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s12c3-3a5bb074eeb947269278bd6ae834f1b2 decode_ms=601.23 output_tokens=27
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s12c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Patrick Michaels senior fellow in Washington D.C."}}'
+[prefill] prefill-SearchData.reason_hop@238:26-4aa4834bd3a44b448f27099a64e1b144 cost_tokens=48 duration_ms=58.78
+[prefill] prefill-WebSearchAgent.web_research@291:32-cf54d2bca92d4b3ebe279cb26f18cefb cost_tokens=48 duration_ms=58.51
+[36m[DEBUG][0m call from deep_search#11 key='WebSearchAgent.web_research'
+[prefill] prefill-WebSearchAgent.web_research@291:32-7e8d6722d4364513b4ee60fc21c79643 cost_tokens=48 duration_ms=7.56 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s11c10-6f92594971084e4cafd8ec278a4dcd42 duration_ms=63.25 cached_tokens=400 prompt_tokens=525
+[36m[DEBUG][0m call from hover#12 key='SearchData.reason_hop'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a6e35b3f28734082b34cd9ad83c888bd cost_tokens=48 duration_ms=35.38 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s12c4-b8ecfc46bf964533ba508edd45b9cac6 duration_ms=54.63 cached_tokens=176 prompt_tokens=257
+[prefill] prefill-SummarizeData.assess_gap@252:23-a2e4ebe4ad4c4032b54227e52f65ed98 cost_tokens=48 duration_ms=48.66
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d2cbc702a71147d388015ec2796a93d6 cost_tokens=48 duration_ms=58.55
+[prefill] prefill-SummarizeData.assess_gap@252:23-481c3da9f76f4721a55da376990ae38a cost_tokens=48 duration_ms=59.32
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c830d1cdb5654791b1b847f06a35d6dc cost_tokens=48 duration_ms=58.67
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s10c13-b2471287f64f40d2b995449851ff6406 decode_ms=2094.92 output_tokens=99
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s10c13 typed_ok=True output='The research task investigates whether speculative decoding could benefit interactive assistants with short prompts and long answers. The web search provided ge'
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.build_report'
+[prefill] prefill-SummarizeData.assess_gap@252:23-2b5354f0a69e43d99f5521750f7d5479 cost_tokens=48 duration_ms=24.59 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-9b96c9a3dd0d4b3e93c675b79a4a21f5 duration_ms=66.42 cached_tokens=96 prompt_tokens=207
+[prefill] prefill-SummarizeData.assess_gap@252:23-fc996abe212245ecbad4fa92ea6d98eb cost_tokens=48 duration_ms=52.60
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-3322c7fd07f045389204f5071df3ca90 cost_tokens=48 duration_ms=58.40
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s11c10-6f92594971084e4cafd8ec278a4dcd42 decode_ms=576.77 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s11c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "assessment of model quality and systems performance benchmark published results measured series"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s12c4-b8ecfc46bf964533ba508edd45b9cac6 decode_ms=506.93 output_tokens=26
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s12c4 typed_ok=True output='The passages establish that Patrick Michaels is a senior fellow in Washington D.C. This fact must be followed by the next hop.'
+[prefill] prefill-SummarizeData.assess_gap@252:23-33f4d173192944daaad5c5ae5062f7cb cost_tokens=32 duration_ms=59.10
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2389e95ac09a4ec683bc576064c40731 cost_tokens=48 duration_ms=58.09
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-c000937cce424cfa95a5877f92e18c1d cost_tokens=48 duration_ms=57.71
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-d07c59e12e7c4bc68cd88eec772f487d cost_tokens=48 duration_ms=57.79
+[36m[DEBUG][0m call from deep_search#11 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-154ffea6d6844b5f830b71372a355bc9 cost_tokens=48 duration_ms=8.23 aborted=1
+[36m[DEBUG][0m call from hover#12 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s11c11-0b052db6765a40f786f7c5e20579bd4c duration_ms=81.38 cached_tokens=400 prompt_tokens=532
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s12c5-40fdb8242ae246228463060389f3d540 duration_ms=91.07 cached_tokens=144 prompt_tokens=234
+[prefill] prefill-SearchData.plan_query@235:25-16562ba944f9431f801b8c259d7eb3b5 cost_tokens=48 duration_ms=57.25
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s8c14-f1ee6ebea4cc4216afd7f071721dd257 decode_ms=3861.16 output_tokens=176
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s8c14 typed_ok=False output='{\n  "title": "Introduction of Prefix Caching and Related Background",\n  "mainText": "The research task was to identify which published work introduced prefix ca'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f35c0d40645841eaa063d540999c5944 cost_tokens=48 duration_ms=58.93
+[36m[DEBUG][0m reject from deep_search#8 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s8c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='Prefix"
+[prefill] prefill-SearchData.plan_query@235:25-e0728bef4c2547e5acd0df66fabf26b5 cost_tokens=48 duration_ms=2.23 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s8c14-3c28f7dacf924ff19a591fb922689d9b duration_ms=68.59 cached_tokens=400 prompt_tokens=489
+[prefill] prefill-SearchData.plan_query@235:25-9a1240af114e4eb79b43ca237e322970 cost_tokens=48 duration_ms=53.49
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-bc3058d64bbe4d36acaa026bde0c92c3 cost_tokens=48 duration_ms=58.83
+[prefill] prefill-SearchData.plan_query@235:25-df6ef8d17d10444e8d65174ac93d9d83 cost_tokens=48 duration_ms=59.51
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s12c5-40fdb8242ae246228463060389f3d540 decode_ms=427.28 output_tokens=22
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s12c5 typed_ok=True output="Bryan Douglas Caplan's workplace is still not established. This needs to be settled by further evidence."
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a05f0161aec341419d3d9f4bfa0d354f cost_tokens=48 duration_ms=58.60
+[prefill] prefill-SearchData.plan_query@235:25-6c7bac9a724a43a3a19abee565f0e105 cost_tokens=48 duration_ms=58.42
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-a714bf0bcc1f497a81c863ca39fbf3e5 cost_tokens=38 duration_ms=58.93
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s11c11-0b052db6765a40f786f7c5e20579bd4c decode_ms=616.04 output_tokens=31
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s11c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "model quality systems performance benchmark end-to-end task success per-call systems metrics"}}'
+[prefill] prefill-SearchData.plan_query@235:25-7622d9586c0a4d6d9e9caab6d06ba0aa cost_tokens=48 duration_ms=59.05
+[36m[DEBUG][0m call from hover#12 key='SearchData.plan_query'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d93112e031f2402cbecd096a1510c05f cost_tokens=48 duration_ms=27.05 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s12c6-36a7203b826c4aa6884624aafc523ca1 duration_ms=62.59 cached_tokens=144 prompt_tokens=230
+[prefill] prefill-SearchData.retrieve_evidence@236:28-2a06d2a3fb8d4c388313c989412cd709 cost_tokens=48 duration_ms=56.77
+[36m[DEBUG][0m call from deep_search#11 key='DataAnalysisAgent.data_research'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-c094fc54d19f4940bb3deb713ffe9b86 cost_tokens=48 duration_ms=36.88 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s11c12-f5a872a25b9c40fdba798c4f04aab3b3 duration_ms=58.08 cached_tokens=464 prompt_tokens=532
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s12c6-36a7203b826c4aa6884624aafc523ca1 decode_ms=212.21 output_tokens=11
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s12c6 typed_ok=True output='"Who is Bryan Douglas Caplan\'s workplace?"'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-30f49413c2524851ad4cf41fc301e4db cost_tokens=48 duration_ms=51.83
+[36m[DEBUG][0m call from hover#12 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-b74c15f4a2a14583943c5d9c3ca0a081 cost_tokens=48 duration_ms=5.08 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s12c7-2dc75a96dd9149ccafa0257e3d27bdec duration_ms=54.94 cached_tokens=464 prompt_tokens=516
+[prefill] prefill-SearchData.reason_hop@238:26-25437459a72946eb99f0e7e96dad0398 cost_tokens=48 duration_ms=51.41
+[prefill] prefill-FactCheckAgent.fact_check@333:33-c77be7495518427ca011ed6b0bb523d1 cost_tokens=48 duration_ms=58.93
+[prefill] prefill-SearchData.reason_hop@238:26-1d4fa1e81a234bef83b3a49f2fe77913 cost_tokens=48 duration_ms=59.46
+[prefill] prefill-FactCheckAgent.fact_check@333:33-0afcae104f6e4b9d9c32ae8c3f5dd44b cost_tokens=48 duration_ms=58.45
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s11c12-f5a872a25b9c40fdba798c4f04aab3b3 decode_ms=418.03 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s11c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "end_to_end_task_success"}}'
+[prefill] prefill-SearchData.reason_hop@238:26-0afa9c706d9e41c8bdb260a500a0dbea cost_tokens=48 duration_ms=59.37
+[prefill] prefill-FactCheckAgent.fact_check@333:33-c2c0649ac8a34f33949317a4340832c5 cost_tokens=48 duration_ms=58.13
+[prefill] prefill-SearchData.reason_hop@238:26-b79cea761d4a45dab9e2f84a3208a209 cost_tokens=41 duration_ms=58.87
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d2e24fa13d2742b489ddb4357dc28ea2 cost_tokens=48 duration_ms=58.37
+[36m[DEBUG][0m call from deep_search#11 key='DeepResearch.summarize'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-1d0e2819956b4e40addd49475f170c6c cost_tokens=48 duration_ms=26.88 aborted=1
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s12c7-2dc75a96dd9149ccafa0257e3d27bdec decode_ms=516.51 output_tokens=27
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s12c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is Bryan Douglas Caplan\'s workplace?"}}'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s11c13-1dcd7b19aadb45068e0894c4ad962472 duration_ms=86.35 cached_tokens=176 prompt_tokens=336
+[prefill] prefill-DeepResearch.build_report@391:23-76453391e8604442b0eea96dd5c4c29f cost_tokens=48 duration_ms=50.29
+[prefill] prefill-SearchData.reason_hop@238:26-62c12445a9214d6ba081c5985c81f33b cost_tokens=48 duration_ms=58.69
+[36m[DEBUG][0m call from hover#12 key='SearchData.reason_hop'
+[prefill] prefill-DeepResearch.build_report@391:23-d5c0fc34c36d4b7e94139cf7063fd42a cost_tokens=48 duration_ms=13.74 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s12c8-ccfe04a55d084d6fb8b22b2c5bb02894 duration_ms=57.13 cached_tokens=176 prompt_tokens=275
+[prefill] prefill-SummarizeData.assess_gap@252:23-eb904000e35e42a19596913cc34c2e5b cost_tokens=48 duration_ms=52.67
+[prefill] prefill-DeepResearch.build_report@391:23-02bf5aa1e059461c8e3224c85b871140 cost_tokens=48 duration_ms=59.07
+[prefill] prefill-SummarizeData.assess_gap@252:23-ab2142a6a27e4924bdda3ff419058baa cost_tokens=48 duration_ms=58.69
+[prefill] prefill-DeepResearch.build_report@391:23-70d5edf359194772940a7e42239c5beb cost_tokens=9 duration_ms=59.73
+[prefill] prefill-SummarizeData.assess_gap@252:23-016072a96b6e48f78e71906bd26e87b2 cost_tokens=48 duration_ms=58.74
+[prefill] prefill-SummarizeData.assess_gap@252:23-010f0284b08f4ee18963a51208cabb1d cost_tokens=5 duration_ms=59.74
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s12c8-ccfe04a55d084d6fb8b22b2c5bb02894 decode_ms=533.38 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s12c8 typed_ok=True output='The passages establish that Bryan Douglas Caplan works at a workplace in Washington D.C. This fact must be followed by the next hop.'
+[prefill] prefill-SummarizeData.assess_gap@252:23-b0519d7c212d4aae8805b212a48b5406 cost_tokens=48 duration_ms=48.15
+[prefill] prefill-SummarizeData.assess_gap@252:23-c9b34174ec9249a2ae6a6f46a2389835 cost_tokens=48 duration_ms=58.85
+[prefill] prefill-SummarizeData.assess_gap@252:23-599f1abbd5504104a317b7a8333f9fee cost_tokens=48 duration_ms=59.04
+[36m[DEBUG][0m call from hover#12 key='SummarizeData.assess_gap'
+[prefill] prefill-SummarizeData.assess_gap@252:23-7e9b955c2ae0440f8479efbe94254f1f cost_tokens=36 duration_ms=27.69 aborted=1
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s12c9-c1a92474d3654f11b0e701b889aa9cc2 duration_ms=67.49 cached_tokens=160 prompt_tokens=236
+[prefill] prefill-SearchData.plan_query@235:25-fb587588394c46c7b26f50797ef76486 cost_tokens=48 duration_ms=52.48
+[prefill] prefill-SearchData.plan_query@235:25-d51941ec8a8942c58422020de5e49d47 cost_tokens=48 duration_ms=59.15
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-9b96c9a3dd0d4b3e93c675b79a4a21f5 decode_ms=3186.05 output_tokens=155
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Speculative Decoding for Interactive Assistants",\n  "mainText": "The research task investigates whether speculative decoding could benefit interac'
+[36m[DEBUG][0m reject from deep_search#10 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s10c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[prefill] prefill-SearchData.plan_query@235:25-4e0a3e00b11e4ea18aa57b2a69b45d36 cost_tokens=48 duration_ms=41.85 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-492b1e5f81ff4bb8977b03592fb2eff7 duration_ms=69.99 cached_tokens=352 prompt_tokens=445
+[prefill] prefill-SearchData.plan_query@235:25-b3036c4279dc43f5b79c707528dbac5f cost_tokens=48 duration_ms=55.52
+[prefill] prefill-SearchData.plan_query@235:25-53edb1de368e4d1186e15d73a484c043 cost_tokens=5 duration_ms=59.88
+[prefill] prefill-Verdict.verify_claim@278:27-97891accec04457d8e26b69084ce7fb9 cost_tokens=48 duration_ms=58.03
+[prefill] prefill-Verdict.verify_claim@278:27-7c75c70031af40238e6bd12a88d91c67 cost_tokens=48 duration_ms=58.72
+[prefill] prefill-Verdict.verify_claim@278:27-cc481f60a00d4d869b85eb42fd2765ba cost_tokens=48 duration_ms=58.56
+[prefill] prefill-Verdict.verify_claim@278:27-9606c64dae0a480c9e4e1bba81302fc8 cost_tokens=48 duration_ms=58.63
+[prefill] prefill-Verdict.verify_claim@278:27-2d372e5c0a14419a97f5e1a4f58f4fd7 cost_tokens=48 duration_ms=58.64
+[prefill] prefill-Verdict.verify_claim@278:27-132d4d41a0cf491fbf6ff960993d2b44 cost_tokens=48 duration_ms=58.75
+[prefill] prefill-Verdict.verify_claim@278:27-fc3f3d7c3da5418b846954f5c6201275 cost_tokens=48 duration_ms=58.58
+[prefill] prefill-Verdict.verify_claim@278:27-c5a685f6a38c4451b0250f18a4246c9b cost_tokens=48 duration_ms=58.95
+[prefill] prefill-Verdict.verify_claim@278:27-80407717537543a7bff93408efce64ed cost_tokens=48 duration_ms=59.01
+[prefill] prefill-Verdict.verify_claim@278:27-12d3d7bbda3d4c239b6ddd88d79a14dc cost_tokens=9 duration_ms=60.13
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s12c9-c1a92474d3654f11b0e701b889aa9cc2 decode_ms=1181.88 output_tokens=60
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s12c9 typed_ok=True output='Bryan Douglas Caplan works where Patrick Michaels is a senior fellow in Washington D.C. This part of the claim is not established by the given digest. The entit'
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s8c14-3c28f7dacf924ff19a591fb922689d9b decode_ms=3565.62 output_tokens=176
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s8c14 typed_ok=False output='{\n  "title": "Introduction of Prefix Caching and Related Background",\n  "mainText": "The research task was to identify which published work introduced prefix ca'
+[prefill] prefill-SearchData.plan_query@235:25-a628a6f74ec947aba43843596becd190 cost_tokens=48 duration_ms=54.73
+[prefill] prefill-SearchData.plan_query@235:25-df5fb1497ab54cbeaa6acf26c4893f59 cost_tokens=48 duration_ms=58.03
+[prefill] prefill-SearchData.plan_query@235:25-84327f56a77b411aa8cd1f2a9ab8b870 cost_tokens=48 duration_ms=58.61
+[36m[DEBUG][0m call from hover#12 key='Verdict.verify_claim'
+[prefill] prefill-SearchData.plan_query@235:25-d6d9fb6bb8b84834b07e694c496e3ab8 cost_tokens=48 duration_ms=32.51 aborted=1
+[32m[LOG][0m deep_search#8 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#8 (7 sites served)
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s12c10-57efe7b6a9f04f37bc032392dabc8ff8 duration_ms=60.13 cached_tokens=432 prompt_tokens=524
+[prefill] prefill-Verdict.synthesize_answer@279:26-a1e2a637c57747ef96b9108ab142ae28 cost_tokens=48 duration_ms=56.07
+[prefill] prefill-Verdict.synthesize_answer@279:26-84ad4b8049194351a9beb202e474f5b5 cost_tokens=48 duration_ms=59.06
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s11c13-1dcd7b19aadb45068e0894c4ad962472 decode_ms=2584.69 output_tokens=129
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s11c13 typed_ok=True output='The research task is to assess whether end-to-end task success or per-call systems metrics is the better lever for separating model quality from systems perform'
+[36m[DEBUG][0m call from deep_search#11 key='DeepResearch.build_report'
+[prefill] prefill-Verdict.synthesize_answer@279:26-11b46281225845fe8185e05f67bfa069 cost_tokens=48 duration_ms=25.10 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s11c14-ef6a0a539a7e48f3b3186ec3b3e063ba duration_ms=87.75 cached_tokens=96 prompt_tokens=237
+[prefill] prefill-Verdict.synthesize_answer@279:26-9243fa138d3241daadde6b11a5e337bf cost_tokens=48 duration_ms=52.91
+[prefill] prefill-Verdict.synthesize_answer@279:26-26c48ab6a34c4e3b9509476f8c519830 cost_tokens=25 duration_ms=58.39
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-492b1e5f81ff4bb8977b03592fb2eff7 decode_ms=3072.90 output_tokens=155
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Speculative Decoding for Interactive Assistants",\n  "mainText": "The research task investigates whether speculative decoding could benefit interac'
+[32m[LOG][0m deep_search#10 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#10 (8 sites served)
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s12c10-57efe7b6a9f04f37bc032392dabc8ff8 decode_ms=2570.14 output_tokens=131
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s12c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "New Zealander Bryan Douglas Caplan is an adjunct scholar. He works where Patrick Michaels is'
+[36m[DEBUG][0m call from hover#12 key='Verdict.synthesize_answer'
+[prefill] prefill-Verdict.synthesize_answer@279:26-fe4314ff3953490a9d2f98d080493308 cost_tokens=48 duration_ms=1.43 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s12c11-3559247d570b4c4e81cac50e144a5efe duration_ms=92.96 cached_tokens=144 prompt_tokens=335
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s12c11-3559247d570b4c4e81cac50e144a5efe decode_ms=676.92 output_tokens=36
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s12c11 typed_ok=True output='NOT_SUPPORTED. The passages establish that Bryan Douglas Caplan works at a workplace in Washington D.C., but do not provide information about his specific role '
+[32m[LOG][0m hover#12 disconnected
+[36m[DEBUG][0m [guard] dropped hover#12 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s11c14-ef6a0a539a7e48f3b3186ec3b3e063ba decode_ms=4095.72 output_tokens=209
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s11c14 typed_ok=False output='{\n  "title": "Assessment of Metrics for Separating Model Quality from Systems Performance",\n  "mainText": "The research task is to assess whether end-to-end tas'
+[36m[DEBUG][0m reject from deep_search#11 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s11c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s11c14-604bef4cc8104fa5a6e94d79e9ecfb91 duration_ms=49.08 cached_tokens=432 prompt_tokens=531
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s11c14-604bef4cc8104fa5a6e94d79e9ecfb91 decode_ms=4090.59 output_tokens=209
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s11c14 typed_ok=False output='{\n  "title": "Assessment of Metrics for Separating Model Quality from Systems Performance",\n  "mainText": "The research task is to assess whether end-to-end tas'
+[32m[LOG][0m deep_search#11 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#11 (7 sites served)
+(EngineCore pid=654567) INFO 08-24 17:19:24 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=654567) INFO 08-24 17:19:24 [core.py:1233] Shutdown complete

@@ -1,0 +1,43 @@
+# Multi-tenant blend: `load-burst-iso`
+
+blend: benchmark/evaluation/blends/burst.json — 12 workflows/trial, mode=multi (burst within 1.0s), ratio {'hover': 0.3333333333333333, 'intercode_sql': 0.3333333333333333, 'deep_search': 0.3333333333333333}, seed 20260824; workers=16, model=Qwen/Qwen2.5-7B-Instruct, cache isolation=instance
+
+## per cell
+
+| cell | trials | workflows (rc=0) | mean / peak concurrency | makespan s | warm fraction | call TTFT p50 / p95 / p99 ms | mean TBT ms | spec prefills/trial | aborted/trial |
+|---|---|---|---|---|---|---|---|---|---|
+| off | 3 | 36/36 | 6.7 / 12 | 35 | 37.6% | 149 / 498 / 607 | 32.78 | 0 | 0 |
+| spec | 3 | 36/36 | 6.5 / 12 | 36 | 39.0% | 146 / 371 / 447 | 33.61 | 114 | 36 |
+
+## spec vs off: paired per workflow (same trial, same order)
+
+| tenant | pairs (same seq / all) | uncached tok/workflow base→cell | Δuncached | ΣTTFT ms base→cell | ΔΣTTFT [95% CI] | ratio | per-call p95 base→cell | wall s base→cell |
+|---|---|---|---|---|---|---|---|---|
+| hover | 12 / 12 | 2571→2524 | +47 | 1915→1768 | +147.1 [-70.6, +363.5] | 1.08x | 421→360 | 20.5→20.8 |
+| intercode_sql | 12 / 12 | 1873→1870 | +3 | 1118→957 | +161.9 [+30.6, +298.1] | 1.17x | 507→366 | 8.6→8.6 |
+| deep_search | 12 / 12 | 3884→3773 | +112 | 2474→2398 | +75.9 [-69.9, +223.8] | 1.03x | 445→339 | 29.2→29.4 |
+| **all** | 36 / 36 | 2776→2722 | **+54** | 1836→1707 | **+128.3 [+34.8, +228.5]** | **1.08x** | 457→355 | 19.4→19.6 |
+
+## per callsite (mean uncached tokens / mean TTFT ms)
+
+| callsite | n | off | spec |
+|---|---|---|---|
+| deep_search:DataAnalysisAgent.data_research | 26 | 288 / 152 | 284 / 167 |
+| deep_search:DeepResearch.build_report | 48 | 153 / 88 | 128 / 80 |
+| deep_search:DeepResearch.summarize | 24 | 279 / 154 | 276 / 147 |
+| deep_search:FactCheckAgent.fact_check | 28 | 244 / 162 | 243 / 162 |
+| deep_search:PaperSearchAgent.paper_research | 48 | 270 / 156 | 270 / 168 |
+| deep_search:ResearchSupervisor.decompose_task | 48 | 259 / 228 | 259 / 186 |
+| deep_search:WebSearchAgent.web_research | 42 | 288 / 174 | 284 / 196 |
+| deep_search:__visit | 96 | 285 / 179 | 274 / 167 |
+| hover:HoverAgent.decompose_claim | 24 | 143 / 389 | 143 / 245 |
+| hover:SearchData.plan_query | 48 | 158 / 145 | 155 / 171 |
+| hover:SearchData.reason_hop | 48 | 178 / 150 | 186 / 139 |
+| hover:SearchData.retrieve_evidence | 48 | 280 / 163 | 281 / 172 |
+| hover:SummarizeData.assess_gap | 48 | 184 / 136 | 179 / 118 |
+| hover:Verdict.synthesize_answer | 24 | 359 / 143 | 304 / 141 |
+| hover:Verdict.verify_claim | 24 | 471 / 193 | 477 / 181 |
+| intercode_sql:diagnose | 24 | 179 / 195 | 179 / 139 |
+| intercode_sql:finalize | 24 | 137 / 197 | 138 / 207 |
+| intercode_sql:generate_sql | 24 | 902 / 438 | 902 / 327 |
+| intercode_sql:revise_sql | 24 | 656 / 289 | 652 / 284 |

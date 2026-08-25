@@ -66,7 +66,13 @@ every TCP listener, the incoming-event monitor, and, unless disabled, the
 engine-idle monitor. `listening on` is printed only after the warmup, so a
 harness that waits for it starts tenants against an already-serving engine.
 A real admission kills the speculative request in flight (`kill_speculation`):
-a queued one is dropped, one already in a running step finishes that step. Registration verifies the program name,
+a queued one is dropped, one already in a running step finishes that step.
+With `--cache-isolation instance` every client connection (one workflow
+instance) gets its own vLLM `cache_salt`; its real requests, speculative
+prefills and route probes carry it, so no KV block is ever shared across
+instances and an instance's cache is dead once it disconnects. The default
+(`none`) leaves the prefix cache shared, so instances of the same program reuse
+each other's invariant prefixes. Registration verifies the program name,
 associates the backend connection with the configured topology, and initializes
 its completed-call set.
 

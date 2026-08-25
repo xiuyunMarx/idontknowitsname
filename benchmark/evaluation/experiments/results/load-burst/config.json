@@ -1,0 +1,59 @@
+{
+ "blend": "benchmark/evaluation/blends/burst.json",
+ "cells": [
+  "off",
+  "spec"
+ ],
+ "workers": 16,
+ "tool_scale": 1.0,
+ "model": "Qwen/Qwen2.5-7B-Instruct",
+ "out": "benchmark/evaluation/experiments/results/load-burst",
+ "aggregate_only": false,
+ "blend_meta": {
+  "seed": 20260824,
+  "size": 12,
+  "trials": 3,
+  "mode": "multi",
+  "window_s": 3.0,
+  "arrival": "burst",
+  "rate_per_s": null,
+  "jitter_s": 1.0,
+  "tenants": [
+   "hover",
+   "intercode_sql",
+   "deep_search"
+  ],
+  "blend_ratio": [
+   0.3333333333333333,
+   0.3333333333333333,
+   0.3333333333333333
+  ],
+  "per_trial_counts": {
+   "hover": 4,
+   "intercode_sql": 4,
+   "deep_search": 4
+  },
+  "packs": {
+   "hover": {
+    "file": "datasets/hover_claims_30.json",
+    "cases": 30,
+    "sha1": "adcc59ee6ccf"
+   },
+   "intercode_sql": {
+    "file": "datasets/intercode_sql_30.json",
+    "cases": 30,
+    "sha1": "f4ac4d0d4f39"
+   },
+   "deep_search": {
+    "file": "datasets/deep_search_30.json",
+    "cases": 30,
+    "sha1": "d83b9b72d741"
+   }
+  }
+ },
+ "programs": [
+  "hover:benchmark/evaluation/programs/HoVer.jac:8971",
+  "intercode_sql:benchmark/evaluation/programs/intercode_sql.jac:8973",
+  "deep_search:benchmark/evaluation/programs/deep_search.jac:8972"
+ ]
+}

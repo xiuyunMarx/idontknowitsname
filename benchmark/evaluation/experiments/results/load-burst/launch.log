@@ -1,0 +1,51 @@
+[off trial 0] workflows=12 failed=1 makespan=73s 98s
+[spec trial 0] workflows=12 failed=0 makespan=32s 57s
+[spec trial 1] workflows=12 failed=0 makespan=30s 55s
+[off trial 1] workflows=12 failed=0 makespan=32s 57s
+[off trial 2] workflows=12 failed=0 makespan=30s 55s
+[spec trial 2] workflows=12 failed=0 makespan=30s 56s
+# Multi-tenant blend: `load-burst`
+
+blend: benchmark/evaluation/blends/burst.json — 12 workflows/trial, mode=multi (burst within 1.0s), ratio {'hover': 0.3333333333333333, 'intercode_sql': 0.3333333333333333, 'deep_search': 0.3333333333333333}, seed 20260824; workers=16, model=Qwen/Qwen2.5-7B-Instruct
+
+## per cell
+
+| cell | trials | workflows (rc=0) | mean / peak concurrency | makespan s | warm fraction | call TTFT p50 / p95 / p99 ms | mean TBT ms | spec prefills/trial | aborted/trial |
+|---|---|---|---|---|---|---|---|---|---|
+| off | 3 | 35/36 | 5.7 / 12 | 45 | 60.4% | 100 / 265 / 452 | 27.27 | 0 | 0 |
+| spec | 3 | 36/36 | 6.9 / 12 | 31 | 58.6% | 112 / 262 / 363 | 28.19 | 114 | 39 |
+
+## spec vs off: paired per workflow (same trial, same order)
+
+| tenant | pairs (same seq / all) | uncached tok/workflow base→cell | Δuncached | ΣTTFT ms base→cell | ΔΣTTFT [95% CI] | ratio | per-call p95 base→cell | wall s base→cell |
+|---|---|---|---|---|---|---|---|---|
+| hover | 12 / 12 | 1624→1629 | -4 | 1254→1338 | -84.5 [-207.3, +29.0] | 0.94x | 244→235 | 18.7→18.7 |
+| intercode_sql | 12 / 12 | 1320→1318 | +2 | 679→698 | -19.7 [-118.5, +67.3] | 0.97x | 255→280 | 7.3→7.3 |
+| deep_search | 9 / 11 | 2677→2617 | +60 | 1903→1898 | +4.6 [-129.4, +163.0] | 1.00x | 278→262 | 28.2→27.2 |
+| **all** | 33 / 35 | 1851→1833 | **+18** | 1261→1295 | **-34.3 [-101.6, +35.3]** | **0.97x** | 259→259 | 17.7→17.5 |
+
+## per callsite (mean uncached tokens / mean TTFT ms)
+
+| callsite | n | off | spec |
+|---|---|---|---|
+| deep_search:DataAnalysisAgent.data_research | 26 | 191 / 115 | 184 / 123 |
+| deep_search:DeepResearch.build_report | 62 | 95 / 73 | 125 / 83 |
+| deep_search:DeepResearch.summarize | 24 | 180 / 111 | 165 / 111 |
+| deep_search:FactCheckAgent.fact_check | 30 | 149 / 128 | 146 / 136 |
+| deep_search:PaperSearchAgent.paper_research | 48 | 140 / 120 | 142 / 126 |
+| deep_search:ResearchSupervisor.decompose_task | 48 | 165 / 166 | 166 / 135 |
+| deep_search:WebSearchAgent.web_research | 40 | 146 / 127 | 152 / 123 |
+| deep_search:__visit | 96 | 236 / 154 | 230 / 146 |
+| hover:HoverAgent.decompose_claim | 24 | 64 / 118 | 63 / 139 |
+| hover:SearchData.plan_query | 48 | 122 / 119 | 118 / 125 |
+| hover:SearchData.reason_hop | 48 | 135 / 121 | 139 / 110 |
+| hover:SearchData.retrieve_evidence | 48 | 106 / 100 | 110 / 105 |
+| hover:SummarizeData.assess_gap | 48 | 144 / 102 | 150 / 134 |
+| hover:Verdict.synthesize_answer | 24 | 282 / 128 | 270 / 122 |
+| hover:Verdict.verify_claim | 24 | 265 / 124 | 261 / 130 |
+| intercode_sql:diagnose | 24 | 81 / 104 | 81 / 89 |
+| intercode_sql:finalize | 24 | 90 / 126 | 90 / 143 |
+| intercode_sql:generate_sql | 24 | 587 / 230 | 587 / 248 |
+| intercode_sql:revise_sql | 24 | 561 / 218 | 560 / 219 |
+
+results in benchmark/evaluation/experiments/results/load-burst

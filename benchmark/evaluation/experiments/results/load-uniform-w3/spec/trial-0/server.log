@@ -1,0 +1,697 @@
+INFO 08-24 17:10:49 [model.py:549] Resolved architecture: Qwen2ForCausalLM
+INFO 08-24 17:10:49 [model.py:1678] Using max model len 8192
+INFO 08-24 17:10:49 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-24 17:10:49 [vllm.py:790] Asynchronous scheduling is enabled.
+(EngineCore pid=646053) INFO 08-24 17:10:51 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore pid=646053) INFO 08-24 17:10:51 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:45911 backend=nccl
+[rank0]:[W824 17:10:51.622032122 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=646053) INFO 08-24 17:10:51 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=646053) INFO 08-24 17:10:52 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
+(EngineCore pid=646053) INFO 08-24 17:10:52 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=646053) INFO 08-24 17:10:52 [flash_attn.py:596] Using FlashAttention version 2
+(EngineCore pid=646053) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore pid=646053) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore pid=646053) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(EngineCore pid=646053) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.36it/s]
+(EngineCore pid=646053) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.21it/s]
+(EngineCore pid=646053) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.18it/s]
+(EngineCore pid=646053) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.22it/s]
+(EngineCore pid=646053) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.22it/s]
+(EngineCore pid=646053) 
+(EngineCore pid=646053) INFO 08-24 17:10:55 [default_loader.py:384] Loading weights took 1.86 seconds
+(EngineCore pid=646053) INFO 08-24 17:10:55 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.663364 seconds
+(EngineCore pid=646053) INFO 08-24 17:10:57 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore pid=646053) INFO 08-24 17:10:57 [backends.py:1111] Dynamo bytecode transform time: 2.21 s
+(EngineCore pid=646053) INFO 08-24 17:10:58 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.578 s
+(EngineCore pid=646053) INFO 08-24 17:10:58 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
+(EngineCore pid=646053) INFO 08-24 17:10:58 [monitor.py:48] torch.compile took 2.96 s in total
+(EngineCore pid=646053) INFO 08-24 17:10:58 [monitor.py:76] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=646053) INFO 08-24 17:10:59 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
+(EngineCore pid=646053) INFO 08-24 17:10:59 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
+(EngineCore pid=646053) INFO 08-24 17:11:00 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
+(EngineCore pid=646053) INFO 08-24 17:11:00 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
+(EngineCore pid=646053) INFO 08-24 17:11:00 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
+(EngineCore pid=646053) INFO 08-24 17:11:00 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
+(EngineCore pid=646053) INFO 08-24 17:11:00 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
+(EngineCore pid=646053) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 13.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 14.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 17.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 26.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.54it/s]
+(EngineCore pid=646053) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.49it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 24.50it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 24.07it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 27.41it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 29.63it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 28.27it/s]
+(EngineCore pid=646053) INFO 08-24 17:11:03 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
+(EngineCore pid=646053) INFO 08-24 17:11:03 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
+(EngineCore pid=646053) INFO 08-24 17:11:03 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.87 seconds
+[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
+WARNING 08-24 17:11:04 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+[warmup] engine ready in 424 ms
+[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 443 ms
+[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
+[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
+[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 59746) as deep_search#1
+[32m[LOG][0m Registered 'deep_search' (pid 646423, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#1
+[36m[DEBUG][0m call from deep_search#1 key='ResearchSupervisor.decompose_task'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 38708) as hover#2
+[32m[LOG][0m Registered 'hover' (pid 646438, model 'Qwen/Qwen2.5-7B-Instruct') as hover#2
+[36m[DEBUG][0m call from hover#2 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s1c1-a17feb4fb8bb45beafa1345ddc559c83 duration_ms=111.54 cached_tokens=0 prompt_tokens=342
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s2c1-562df4b576514551a8e970a6ea839e2f duration_ms=61.36 cached_tokens=48 prompt_tokens=127
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 42786) as intercode_sql#3
+[32m[LOG][0m Registered 'intercode_sql' (pid 646448, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#3
+[prefill] prefill-SearchData.plan_query@235:25-b0144561db264438a23cce19e39b62b4 cost_tokens=48 duration_ms=56.21
+[36m[DEBUG][0m call from intercode_sql#3 key='generate_sql'
+[prefill] prefill-__visit@deep_search.jac:380-43c4ccd47c714e879e31963e5c50f5eb cost_tokens=48 duration_ms=16.93 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s3c1-8163a7f406df4ccb91956f6286802f32 duration_ms=378.95 cached_tokens=32 prompt_tokens=1755
+[prefill] prefill-diagnose@367:30-192548f8629d40159b40e88b03bd1e9d cost_tokens=48 duration_ms=57.21
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 59754) as deep_search#4
+[32m[LOG][0m Registered 'deep_search' (pid 646469, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#4
+[prefill] prefill-SearchData.plan_query@235:25-e9cfa6197f4241419fbb9f214b20c534 cost_tokens=48 duration_ms=59.56
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 42794) as intercode_sql#5
+[32m[LOG][0m Registered 'intercode_sql' (pid 646480, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#5
+[prefill] prefill-__visit@deep_search.jac:380-38543bdb603844898c642efa31d984c4 cost_tokens=48 duration_ms=60.59
+[36m[DEBUG][0m call from intercode_sql#5 key='generate_sql'
+[prefill] prefill-diagnose@367:30-8cea89ba25a24b578f01adcc51bb1d2c cost_tokens=48 duration_ms=35.07 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s5c1-8578426acde64de9bde6d3c14aa70227 duration_ms=130.39 cached_tokens=416 prompt_tokens=795
+[36m[DEBUG][0m call from deep_search#4 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-diagnose@367:30-2797bc58cff54fb796413d8ce1273b91 cost_tokens=48 duration_ms=7.56 aborted=1
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s4c1-5f61fed0397740749ff1682fbcf01fd8 duration_ms=57.59 cached_tokens=224 prompt_tokens=325
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s3c1-8163a7f406df4ccb91956f6286802f32 decode_ms=455.38 output_tokens=19
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s3c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "Departments"}}'
+[prefill] prefill-__visit@deep_search.jac:380-6323981107a6425b859153cd5abf993c cost_tokens=48 duration_ms=54.57
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s2c1-562df4b576514551a8e970a6ea839e2f decode_ms=948.24 output_tokens=27
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s2c1 typed_ok=True output="Duff McKagan plays an instrument on Macy Gray's single, Kissed.\nThe instrument Duff McKagan plays is bass."
+[prefill] prefill-diagnose@367:30-a51648b6c4d147ed8b6842571808add0 cost_tokens=48 duration_ms=58.18
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 38712) as hover#6
+[32m[LOG][0m Registered 'hover' (pid 646488, model 'Qwen/Qwen2.5-7B-Instruct') as hover#6
+[prefill] prefill-diagnose@367:30-57c414d36f144f32bfa0eafe833b86a7 cost_tokens=48 duration_ms=57.80
+[36m[DEBUG][0m call from hover#6 key='HoverAgent.decompose_claim'
+[prefill] prefill-SearchData.plan_query@235:25-ce9e5dee10764a48ac06b98c4299d6e2 cost_tokens=48 duration_ms=59.34 aborted=1
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s5c1-8578426acde64de9bde6d3c14aa70227 decode_ms=382.20 output_tokens=19
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s5c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "TV_Channel"}}'
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s6c1-e986c95811ab4233987f5e91bf3cd03a duration_ms=73.78 cached_tokens=96 prompt_tokens=168
+[prefill] prefill-SearchData.plan_query@235:25-62dfbb7d1d814c19be55e940a9b540cc cost_tokens=48 duration_ms=46.50
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 42800) as intercode_sql#7
+[32m[LOG][0m Registered 'intercode_sql' (pid 646498, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#7
+[36m[DEBUG][0m call from intercode_sql#3 key='diagnose'
+[prefill] prefill-__visit@deep_search.jac:380-6a6d2e71ac8b48c183ff40d8308d1baf cost_tokens=10 duration_ms=27.75 aborted=1
+[36m[DEBUG][0m call from intercode_sql#7 key='generate_sql'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s3c2-f7a779031edf42d190e91c6603cfb304 duration_ms=86.78 cached_tokens=336 prompt_tokens=516
+[36m[DEBUG][0m call from hover#2 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s7c1-c1c87b80451243a98aafb6cdeaca15dd duration_ms=161.77 cached_tokens=416 prompt_tokens=708
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s2c2-5837308cd60441c7822f957bd9101d8a duration_ms=143.14 cached_tokens=96 prompt_tokens=205
+[36m[DEBUG][0m call from intercode_sql#5 key='diagnose'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-a0f7743cd62946a097a486814501aedf cost_tokens=48 duration_ms=37.41 aborted=1
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s5c2-da04151ae3874b6ca836f69739af7fb2 duration_ms=60.07 cached_tokens=464 prompt_tokens=520
+[prefill] prefill-revise_sql@369:24-dd7d77dc1e93448683a475846b05359f cost_tokens=48 duration_ms=57.06
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 38720) as hover#8
+[32m[LOG][0m Registered 'hover' (pid 646516, model 'Qwen/Qwen2.5-7B-Instruct') as hover#8
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s3c2-f7a779031edf42d190e91c6603cfb304 decode_ms=349.89 output_tokens=14
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s3c2 typed_ok=True output='<tool_call>{"name": "show_schema", "arguments": {}}'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-e089c9ce172841f0a54959d5a5047c8f cost_tokens=48 duration_ms=59.15
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 42812) as intercode_sql#9
+[32m[LOG][0m Registered 'intercode_sql' (pid 646537, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#9
+[36m[DEBUG][0m call from hover#8 key='HoverAgent.decompose_claim'
+[prefill] prefill-diagnose@367:30-1defa9766f604a09a899a7a2e7deb32b cost_tokens=48 duration_ms=28.65 aborted=1
+[36m[DEBUG][0m call from intercode_sql#9 key='generate_sql'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s2c2-5837308cd60441c7822f957bd9101d8a decode_ms=304.06 output_tokens=16
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s2c2 typed_ok=True output="Does Macy Gray's single, Kissed, feature Duff McKagan?"
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s8c1-b40ff25c92ef4088869f195446dfdec6 duration_ms=52.70 cached_tokens=96 prompt_tokens=147
+[36m[DEBUG][0m call from hover#2 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s7c1-c1c87b80451243a98aafb6cdeaca15dd decode_ms=353.87 output_tokens=18
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s7c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "student"}}'
+[36m[DEBUG][0m call from intercode_sql#3 key='revise_sql'
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s1c1-a17feb4fb8bb45beafa1345ddc559c83 decode_ms=1996.54 output_tokens=67
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s1c1 typed_ok=True output='["What are the published results comparing weight quantization and KV cache quantization for fitting larger models on one accelerator?", "What are the measured '
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s4c1-5f61fed0397740749ff1682fbcf01fd8 decode_ms=1075.45 output_tokens=43
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s4c1 typed_ok=True output='["What are the typical costs associated with speculative decoding?", "Can speculative decoding reduce end-to-end generation latency under certain conditions?", '
+[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s9c1-ba2359c2e93246e7b7255a0432a41842 duration_ms=161.00 cached_tokens=416 prompt_tokens=922
+[36m[DEBUG][0m generate from deep_search#4 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m generate from deep_search#1 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s2c3-552d9565ed6a49a099cfcb4447b00293 duration_ms=249.16 cached_tokens=112 prompt_tokens=512
+[36m[DEBUG][0m call from intercode_sql#7 key='diagnose'
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 48926) as deep_search#10
+[32m[LOG][0m Registered 'deep_search' (pid 646550, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#10
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s3c3-be4608ed62a24fcf9ccad8144e0f90d7 duration_ms=512.91 cached_tokens=48 prompt_tokens=1521
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 46228) as hover#11
+[32m[LOG][0m Registered 'hover' (pid 646559, model 'Qwen/Qwen2.5-7B-Instruct') as hover#11
+[36m[DEBUG][0m call from hover#11 key='HoverAgent.decompose_claim'
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s4c2-58a48288e154494fb857685eefbb3286 duration_ms=537.47 cached_tokens=96 prompt_tokens=369
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s1c2-738f0e06650940c1b0111846f7144cbf duration_ms=532.64 cached_tokens=256 prompt_tokens=411
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s7c2-baefd7d95e654ac7b9bd2539ccd5de54 duration_ms=332.64 cached_tokens=464 prompt_tokens=515
+[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s11c1-ad6717403b634ef59dfdcdfd4481abfa duration_ms=106.71 cached_tokens=96 prompt_tokens=123
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c1-3da80ec7f7e44f0cb02e50519b665273 duration_ms=89.55 cached_tokens=224 prompt_tokens=323
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 48934) as deep_search#12
+[32m[LOG][0m Registered 'deep_search' (pid 646571, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#12
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s3c3-be4608ed62a24fcf9ccad8144e0f90d7 decode_ms=424.54 output_tokens=13
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s3c3 typed_ok=True output="SELECT department_description FROM Departments WHERE department_name LIKE '%computer%'"
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s1c2-738f0e06650940c1b0111846f7144cbf decode_ms=307.58 output_tokens=12
+[prefill] prefill-__visit@deep_search.jac:380-e2a1d7c9f67140a28566360eec1b9f8d cost_tokens=10 duration_ms=62.64
+[36m[DEBUG][0m generate from deep_search#1 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.plan_query@235:25-e30b041bf0414f94b55e76bb8093ab76 cost_tokens=48 duration_ms=1.87 aborted=1
+[36m[DEBUG][0m call from deep_search#12 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s1c3-82e1760f8d9340bea77bb70714547637 duration_ms=141.52 cached_tokens=384 prompt_tokens=682
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s4c2-58a48288e154494fb857685eefbb3286 decode_ms=469.62 output_tokens=16
+[36m[DEBUG][0m generate from deep_search#4 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s9c1-ba2359c2e93246e7b7255a0432a41842 decode_ms=1047.24 output_tokens=20
+[36m[DEBUG][0m [final] intercode_sql:generate_sql:s9c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "CARS_DATA"}}'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s12c1-541e953e1199440d8a8fc769f027ea11 duration_ms=96.38 cached_tokens=224 prompt_tokens=340
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s4c3-1dfd33d26d584731bdc9a9d927387ecf duration_ms=153.28 cached_tokens=352 prompt_tokens=644
+[36m[DEBUG][0m call from intercode_sql#3 key='finalize'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s3c4-e77c3974c05b4571b9c64531bd566c72 duration_ms=94.08 cached_tokens=48 prompt_tokens=168
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s5c2-da04151ae3874b6ca836f69739af7fb2 decode_ms=1685.59 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s5c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL s'
+[36m[DEBUG][0m call from intercode_sql#9 key='diagnose'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s1c3-82e1760f8d9340bea77bb70714547637 decode_ms=431.40 output_tokens=16
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s2c3-552d9565ed6a49a099cfcb4447b00293 decode_ms=1335.55 output_tokens=33
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s2c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Does Macy Gray\'s single, Kissed, feature Duff McKagan?"}}'
+[36m[DEBUG][0m [serve] intercode_sql:diagnose:s9c2-c4cd342d7ad44e08bfc321391b95ce26 duration_ms=46.72 cached_tokens=464 prompt_tokens=515
+[36m[DEBUG][0m call from intercode_sql#5 key='revise_sql'
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s8c1-b40ff25c92ef4088869f195446dfdec6 decode_ms=1672.24 output_tokens=40
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s8c1 typed_ok=True output='American comedian starred in the original cast of Saturday Night Live.\nAmerican comedian played Lorne Michaels in the sitcom Martin.\nAmerican comedian starred o'
+[36m[DEBUG][0m call from deep_search#1 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s5c3-37b58db36cf547679ccb759de3a63dbe duration_ms=152.34 cached_tokens=144 prompt_tokens=588
+[36m[DEBUG][0m call from hover#2 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s1c4-c4a519e0d3014aa18245cb45b104e57a duration_ms=153.16 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c1-3da80ec7f7e44f0cb02e50519b665273 decode_ms=1225.20 output_tokens=37
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c1 typed_ok=True output='["What specific multi-tenant GPU sharing mechanisms are described in the published systems?", "What are the key points of disagreement among the published syste'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s2c4-fd6104f28be549ddbc66e45d06709b4c duration_ms=192.07 cached_tokens=48 prompt_tokens=252
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-SummarizeData.assess_gap@252:23-f2b5c507bd3947a4813ef84b0be3818f cost_tokens=48 duration_ms=5.61 aborted=1
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s3c4-e77c3974c05b4571b9c64531bd566c72 decode_ms=564.07 output_tokens=17
+[36m[DEBUG][0m [final] intercode_sql:finalize:s3c4 typed_ok=True output="The department description for the department whose name has the word computer is 'error'."
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c2-3ea2f36b5a5445c29654e98063dd17f6 duration_ms=64.57 cached_tokens=256 prompt_tokens=362
+[36m[DEBUG][0m call from hover#8 key='SearchData.plan_query'
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s7c2-baefd7d95e654ac7b9bd2539ccd5de54 decode_ms=1391.17 output_tokens=43
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s7c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because this environment runs SELECT statements only, not other types o'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s4c3-1dfd33d26d584731bdc9a9d927387ecf decode_ms=789.98 output_tokens=26
+[32m[LOG][0m intercode_sql#3 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#3 (4 sites served)
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s8c2-e058362815644797905afba9a6807e9d duration_ms=74.89 cached_tokens=144 prompt_tokens=240
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s11c1-ad6717403b634ef59dfdcdfd4481abfa decode_ms=1453.68 output_tokens=47
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s11c1 typed_ok=True output='Southern California Logistics Airport is located in California.\nVictorville is a city in California.\nThe distance between Southern California Logistics Airport '
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c2-3ea2f36b5a5445c29654e98063dd17f6 decode_ms=195.93 output_tokens=10
+[36m[DEBUG][0m call from intercode_sql#7 key='revise_sql'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-7e32d0de98964d259cd5309c1535f6e3 cost_tokens=48 duration_ms=40.07 aborted=1
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from deep_search#4 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s7c3-882924a3d88d41ab9f2ba9e2aa812e1e duration_ms=199.10 cached_tokens=160 prompt_tokens=502
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c3-0d0c613e98014d8faff94be68681774e duration_ms=197.68 cached_tokens=336 prompt_tokens=631
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s4c4-ca625940a1004515a1097b9f51edf565 duration_ms=283.74 cached_tokens=112 prompt_tokens=496
+[36m[DEBUG][0m call from hover#11 key='SearchData.plan_query'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s5c3-37b58db36cf547679ccb759de3a63dbe decode_ms=860.38 output_tokens=24
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s5c3 typed_ok=True output='SELECT Country, COUNT(*) AS TV_Channels FROM TV_Channel GROUP BY Country ORDER BY COUNT(*) DESC LIMIT 1'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s11c2-09204412afde4e2a92cd6ce384053fd2 duration_ms=62.52 cached_tokens=144 prompt_tokens=222
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s1c4-c4a519e0d3014aa18245cb45b104e57a decode_ms=859.92 output_tokens=28
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s1c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "weight quantization KV cache quantization model accuracy accelerator comparison"}}'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-ac75a2d5f2cf442baa10aeeafa5445fa cost_tokens=48 duration_ms=60.67
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-48d0b6947ff643b0af285c70b5be2831 cost_tokens=48 duration_ms=61.02
+[36m[DEBUG][0m [decode] intercode_sql:diagnose:s9c2-c4cd342d7ad44e08bfc321391b95ce26 decode_ms=1320.85 output_tokens=41
+[36m[DEBUG][0m [final] intercode_sql:diagnose:s9c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only supports SELECT statements. The provided S'
+[prefill] prefill-WebSearchAgent.web_research@291:32-9b463b7cd472420399b5ffb49491a427 cost_tokens=48 duration_ms=61.09
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c3-0d0c613e98014d8faff94be68681774e decode_ms=517.56 output_tokens=21
+[36m[DEBUG][0m call from deep_search#1 key='DataAnalysisAgent.data_research'
+[prefill] prefill-diagnose@367:30-acf8fc9d33104ce2952170a7b54cee4d cost_tokens=48 duration_ms=60.30 aborted=1
+[36m[DEBUG][0m call from intercode_sql#5 key='finalize'
+[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s6c1-e986c95811ab4233987f5e91bf3cd03a decode_ms=3636.28 output_tokens=106
+[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s6c1 typed_ok=True output='Lillo-Stenberg is a Norwegian actress.\nLillo-Stenberg performed in Anton Checkhov\'s "Three Sisters".\nLillo-Stenberg performed in a three-act play written by Hen'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s7c3-882924a3d88d41ab9f2ba9e2aa812e1e decode_ms=558.78 output_tokens=23
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s7c3 typed_ok=True output='SELECT AVG(Age) FROM student WHERE StuID NOT IN (SELECT StuID FROM has_pet)'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s11c2-09204412afde4e2a92cd6ce384053fd2 decode_ms=329.94 output_tokens=17
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s11c2 typed_ok=True output='"What entity is the direction from Victorville to Southern California Logistics Airport dependent on?"'
+[36m[DEBUG][0m call from hover#11 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m call from intercode_sql#9 key='revise_sql'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s1c5-df05b3ffb77441e1ba6cd8da46881635 duration_ms=158.09 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s5c4-4e001109faa3413da165456b17847257 duration_ms=144.31 cached_tokens=112 prompt_tokens=186
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s11c3-31332275479341cb8ec0d8cad7216e63 duration_ms=151.22 cached_tokens=464 prompt_tokens=510
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s9c3-b9e9f5b2151947428e3e0b6d589bcb3d duration_ms=237.26 cached_tokens=160 prompt_tokens=716
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c4-d39500f8a2004f61a5dc1615d64afdb3 duration_ms=175.95 cached_tokens=400 prompt_tokens=496
+[36m[DEBUG][0m call from intercode_sql#7 key='finalize'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-88e6936f56d7416aaf420f6e2ae54a7d cost_tokens=48 duration_ms=13.06 aborted=1
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s8c2-e058362815644797905afba9a6807e9d decode_ms=1221.05 output_tokens=38
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s8c2 typed_ok=True output='What American comedian starred in the original cast of Saturday Night Live, played Lorne Michaels in the sitcom Martin, and starred on a sitcom where Karen Maru'
+[36m[DEBUG][0m call from hover#8 key='SearchData.retrieve_evidence'
+[36m[DEBUG][0m call from hover#6 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s7c4-cf449f6f434f45d8a81c844c9d374365 duration_ms=60.81 cached_tokens=112 prompt_tokens=182
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s5c4-4e001109faa3413da165456b17847257 decode_ms=311.47 output_tokens=9
+[36m[DEBUG][0m [final] intercode_sql:finalize:s5c4 typed_ok=True output='Italy has 12 TV Channels.'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s8c3-02b960a391f14d4a8eb747424727ffab duration_ms=82.10 cached_tokens=464 prompt_tokens=555
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s6c2-8ef9cd97c45e47a8b8d93a348adcbcd4 duration_ms=104.12 cached_tokens=144 prompt_tokens=334
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s4c4-ca625940a1004515a1097b9f51edf565 decode_ms=953.34 output_tokens=33
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s4c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "typical costs speculative decoding end-to-end generation latency cost-benefit ratio different scenario'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-ff94b15331a64cbdbf52eac3deec3d5c cost_tokens=48 duration_ms=58.02
+[32m[LOG][0m intercode_sql#5 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#5 (4 sites served)
+[prefill] prefill-SearchData.reason_hop@238:26-612a794ff8cd4f55ab5641d9c1428a59 cost_tokens=48 duration_ms=61.10
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-069b882e817d4a7da002f523ad2347c5 cost_tokens=48 duration_ms=60.81
+[36m[DEBUG][0m call from deep_search#4 key='PaperSearchAgent.paper_research'
+[prefill] prefill-diagnose@367:30-c326b30cc08a4e06aef0009a2727ad46 cost_tokens=48 duration_ms=40.67 aborted=1
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s1c5-df05b3ffb77441e1ba6cd8da46881635 decode_ms=620.44 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s1c5 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "model_accuracy_weight_quantization"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s11c3-31332275479341cb8ec0d8cad7216e63 decode_ms=620.43 output_tokens=22
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s11c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport"}}'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s4c5-ceaeb6a383334c109a570ee5cbcd6bc1 duration_ms=74.62 cached_tokens=416 prompt_tokens=503
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s6c2-8ef9cd97c45e47a8b8d93a348adcbcd4 decode_ms=340.21 output_tokens=17
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s6c2 typed_ok=True output="Who is Lillo-Stenberg's sister and what play did she appear in?"
+[36m[DEBUG][0m call from hover#6 key='SearchData.retrieve_evidence'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-23bbea1994d4476c95f01b35e73fd265 cost_tokens=48 duration_ms=35.13 aborted=1
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c4-d39500f8a2004f61a5dc1615d64afdb3 decode_ms=582.44 output_tokens=25
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "multi-tenant GPU sharing mechanisms published systems"}}'
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s7c4-cf449f6f434f45d8a81c844c9d374365 decode_ms=507.18 output_tokens=22
+[36m[DEBUG][0m [final] intercode_sql:finalize:s7c4 typed_ok=True output='The average age for all students who do not own any pets is 19.625.'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s6c3-bc960b545ac7413f9dd99c9125799ba6 duration_ms=68.01 cached_tokens=464 prompt_tokens=554
+[36m[DEBUG][0m call from deep_search#1 key='FactCheckAgent.fact_check'
+[prefill] prefill-SearchData.reason_hop@238:26-0366910ee17c487fbabb60c29fa76356 cost_tokens=48 duration_ms=35.21 aborted=1
+[36m[DEBUG][0m call from hover#11 key='SearchData.reason_hop'
+[32m[LOG][0m intercode_sql#7 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#7 (4 sites served)
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s1c6-5e3c404517004e34b58197e0c14dd3a7 duration_ms=156.55 cached_tokens=112 prompt_tokens=512
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s11c4-56aeda38bc36447f8420d493d103c729 duration_ms=170.69 cached_tokens=176 prompt_tokens=238
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c5-1a7aac22a0b14c67980b214c93e62297 duration_ms=75.53 cached_tokens=400 prompt_tokens=489
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-2174fedd6f724cd7a36efa566e090fd9 cost_tokens=48 duration_ms=49.73
+[prefill] prefill-SummarizeData.assess_gap@252:23-1573210772a94eeaa20881dbcc601bac cost_tokens=48 duration_ms=61.56
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s12c1-541e953e1199440d8a8fc769f027ea11 decode_ms=3193.00 output_tokens=106
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s12c1 typed_ok=True output='["What specific prefill-decode disaggregation techniques were used in the ttft_ms_vs_queue_depth series?", "What are the service level objectives (SLO) for hold'
+[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s9c3-b9e9f5b2151947428e3e0b6d589bcb3d decode_ms=1078.01 output_tokens=43
+[36m[DEBUG][0m [final] intercode_sql:revise_sql:s9c3 typed_ok=True output='SELECT T1.Model FROM CAR_NAMES AS T1 JOIN CARS_DATA AS T2 ON T1.MakeId = T2.Id WHERE T2.Weight < (SELECT AVG(Weight) FROM CARS_DATA)'
+[36m[DEBUG][0m generate from deep_search#12 key='__visit@deep_search.jac:380'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-e8381a1012ba4ece9832a30c772cb27c cost_tokens=48 duration_ms=47.97 aborted=1
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s4c5-ceaeb6a383334c109a570ee5cbcd6bc1 decode_ms=598.86 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s4c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "speculative decoding cost latency reduction scenarios"}}'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s12c2-6f5fadbac90440f4b7df8bc02f245ac1 duration_ms=95.64 cached_tokens=256 prompt_tokens=448
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s2c4-fd6104f28be549ddbc66e45d06709b4c decode_ms=2596.30 output_tokens=92
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s2c4 typed_ok=True output="The passages indicate that Duff McKagan is featured on Macy Gray's single, Kissed. This establishes that Duff McKagan is involved with the song, which supports "
+[prefill] prefill-WebSearchAgent.web_research@291:32-78600ef54a3f469eb9f42fde248b7461 cost_tokens=48 duration_ms=58.87
+[36m[DEBUG][0m call from deep_search#4 key='DataAnalysisAgent.data_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-8e2e69c940fc49fc8a2597faf820b425 cost_tokens=48 duration_ms=23.97 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s4c6-a2a33372699d400c904bd50e6b9d7852 duration_ms=68.84 cached_tokens=416 prompt_tokens=503
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s12c2-6f5fadbac90440f4b7df8bc02f245ac1 decode_ms=232.29 output_tokens=12
+[36m[DEBUG][0m generate from deep_search#12 key='__visit@deep_search.jac:380'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-29aca3aacb934c4f93fddd6e3a981dc3 cost_tokens=48 duration_ms=17.05 aborted=1
+[36m[DEBUG][0m call from intercode_sql#9 key='finalize'
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c5-1a7aac22a0b14c67980b214c93e62297 decode_ms=539.30 output_tokens=25
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "multi-tenant GPU sharing mechanisms published systems"}}'
+[36m[DEBUG][0m call from hover#2 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s6c3-bc960b545ac7413f9dd99c9125799ba6 decode_ms=921.91 output_tokens=34
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s6c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is Lillo-Stenberg\'s sister and what play did she appear in?"}}'
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s1c6-5e3c404517004e34b58197e0c14dd3a7 decode_ms=725.82 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s1c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "weight quantization vs KV cache quantization for fitting larger models"}}'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s12c3-013de29d54864bc8a8dc6a38a5855262 duration_ms=141.13 cached_tokens=416 prompt_tokens=719
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s8c3-02b960a391f14d4a8eb747424727ffab decode_ms=1427.50 output_tokens=55
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s8c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "What American comedian starred in the original cast of Saturday Night Live, played Lorne Michaels in '
+[36m[DEBUG][0m [serve] intercode_sql:finalize:s9c4-99ba256c2046454c9ad90fb12a22069b duration_ms=152.40 cached_tokens=112 prompt_tokens=227
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s2c5-669c842c72584b1fa1dba3b47b083762 duration_ms=167.83 cached_tokens=48 prompt_tokens=296
+[36m[DEBUG][0m call from deep_search#10 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s2c5-669c842c72584b1fa1dba3b47b083762 decode_ms=38.84 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s2c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s10c6-883f1a43326c4ffda825fb0f44980350 duration_ms=64.10 cached_tokens=368 prompt_tokens=463
+[36m[DEBUG][0m call from hover#6 key='SearchData.reason_hop'
+[36m[DEBUG][0m call from deep_search#1 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m call from hover#8 key='SearchData.reason_hop'
+[36m[DEBUG][0m call from hover#2 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s6c4-2074cfd14c3549518929ecdebb8f781b duration_ms=143.52 cached_tokens=176 prompt_tokens=295
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s1c7-f0554b0324ef445c914a857ac07049fd duration_ms=141.63 cached_tokens=224 prompt_tokens=421
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s8c4-901817f6c1624f6fa8e6bfa36ad03e5a duration_ms=165.15 cached_tokens=176 prompt_tokens=316
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s11c4-56aeda38bc36447f8420d493d103c729 decode_ms=1127.24 output_tokens=40
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s11c4 typed_ok=True output='The passages establish that Southern California Logistics Airport is 8 miles northwest of Victorville, California. The next hop must follow the entity that dete'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s2c6-c6ddaae1f97d4abbb3b3bfb640e60580 duration_ms=93.38 cached_tokens=144 prompt_tokens=208
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s4c6-a2a33372699d400c904bd50e6b9d7852 decode_ms=697.36 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s4c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "speculative_decoding_cost"}}'
+[prefill] prefill-SearchData.retrieve_evidence@236:28-189db72959114c4c91586debd5212bd4 cost_tokens=48 duration_ms=59.37
+[prefill] prefill-SummarizeData.assess_gap@252:23-d7d273b4655f4477a024b6d6efdb3566 cost_tokens=48 duration_ms=59.86
+[36m[DEBUG][0m call from hover#11 key='SummarizeData.assess_gap'
+[prefill] prefill-__visit@deep_search.jac:380-a098b55b67d343e5a89048505007cb12 cost_tokens=48 duration_ms=24.49 aborted=1
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s12c3-013de29d54864bc8a8dc6a38a5855262 decode_ms=708.68 output_tokens=26
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s11c5-53f8c82204884d4aa7311087a3505091 duration_ms=67.89 cached_tokens=144 prompt_tokens=261
+[36m[DEBUG][0m call from deep_search#4 key='ResearchSupervisor.decompose_task'
+[prefill] prefill-SearchData.plan_query@235:25-26c2e22006c5423d8a3365e43098661e cost_tokens=48 duration_ms=27.52 aborted=1
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s10c6-883f1a43326c4ffda825fb0f44980350 decode_ms=580.72 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s10c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "multi-tenant-GPU-sharing"}}'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s11c5-53f8c82204884d4aa7311087a3505091 decode_ms=39.75 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s11c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s2c6-c6ddaae1f97d4abbb3b3bfb640e60580 decode_ms=393.99 output_tokens=18
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s2c6 typed_ok=True output="Who is Duff McKagan's instrument on Macy Gray's single, Kissed?"
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s4c7-7bcab90737404b82b9898c8554c46b22 duration_ms=88.63 cached_tokens=224 prompt_tokens=404
+[36m[DEBUG][0m call from hover#2 key='SearchData.retrieve_evidence'
+[prefill] prefill-__visit@deep_search.jac:380-29d4d52f89634cff805caad7e8f2faba cost_tokens=48 duration_ms=1.38 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s2c7-6b6bc0cfd88443ca944d5804f844efda duration_ms=53.96 cached_tokens=464 prompt_tokens=514
+[36m[DEBUG][0m call from deep_search#12 key='WebSearchAgent.web_research'
+[prefill] prefill-SearchData.reason_hop@238:26-d25714e0677c4a0c88a0910520010f7d cost_tokens=48 duration_ms=16.54 aborted=1
+[36m[DEBUG][0m [decode] intercode_sql:finalize:s9c4-99ba256c2046454c9ad90fb12a22069b decode_ms=898.50 output_tokens=34
+[36m[DEBUG][0m [final] intercode_sql:finalize:s9c4 typed_ok=True output="The models of the cars whose weight is below the average weight are 'chevrolet', 'buick', 'plymouth', and 'amc', among others."
+[36m[DEBUG][0m call from hover#11 key='SearchData.plan_query'
+[36m[DEBUG][0m call from deep_search#10 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s12c4-fba4afe67b13414e87784acc684e8641 duration_ms=90.30 cached_tokens=400 prompt_tokens=575
+[32m[LOG][0m intercode_sql#9 disconnected
+[36m[DEBUG][0m [guard] dropped intercode_sql#9 (4 sites served)
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s11c6-599bcb7e1c824e8e988bc2b502374acf duration_ms=137.87 cached_tokens=144 prompt_tokens=225
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s10c7-8e527a4553174b8c9e49ff314cedc06c duration_ms=136.87 cached_tokens=240 prompt_tokens=396
+[prefill] prefill-__visit@deep_search.jac:380-45570113f1934653b18b73f775e9e187 cost_tokens=48 duration_ms=48.93
+[prefill] prefill-SearchData.retrieve_evidence@236:28-4328c4a72c6148a99947c0ac49290b8c cost_tokens=48 duration_ms=59.28
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-fdea8f9aba8847c2ac718875e5e75ec1 cost_tokens=48 duration_ms=59.95
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s6c4-2074cfd14c3549518929ecdebb8f781b decode_ms=964.09 output_tokens=40
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s6c4 typed_ok=True output='The passages establish that Lillo-Stenberg has a sister named Sonja Stenberg who appeared in the play "A Commuter Kind of Love". The next hop must follow Sonja '
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s11c6-599bcb7e1c824e8e988bc2b502374acf decode_ms=241.63 output_tokens=13
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s11c6 typed_ok=True output="'Southern California Logistics Airport is located in which county?'"
+[prefill] prefill-SearchData.reason_hop@238:26-7842874a1c294dc6b0ca4aebd80e5a60 cost_tokens=48 duration_ms=60.00
+[36m[DEBUG][0m call from hover#11 key='SearchData.retrieve_evidence'
+[prefill] prefill-__visit@deep_search.jac:380-56ec5f88a6a94bd499523cd2c3878506 cost_tokens=48 duration_ms=8.64 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s11c7-89e94a0b44d14643902c3b77cbc369a3 duration_ms=53.86 cached_tokens=464 prompt_tokens=504
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s10c7-8e527a4553174b8c9e49ff314cedc06c decode_ms=363.43 output_tokens=19
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s10c7 typed_ok=True output='["What are the specific mechanisms used by published systems for multi-tenant GPU sharing?"]'
+[prefill] prefill-SearchData.reason_hop@238:26-0ba40156b87c45cd855a981b4a790be4 cost_tokens=48 duration_ms=60.43
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-__visit@deep_search.jac:380-96cb8beb087f4cb1a306115a3960a5a1 cost_tokens=48 duration_ms=7.08 aborted=1
+[36m[DEBUG][0m call from hover#6 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c8-9ca6ec33f52046c788c599c9b56e49af duration_ms=86.97 cached_tokens=272 prompt_tokens=417
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s6c5-18e39b838ff94564aa1cab1ca6758ab9 duration_ms=117.13 cached_tokens=144 prompt_tokens=373
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s12c4-fba4afe67b13414e87784acc684e8641 decode_ms=709.15 output_tokens=30
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s12c4 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation techniques"}}'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s2c7-6b6bc0cfd88443ca944d5804f844efda decode_ms=844.98 output_tokens=35
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s2c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is Duff McKagan\'s instrument on Macy Gray\'s single, Kissed?"}}'
+[prefill] prefill-SearchData.plan_query@235:25-1a4472cd654246f4b6d1c4010aed8ab5 cost_tokens=48 duration_ms=59.09
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c8-9ca6ec33f52046c788c599c9b56e49af decode_ms=265.81 output_tokens=12
+[prefill] prefill-WebSearchAgent.web_research@291:32-d39641d6b99841f98322d3296134b114 cost_tokens=48 duration_ms=59.58
+[36m[DEBUG][0m generate from deep_search#10 key='__visit@deep_search.jac:380'
+[prefill] prefill-SearchData.reason_hop@238:26-4a9aee0dc2b840889f915152073b40b4 cost_tokens=48 duration_ms=1.53 aborted=1
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s1c7-f0554b0324ef445c914a857ac07049fd decode_ms=1505.42 output_tokens=63
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s1c7 typed_ok=True output='["What are the published results comparing weight quantization and KV cache quantization for fitting larger models on one accelerator in terms of model accuracy'
+[36m[DEBUG][0m generate from deep_search#1 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from deep_search#12 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m call from hover#2 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s10c9-cd3984583de14fa381ccc697241e0916 duration_ms=139.79 cached_tokens=400 prompt_tokens=688
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s8c4-901817f6c1624f6fa8e6bfa36ad03e5a decode_ms=1573.42 output_tokens=64
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s8c4 typed_ok=True output='The passages establish that the claim is true. The next hop must follow the entity "Geoffrey Owens" as he is the American comedian who starred in the original c'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s1c8-b52a70cbbc7a41e6aa7575dc2c8c0753 duration_ms=230.54 cached_tokens=320 prompt_tokens=486
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s12c5-565cc8d0fda8409d8c63590ca97030b3 duration_ms=170.82 cached_tokens=416 prompt_tokens=582
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s2c8-cc0fda09243b4e738e101b1357167027 duration_ms=151.68 cached_tokens=176 prompt_tokens=348
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s4c7-7bcab90737404b82b9898c8554c46b22 decode_ms=1322.22 output_tokens=50
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s4c7 typed_ok=True output='["What are the typical costs associated with speculative decoding and in what scenarios does the cost outweigh the benefit for reducing end-to-end generation la'
+[36m[DEBUG][0m generate from deep_search#4 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s6c5-18e39b838ff94564aa1cab1ca6758ab9 decode_ms=535.59 output_tokens=19
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s6c5 typed_ok=True output="Lillo-Stenberg's sister is an actor. The Norwegian Theatre Association would settle this."
+[36m[DEBUG][0m call from hover#8 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s11c7-89e94a0b44d14643902c3b77cbc369a3 decode_ms=795.76 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s11c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Southern California Logistics Airport is located in which county?"}}'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s4c8-85cbc81c37324632a084211a70c09114 duration_ms=86.48 cached_tokens=288 prompt_tokens=455
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s8c5-10d89b808fba4835bf27ab97d7148fcb duration_ms=117.52 cached_tokens=144 prompt_tokens=303
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s1c8-b52a70cbbc7a41e6aa7575dc2c8c0753 decode_ms=246.18 output_tokens=10
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s8c5-10d89b808fba4835bf27ab97d7148fcb decode_ms=39.50 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s8c5 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m generate from deep_search#1 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from hover#6 key='SearchData.plan_query'
+[36m[DEBUG][0m call from hover#11 key='SearchData.reason_hop'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s1c9-5e8e3fc7b6dd436ebf6348236949fc15 duration_ms=140.19 cached_tokens=464 prompt_tokens=755
+[36m[DEBUG][0m call from hover#8 key='SearchData.plan_query'
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s6c6-768130a8bd1b446a8b80c0807ad67488 duration_ms=217.84 cached_tokens=144 prompt_tokens=352
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s11c8-0f39c122cd2947139fb1321f3c905843 duration_ms=199.88 cached_tokens=176 prompt_tokens=277
+[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s8c6-5da284907d9c4e65819979b8a379f5f8 duration_ms=104.00 cached_tokens=144 prompt_tokens=243
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s10c9-cd3984583de14fa381ccc697241e0916 decode_ms=730.24 output_tokens=21
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s4c8-85cbc81c37324632a084211a70c09114 decode_ms=545.24 output_tokens=18
+[36m[DEBUG][0m generate from deep_search#4 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m call from deep_search#10 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s4c9-a2a82bfd99d940bd99788f6b75f36314 duration_ms=143.54 cached_tokens=432 prompt_tokens=731
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s12c5-565cc8d0fda8409d8c63590ca97030b3 decode_ms=896.63 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s12c5 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "ttft_ms_vs_queue_depth prefill-decode disaggregation"}}'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s10c10-8a4b39661994459a890f82085fa1d6f5 duration_ms=96.06 cached_tokens=400 prompt_tokens=471
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s6c6-768130a8bd1b446a8b80c0807ad67488 decode_ms=452.19 output_tokens=18
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s6c6 typed_ok=True output='"What is the name of the actor who appeared in A Commuter Kind of Love?"'
+[36m[DEBUG][0m call from hover#6 key='SearchData.retrieve_evidence'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-8b3dd4601e8b4ddb85adb82d6f68a4f0 cost_tokens=48 duration_ms=5.30 aborted=1
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s6c7-7894622e70464a4cb1090ce563cf1fa7 duration_ms=65.69 cached_tokens=464 prompt_tokens=556
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s1c9-5e8e3fc7b6dd436ebf6348236949fc15 decode_ms=701.48 output_tokens=26
+[prefill] prefill-SearchData.reason_hop@238:26-393ec05381014471928f0b66111e94b1 cost_tokens=48 duration_ms=49.93
+[36m[DEBUG][0m call from deep_search#12 key='DataAnalysisAgent.data_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f569b0ddb8744882881174f600b99038 cost_tokens=48 duration_ms=13.12 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s12c6-a5c1d5a7e03d45a6a74038a55612ab7f duration_ms=87.09 cached_tokens=400 prompt_tokens=582
+[prefill] prefill-FactCheckAgent.fact_check@333:33-b80dd7c3af2d45f3a7ed96026ed026e4 cost_tokens=48 duration_ms=52.68
+[36m[DEBUG][0m call from deep_search#1 key='WebSearchAgent.web_research'
+[prefill] prefill-SearchData.reason_hop@238:26-530df4e617f8461c81d570476e6b219e cost_tokens=48 duration_ms=46.16 aborted=1
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s1c10-12e0c30712a14909942d2bfe272f4b0d duration_ms=89.52 cached_tokens=400 prompt_tokens=534
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s11c8-0f39c122cd2947139fb1321f3c905843 decode_ms=897.97 output_tokens=36
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s11c8 typed_ok=True output='The passages establish that Southern California Logistics Airport is located in San Bernardino County. The next hop must follow the entity that determines the d'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s4c9-a2a82bfd99d940bd99788f6b75f36314 decode_ms=600.81 output_tokens=26
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-cc4a53af547b4b40a2b3576f412adfc1 cost_tokens=48 duration_ms=54.86
+[prefill] prefill-FactCheckAgent.fact_check@333:33-b50e6757a2c8466784c3eea7721e7904 cost_tokens=48 duration_ms=58.50
+[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s8c6-5da284907d9c4e65819979b8a379f5f8 decode_ms=987.86 output_tokens=41
+[36m[DEBUG][0m [final] hover:SearchData.plan_query:s8c6 typed_ok=True output='Who is the American comedian that starred in the original cast of Saturday Night Live, played Lorne Michaels in the sitcom Martin, and starred on a sitcom where'
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s10c10-8a4b39661994459a890f82085fa1d6f5 decode_ms=647.01 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s10c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "specific mechanisms used by published systems for multi-tenant GPU sharing"}}'
+[36m[DEBUG][0m call from hover#8 key='SearchData.retrieve_evidence'
+[prefill] prefill-SearchData.reason_hop@238:26-4319a0cdd7a1467184db37a0d72d170a cost_tokens=48 duration_ms=45.49 aborted=1
+[36m[DEBUG][0m call from hover#11 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s8c7-a87f72e5ef894896828fdf5e220c5b92 duration_ms=66.80 cached_tokens=464 prompt_tokens=558
+[36m[DEBUG][0m call from deep_search#4 key='WebSearchAgent.web_research'
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s6c7-7894622e70464a4cb1090ce563cf1fa7 decode_ms=638.72 output_tokens=28
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s6c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "actor who appeared in A Commuter Kind of Love"}}'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s11c9-f5a6d785a36a4ccb900d3fea98b9d7a9 duration_ms=58.71 cached_tokens=144 prompt_tokens=257
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s12c6-a5c1d5a7e03d45a6a74038a55612ab7f decode_ms=497.54 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s12c6 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s11c9-f5a6d785a36a4ccb900d3fea98b9d7a9 decode_ms=51.71 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s11c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s4c10-0ee0ec2a37bc4d8993371c5aa32f2054 duration_ms=69.53 cached_tokens=400 prompt_tokens=503
+[36m[DEBUG][0m call from deep_search#10 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b8e23bf0fd704aa6b04c2521b5058fd8 cost_tokens=48 duration_ms=23.11 aborted=1
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s10c11-c0346da3d4fb40d483e193f337fc6021 duration_ms=63.99 cached_tokens=416 prompt_tokens=478
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s2c8-cc0fda09243b4e738e101b1357167027 decode_ms=1832.89 output_tokens=69
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s2c8 typed_ok=True output="Duff McKagan is featured on Macy Gray's single, Kissed. The next hop must follow that Duff McKagan plays an instrument on Macy Gray's single, Kissed, and identi"
+[36m[DEBUG][0m call from hover#6 key='SearchData.reason_hop'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f21b6a3c584446eb92c7e8a5e6cbe8f3 cost_tokens=48 duration_ms=49.57 aborted=1
+[36m[DEBUG][0m call from deep_search#12 key='ResearchSupervisor.decompose_task'
+[36m[DEBUG][0m call from hover#11 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s6c8-3132d12fc07d4a82802f8806c4706f69 duration_ms=93.38 cached_tokens=176 prompt_tokens=329
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s1c10-12e0c30712a14909942d2bfe272f4b0d decode_ms=641.87 output_tokens=27
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s1c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "weight quantization vs KV cache quantization model accuracy"}}'
+[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s12c7-c72b656f55a84cecbd2c9e6e1ae276e2 duration_ms=133.68 cached_tokens=240 prompt_tokens=422
+[36m[DEBUG][0m call from hover#2 key='SummarizeData.assess_gap'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s11c10-4838c27030ae406688d484169a37d5cb duration_ms=217.12 cached_tokens=112 prompt_tokens=545
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s2c9-81e8d4abcdeb44048c788ba704e7f0f6 duration_ms=172.65 cached_tokens=144 prompt_tokens=273
+[36m[DEBUG][0m call from deep_search#1 key='PaperSearchAgent.paper_research'
+[prefill] prefill-SearchData.plan_query@235:25-da17b68432204fe1baa15fb6afce8c3b cost_tokens=48 duration_ms=18.79 aborted=1
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s2c9-81e8d4abcdeb44048c788ba704e7f0f6 decode_ms=39.14 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s2c9 typed_ok=True output='nothing missing'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s1c11-9a536e599b3d4ae9b25bf9e282796495 duration_ms=70.71 cached_tokens=432 prompt_tokens=541
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-081a0d333f7d4c5190d4a5f0e5ce1e5c cost_tokens=48 duration_ms=55.27
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s4c10-0ee0ec2a37bc4d8993371c5aa32f2054 decode_ms=683.22 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s4c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "speculative decoding cost scenarios latency reduction"}}'
+[prefill] prefill-SearchData.plan_query@235:25-a578a5e1ac5b4b0d9b35c127908cf3ef cost_tokens=48 duration_ms=59.79
+[36m[DEBUG][0m call from hover#2 key='Verdict.verify_claim'
+[prefill] prefill-Verdict.synthesize_answer@279:26-73cde269a5e2423bb016e8150fce4fd9 cost_tokens=48 duration_ms=32.91 aborted=1
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s10c11-c0346da3d4fb40d483e193f337fc6021 decode_ms=649.63 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s10c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "multi-tenant GPU sharing mechanisms"}}'
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s2c10-2963197d70de4d6db1ddecfa4a5eeedb duration_ms=83.24 cached_tokens=400 prompt_tokens=561
+[prefill] prefill-Verdict.synthesize_answer@279:26-d451abf9131d41cca5a9634ba5931e94 cost_tokens=48 duration_ms=48.50
+[36m[DEBUG][0m call from deep_search#4 key='PaperSearchAgent.paper_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f95e1305de2e43e7936ed2b55eb6f47d cost_tokens=48 duration_ms=9.51 aborted=1
+[36m[DEBUG][0m call from deep_search#10 key='FactCheckAgent.fact_check'
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s4c11-ceac07e73753432189d70ff60f2e83d7 duration_ms=62.77 cached_tokens=416 prompt_tokens=510
+[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s10c12-f2c4a4aaa3724df2b71929d03ecf5d46 duration_ms=72.35 cached_tokens=368 prompt_tokens=445
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-e7f213fc458947fdab4602f9f00d64a1 cost_tokens=48 duration_ms=57.13
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-9e7e17b092e94a69856c493d77f5710b cost_tokens=48 duration_ms=60.33
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s1c11-9a536e599b3d4ae9b25bf9e282796495 decode_ms=599.85 output_tokens=28
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s1c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "weight quantization KV cache quantization model accuracy accelerator larger"}}'
+[prefill] prefill-Verdict.synthesize_answer@279:26-bd064aadec59484e958b42be1f731790 cost_tokens=48 duration_ms=60.96
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s6c8-3132d12fc07d4a82802f8806c4706f69 decode_ms=1019.33 output_tokens=40
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s6c8 typed_ok=True output='The passages establish that Lillo-Stenberg has a sister named Sonja Stenberg who appeared in the play "A Commuter Kind of Love". The next hop must follow Sonja '
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-0dd1a630f558424dba9514128c3e5f11 cost_tokens=48 duration_ms=60.87
+[prefill] prefill-Verdict.synthesize_answer@279:26-554c70c5ef1346e8aaf84bf36176b7a1 cost_tokens=48 duration_ms=60.38
+[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s8c7-a87f72e5ef894896828fdf5e220c5b92 decode_ms=1450.45 output_tokens=58
+[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s8c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is the American comedian that starred in the original cast of Saturday Night Live, played Lorne M'
+[prefill] prefill-__visit@deep_search.jac:380-4aff6f8ad9844300bc59c31e0d3f3350 cost_tokens=48 duration_ms=59.59
+[36m[DEBUG][0m call from deep_search#1 key='DataAnalysisAgent.data_research'
+[prefill] prefill-SummarizeData.assess_gap@252:23-8a5fde7fceb242cf9a81ad3af883192c cost_tokens=48 duration_ms=1.76 aborted=1
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s4c11-ceac07e73753432189d70ff60f2e83d7 decode_ms=475.48 output_tokens=24
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s4c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "speculative decoding cost latency reduction scenarios"}}'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s1c12-32ae4976ade8460999915e26434e6759 duration_ms=70.29 cached_tokens=432 prompt_tokens=541
+[36m[DEBUG][0m call from hover#6 key='SummarizeData.assess_gap'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-abf184aa23b34438b9100700fc3f5f00 cost_tokens=48 duration_ms=9.59 aborted=1
+[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s10c12-f2c4a4aaa3724df2b71929d03ecf5d46 decode_ms=456.83 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s10c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "multi-tenant-gpu-sharing"}}'
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s6c9-ad826dee54c142e39911e8387825c059 duration_ms=47.44 cached_tokens=368 prompt_tokens=373
+[36m[DEBUG][0m call from hover#8 key='SearchData.reason_hop'
+[prefill] prefill-SearchData.plan_query@235:25-d213abe49ae24d2d8d036b0520025eed cost_tokens=48 duration_ms=28.71 aborted=1
+[36m[DEBUG][0m call from deep_search#4 key='DataAnalysisAgent.data_research'
+[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s8c8-6f680bf116b8465489d51446eb9eb996 duration_ms=88.27 cached_tokens=176 prompt_tokens=385
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s4c12-6040677272cc432aa1d98c28b495983d duration_ms=59.11 cached_tokens=416 prompt_tokens=510
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s10c13-2921bb9b2c8845658c2eba46128387d5 duration_ms=127.25 cached_tokens=48 prompt_tokens=309
+[prefill] prefill-DeepResearch.build_report@391:23-01bd82625f0f481187dce49ac77b5e04 cost_tokens=48 duration_ms=58.01
+[prefill] prefill-FactCheckAgent.fact_check@333:33-29d504afbb4f4598924195d313ba8acc cost_tokens=48 duration_ms=59.63
+[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s12c7-c72b656f55a84cecbd2c9e6e1ae276e2 decode_ms=1663.30 output_tokens=67
+[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s12c7 typed_ok=True output='["What specific prefill-decode disaggregation techniques are discussed in the web search results and how do they relate to ttft_ms_vs_queue_depth?", "Are there '
+[36m[DEBUG][0m generate from deep_search#12 key='__visit@deep_search.jac:380'
+[prefill] prefill-SummarizeData.assess_gap@252:23-ff6bb38e6924440aa434d71f1c402f40 cost_tokens=48 duration_ms=46.24 aborted=1
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s1c12-32ae4976ade8460999915e26434e6759 decode_ms=552.55 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s1c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "model_accuracy_weight_quantization"}}'
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s6c9-ad826dee54c142e39911e8387825c059 decode_ms=492.21 output_tokens=19
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s6c9 typed_ok=True output="Lillo-Stenberg's sister is an actor. The Norwegian Theatre Association would settle this."
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s12c8-1ede267def8245729182cbef0edfbb09 duration_ms=96.39 cached_tokens=304 prompt_tokens=491
+[prefill] prefill-WebSearchAgent.web_research@291:32-98119925ef7c437dad1c533321b6fea9 cost_tokens=48 duration_ms=59.04
+[36m[DEBUG][0m call from deep_search#1 key='DeepResearch.summarize'
+[prefill] prefill-DeepResearch.build_report@391:23-521bdcf29df64083b79f0536bfc5bffb cost_tokens=48 duration_ms=23.98 aborted=1
+[36m[DEBUG][0m call from hover#6 key='Verdict.verify_claim'
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s4c12-6040677272cc432aa1d98c28b495983d decode_ms=541.77 output_tokens=22
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s4c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "speculative_decoding_cost"}}'
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s12c8-1ede267def8245729182cbef0edfbb09 decode_ms=180.86 output_tokens=10
+[36m[DEBUG][0m generate from deep_search#12 key='__visit@deep_search.jac:380'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s1c13-2ad755db8d3e4d49a7bed48984592fe6 duration_ms=156.57 cached_tokens=176 prompt_tokens=359
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s6c10-5c6277df0fb842e08de1f2fb74d4657b duration_ms=155.45 cached_tokens=400 prompt_tokens=661
+[36m[DEBUG][0m call from deep_search#4 key='DeepResearch.summarize'
+[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s12c9-666066135da64b9c889809da9eb48194 duration_ms=237.64 cached_tokens=464 prompt_tokens=760
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s4c13-5b12a2db05d2423b928c8aacb83a1126 duration_ms=104.95 cached_tokens=208 prompt_tokens=306
+[prefill] prefill-DeepResearch.build_report@391:23-550a0426ca554978883d2587556e4c8c cost_tokens=48 duration_ms=59.93
+[prefill] prefill-WebSearchAgent.web_research@291:32-52805d0d573e4cf69c3e617ec870359f cost_tokens=48 duration_ms=60.69
+[prefill] prefill-Verdict.synthesize_answer@279:26-6ba6e850194047ff86811e06097ed005 cost_tokens=48 duration_ms=60.96
+[prefill] prefill-DeepResearch.build_report@391:23-bed0ca2eaa574b6686641678da8c847f cost_tokens=9 duration_ms=61.07
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s6c10-5c6277df0fb842e08de1f2fb74d4657b decode_ms=496.91 output_tokens=21
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s6c10 typed_ok=True output='<tool_call>{"name": "open_article", "arguments": {"title": "Sonja Stenberg"}}'
+[36m[DEBUG][0m call from hover#6 key='Verdict.synthesize_answer'
+[prefill] prefill-SummarizeData.assess_gap@252:23-642fca1af03848efb8596fedf3946203 cost_tokens=48 duration_ms=25.18 aborted=1
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s6c11-63fc308aa00f4b6296f2ead7705c8949 duration_ms=91.07 cached_tokens=96 prompt_tokens=269
+[prefill] prefill-WebSearchAgent.web_research@291:32-a7ac2d2a4e44450a933a695bdc83ac4a cost_tokens=48 duration_ms=56.77
+[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s12c9-666066135da64b9c889809da9eb48194 decode_ms=554.91 output_tokens=26
+[prefill] prefill-SummarizeData.assess_gap@252:23-03e11e554d4b4802b7c06ae4f56d9f56 cost_tokens=48 duration_ms=59.88
+[prefill] prefill-Verdict.synthesize_answer@279:26-1e3f1289dba84b06bc47b17d7a7955af cost_tokens=48 duration_ms=59.96
+[prefill] prefill-Verdict.synthesize_answer@279:26-bbfa6c94d4134fd1a33c9a99d8c91a63 cost_tokens=48 duration_ms=60.05
+[36m[DEBUG][0m call from deep_search#12 key='WebSearchAgent.web_research'
+[prefill] prefill-WebSearchAgent.web_research@291:32-63b321c5306042189ce392c679b0f87c cost_tokens=48 duration_ms=44.28 aborted=1
+[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s8c8-6f680bf116b8465489d51446eb9eb996 decode_ms=1629.18 output_tokens=64
+[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s8c8 typed_ok=True output='The passages establish that the claim is true. The next hop must follow the entity "Geoffrey Owens" as he is the American comedian who starred in the original c'
+[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s12c10-3535ec04bdb64550a92e3249ef83cb11 duration_ms=92.27 cached_tokens=400 prompt_tokens=536
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-e10c82b0c275487692ae9238ffb2a30c cost_tokens=48 duration_ms=57.85
+[prefill] prefill-SummarizeData.assess_gap@252:23-20425b5474254503a764fb3206da646e cost_tokens=48 duration_ms=59.89
+[36m[DEBUG][0m call from hover#8 key='SummarizeData.assess_gap'
+[prefill] prefill-Verdict.synthesize_answer@279:26-07148da986a842f490e3ca5e51dd9eb3 cost_tokens=48 duration_ms=10.13 aborted=1
+[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s8c9-d265fe54106d40c9b438a164a538f833 duration_ms=50.81 cached_tokens=288 prompt_tokens=303
+[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s8c9-d265fe54106d40c9b438a164a538f833 decode_ms=39.51 output_tokens=3
+[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s8c9 typed_ok=True output='nothing missing'
+[prefill] prefill-SearchData.plan_query@235:25-af8a12f264184397982038689a1da7c3 cost_tokens=48 duration_ms=58.06
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-745ab2d3df494c0397583d468be373d3 cost_tokens=48 duration_ms=59.59
+[prefill] prefill-Verdict.synthesize_answer@279:26-b5b35b62f1e24629b5494a772e7b8dfe cost_tokens=48 duration_ms=60.67
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s2c10-2963197d70de4d6db1ddecfa4a5eeedb decode_ms=2908.99 output_tokens=122
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s2c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "The instrument Duff McKagan plays on Macy Gray\'s single, Kissed It is bass.", "subclaims": "'
+[36m[DEBUG][0m call from hover#2 key='Verdict.synthesize_answer'
+[prefill] prefill-Verdict.synthesize_answer@279:26-b002afe07ce24e2ea478096815a24fc1 cost_tokens=48 duration_ms=25.69 aborted=1
+[36m[DEBUG][0m call from hover#8 key='Verdict.verify_claim'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s2c11-02e2de3372d849adbed53deb025dd684 duration_ms=103.50 cached_tokens=128 prompt_tokens=362
+[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s8c10-97e236b3319e4952a59d8bf84642dfb6 duration_ms=146.09 cached_tokens=400 prompt_tokens=591
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s4c13-5b12a2db05d2423b928c8aacb83a1126 decode_ms=1413.83 output_tokens=63
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s4c13 typed_ok=True output='The research task investigates the cost of speculative decoding and under what conditions this cost is outweighed by the benefit of reducing end-to-end generati'
+[36m[DEBUG][0m call from deep_search#4 key='DeepResearch.build_report'
+[prefill] prefill-Verdict.synthesize_answer@279:26-4eaf61eec83444608e053e8f8db61a1d cost_tokens=48 duration_ms=42.59 aborted=1
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s6c11-63fc308aa00f4b6296f2ead7705c8949 decode_ms=1011.03 output_tokens=45
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s6c11 typed_ok=True output="The claim is supported. The evidence chain starts with the article about Sonja Stenberg, which leads to information about her sister Lillo-Stenberg's acting car"
+[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s12c10-3535ec04bdb64550a92e3249ef83cb11 decode_ms=651.89 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s12c10 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "prefill-decode disaggregation ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s4c14-44915035cf144e7fb1e966a8109c8201 duration_ms=68.02 cached_tokens=96 prompt_tokens=171
+[prefill] prefill-Verdict.synthesize_answer@279:26-ef4ce5d134c641bb825305a72ddd9387 cost_tokens=48 duration_ms=53.96
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s11c10-4838c27030ae406688d484169a37d5cb decode_ms=3686.90 output_tokens=152
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s11c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "Southern California Logistics Airport is 8 miles northwest of Victorville, California.", "su'
+[36m[DEBUG][0m call from hover#11 key='Verdict.synthesize_answer'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-53ee4f56a6234fc983e724a5ad46f29e cost_tokens=48 duration_ms=25.93 aborted=1
+[32m[LOG][0m hover#6 disconnected
+[36m[DEBUG][0m [guard] dropped hover#6 (7 sites served)
+[36m[DEBUG][0m call from deep_search#12 key='PaperSearchAgent.paper_research'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s11c11-d52ea19a6e274ff696560ce0465d228b duration_ms=94.81 cached_tokens=144 prompt_tokens=354
+[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s12c11-34ca3c080eef4c2e9dec05b927511f80 duration_ms=76.22 cached_tokens=416 prompt_tokens=543
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-f504e28c40664f82ba9f26a33c8e1792 cost_tokens=48 duration_ms=53.03
+[prefill] prefill-Verdict.synthesize_answer@279:26-e09755f8a6084d399ce19d20f21d0cca cost_tokens=48 duration_ms=59.23
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-098651fe0464468fa629b1b510dbec70 cost_tokens=48 duration_ms=59.18
+[prefill] prefill-Verdict.synthesize_answer@279:26-6e3d58185afe433a926c8a0c522ad46b cost_tokens=48 duration_ms=59.94
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-3177c861e6a84af3b1dc070816e2f58e cost_tokens=48 duration_ms=59.23
+[prefill] prefill-Verdict.synthesize_answer@279:26-f72f9a6b60894976bb25455334c7a8a5 cost_tokens=48 duration_ms=60.17
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s2c11-02e2de3372d849adbed53deb025dd684 decode_ms=824.16 output_tokens=36
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s2c11 typed_ok=True output="SUPPORTED: Duff McKagan is featured on Macy Gray's single, Kissed, and plays an instrument on it, which entails that the instrument he plays is bass."
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s10c13-2921bb9b2c8845658c2eba46128387d5 decode_ms=2871.11 output_tokens=120
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s10c13 typed_ok=True output='In this research task, we aim to summarize the handling of multi-tenant GPU sharing across published systems and identify the point of disagreement among them. '
+[36m[DEBUG][0m call from deep_search#10 key='DeepResearch.build_report'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-1704ae31c9e2415ba2406c5aaef1c44a cost_tokens=48 duration_ms=45.30 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-aabca0c88a7c400ab8c1a0d5dc07d09c duration_ms=89.64 cached_tokens=96 prompt_tokens=228
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-b57b8b9a87d04ddda1453653e48602df cost_tokens=48 duration_ms=54.49
+[32m[LOG][0m hover#2 disconnected
+[36m[DEBUG][0m [guard] dropped hover#2 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s12c11-34ca3c080eef4c2e9dec05b927511f80 decode_ms=596.46 output_tokens=29
+[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s12c11 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "prefill-decode disaggregation ttft_ms_vs_queue_depth"}}'
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s11c11-d52ea19a6e274ff696560ce0465d228b decode_ms=686.20 output_tokens=32
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s11c11 typed_ok=True output='NOT_SUPPORTED The passages establish that Southern California Logistics Airport is located in San Bernardino County, but do not provide information about the di'
+[prefill] prefill-Verdict.synthesize_answer@279:26-e1d3372672a043c0b2befbdbcac7f269 cost_tokens=13 duration_ms=59.38
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-fe45f566869d435da5c24f4fc304cd03 cost_tokens=48 duration_ms=58.18
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-34a94a7ae3c24f7290d7cfb19880e444 cost_tokens=48 duration_ms=58.13
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-5295b0599e2142aeb163375891876f95 cost_tokens=48 duration_ms=58.01
+[36m[DEBUG][0m call from deep_search#12 key='DataAnalysisAgent.data_research'
+[prefill] prefill-DataAnalysisAgent.data_research@319:33-9c66141d3709447ba0d6e27a4a363374 cost_tokens=48 duration_ms=6.45 aborted=1
+[32m[LOG][0m hover#11 disconnected
+[36m[DEBUG][0m [guard] dropped hover#11 (7 sites served)
+[36m[DEBUG][0m [serve] deep_search:DataAnalysisAgent.data_research:s12c12-ded49984ecd147fc9437ca0dc94a3394 duration_ms=63.91 cached_tokens=432 prompt_tokens=543
+[prefill] prefill-FactCheckAgent.fact_check@333:33-c02b370169a74d79921867bab96a6337 cost_tokens=48 duration_ms=58.28
+[prefill] prefill-FactCheckAgent.fact_check@333:33-02b2f90259a74a09a4b4725ebc2885f2 cost_tokens=48 duration_ms=58.65
+[prefill] prefill-FactCheckAgent.fact_check@333:33-4a27885114b6464e8ba2dbe1e406d3c1 cost_tokens=48 duration_ms=58.16
+[prefill] prefill-FactCheckAgent.fact_check@333:33-480132fb743a4ca2b856f8bd4ffdb298 cost_tokens=48 duration_ms=58.68
+[prefill] prefill-FactCheckAgent.fact_check@333:33-9fb57984bcbe461bbfb46e17857aa59d cost_tokens=48 duration_ms=58.86
+[prefill] prefill-FactCheckAgent.fact_check@333:33-9565709dd3b34d3d9d14357edfa39471 cost_tokens=48 duration_ms=59.11
+[prefill] prefill-FactCheckAgent.fact_check@333:33-d43c2c77154e4014935889d9c0d902b6 cost_tokens=48 duration_ms=58.93
+[36m[DEBUG][0m [decode] deep_search:DataAnalysisAgent.data_research:s12c12-ded49984ecd147fc9437ca0dc94a3394 decode_ms=438.76 output_tokens=23
+[36m[DEBUG][0m [final] deep_search:DataAnalysisAgent.data_research:s12c12 typed_ok=True output='<tool_call>{"name": "metric_series", "arguments": {"metric": "ttft_ms_vs_queue_depth"}}'
+[prefill] prefill-FactCheckAgent.fact_check@333:33-9c315df6f09f469a9420e32e5bbacb4b cost_tokens=48 duration_ms=58.70
+[prefill] prefill-FactCheckAgent.fact_check@333:33-9f1081fd9f3f4b2594ca614c179569ee cost_tokens=48 duration_ms=58.74
+[prefill] prefill-FactCheckAgent.fact_check@333:33-6928fd297b754302bf71cfb590d9418f cost_tokens=17 duration_ms=59.27
+[36m[DEBUG][0m call from deep_search#12 key='DeepResearch.summarize'
+[prefill] prefill-PaperSearchAgent.paper_research@305:34-48e8b7415a9344c58ccdba1827f76d6c cost_tokens=48 duration_ms=47.08 aborted=1
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s12c13-59f188fc232048e6b624387799581a64 duration_ms=63.13 cached_tokens=208 prompt_tokens=332
+[prefill] prefill-DeepResearch.build_report@391:23-5eab9e67d4b04387834de9482cb213d7 cost_tokens=48 duration_ms=59.13
+[prefill] prefill-DeepResearch.build_report@391:23-279d3ddaac5e4c2d9f6d5677619fc5f7 cost_tokens=48 duration_ms=59.61
+[prefill] prefill-DeepResearch.build_report@391:23-7b0e3b2e10a84255b9083f6963a6fb91 cost_tokens=9 duration_ms=60.19
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s4c14-44915035cf144e7fb1e966a8109c8201 decode_ms=2674.04 output_tokens=129
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s4c14 typed_ok=False output='{\n  "title": "Cost Analysis of Speculative Decoding in Reducing End-to-End Generation Latency",\n  "mainText": "The research task investigates the cost of specul'
+[36m[DEBUG][0m reject from deep_search#4 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s4c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='This r"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s4c14-8c184d8844b5436a806a355f241e3a05 duration_ms=68.42 cached_tokens=288 prompt_tokens=384
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s1c13-2ad755db8d3e4d49a7bed48984592fe6 decode_ms=4577.31 output_tokens=210
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s1c13 typed_ok=True output='The research task is to assess whether weight quantization or KV cache quantization is the better lever for fitting a larger model on one accelerator without lo'
+[36m[DEBUG][0m call from deep_search#1 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s1c14-1f40946eecbf45adb9608f24cf5c5470 duration_ms=101.21 cached_tokens=96 prompt_tokens=326
+[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s8c10-97e236b3319e4952a59d8bf84642dfb6 decode_ms=4101.13 output_tokens=198
+[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s8c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "An American comedian starred in the original cast of Saturday Night Live and played Lorne Mi'
+[36m[DEBUG][0m call from hover#8 key='Verdict.synthesize_answer'
+[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s8c11-43f257bc6d524e5b9c34b23d33e5997f duration_ms=134.13 cached_tokens=144 prompt_tokens=452
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-aabca0c88a7c400ab8c1a0d5dc07d09c decode_ms=4121.36 output_tokens=202
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Research Report on Multi-Tenant GPU Sharing Across Published Systems",\n  "mainText": "In this research task, we aim to summarize the handling of m'
+[36m[DEBUG][0m reject from deep_search#10 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s10c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s10c14-c8e764ce3d914f4f85c2835f24cb6f7a duration_ms=68.77 cached_tokens=416 prompt_tokens=515
+[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s8c11-43f257bc6d524e5b9c34b23d33e5997f decode_ms=1029.04 output_tokens=53
+[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s8c11 typed_ok=True output='SUPPORTED: The claim is supported by the evidence that Geoffrey Owens, an American comedian, starred in the original cast of Saturday Night Live, played Lorne M'
+[32m[LOG][0m hover#8 disconnected
+[36m[DEBUG][0m [guard] dropped hover#8 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s4c14-8c184d8844b5436a806a355f241e3a05 decode_ms=2647.61 output_tokens=129
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s4c14 typed_ok=False output='{\n  "title": "Cost Analysis of Speculative Decoding in Reducing End-to-End Generation Latency",\n  "mainText": "The research task investigates the cost of specul'
+[32m[LOG][0m deep_search#4 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#4 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s12c13-59f188fc232048e6b624387799581a64 decode_ms=4768.17 output_tokens=237
+[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s12c13 typed_ok=True output='The research task is to determine if the series "ttft_ms_vs_queue_depth" supports the claim that prefill-decode disaggregation helps in holding tail latency und'
+[36m[DEBUG][0m call from deep_search#12 key='DeepResearch.build_report'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s12c14-a09d3f2b29124777affc4ae2e143d9cc duration_ms=130.49 cached_tokens=96 prompt_tokens=353
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s1c14-1f40946eecbf45adb9608f24cf5c5470 decode_ms=5580.97 output_tokens=279
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s1c14 typed_ok=False output='{\n  "title": "Weight Quantization vs KV Cache Quantization for Fitting Larger Models on One Accelerator",\n  "mainText": "The research task is to assess whether '
+[36m[DEBUG][0m reject from deep_search#1 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s1c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='Weight"
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s1c14-cb00fd4ff7b84f4db55ff9d27621b016 duration_ms=68.15 cached_tokens=592 prompt_tokens=690
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s10c14-c8e764ce3d914f4f85c2835f24cb6f7a decode_ms=3991.67 output_tokens=202
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s10c14 typed_ok=False output='{\n  "title": "Research Report on Multi-Tenant GPU Sharing Across Published Systems",\n  "mainText": "In this research task, we aim to summarize the handling of m'
+[32m[LOG][0m deep_search#10 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#10 (7 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s12c14-a09d3f2b29124777affc4ae2e143d9cc decode_ms=6335.59 output_tokens=328
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s12c14 typed_ok=False output='{\n  "title": "Analysis of \'ttft_ms_vs_queue_depth\' for Pre-fill Decode Disaggregation Impact",\n  "mainText": "The research task is to determine if the series \'t'
+[36m[DEBUG][0m reject from deep_search#12 key=None
+[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s12c14 feedback='Failed to convert LLM output to \'ResearchReport\': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value="The re'
+[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s12c14-13688c4930c24e9594b94afeb80e8731 duration_ms=68.24 cached_tokens=672 prompt_tokens=767
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s1c14-cb00fd4ff7b84f4db55ff9d27621b016 decode_ms=5384.33 output_tokens=279
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s1c14 typed_ok=False output='{\n  "title": "Weight Quantization vs KV Cache Quantization for Fitting Larger Models on One Accelerator",\n  "mainText": "The research task is to assess whether '
+[32m[LOG][0m deep_search#1 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#1 (8 sites served)
+[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s12c14-13688c4930c24e9594b94afeb80e8731 decode_ms=6391.82 output_tokens=328
+[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s12c14 typed_ok=False output='{\n  "title": "Analysis of \'ttft_ms_vs_queue_depth\' for Pre-fill Decode Disaggregation Impact",\n  "mainText": "The research task is to determine if the series \'t'
+[32m[LOG][0m deep_search#12 disconnected
+[36m[DEBUG][0m [guard] dropped deep_search#12 (7 sites served)
+(EngineCore pid=646053) INFO 08-24 17:11:41 [core.py:1210] Shutdown initiated (timeout=0)
+(EngineCore pid=646053) INFO 08-24 17:11:41 [core.py:1233] Shutdown complete

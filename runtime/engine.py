@@ -7,7 +7,7 @@ import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
 from vllm.engine.arg_utils import AsyncEngineArgs
-from vllm.inputs import TokensPrompt
+from vllm.inputs import TextPrompt, TokensPrompt
 from vllm.logprobs import Logprob
 from vllm.sampling_params import SamplingParams
 from vllm.v1.engine.async_llm import AsyncLLM
@@ -76,13 +76,28 @@ class ModelEngine:
     def render(self, messages: List[Dict[str, str]]) -> str:
         return self.engine.get_tokenizer().apply_chat_template(messages, tokenize=False, add_generation_prompt=True) #type: ignore
 
+    @staticmethod
+    def _with_salt(prompt: Any, cache_salt: Optional[str]) -> Any:
+        """Attach a prefix-cache salt: requests with different salts never share
+        cached blocks, which is how one workflow instance's KV cache is kept
+        invisible to every other instance (FaaS-style isolation)."""
+        if not cache_salt:
+            return prompt
+        if isinstance(prompt, str):
+            return TextPrompt(prompt=prompt, cache_salt=cache_salt)  # type: ignore[call-arg]
+        if isinstance(prompt, dict):
+            return {**prompt, "cache_salt": cache_salt}
+        return prompt
+
     async def generate(
         self,
         prompt: str,
         request_id: str,
         sampling_params: SamplingParams | None = None,
+        cache_salt: Optional[str] = None,
     ) -> str:
         text = ""
+        prompt = self._with_salt(prompt, cache_salt)
         started = time.perf_counter()
         first_token_at = started
         first_token = True
@@ -143,7 +158,8 @@ class ModelEngine:
             self._spec_inflight = False
             self._spec_task = None
 
-    async def prefill(self, prefill_prompt: str | List[int], request_id: str, cost: int | None = None) -> bool:
+    async def prefill(self, prefill_prompt: str | List[int], request_id: str, cost: int | None = None,
+                      cache_salt: Optional[str] = None) -> bool:
         """`cost` is the caller's estimate of uncached tokens; defaults to full length.
         Returns False when a real admission killed the request before it completed;
         the caller must not count those tokens as warm."""
@@ -154,6 +170,7 @@ class ModelEngine:
             prefill_prompt = TokensPrompt(prompt_token_ids=prefill_prompt) #type: ignore[call-arg]
         elif cost is None:
             cost = len(self.tokenize(prefill_prompt))
+        prefill_prompt = self._with_salt(prefill_prompt, cache_salt)
         done = await self._speculative(prefill_prompt, sampling_params, request_id) is not None
         # An aborted request keeps its cost in the log line: it may have spent a step
         # before the abort landed, so the spend accounting errs conservative.
@@ -164,7 +181,8 @@ class ModelEngine:
         )
         return done
 
-    async def probe(self, prompt: str, request_id: str, cost: int = 64) -> Optional[Dict[int, Logprob]]:
+    async def probe(self, prompt: str, request_id: str, cost: int = 64,
+                    cache_salt: Optional[str] = None) -> Optional[Dict[int, Logprob]]:
         """Greedy one-token probe; returns the top logprobs at the first position.
         The prompt rides the router's own just-computed prefix, so its uncached
         cost is a few think-block tokens. None when a real prefill owns the step
@@ -172,7 +190,7 @@ class ModelEngine:
         if self._real_prefills > 0:
             return None
         sampling_params = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
-        output = await self._speculative(prompt, sampling_params, request_id)
+        output = await self._speculative(self._with_salt(prompt, cache_salt), sampling_params, request_id)
         if output is None:
             return None
         if output.outputs and output.outputs[0].logprobs:

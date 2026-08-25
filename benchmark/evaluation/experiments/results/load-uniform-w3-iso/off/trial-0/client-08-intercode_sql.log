@@ -1,0 +1,13 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+TASK: ic-sql-0211 | db: car_1 | hardness: extra
+QUESTION: Find the model of the car whose weight is below the average weight.
+SQL: SELECT T2.Model FROM CARS_DATA AS T1 JOIN CAR_NAMES AS T2 ON T1.Id = T2.MakeId WHERE T1.Weight < (SELECT AVG(Weight) FROM CARS_DATA)
+RESULT: OK: 12 rows
+('chevrolet',)
+('buick',)
+('plymouth',)
+('amc',)
+('ford',)
+... 7 more rows
+ANSWER: The models of the cars whose weight is below the average weight are 'chevrolet', 'buick', 'plymouth', and 'amc', among others.
+VERDICT: task=ic-sql-0211 hardness=extra turns=1 match=MATCH

@@ -119,6 +119,32 @@ python build/build_deep_search.py      # 约 150 次 API 调用，带限速与�
 
 ---
 
+## 多租户冷启动的混合采样
+
+`../synthesis_data.py` 从这三个包中采样出一份 blend——它是一张调度表，而不是数据副本，因为
+每个租户会自己加载数据包、并按索引选取用例：
+
+```bash
+python benchmark/evaluation/synthesis_data.py --blend-ratio 0.5,0.3,0.2 \
+    --size 12 --trials 5 --mode multi --window 3
+```
+
+`--blend-ratio` 按 `--tenants` 的顺序解读，用最大余数法把一次 trial 的 `--size` 个工作流分配
+给各租户。用例取自每个租户带固定种子的排列，并在多个 trial 之间连续消费，因此只有在整个数据包
+用完之后才会重复（5 个 trial × 每次 6 个 hover 工作流，恰好把 30 条用例各跑一遍）。输出的
+JSON 包含：
+
+- `meta`——种子、比例、每个 trial 的分配数量，以及索引所指向的每个数据包的文件名与 SHA-1，
+  让一份 blend 与它所基于的数据版本绑定；
+- `server.programs`——传给 `start_server.py` 的 `--program name:path:port` 参数，且只列出
+  这份 blend 真正用到的租户；
+- `trials[].entries[]`——每个工作流一条：`tenant`、`jac_file`、`port`、`case_index`、
+  `case_id`、`strata`、运行所需的 `env`，以及 `start_offset_s`（`multi` 模式下按窗口均匀展开，
+  `single` 模式下为 `null`，此时按 `order` 顺序执行）；
+- `summary`——各租户的工作流数量、实际用到的不同用例数，以及最终的分层分布。
+
+相同的种子与相同的数据包会产出逐字节一致的结果。
+
 ## 出处与许可
 
 - HoVer —— Jiang 等，*HoVer: A Dataset for Many-Hop Fact Extraction And Claim

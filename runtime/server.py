@@ -18,7 +18,7 @@ from console_helper.debug_output import console_debug, console_log, console_warn
 _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.DOTALL)
 
 Bindings = Dict[str, str]  # param name -> repr, insertion order = warm prefix order
-WarmKey = Tuple[str, Tuple[Tuple[str, str], ...]]  # (callsite uuid, bindings) = the warmed bytes
+WarmKey = Tuple[str, Tuple[Tuple[str, str], ...], Optional[str]]  # (callsite uuid, bindings, cache salt) = the warmed bytes
 
 
 @dataclass
@@ -32,6 +32,7 @@ class _CallState:
     pending_tool_text: Optional[str] = None  # assistant turn awaiting a tool_result
     turn_warm: Optional[Tuple[str, int]] = None  # (tool-turn tag, tokens warmed so far)
     route_plan: Optional[List[ByLLMCallsite]] = None  # visit successors, ranked once per call
+    cache_salt: Optional[str] = None  # this instance's prefix-cache salt (None = shared cache)
     inbox: asyncio.Queue[Optional[ByLLMRequest]] = field(default_factory=asyncio.Queue)
 
 
@@ -46,6 +47,7 @@ class _SessionState:
     done: set[str] = field(default_factory=set)  # callsite keys served in this instance
     bindings: Dict[str, Bindings] = field(default_factory=dict)  # callsite uuid -> ready params
     last_call: Optional[_CallState] = None  # final sent, next frame not yet seen
+    cache_salt: Optional[str] = None  # per-instance prefix-cache salt under cache isolation
 
 
 class GuardServer:
@@ -55,6 +57,7 @@ class GuardServer:
         self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True,
         spec_policy: str = "global", spec_chunk: int = 128,
         spec_features: Optional[set] = None, spec_order: str = "static",
+        cache_isolation: str = "none",
     ):
         # Ablation switches. Features are the compile-time facts speculation may
         # use beyond the may-run-next topology itself: const/ret parameter
@@ -84,6 +87,13 @@ class GuardServer:
         self._spec_policy = spec_policy  # "global" | "newest" (ablation: pre-multi-tenant behavior)
         self._spec_chunk = spec_chunk  # max uncached tokens per speculative prefill request
         self._engine_idle_interval = 0.01
+        if cache_isolation not in ("none", "instance"):
+            raise ValueError("cache_isolation must be none or instance")
+        # instance: every workflow instance (client connection) gets its own
+        # prefix-cache salt, so no instance ever hits blocks another one computed —
+        # the FaaS setting where a task's KV cache dies with the task. Speculative
+        # prefills carry the salt of the instance they are issued for.
+        self._cache_isolation = cache_isolation
 
     def add_program(self, program_name: str, src_path: str, port: int) -> None:
         self._programs[program_name] = ProgramTopology(program_name, src_path)
@@ -129,19 +139,26 @@ class GuardServer:
 
     # ---- per-instance state -------------------------------------------------
 
+    def _new_session_state(self, session: ClientSession) -> _SessionState:
+        salt = f"{session.program_name}#{session.session_id}" if self._cache_isolation == "instance" else None
+        return _SessionState(cache_salt=salt)
+
     def _session(self, session: ClientSession) -> _SessionState:
-        return self._sessions.setdefault(session.session_id, _SessionState())
+        sess = self._sessions.get(session.session_id)
+        if sess is None:
+            sess = self._sessions[session.session_id] = self._new_session_state(session)
+        return sess
 
     @staticmethod
-    def _warm_key(site: ByLLMCallsite, bindings: Bindings) -> WarmKey:
-        return site.callsite_uuid, tuple(bindings.items())
+    def _warm_key(site: ByLLMCallsite, bindings: Bindings, salt: Optional[str] = None) -> WarmKey:
+        return site.callsite_uuid, tuple(bindings.items()), salt
 
     def _forget_site(self, sess: _SessionState, site: ByLLMCallsite) -> None:
         """Drop an instance's bindings for a site once it has been served (or the
         instance is gone) and the warm entry those bytes had."""
         bindings = sess.bindings.pop(site.callsite_uuid, None)
         if bindings is not None:
-            self._warm_tokens.pop(self._warm_key(site, bindings), None)
+            self._warm_tokens.pop(self._warm_key(site, bindings, sess.cache_salt), None)
 
     async def _drop_session(self, session: ClientSession) -> None:
         """The instance's connection closed: release every call waiting on it and
@@ -154,7 +171,7 @@ class GuardServer:
             return
         program = self._programs.get(session.program_name)
         for site_uuid, bindings in sess.bindings.items():
-            self._warm_tokens.pop((site_uuid, tuple(bindings.items())), None)
+            self._warm_tokens.pop((site_uuid, tuple(bindings.items()), sess.cache_salt), None)
         console_debug(f"[guard] dropped {session.tag}"
                       + (f" ({len(sess.done)} sites served)" if program else ""))
 
@@ -210,7 +227,8 @@ class GuardServer:
             if cost <= 0:
                 state.turn_warm = (tag, warmed)
                 return False
-            if not await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost):
+            if not await self._engine.prefill(ids[: warmed + cost], f"prefill-{tag}-{uuid.uuid4().hex}", cost,
+                                              cache_salt=state.cache_salt):
                 state.turn_warm = (tag, warmed)  # killed by a real admission: resume here next tick
                 return False
             warmed += cost
@@ -270,14 +288,15 @@ class GuardServer:
                     }
                     site.incremental_prompt(bindings, constants)
                 ids = self._engine.tokenize(self._engine.render(site.get_ready_prompt(bindings)))
-                key = self._warm_key(site, bindings)
+                key = self._warm_key(site, bindings, sess.cache_salt)
                 warmed = self._warm_tokens.get(key, 0)
                 if warmed < len(ids):
                     cost = min(self._spec_chunk, self._engine.spec_allowance(), len(ids) - warmed)
                     if cost <= 0:
                         return
                     if not await self._engine.prefill(
-                        ids[: warmed + cost], f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost
+                        ids[: warmed + cost], f"prefill-{site.callsite_uuid}-{uuid.uuid4().hex}", cost,
+                        cache_salt=sess.cache_salt,
                     ):
                         return  # killed by a real admission; progress so far stays recorded
                     warmed += cost
@@ -298,7 +317,7 @@ class GuardServer:
                 if request.type == "register":
                     if request.program_name not in self._programs:
                         raise ValueError(f"unknown program {request.program_name!r}")
-                    self._sessions[session.session_id] = _SessionState()
+                    self._sessions[session.session_id] = self._new_session_state(session)
                     continue
 
                 if request.type == "disconnect":
@@ -354,11 +373,12 @@ class GuardServer:
         )
 
     async def _complete(
-        self, messages: list[dict[str, str]], sampling: SamplingParams, tag: str
+        self, messages: list[dict[str, str]], sampling: SamplingParams, tag: str,
+        cache_salt: Optional[str] = None,
     ) -> str:
         prompt = self._engine.render(messages)
         async with self._generation_slots:
-            return await self._engine.generate(prompt, f"{tag}-{uuid.uuid4().hex}", sampling)
+            return await self._engine.generate(prompt, f"{tag}-{uuid.uuid4().hex}", sampling, cache_salt=cache_salt)
 
     @staticmethod
     def _parse_tool_call(text: str) -> dict:
@@ -401,7 +421,7 @@ class GuardServer:
             request.args or {}, request.nest_scope_desc, sess.bindings.get(site.callsite_uuid)
         )
         call_id:int = request.id  #type: ignore
-        state = _CallState(session, request, site, messages, sess.done)
+        state = _CallState(session, request, site, messages, sess.done, cache_salt=sess.cache_salt)
         state_key = (session.session_id, call_id)
         if state_key in self._calls:
             raise ValueError(f"duplicate call id {call_id}")
@@ -416,7 +436,7 @@ class GuardServer:
         try:
             iterations = 0
             while True:
-                text = await self._complete(state.messages, sampling, tag)
+                text = await self._complete(state.messages, sampling, tag, sess.cache_salt)
 
                 if site.decl.tools:
                     tool_call = self._parse_tool_call(text)
@@ -559,11 +579,12 @@ class GuardServer:
                         request.messages,
                         self._sampling_params(request),
                         f"{request.program_name}:generate:s{session.session_id}c{request.id}",
+                        self._session(session).cache_salt,
                     ),
                 })
                 return
             sess = self._session(session)
-            state = _CallState(session, request, site, list(request.messages), sess.done)
+            state = _CallState(session, request, site, list(request.messages), sess.done, cache_salt=sess.cache_salt)
             # Registered before generation so that the idle window *after* the
             # router answers finds it as the current call and speculates on the
             # node abilities the chosen candidate may run.
@@ -573,6 +594,7 @@ class GuardServer:
                     request.messages,
                     self._sampling_params(request, site),
                     f"{request.program_name}:{site.key}:s{session.session_id}c{request.id}",
+                    sess.cache_salt,
                 )
             except Exception:
                 self._calls.pop((session.session_id, request.id), None)

@@ -1,0 +1,8 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+TASK: ic-sql-0500 | db: car_1 | hardness: extra
+QUESTION: Which of the countries has the most car makers? List the country name.
+SQL: SELECT COUNTRIES.CountryName FROM CAR_MAKERS JOIN COUNTRIES ON CAR_MAKERS.Country = COUNTRIES.CountryId GROUP BY COUNTRIES.CountryName ORDER BY COUNT(CAR_MAKERS.Id) DESC LIMIT 1
+RESULT: OK: 1 rows
+('japan',)
+ANSWER: The country with the most car makers is 'japan'.
+VERDICT: task=ic-sql-0500 hardness=extra turns=1 match=MATCH

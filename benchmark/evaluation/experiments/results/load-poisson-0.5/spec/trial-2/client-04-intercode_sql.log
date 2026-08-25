@@ -1,0 +1,8 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+TASK: ic-sql-0127 | db: concert_singer | hardness: extra
+QUESTION: What is the name and capacity of the stadium with the most concerts after 2013 ?
+SQL: SELECT T3.Name, T3.Capacity FROM concert AS T1 JOIN stadium AS T3 ON T1.Stadium_ID = T3.Stadium_ID WHERE T1.Year > '2013' GROUP BY T3.Stadium_ID ORDER BY COUNT(*) DESC LIMIT 1
+RESULT: OK: 1 rows
+('Somerset Park', 11998)
+ANSWER: The stadium with the most concerts after 2013 is 'Somerset Park' with a capacity of 11998.
+VERDICT: task=ic-sql-0127 hardness=extra turns=1 match=MATCH

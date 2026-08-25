@@ -32,6 +32,8 @@ async def main() -> None:
     parser.add_argument("--profile-slack", type=float, default=0.10, help="TBT slack for --profile")
     parser.add_argument("--profile-stat", choices=["tbt_mean_ms", "tbt_p95_ms"], default="tbt_mean_ms")
     parser.add_argument("--workers", type=int, default=4)
+    parser.add_argument("--cache-isolation", choices=["none", "instance"], default="none",
+                        help="instance: each workflow instance gets its own prefix-cache salt; no KV block is shared across instances")
     parser.add_argument("--gpu-mem", type=float, default=0.9)
     parser.add_argument("--max-model-len", type=int, default=8192)
     args = parser.parse_args()
@@ -59,8 +61,9 @@ async def main() -> None:
         spec_features=set() if args.spec_features == "none"
         else {f.strip() for f in args.spec_features.split(",") if f.strip()},
         spec_order=args.spec_order,
+        cache_isolation=args.cache_isolation,
     )
-    print(f"[guard] spec_features={sorted(server._spec_features)} spec_order={args.spec_order}", flush=True)
+    print(f"[guard] spec_features={sorted(server._spec_features)} spec_order={args.spec_order} cache_isolation={args.cache_isolation}", flush=True)
     for program in args.program:
         name, source, port = program.rsplit(":", 2)
         server.add_program(name, source, int(port))

@@ -90,7 +90,8 @@ class RoutingSpeculate:
                 state.messages, tokenize=False, add_generation_prompt=True, enable_thinking=False #type: ignore
             )
             top = await self.engine.probe(
-                probe_prompt, f"probe-{state.site.callsite_uuid}-{uuid.uuid4().hex}" #type: ignore
+                probe_prompt, f"probe-{state.site.callsite_uuid}-{uuid.uuid4().hex}", #type: ignore
+                cache_salt=getattr(state, "cache_salt", None),
             )
             if top is None:
                 return None

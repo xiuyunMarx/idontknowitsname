@@ -1,0 +1,12 @@
+INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+TASK: ic-sql-0202 | db: world_1 | hardness: medium
+QUESTION: For the countries founded before 1930, what is the total number of distinct official languages?
+SQL: SELECT COUNT(DISTINCT T2.Language) 
+FROM country AS T1 
+INNER JOIN countrylanguage AS T2 
+ON T1.Code = T2.CountryCode 
+WHERE T1.IndepYear < 1930
+RESULT: OK: 1 rows
+(153,)
+ANSWER: For the countries founded before 1930, the total number of distinct official languages is 153.
+VERDICT: task=ic-sql-0202 hardness=medium turns=2 match=MISMATCH

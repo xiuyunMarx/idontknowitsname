@@ -137,6 +137,32 @@ rest need the sub-question a planner writes, which is the work the tenant is the
 
 ---
 
+## Blending for multi-tenant cold start
+
+`../synthesis_data.py` samples these packs into a blend — a schedule, not a copy of the
+data, since each tenant loads its own pack and selects a case by index:
+
+```bash
+python benchmark/evaluation/synthesis_data.py --blend-ratio 0.5,0.3,0.2 \
+    --size 12 --trials 5 --mode multi --window 3
+```
+
+`--blend-ratio` is read in `--tenants` order and splits one trial's `--size` workflows
+by largest remainder. Cases come from a seeded per-tenant permutation consumed across
+trials, so a case repeats only after its pack is exhausted (5 trials x 6 hover
+workflows covers all 30 exactly once). The written JSON carries:
+
+- `meta` — seed, ratios, per-trial counts, and the file and SHA-1 of every pack the
+  indices point into, so a blend is tied to the data version it was built from;
+- `server.programs` — the `--program name:path:port` arguments for `start_server.py`,
+  listing only the tenants the blend actually uses;
+- `trials[].entries[]` — one workflow each: `tenant`, `jac_file`, `port`, `case_index`,
+  `case_id`, `strata`, the `env` to run it with, and `start_offset_s` (spread over the
+  window in `multi` mode, `null` in `single` mode, where entries run in `order`);
+- `summary` — per-tenant counts, distinct cases used, and the strata mix that resulted.
+
+Same seed and same packs give byte-identical output.
+
 ## Provenance and licences
 
 - HoVer — Jiang et al., *HoVer: A Dataset for Many-Hop Fact Extraction And Claim
