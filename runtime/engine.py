@@ -38,16 +38,6 @@ class ModelEngine:
         return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
 
     def spec_allowance(self) -> int:
-        """Uncached tokens the next speculative request may carry right now.
-        A real prefill in flight already owns the step: nothing.
-        Idle engine: unbounded.
-        Otherwise the decode-only batch has compute slack up to the profiled per-step figure for its concurrency.
-
-        The real-prefill test comes before the idle test on purpose: a real
-        request is counted here from the moment generate() is entered, whereas
-        the engine's own view of it lags admission (AsyncLLM.add_request awaits
-        before the output processor registers the request), so an idle-looking
-        engine may already have a real request on the way."""
         if self._spec_inflight or self._real_prefills > 0:
             return 0
         if not self.engine.output_processor.has_unfinished_requests():
@@ -297,7 +287,7 @@ class ModelEngine:
     async def _profile(
         self,
         *,
-        tbt_slack: float = 0.10,
+        tbt_slack: float = 0.05,
         max_decode_tasks: int = 16,
         step_tokens: Tuple[int, ...] = (16, 32, 48, 64, 96, 128, 192, 256),
         decode_tokens: int = 128,

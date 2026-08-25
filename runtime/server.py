@@ -4,14 +4,17 @@ import random
 import re
 import time
 import uuid
+import os
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-from vllm.sampling_params import SamplingParams
+from vllm.sampling_params import SamplingParams, StructuredOutputsParams
 
 from runtime.engine import ModelEngine
-from runtime.routing_speculate import RoutingSpeculate
+from runtime.routing_speculate import RoutingSpeculate, inner_json_schema, parse_answer_handles
 from utils.jac_static_parser import ProgramTopology, ByLLMCallsite
+from utils.utils import ROUTE_ZONE_LABEL
 from utils.interceptor_receiver import InterceptorLLMBackend, ClientSession, ByLLMRequest
 from console_helper.debug_output import console_debug, console_log, console_warn, console_error
 
@@ -32,6 +35,7 @@ class _CallState:
     pending_tool_text: Optional[str] = None  # assistant turn awaiting a tool_result
     turn_warm: Optional[Tuple[str, int]] = None  # (tool-turn tag, tokens warmed so far)
     route_plan: Optional[List[ByLLMCallsite]] = None  # visit successors, ranked once per call
+    route_probe: Optional[List[Tuple[str, float]]] = None  # probe ranking (handle, logprob); [] = no signal
     cache_salt: Optional[str] = None  # this instance's prefix-cache salt (None = shared cache)
     inbox: asyncio.Queue[Optional[ByLLMRequest]] = field(default_factory=asyncio.Queue)
 
@@ -57,12 +61,17 @@ class GuardServer:
         self, engine: ModelEngine, num_workers: int = 4, proactive_prefill: bool = True,
         spec_policy: str = "global", spec_chunk: int = 128,
         spec_features: Optional[set] = None, spec_order: str = "static",
-        cache_isolation: str = "none",
+        cache_isolation: str = "none", route_layout: str = "cache",
     ):
-        # Ablation switches. Features are the compile-time facts speculation may
-        # use beyond the may-run-next topology itself: const/ret parameter
-        # provenance, the in-flight call's own tool turn, and the route probe.
-        # With none of them, only each successor's invariant (anchor) is warmed.
+        if route_layout not in ("cache", "default"):
+            raise ValueError("route_layout must be cache or default")
+        # The routing prompt's zone order is a property of this server: the
+        # static pass (route_layout()) and route_visit on every client must
+        # agree on it byte for byte, so it is announced in the `registered`
+        # frame and clients adopt it — the client's own environment never
+        # decides it.
+        self._route_layout = route_layout
+        os.environ["JAC_ROUTE_CACHE_LAYOUT"] = "1" if route_layout == "cache" else "0"
         self._spec_features = self.SPEC_FEATURES if spec_features is None else set(spec_features)
         unknown = self._spec_features - self.SPEC_FEATURES
         if unknown:
@@ -318,6 +327,11 @@ class GuardServer:
                     if request.program_name not in self._programs:
                         raise ValueError(f"unknown program {request.program_name!r}")
                     self._sessions[session.session_id] = self._new_session_state(session)
+                    await session.send({
+                        "type": "registered",
+                        "route_layout": self._route_layout,
+                        "spec_features": sorted(self._spec_features),
+                    })
                     continue
 
                 if request.type == "disconnect":
@@ -370,7 +384,21 @@ class GuardServer:
             temperature=float( requested_temperature if temperature is None else temperature),
             stop=stop,
             include_stop_str_in_output=include_stop,
+            structured_outputs=self._structured_outputs(request.schema),
         )
+
+    @staticmethod
+    def _structured_outputs(schema: Optional[dict]) -> Optional[StructuredOutputsParams]:
+        """Grammar for the client's `response_format` (the schema byllm validates
+        the answer against). Without it a routing or typed call is decoded free
+        and its first answer fails typed-output validation; the client then
+        re-sends the call with a feedback turn, a second full serve."""
+        if not isinstance(schema, dict):
+            return None
+        if schema.get("type") == "json_object":
+            return StructuredOutputsParams(json_object=True)
+        inner = inner_json_schema(schema)
+        return StructuredOutputsParams(json=inner) if inner is not None else None
 
     async def _complete(
         self, messages: list[dict[str, str]], sampling: SamplingParams, tag: str,
@@ -585,6 +613,7 @@ class GuardServer:
                 return
             sess = self._session(session)
             state = _CallState(session, request, site, list(request.messages), sess.done, cache_salt=sess.cache_salt)
+            self._check_route_layout(request, site)
             # Registered before generation so that the idle window *after* the
             # router answers finds it as the current call and speculates on the
             # node abilities the chosen candidate may run.
@@ -600,10 +629,58 @@ class GuardServer:
                 self._calls.pop((session.session_id, request.id), None)
                 raise
             state.done.add(site.key)
+            self._route_answered(state, site, text)
             await session.send({"type": "result", "id": request.id, "text": text})
             sess.last_call = state
         except Exception as exc:
             await session.send({"type": "error", "id": request.id, "error": str(exc)})
+
+    @staticmethod
+    def _check_route_layout(request: ByLLMRequest, site: ByLLMCallsite) -> None:
+        """Parity guard: the zone order in the client's routing prompt must be
+        the order the static pass assumed (`decl.zones`), or the warmed zone
+        prefix is not a prefix of the served bytes. Logged per routing call."""
+        labels = {zone: ROUTE_ZONE_LABEL[zone] for zone in ("walker", "here", "candidates")}
+        marker = labels["candidates"] + "\n"
+        content = next(
+            (str(m.get("content") or "") for m in reversed(request.messages or [])
+             if m.get("role") == "user" and marker in str(m.get("content") or "")),
+            "",
+        )
+        observed = sorted(
+            (zone for zone, label in labels.items() if label + "\n" in content),
+            key=lambda zone: content.index(labels[zone] + "\n"),
+        )
+        expected = [zone for zone in site.decl.zones if zone in observed]
+        console_debug(
+            f"[route-layout] {request.program_name}:{site.key}:s?c{request.id} "
+            f"observed={observed} expected={expected} match={int(observed == expected)}"
+        )
+
+    def _route_answered(self, state: _CallState, site: ByLLMCallsite, text: str) -> None:
+        """The router has chosen: score the probe's ranking against the answer
+        and re-plan the warm list so the idle window after the answer warms the
+        chosen candidates' first calls, in answer order, ahead of the rest."""
+        handles = parse_answer_handles(text)
+        tag = f"{state.request.program_name}:{site.key}:s{state.session.session_id}c{state.request.id}"
+        probe = state.route_probe
+        if probe:
+            ranked = [h for h, _ in probe]
+            hit = bool(handles) and ranked[0] in handles
+            console_debug(
+                f"[route] {tag} answer={handles} probe={ranked} hit={int(hit)} "
+                f"first_ok={int(bool(handles) and ranked[0] == handles[0])}"
+            )
+        else:
+            console_debug(
+                f"[route] {tag} answer={handles} probe={'no-signal' if probe == [] else 'none'}"
+            )
+        if handles:
+            program = self._programs.get(state.request.program_name or "")
+            if program is not None:
+                plan = self._speculate.plan_from_answer(state, program, handles)
+                if plan:
+                    state.route_plan = plan
 
     def show_info(self, program_name: str):
         if program_name not in self._programs:

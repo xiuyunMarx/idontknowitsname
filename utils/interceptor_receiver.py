@@ -58,7 +58,7 @@ _REQUIRED: Dict[str, Tuple[str, ...]] = {
 # Wire layout per frame type, in protocol order ("self" maps to nest_scope_desc).
 _WIRE_FIELDS: Dict[str, Tuple[str, ...]] = {
     "register": ("program_name", "pid", "model_name"),
-    "call": ("id", "key", "site", "program_name", "pid", "args", "self", "call_params"),
+    "call": ("id", "key", "site", "program_name", "pid", "args", "self", "schema", "call_params"),
     "tool_result": ("call", "content"),
     "reject": ("call", "feedback"),
     "generate": ("id", "key", "site", "program_name", "pid", "messages", "schema", "temperature", "max_tokens", "stop"),

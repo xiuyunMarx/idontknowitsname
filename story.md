@@ -1,27 +1,5 @@
-# Intro
-
-The integration of large language models (LLMs) into programming languages has emerged as an active research direction. Rather than treating model invocation as an external API call surrounded by ad hoc string manipulation, systems such as byLLM, Cotlins, and NVIDIA OOOA expose LLM-backed computation through dedicated language constructs, type information, and runtime support [byLLM, Cotlins, NVIDIA OOOA]. These abstractions address several limitations of conventional LLM application development: prompts assembled through string concatenation are opaque to program analysis, model outputs require defensive parsing, and control flow that interleaves deterministic computation with probabilistic generation is difficult to express, test, and optimize. By making the relationship between program state and model invocation explicit, LLM-integrated languages improve programmability and recover semantic structure that is unavailable in an ordinary API request.
-
-This structure, however, is typically lost at the boundary between the language runtime and the model-serving system. A compiler may know the identity and type of an LLM-backed function, the callsites that can execute after it, and the program values that will flow into downstream calls. The language runtime may further know exactly how those elements are serialized into a prompt. Yet the serving layer receives only a completed token sequence and schedules it as an opaque request. Consequently, information extracted to make an LLM application easier to program is not reused to make that application faster to serve.
-
-Recent agent-serving systems recover part of this missing structure from execution history. PBKV trains a workload-specific, multi-step predictor on offline workflow traces and uses its predictions for KV-cache eviction and prefetching. Pythia mines annotated historical traces into workflow and prompt profiles, and explicitly routes new or changed workflows through a reactive shadow-profiling phase until those profiles become reliable. CacheScout avoids offline training but learns agent-transition probabilities online; before sufficient transitions have been observed, its predictive signal is weak and its cache policy relies primarily on recency. These systems retain deterministic safeguards, but their prediction-driven optimizations require an execution-derived prior [PBKV, Pythia, CacheScout]. When a workflow is first deployed, or when its control flow, agent roster, prompt schema, or coordination policy changes, such a prior may be unavailable or stale. We call this regime *history-free workflow cold start*: the first executions of a workflow after the model is already serving but before a reliable execution profile has been accumulated.
 
 
-
-We make the following contributions:
-1. We identify a previously unused compiler-to-serving interface and characterize how compiler-derived value readiness exposes KV-cache reuse opportunities without execution history.
-2. We develop a compiler-runtime co-design that turns progressively available program information into exact usable runtime serving information.
-3. We design a slack-aware runtime serving mechanism that turns serving idle into proactive prefilling oppotunities. 
-
-# Motivation
-
-LLM-integrated programming languages offer a complementary source of predictability that is available in this regime: the program itself. We use byLLM as a canonical setting. ByLLM's compiler materializes program semantics in an intermediate representation and its runtime constructs prompts by binding dynamic program values to that representation. This design exposes information that a trace-driven serving layer must otherwise infer.
-
-In particular, we have the following observations.
-1. A major part of prompt in byLLM framework can be duduced during compile time.
-2. Arguments for a LLM call might be ready a long time before the call site. 
-
-An agent workflow is a sequence of model calls separated by program execution. During runtime, tool calling and sole decoding can yield idle slack from server. From our workflow study, <...> computational slack and <...> temporal idle is not utilized, which left substantial time for our proactive execution. 
 
 # Design 
 Based on our observations, we build the a compile-runtime co-design system that substantially exploit compile-time colected information and guide the model which mitigate the cold start TTFT.

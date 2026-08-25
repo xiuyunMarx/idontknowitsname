@@ -23,7 +23,8 @@ Every frame is a 4-byte big-endian payload length followed by a UTF-8 JSON body.
 | Direction | Type | Required fields | Meaning |
 |---|---|---|---|
 | client → server | `register` | `program_name`, `model_name` | Register a client on its preconfigured backend; `pid` is optional. |
-| client → server | `call` | `id`, `key`, `program_name`, `args` | Start a byLLM call. Optional fields: `site`, `pid`, `self`, `call_params`. |
+| server → client | `registered` | `route_layout` | Reply to `register`: the zone order (`cache` or `default`) the server's static pass assumes for `visit ... by llm()` prompts; the client sets `JAC_ROUTE_CACHE_LAYOUT` from it before its first routing call. Also lists `spec_features`. |
+| client → server | `call` | `id`, `key`, `program_name`, `args` | Start a byLLM call. Optional fields: `site`, `pid`, `self`, `schema` (the `response_format` the typed return is validated against; the server decodes under it as a grammar), `call_params`. |
 | server → client | `tool_call` | `call`, `name`, `arguments`, `text` | Ask the Jac client to execute one local tool. |
 | client → server | `tool_result` | `call`, `content` | Return the local tool result or error text. |
 | server → client | `final` | `call`, `output`, `text` | Complete a call. The client parses `output` into its declared Jac type. |

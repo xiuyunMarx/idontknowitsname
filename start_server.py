@@ -34,6 +34,8 @@ async def main() -> None:
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--cache-isolation", choices=["none", "instance"], default="none",
                         help="instance: each workflow instance gets its own prefix-cache salt; no KV block is shared across instances")
+    parser.add_argument("--route-layout", choices=["cache", "default"], default="cache",
+                        help="zone order of `visit ... by llm()` prompts; announced to every client on register")
     parser.add_argument("--gpu-mem", type=float, default=0.9)
     parser.add_argument("--max-model-len", type=int, default=8192)
     args = parser.parse_args()
@@ -62,8 +64,9 @@ async def main() -> None:
         else {f.strip() for f in args.spec_features.split(",") if f.strip()},
         spec_order=args.spec_order,
         cache_isolation=args.cache_isolation,
+        route_layout=args.route_layout,
     )
-    print(f"[guard] spec_features={sorted(server._spec_features)} spec_order={args.spec_order} cache_isolation={args.cache_isolation}", flush=True)
+    print(f"[guard] spec_features={sorted(server._spec_features)} spec_order={args.spec_order} cache_isolation={args.cache_isolation} route_layout={args.route_layout}", flush=True)
     for program in args.program:
         name, source, port = program.rsplit(":", 2)
         server.add_program(name, source, int(port))

@@ -16,13 +16,6 @@ Hop count is fixed by $HOVER_HOPS (default 2), not decided by the model, so the
 served callsite sequence is identical across conditions and paired comparisons
 stay valid.
 
-Topology note: the static pass links successors inside one ability body, so both
-tool loops are covered (`retrieve_evidence` -> `reason_hop`, `verify_claim` ->
-`synthesize_answer`). The three hand-offs that cross a plain `visit` —
-`decompose_claim` -> `plan_query`, `reason_hop` -> `assess_gap`, `assess_gap` ->
-the next hop's `plan_query` — are recovered as dataflow (`ret`) edges but not as
-may-run-next edges, so the windows after those calls stay cold.
-
 Run:
 
     python start_server.py --model Qwen/Qwen2.5-7B-Instruct \
