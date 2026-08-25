@@ -6,21 +6,22 @@ This structure, however, is typically lost at the boundary between the language 
 
 Recent agent-serving systems recover part of this missing structure from execution history. PBKV trains a workload-specific, multi-step predictor on offline workflow traces and uses its predictions for KV-cache eviction and prefetching. Pythia mines annotated historical traces into workflow and prompt profiles, and explicitly routes new or changed workflows through a reactive shadow-profiling phase until those profiles become reliable. CacheScout avoids offline training but learns agent-transition probabilities online; before sufficient transitions have been observed, its predictive signal is weak and its cache policy relies primarily on recency. These systems retain deterministic safeguards, but their prediction-driven optimizations require an execution-derived prior [PBKV, Pythia, CacheScout]. When a workflow is first deployed, or when its control flow, agent roster, prompt schema, or coordination policy changes, such a prior may be unavailable or stale. We call this regime *history-free workflow cold start*: the first executions of a workflow after the model is already serving but before a reliable execution profile has been accumulated.
 
-LLM-integrated programming languages offer a complementary source of predictability that is available in this regime: the program itself. We use byLLM as a canonical setting. ByLLM's compiler materializes program semantics in an intermediate representation and its runtime constructs prompts by binding dynamic program values to that representation. This design exposes information that a trace-driven serving layer must otherwise infer. In particular, we make three observations.
 
-1. **A substantial prompt prefix is known before execution.** The system persona, function signature, output schema, tool definitions, semantic annotations, and compile-time constant arguments of an LLM call are invariant across executions of a compiled program. For downstream calls, these components often constitute a large fraction of the final prompt.
-
-2. **Static provenance predicts when dynamic prompt content becomes available.** A return value is not known at compile time, but the compiler can determine the argument provenance of a byLLM function. Once the producer returns, the concrete value may be available. The serving runtime can therefore materialize downstream prompts proactively.
-
-3. **Compiler metadata provides a version-aligned, zero-history prior.** A compiler can enumerate next LLM callsites and can associate speculative prediction results probe with the exact program.
-
-These observations motivate **compiler-guided proactive prefill**, a compiler-to-serving contract for carrying program structure across the abstraction boundary. At compilation time, our analysis extracts LLM declarations and callsites, a conservative may-run-next topology, prompt layout, and parameter provenance. At runtime, the server tracks which values have materialized, constructs the longest known byte-exact prefix of likely successor calls, and submits proactive prefill work during temporal idle and spatial idle.
 
 We make the following contributions:
 1. We identify a previously unused compiler-to-serving interface and characterize how compiler-derived value readiness exposes KV-cache reuse opportunities without execution history.
 2. We develop a compiler-runtime co-design that turns progressively available program information into exact usable runtime serving information.
-3. We design a multi-tenant proactive-prefill runtime that opportunistically schedule workloads.
+3. We design a slack-aware runtime serving mechanism that turns serving idle into proactive prefilling oppotunities. 
 
+# Motivation
+
+LLM-integrated programming languages offer a complementary source of predictability that is available in this regime: the program itself. We use byLLM as a canonical setting. ByLLM's compiler materializes program semantics in an intermediate representation and its runtime constructs prompts by binding dynamic program values to that representation. This design exposes information that a trace-driven serving layer must otherwise infer.
+
+In particular, we have the following observations.
+1. A major part of prompt in byLLM framework can be duduced during compile time.
+2. Arguments for a LLM call might be ready a long time before the call site. 
+
+An agent workflow is a sequence of model calls separated by program execution. During runtime, tool calling and sole decoding can yield idle slack from server. From our workflow study, <...> computational slack and <...> temporal idle is not utilized, which left substantial time for our proactive execution. 
 
 # Design 
 Based on our observations, we build the a compile-runtime co-design system that substantially exploit compile-time colected information and guide the model which mitigate the cold start TTFT.
@@ -28,6 +29,12 @@ Based on our observations, we build the a compile-runtime co-design system that 
 # Evaluation
 
 All experiments run on one NVIDIA RTX 3090 (24 GB) with vLLM 0.19.1 serving Qwen2.5-7B-Instruct in bf16, automatic prefix caching and priority scheduling on. The interference profile taken on this configuration admits 48 uncached speculative tokens per engine step at every decode concurrency from 1 to 16 (the +10% mean-TBT bound; 64 tokens raise TBT by 21%).
+
+# Table of Content
+1. Single Application
+2. Slack from full to None -> How system regress
+3. Abalation. The effect of each part: {Invariant prompt + tool prefilling + argument prefilling}
+
 
 Three byLLM programs are the workloads, each with a 30-case dataset (`benchmark/evaluation/datasets`):
 
