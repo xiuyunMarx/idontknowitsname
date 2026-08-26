@@ -135,7 +135,6 @@ class RoutingSpeculate:
                         out.append(site)
 
         return out
-
     def _first_piece(self, tokenizer: Any, prefix: str, handle: str) -> str:
         """Text of the first token the model emits for `handle` right after
         `prefix` — the token the probe's top-k is matched against. Tokenized in
@@ -200,9 +199,7 @@ class RoutingSpeculate:
             seen_tokens.sort(key=lambda t: -t[1])
             tag = f"{state.request.program_name}:{state.site.key}:s{state.session.session_id}c{state.request.id}"
             if all(s == float("-inf") for s in scores.values()):
-                console_debug(
-                    f"[probe] {tag} no-signal prefix={prefix!r} top={seen_tokens[:5]}"
-                )
+                console_debug(f"[probe] {tag} no-signal prefix={prefix!r} top={seen_tokens[:5]}")
                 state.route_probe = []
             else:
                 # Stable sort: unscored candidates keep their listed order after the scored ones.

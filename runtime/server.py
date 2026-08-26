@@ -133,10 +133,7 @@ class GuardServer:
             await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _warmup(self) -> None:
-        """Reach the already-serving state before listeners open: compile the chat
-        template, tokenize every callsite's invariant prefix (what a speculation
-        tick renders), and run the engine's warmup. `listening on` is printed by
-        the listeners, so a harness waiting for it also waits for this."""
+        """Prewarm the engine"""
         started = time.perf_counter()
         sites = 0
         for program in self._programs.values():
@@ -253,11 +250,7 @@ class GuardServer:
                 # Probed once per call: the ranked plan is cached on the state so
                 # subsequent idle ticks reuse it instead of re-probing the router.
                 if state.route_plan is None:
-                    # The probe is a speculative request like any other: it needs
-                    # a step it may use, and None means a real admission killed it
-                    # (or owns the step), so the plan stays unranked until a
-                    # later tick probes again.
-                    if self._engine.spec_allowance() <= 0:
+                    if self._engine.spec_allowance() <= 0: # No space for the probe, skip
                         continue
                     state.route_plan = await self._speculate.sort_candidate_calls(
                         state, program, rank="probe" in self._spec_features

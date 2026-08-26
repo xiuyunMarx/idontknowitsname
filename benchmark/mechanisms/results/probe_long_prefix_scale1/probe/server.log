@@ -1,0 +1,339 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+INFO 08-25 16:34:03 [model.py:645] Resolved architecture: Qwen3ForCausalLM
+INFO 08-25 16:34:03 [model.py:1883] Using max model len 8192
+INFO 08-25 16:34:03 [scheduler.py:242] Chunked prefill is enabled with max_num_batched_tokens=2048.
+INFO 08-25 16:34:03 [kernel.py:306] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+(EngineCore pid=1178633) INFO 08-25 16:34:06 [core.py:121] Initializing a V1 LLM engine (v0.27.1) with config: model='Qwen/Qwen3-8B', speculative_config=None, tokenizer='Qwen/Qwen3-8B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=Qwen/Qwen3-8B, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, enable_bf16x3_router_gemm=False, moe_backend='auto', linear_backend='auto')
+(EngineCore pid=1178633) INFO 08-25 16:34:06 [parallel_state.py:1640] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.139:47541 backend=nccl
+[rank0]:[W825 16:34:06.746889399 ProcessGroupGloo.cpp:524] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+(EngineCore pid=1178633) INFO 08-25 16:34:06 [parallel_state.py:1977] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore pid=1178633) INFO 08-25 16:34:06 [gpu_worker.py:385] Using V2 Model Runner
+(EngineCore pid=1178633) INFO 08-25 16:34:07 [model_runner.py:308] Loading model from scratch...
+(EngineCore pid=1178633) INFO 08-25 16:34:07 [cuda.py:482] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=1178633) INFO 08-25 16:34:07 [flash_attn.py:789] Using FlashAttention version 2
+(EngineCore pid=1178633) INFO 08-25 16:34:08 [weight_utils.py:867] Filesystem type for checkpoints: EXT4. Checkpoint size: 15.26 GiB. Available RAM: 40.74 GiB.
+(EngineCore pid=1178633) INFO 08-25 16:34:08 [weight_utils.py:890] Auto-prefetch is disabled because the filesystem (EXT4) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(EngineCore pid=1178633) Loading safetensors checkpoint shards:   0% Completed | 0/5 [00:00<?, ?it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards:  20% Completed | 1/5 [00:00<00:01,  2.17it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards:  40% Completed | 2/5 [00:00<00:01,  1.97it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards:  60% Completed | 3/5 [00:01<00:01,  1.94it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards:  80% Completed | 4/5 [00:01<00:00,  2.11it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards: 100% Completed | 5/5 [00:02<00:00,  2.70it/s]
+(EngineCore pid=1178633) Loading safetensors checkpoint shards: 100% Completed | 5/5 [00:02<00:00,  2.36it/s]
+(EngineCore pid=1178633) 
+(EngineCore pid=1178633) INFO 08-25 16:34:10 [default_loader.py:430] Loading weights took 2.15 seconds
+(EngineCore pid=1178633) INFO 08-25 16:34:11 [model_runner.py:329] Model loading took 15.27 GiB and 3.845133 seconds
+(EngineCore pid=1178633) INFO 08-25 16:34:11 [topk_topp_sampler.py:62] Using FlashInfer for top-p & top-k sampling.
+(EngineCore pid=1178633) INFO 08-25 16:34:12 [caching.py:335] reconstructed serializable fn from standalone compile artifacts. num_artifacts=3 num_submods=37
+(EngineCore pid=1178633) INFO 08-25 16:34:12 [decorators.py:311] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/53adc8a1fd2f4e33f57bd79c115e1c5d124ac1e1e4fc2ec46d9203e2613d412b/rank_0_0/model
+(EngineCore pid=1178633) INFO 08-25 16:34:12 [monitor.py:53] torch.compile took 0.14 s in total
+(EngineCore pid=1178633) INFO 08-25 16:34:12 [monitor.py:81] Initial profiling/warmup run took 0.09 s
+(EngineCore pid=1178633) INFO 08-25 16:34:13 [gpu_worker.py:563] Available KV cache memory: 5.57 GiB
+(EngineCore pid=1178633) INFO 08-25 16:34:13 [kv_cache_utils.py:2235] GPU KV cache size: 40,576 tokens
+(EngineCore pid=1178633) INFO 08-25 16:34:13 [kv_cache_utils.py:2236] Maximum concurrency for 8,192 tokens per request: 4.95x
+(EngineCore pid=1178633) Capturing CUDA graphs (PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (PIECEWISE):   3%|▎         | 1/35 [00:00<00:03,  8.93it/s]Capturing CUDA graphs (PIECEWISE):   6%|▌         | 2/35 [00:00<00:03,  9.18it/s]Capturing CUDA graphs (PIECEWISE):   9%|▊         | 3/35 [00:00<00:03,  9.29it/s]Capturing CUDA graphs (PIECEWISE):  11%|█▏        | 4/35 [00:00<00:03,  9.33it/s]Capturing CUDA graphs (PIECEWISE):  14%|█▍        | 5/35 [00:00<00:03,  9.33it/s]Capturing CUDA graphs (PIECEWISE):  17%|█▋        | 6/35 [00:00<00:03,  9.25it/s]Capturing CUDA graphs (PIECEWISE):  20%|██        | 7/35 [00:00<00:03,  9.27it/s]Capturing CUDA graphs (PIECEWISE):  23%|██▎       | 8/35 [00:00<00:02,  9.30it/s]Capturing CUDA graphs (PIECEWISE):  29%|██▊       | 10/35 [00:01<00:02,  9.90it/s]Capturing CUDA graphs (PIECEWISE):  34%|███▍      | 12/35 [00:01<00:02, 10.38it/s]Capturing CUDA graphs (PIECEWISE):  40%|████      | 14/35 [00:01<00:01, 10.68it/s]Capturing CUDA graphs (PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 10.76it/s]Capturing CUDA graphs (PIECEWISE):  51%|█████▏    | 18/35 [00:01<00:01, 11.97it/s]Capturing CUDA graphs (PIECEWISE):  57%|█████▋    | 20/35 [00:01<00:01, 13.12it/s]Capturing CUDA graphs (PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 14.07it/s]Capturing CUDA graphs (PIECEWISE):  69%|██████▊   | 24/35 [00:02<00:00, 14.42it/s]Capturing CUDA graphs (PIECEWISE):  74%|███████▍  | 26/35 [00:02<00:00, 15.45it/s]Capturing CUDA graphs (PIECEWISE):  80%|████████  | 28/35 [00:02<00:00, 16.27it/s]Capturing CUDA graphs (PIECEWISE):  89%|████████▊ | 31/35 [00:02<00:00, 17.75it/s]Capturing CUDA graphs (PIECEWISE):  97%|█████████▋| 34/35 [00:02<00:00, 19.03it/s]Capturing CUDA graphs (PIECEWISE): 100%|██████████| 35/35 [00:02<00:00, 13.28it/s]
+(EngineCore pid=1178633) Capturing CUDA graphs (FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (FULL):  16%|█▌        | 3/19 [00:00<00:00, 20.15it/s]Capturing CUDA graphs (FULL):  32%|███▏      | 6/19 [00:00<00:00, 20.42it/s]Capturing CUDA graphs (FULL):  47%|████▋     | 9/19 [00:00<00:00, 20.64it/s]Capturing CUDA graphs (FULL):  63%|██████▎   | 12/19 [00:00<00:00, 21.76it/s]Capturing CUDA graphs (FULL):  79%|███████▉  | 15/19 [00:00<00:00, 23.31it/s]Capturing CUDA graphs (FULL):  95%|█████████▍| 18/19 [00:00<00:00, 25.12it/s]Capturing CUDA graphs (FULL): 100%|██████████| 19/19 [00:00<00:00, 23.39it/s]
+(EngineCore pid=1178633) INFO 08-25 16:34:17 [model_runner.py:791] Graph capturing finished in 4 secs, took 0.36 GiB
+(EngineCore pid=1178633) INFO 08-25 16:34:17 [gpu_worker.py:789] Free memory on device (23.26/23.56 GiB) on startup. Desired GPU memory utilization is (0.9, 21.2 GiB). Actual usage is 15.44 GiB for consumed memory (weights + non-torch), 0.19 GiB for peak activation, and 0.36 GiB for CUDAGraph memory. Replace gpu_memory_utilization config with `--kv-cache-memory=5446058701` (5.07 GiB) to fit into requested memory, or `--kv-cache-memory=7659582976` (7.13 GiB) to fully utilize gpu memory. Current kv cache memory in use is 5.57 GiB.
+(EngineCore pid=1178633) INFO 08-25 16:34:17 [jit_monitor.py:79] Kernel JIT monitor activated; monitored JIT compilations during inference will use mode=warn.
+(EngineCore pid=1178633) INFO 08-25 16:34:18 [core.py:348] init engine (profile, create kv cache, warmup model) took 7.16 s (compilation: 0.14 s)
+(EngineCore pid=1178633) INFO 08-25 16:34:18 [kernel.py:306] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'])
+[profile] loaded /home/xiaoyu/idontknowitsname/profile-Qwen3-8B.json: {1: 16, 2: 16, 3: 16, 4: 16, 5: 16, 6: 16, 7: 16, 8: 16, 9: 16, 10: 16, 11: 16, 12: 16, 13: 16, 14: 16, 15: 16, 16: 16}
+[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static cache_isolation=none route_layout=cache
+WARNING 08-25 16:34:18 [input_processor.py:291] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
+(EngineCore pid=1178633) WARNING 08-25 16:34:18 [jit_monitor.py:135] Triton kernel JIT compilation during inference: _topk_log_softmax_kernel. This causes a latency spike; consider extending warmup to cover this shape/config.
+[warmup] engine ready in 504 ms
+[32m[LOG][0m [guard] warmup done: 15 callsites rendered, 540 ms
+[32m[LOG][0m InterceptorLLMBackend for 'big_fan_out' listening on localhost:1145
+[32m[LOG][0m Accepted connection from ('127.0.0.1', 57868) as big_fan_out#1
+[32m[LOG][0m Registered 'big_fan_out' (pid 1179401, model 'Qwen/Qwen3-8B') as big_fan_out#1
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c1 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c1-5259a99603664fba8d5a6a1a2a600351 duration_ms=632.60 cached_tokens=0 prompt_tokens=1283
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c1 prefix='{"schema_object_wrapper": ["' top=[('Billing', -0.0689842700958252), ('Esc', -2.818984270095825), ('Account', -5.693984031677246), ('Tech', -6.318984031677246), ('Subscription', -7.818984031677246)] order=['BillingAgent', 'EscalationAgent', 'AccountAgent', 'TechSupportAgent', 'ReturnsAgent', 'SubscriptionAgent', 'ProductQAAgent', 'PrivacyAgent', 'IntegrationAgent', 'SecurityAgent', 'ShippingAgent', 'FinanceAgent', 'PartnerAgent']
+[prefill] prefill-BillingAgent.resolve_billing@58:26-69fc743b3ca8470dbeeb7cea02597211 cost_tokens=16 duration_ms=63.05
+[prefill] prefill-BillingAgent.resolve_billing@58:26-2c6253558d104d5f80b5892bbde27efb cost_tokens=16 duration_ms=61.96
+[prefill] prefill-BillingAgent.resolve_billing@58:26-cecd0d42cfb14cf59650354fc4d04a49 cost_tokens=16 duration_ms=64.33
+[prefill] prefill-BillingAgent.resolve_billing@58:26-01aad04410674ec189a034c0fb32d1a5 cost_tokens=16 duration_ms=63.90
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c1-5259a99603664fba8d5a6a1a2a600351 decode_ms=346.89 output_tokens=17
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c1 answer=['BillingAgent'] probe=['BillingAgent', 'EscalationAgent', 'AccountAgent', 'TechSupportAgent', 'ReturnsAgent', 'SubscriptionAgent', 'ProductQAAgent', 'PrivacyAgent', 'IntegrationAgent', 'SecurityAgent', 'ShippingAgent', 'FinanceAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-BillingAgent.resolve_billing@58:26-b06759e373564fc88ec0d2dee3d4cab9 cost_tokens=16 duration_ms=59.19
+[prefill] prefill-BillingAgent.resolve_billing@58:26-6992e25128f348fd862c1dd6c2b1b7f7 cost_tokens=128 duration_ms=36.36
+[prefill] prefill-BillingAgent.resolve_billing@58:26-2f9efbfedf344e5cba7d63e3d3b44fc8 cost_tokens=128 duration_ms=37.09
+[prefill] prefill-BillingAgent.resolve_billing@58:26-57d718354f534bc591128769b6ac64ab cost_tokens=128 duration_ms=37.29
+[prefill] prefill-BillingAgent.resolve_billing@58:26-634589c0eba7410ea582907ccbeba4ee cost_tokens=128 duration_ms=37.50
+[36m[DEBUG][0m call from big_fan_out#1 key='BillingAgent.resolve_billing'
+[prefill] prefill-BillingAgent.resolve_billing@58:26-6ae9ee1f2fab43fcad14ba11c9cfad22 cost_tokens=128 duration_ms=7.93 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:BillingAgent.resolve_billing:s1c2-29fad69bf608407cb70c84e2f8867fb0 duration_ms=81.82 cached_tokens=720 prompt_tokens=884
+[prefill] prefill-Agent.summarize@230:28-df3b7a0d3a3c40ce83d56485c21ff2a4 cost_tokens=16 duration_ms=62.14
+[prefill] prefill-Agent.summarize@230:28-0165ea4c739a42b4aadd588a1fe09c28 cost_tokens=16 duration_ms=64.27
+[prefill] prefill-Agent.summarize@230:28-36a6ee292d6744b1bb47bbf77c9c06ba cost_tokens=16 duration_ms=64.41
+[prefill] prefill-Agent.summarize@230:28-cb0be25e19e642b496a074adf145e826 cost_tokens=16 duration_ms=64.56
+[prefill] prefill-Agent.summarize@230:28-d047f344939145c7bce74451d453b792 cost_tokens=16 duration_ms=64.70
+[prefill] prefill-Agent.summarize@230:28-55abecb41aaf4dfbb20875a9a54caad1 cost_tokens=16 duration_ms=64.57
+[prefill] prefill-Agent.summarize@230:28-51e2d07498c74318b03aaa3d3046d39d cost_tokens=16 duration_ms=64.54
+[prefill] prefill-Agent.summarize@230:28-690f1d2911334fa9bb89701f48571fd6 cost_tokens=1 duration_ms=59.76
+[36m[DEBUG][0m [decode] big_fan_out:BillingAgent.resolve_billing:s1c2-29fad69bf608407cb70c84e2f8867fb0 decode_ms=4438.91 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:BillingAgent.resolve_billing:s1c2 typed_ok=True output="<think>\nOkay, let's tackle this. The user was charged twice for invoice INV-2291 and the receipt only shows one order. The playbook is to reconcile the charge a"
+[prefill] prefill-Agent.summarize@230:28-23a5ed0fae05475596d6f56cc50a46c6 cost_tokens=128 duration_ms=24.74
+[prefill] prefill-Agent.summarize@230:28-a4310a5a81af4cbc824ebd32487d75fb cost_tokens=128 duration_ms=36.72
+[prefill] prefill-Agent.summarize@230:28-b46e9a4156724938b93f07d8db18630a cost_tokens=92 duration_ms=37.83
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c3-62b54b70cc4b47ef8c87cccb75bbc8ae duration_ms=103.39 cached_tokens=336 prompt_tokens=658
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c3-62b54b70cc4b47ef8c87cccb75bbc8ae decode_ms=2793.44 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c3 typed_ok=True output="<think>\nOkay, I need to summarize the desk's resolution into a two-sentence note for the ticket log. The desk is the billing desk, and the answer provided is th"
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c4 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c4-2ce17ddd3bf843bd83a1d91c1073c2d2 duration_ms=35.64 cached_tokens=1216 prompt_tokens=1280
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c4 prefix='{"schema_object_wrapper": ["' top=[('Tech', -0.0026478252839297056), ('Esc', -6.002647876739502), ('Account', -9.627647399902344), ('Integration', -9.877647399902344), ('Security', -10.127647399902344)] order=['TechSupportAgent', 'EscalationAgent', 'AccountAgent', 'IntegrationAgent', 'SecurityAgent', 'ProductQAAgent', 'BillingAgent', 'SubscriptionAgent', 'PrivacyAgent', 'FinanceAgent', 'ShippingAgent', 'ReturnsAgent', 'PartnerAgent']
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-2ff50a66583348d0a98dd97116631dc6 cost_tokens=16 duration_ms=63.48
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-11a4220c79ab42c39fcbcfaabef0d205 cost_tokens=16 duration_ms=64.47
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-2cd774d5fa8f49de886b72371c68d568 cost_tokens=16 duration_ms=64.23
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-1e076b07c5c34693897acbc8bfd89357 cost_tokens=16 duration_ms=64.90
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c4-2ce17ddd3bf843bd83a1d91c1073c2d2 decode_ms=367.05 output_tokens=18
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c4 answer=['TechSupportAgent'] probe=['TechSupportAgent', 'EscalationAgent', 'AccountAgent', 'IntegrationAgent', 'SecurityAgent', 'ProductQAAgent', 'BillingAgent', 'SubscriptionAgent', 'PrivacyAgent', 'FinanceAgent', 'ShippingAgent', 'ReturnsAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-12cfb941930444a7987fc6f845c0d72e cost_tokens=16 duration_ms=62.84
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-383b8cba7b2842eb865b406cab5c1454 cost_tokens=128 duration_ms=36.91
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-394e940f6e964fcc8fe4b7b58951975d cost_tokens=128 duration_ms=37.86
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-9f1960d9fa66443e9831a31c5039ea28 cost_tokens=128 duration_ms=39.27
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-bb65d83ec3a5419e99fc312ffdc027b5 cost_tokens=128 duration_ms=38.28
+[36m[DEBUG][0m call from big_fan_out#1 key='TechSupportAgent.resolve_tech'
+[prefill] prefill-TechSupportAgent.resolve_tech@71:26-402ad9eb78c14ebd8f5608a775042442 cost_tokens=128 duration_ms=18.21 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:TechSupportAgent.resolve_tech:s1c5-1fcf5755c0994d78ab7bc3f3abbc09e0 duration_ms=90.82 cached_tokens=720 prompt_tokens=925
+[prefill] prefill-Agent.summarize@230:28-17c913f16c894fb891328d31479694e7 cost_tokens=16 duration_ms=60.65
+[prefill] prefill-Agent.summarize@230:28-748da6312886426cbc7d27ae97ec4daf cost_tokens=16 duration_ms=64.41
+[prefill] prefill-Agent.summarize@230:28-9bc9630aad524fc895d23c5feeda2e47 cost_tokens=16 duration_ms=64.43
+[prefill] prefill-Agent.summarize@230:28-24a63ad0a17b440c971ebb93e2e5bfae cost_tokens=16 duration_ms=64.33
+[prefill] prefill-Agent.summarize@230:28-084c8bf8d13f44128d09db4ebe0bc494 cost_tokens=16 duration_ms=64.34
+[prefill] prefill-Agent.summarize@230:28-49cda42051bb48c7b9b815e911d35a25 cost_tokens=16 duration_ms=64.60
+[prefill] prefill-Agent.summarize@230:28-09bb457212da4a21b36353f124a545e8 cost_tokens=16 duration_ms=64.49
+[prefill] prefill-Agent.summarize@230:28-c5159bbd1f7f4868b8117a407723aff9 cost_tokens=1 duration_ms=59.23
+[36m[DEBUG][0m [decode] big_fan_out:TechSupportAgent.resolve_tech:s1c5-1fcf5755c0994d78ab7bc3f3abbc09e0 decode_ms=4441.68 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:TechSupportAgent.resolve_tech:s1c5 typed_ok=True output="<think>\nOkay, let's tackle this. The user is having an issue where the reports tab crashes with a 500 error every time they open the dashboard. The playbook pro"
+[prefill] prefill-Agent.summarize@230:28-743ac0c982ba4878a59b1bd4692de4d7 cost_tokens=128 duration_ms=24.57
+[prefill] prefill-Agent.summarize@230:28-5e557a1bf53b49cf98de3622ea536e19 cost_tokens=128 duration_ms=37.10
+[prefill] prefill-Agent.summarize@230:28-63adf41db641428c91694d42958e3f33 cost_tokens=100 duration_ms=37.62
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c6-64cb86486c54474fa06de6f0ea89f66a duration_ms=103.79 cached_tokens=336 prompt_tokens=670
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c6-64cb86486c54474fa06de6f0ea89f66a decode_ms=2794.43 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c6 typed_ok=True output="<think>\nOkay, let's see. The user wants me to summarize the desk's resolution into a two-sentence note for the ticket log. The desk is 'tech support desk', and "
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c7 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c7-aa615191801e406f82abb9cd6643c415 duration_ms=36.90 cached_tokens=1216 prompt_tokens=1280
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c7 prefix='{"schema_object_wrapper": ["' top=[('Integration', -0.0026115619111806154), ('Tech', -6.2526116371154785), ('Esc', -8.00261116027832), ('Account', -8.12761116027832), ('Product', -10.12761116027832)] order=['IntegrationAgent', 'TechSupportAgent', 'EscalationAgent', 'AccountAgent', 'ProductQAAgent', 'BillingAgent', 'SecurityAgent', 'SubscriptionAgent', 'FinanceAgent', 'PrivacyAgent', 'ShippingAgent', 'ReturnsAgent', 'PartnerAgent']
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-a5e8ffa2f8a24e94bb701b9e711ce248 cost_tokens=16 duration_ms=63.72
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-fd8155bbebb241bda1f5071fe11d7505 cost_tokens=16 duration_ms=64.27
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-b051d264ac724004b84c211bf5f6a6b9 cost_tokens=16 duration_ms=64.57
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-5b6620815528453eacdc3deefde8a516 cost_tokens=16 duration_ms=64.51
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-a4e903d720a84d61b41c9d3e7e061f82 cost_tokens=16 duration_ms=64.05
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c7-aa615191801e406f82abb9cd6643c415 decode_ms=412.66 output_tokens=20
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c7 answer=['IntegrationAgent'] probe=['IntegrationAgent', 'TechSupportAgent', 'EscalationAgent', 'AccountAgent', 'ProductQAAgent', 'BillingAgent', 'SecurityAgent', 'SubscriptionAgent', 'FinanceAgent', 'PrivacyAgent', 'ShippingAgent', 'ReturnsAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-09f279696ac44132a0fa636209fcdc51 cost_tokens=16 duration_ms=58.90
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-344825220ed542d2b9271ccced44c484 cost_tokens=128 duration_ms=36.89
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-10c5d7c7384f491ca4b55caf56c00c51 cost_tokens=128 duration_ms=38.56
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-28f7b900ee794661b4a3cae3c03eb083 cost_tokens=128 duration_ms=38.17
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-2e1ea180444d449c9cbb1a52794415e7 cost_tokens=128 duration_ms=38.38
+[36m[DEBUG][0m call from big_fan_out#1 key='IntegrationAgent.resolve_integration'
+[prefill] prefill-IntegrationAgent.resolve_integration@175:26-49966d8c89064a15a5e6c224afbb2962 cost_tokens=128 duration_ms=2.18 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:IntegrationAgent.resolve_integration:s1c8-5aa2e9c9da434a23b6a1698f80c822f5 duration_ms=85.46 cached_tokens=736 prompt_tokens=888
+[prefill] prefill-Agent.summarize@230:28-c51cb02bbb0d4f49ae1ca7b1762f2086 cost_tokens=16 duration_ms=57.30
+[prefill] prefill-Agent.summarize@230:28-6ec0bfc9332942e3a7e2eb3394a0f313 cost_tokens=16 duration_ms=64.42
+[prefill] prefill-Agent.summarize@230:28-904f1b5d5d164c43b935eeba98db4141 cost_tokens=16 duration_ms=64.36
+[prefill] prefill-Agent.summarize@230:28-50ae8ecf03a147aa9a59bbb932756896 cost_tokens=16 duration_ms=64.38
+[prefill] prefill-Agent.summarize@230:28-c0302d05bf2645f4987fa361e9f359f3 cost_tokens=16 duration_ms=64.61
+[prefill] prefill-Agent.summarize@230:28-e4155ef438c8414281f2cd6994e766e8 cost_tokens=16 duration_ms=64.71
+[prefill] prefill-Agent.summarize@230:28-2015beae21d24f1ea844dd010e8b14bc cost_tokens=16 duration_ms=64.54
+[prefill] prefill-Agent.summarize@230:28-a1232c62efe941eca1423848e025a861 cost_tokens=1 duration_ms=60.04
+[36m[DEBUG][0m [decode] big_fan_out:IntegrationAgent.resolve_integration:s1c8-5aa2e9c9da434a23b6a1698f80c822f5 decode_ms=4442.72 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:IntegrationAgent.resolve_integration:s1c8 typed_ok=True output="<think>\nOkay, let's tackle this. The user's request is about an API key issue after an SDK upgrade, resulting in a 401 error from the webhook endpoint. The play"
+[prefill] prefill-Agent.summarize@230:28-53fc8e155c7e4789b45fa840c8740d28 cost_tokens=128 duration_ms=24.26
+[prefill] prefill-Agent.summarize@230:28-41b1442b2b21407badec555bc62a8e02 cost_tokens=128 duration_ms=36.67
+[prefill] prefill-Agent.summarize@230:28-c4f616a814a8455aa3f161754c514f01 cost_tokens=88 duration_ms=37.54
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c9-de67150bbc11404594f5d406cb75da94 duration_ms=102.74 cached_tokens=336 prompt_tokens=644
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c9-de67150bbc11404594f5d406cb75da94 decode_ms=2794.94 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c9 typed_ok=True output="<think>\nOkay, let's see. The task is to summarize the desk's resolution into a two-sentence note for the ticket log. The desk here is the integration desk, and "
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c10 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c10-f70949ae620c4647be680e97d8f8a8df duration_ms=35.36 cached_tokens=1216 prompt_tokens=1280
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c10 prefix='{"schema_object_wrapper": ["' top=[('Security', -0.08308839052915573), ('Esc', -2.5830883979797363), ('Privacy', -6.583088397979736), ('Account', -6.583088397979736), ('Tech', -6.708088397979736)] order=['SecurityAgent', 'EscalationAgent', 'AccountAgent', 'PrivacyAgent', 'TechSupportAgent', 'IntegrationAgent', 'ProductQAAgent', 'BillingAgent', 'FinanceAgent', 'SubscriptionAgent', 'ReturnsAgent', 'ShippingAgent', 'PartnerAgent']
+[prefill] prefill-SecurityAgent.resolve_security@136:26-e4417737264047df9265255ce70554cf cost_tokens=16 duration_ms=63.36
+[prefill] prefill-SecurityAgent.resolve_security@136:26-a94729f077ed40b18bc8d75b5f78c6a9 cost_tokens=16 duration_ms=65.01
+[prefill] prefill-SecurityAgent.resolve_security@136:26-90139dea2463411092b5e8d7426ee91d cost_tokens=16 duration_ms=64.14
+[prefill] prefill-SecurityAgent.resolve_security@136:26-91c0f3b3ad0c408b90ef28b53a68c7f3 cost_tokens=16 duration_ms=64.34
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c10-f70949ae620c4647be680e97d8f8a8df decode_ms=367.59 output_tokens=18
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c10 answer=['SecurityAgent'] probe=['SecurityAgent', 'EscalationAgent', 'AccountAgent', 'PrivacyAgent', 'TechSupportAgent', 'IntegrationAgent', 'ProductQAAgent', 'BillingAgent', 'FinanceAgent', 'SubscriptionAgent', 'ReturnsAgent', 'ShippingAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-SecurityAgent.resolve_security@136:26-358ea4b4efc84598a339ce06f01b012a cost_tokens=16 duration_ms=63.56
+[prefill] prefill-SecurityAgent.resolve_security@136:26-e82f6927505e4d5eb59d7ef33579f8ca cost_tokens=128 duration_ms=36.57
+[prefill] prefill-SecurityAgent.resolve_security@136:26-4073f9e723bb4576b0b8c37a4a64dba5 cost_tokens=128 duration_ms=37.62
+[prefill] prefill-SecurityAgent.resolve_security@136:26-81cb9137c82a45b899daaf8b4bf09ad8 cost_tokens=128 duration_ms=37.80
+[prefill] prefill-SecurityAgent.resolve_security@136:26-0936465c3fa7491397f3c4b30b0e4d14 cost_tokens=128 duration_ms=37.91
+[36m[DEBUG][0m call from big_fan_out#1 key='SecurityAgent.resolve_security'
+[prefill] prefill-SecurityAgent.resolve_security@136:26-6c36c5ab84e74b72bf701089a8d8cacb cost_tokens=128 duration_ms=21.26 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:SecurityAgent.resolve_security:s1c11-386d4b86c7b84866b3d1d4fb58a1391c duration_ms=69.22 cached_tokens=720 prompt_tokens=894
+[prefill] prefill-Agent.summarize@230:28-ec2fedd75f744c83bc228a5267d3e472 cost_tokens=16 duration_ms=61.83
+[prefill] prefill-Agent.summarize@230:28-66c5ac7c8d6b4a29a9c292400ad66e53 cost_tokens=16 duration_ms=64.61
+[prefill] prefill-Agent.summarize@230:28-0606b51e21a3421f8c5a6ba1e4f6c322 cost_tokens=16 duration_ms=64.44
+[prefill] prefill-Agent.summarize@230:28-719d6cd0b1654d51937748d87a7eddbe cost_tokens=16 duration_ms=64.63
+[prefill] prefill-Agent.summarize@230:28-c3747baa25fc4f09a68b43a291ac780d cost_tokens=16 duration_ms=64.64
+[prefill] prefill-Agent.summarize@230:28-f982c88a6cbf442998ef119daa3582d4 cost_tokens=16 duration_ms=64.56
+[prefill] prefill-Agent.summarize@230:28-49df7f8be47f4eca8502323d525b6730 cost_tokens=16 duration_ms=64.70
+[prefill] prefill-Agent.summarize@230:28-e94a802b6111464ab37ac0b5edfdcc47 cost_tokens=1 duration_ms=59.96
+[36m[DEBUG][0m [decode] big_fan_out:SecurityAgent.resolve_security:s1c11-386d4b86c7b84866b3d1d4fb58a1391c decode_ms=4444.45 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:SecurityAgent.resolve_security:s1c11 typed_ok=True output="<think>\nOkay, let's tackle this. The user's request is about someone signing in from an unknown country and 2FA being disabled without their consent. The playbo"
+[prefill] prefill-Agent.summarize@230:28-bc55693513174fb086b1f6748af34ded cost_tokens=128 duration_ms=23.74
+[prefill] prefill-Agent.summarize@230:28-f50baaa10b324e16aef74fda208de467 cost_tokens=128 duration_ms=36.66
+[prefill] prefill-Agent.summarize@230:28-d1dfaef5ecc04ae8847e18ae76f76a76 cost_tokens=92 duration_ms=37.08
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c12-56571509a7a5454ead59f6f4d232414b duration_ms=102.60 cached_tokens=336 prompt_tokens=652
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c12-56571509a7a5454ead59f6f4d232414b decode_ms=2795.27 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c12 typed_ok=True output="<think>\nOkay, let's see. The user wants me to compress the desk's resolution into a two-sentence note for the ticket log. The desk is the security desk, and the"
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c13 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c13-1b8a51d010f745218d7f5dbeff9ddfb1 duration_ms=35.59 cached_tokens=1216 prompt_tokens=1279
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c13 prefix='{"schema_object_wrapper": ["' top=[('Subscription', -0.03980428725481033), ('Esc', -3.289804220199585), ('Account', -6.914804458618164), ('Tech', -7.414804458618164), ('Integration', -9.414804458618164)] order=['SubscriptionAgent', 'EscalationAgent', 'AccountAgent', 'TechSupportAgent', 'IntegrationAgent', 'BillingAgent', 'SecurityAgent', 'ProductQAAgent', 'ReturnsAgent', 'PrivacyAgent', 'FinanceAgent', 'ShippingAgent', 'PartnerAgent']
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-57b82ca33f834aedbfd14328ffdbbba3 cost_tokens=16 duration_ms=64.14
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-fee5698eec864503afb4d3eb2fbab7d9 cost_tokens=16 duration_ms=64.40
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-b0c0aa76905f4afb9f0a65cd13e78c9b cost_tokens=16 duration_ms=64.15
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-aff161d2ad364015aa752662399c72b8 cost_tokens=16 duration_ms=64.51
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-3860d5b7dc904dafa0d6fc8a15000b9b cost_tokens=16 duration_ms=64.63
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c13-1b8a51d010f745218d7f5dbeff9ddfb1 decode_ms=417.39 output_tokens=20
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c13 answer=['SubscriptionAgent'] probe=['SubscriptionAgent', 'EscalationAgent', 'AccountAgent', 'TechSupportAgent', 'IntegrationAgent', 'BillingAgent', 'SecurityAgent', 'ProductQAAgent', 'ReturnsAgent', 'PrivacyAgent', 'FinanceAgent', 'ShippingAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-02ce28454cb4436bb9400fa4b18c72cf cost_tokens=16 duration_ms=59.18
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-8ec61096ff294749b6634f1c7c0252d5 cost_tokens=128 duration_ms=37.30
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-72f897b6607c4fff8fd4314ab5d9b86c cost_tokens=128 duration_ms=37.97
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-d9410a00b279447b98b6a2b8ec325087 cost_tokens=128 duration_ms=38.39
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-479ef4711f144822a61aa2efafccc7f7 cost_tokens=128 duration_ms=39.00
+[36m[DEBUG][0m call from big_fan_out#1 key='SubscriptionAgent.resolve_subscription'
+[prefill] prefill-SubscriptionAgent.resolve_subscription@149:26-84ded490103f427092e14408da2ebfdc cost_tokens=128 duration_ms=2.33 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:SubscriptionAgent.resolve_subscription:s1c14-3b692a51b89d4939aab3ffa235d7e3a2 duration_ms=86.31 cached_tokens=736 prompt_tokens=881
+[prefill] prefill-Agent.summarize@230:28-9352b9ba2dfc4f3a84ba0e6c2bb2a304 cost_tokens=16 duration_ms=57.32
+[prefill] prefill-Agent.summarize@230:28-79690790509d4cd385baaa72c7de9f47 cost_tokens=16 duration_ms=64.29
+[prefill] prefill-Agent.summarize@230:28-5fe2c37af03440b884e3b4db1f5622dd cost_tokens=16 duration_ms=64.46
+[prefill] prefill-Agent.summarize@230:28-25342c0d1e9c466ea7bfa944a0fa8b54 cost_tokens=16 duration_ms=64.58
+[prefill] prefill-Agent.summarize@230:28-c10b0f52eede4fe2b58e0037d7f42f42 cost_tokens=16 duration_ms=64.64
+[prefill] prefill-Agent.summarize@230:28-3c949ce1bd474ff19ead0151fc1b695c cost_tokens=16 duration_ms=64.49
+[prefill] prefill-Agent.summarize@230:28-7fa3cbc11f88402c97f8880a3922a778 cost_tokens=16 duration_ms=64.66
+[prefill] prefill-Agent.summarize@230:28-1ad94fc41081463d8d2f3a5446cf2a43 cost_tokens=1 duration_ms=59.82
+[36m[DEBUG][0m [decode] big_fan_out:SubscriptionAgent.resolve_subscription:s1c14-3b692a51b89d4939aab3ffa235d7e3a2 decode_ms=4447.78 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:SubscriptionAgent.resolve_subscription:s1c14 typed_ok=True output="<think>\nOkay, let's tackle this. The user wants to cancel their pro plan before the renewal date and drop two extra seats. The playbook says to apply plan chang"
+[prefill] prefill-Agent.summarize@230:28-7fd59518296a4b1c8b9f68315df47db8 cost_tokens=128 duration_ms=24.32
+[prefill] prefill-Agent.summarize@230:28-eae6ec6e8267472cb7ed6a4559266205 cost_tokens=128 duration_ms=37.41
+[prefill] prefill-Agent.summarize@230:28-dabcc7f816de4d73b04b15ba045af33c cost_tokens=83 duration_ms=37.99
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c15-9f9dff2fac824d719a47b7cb400c6f80 duration_ms=103.08 cached_tokens=320 prompt_tokens=632
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c15-9f9dff2fac824d719a47b7cb400c6f80 decode_ms=2798.15 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c15 typed_ok=True output="<think>\nOkay, let's see. The user wants to cancel their pro plan before the renewal date and drop two extra seats. The desk is the subscription desk. The answer"
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c16 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c16-0bd95953fdd642b6884e0f70e91001cf duration_ms=36.85 cached_tokens=1216 prompt_tokens=1276
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c16 prefix='{"schema_object_wrapper": ["' top=[('Shipping', -0.000922969076782465), ('Esc', -7.125923156738281), ('shipping', -9.500923156738281), ('Account', -10.875923156738281), ('Billing', -11.750923156738281)] order=['ShippingAgent', 'EscalationAgent', 'AccountAgent', 'BillingAgent', 'ReturnsAgent', 'SecurityAgent', 'TechSupportAgent', 'ProductQAAgent', 'IntegrationAgent', 'PrivacyAgent', 'FinanceAgent', 'SubscriptionAgent', 'PartnerAgent']
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-5bd663eeca3646bea55930f54e0d85e1 cost_tokens=16 duration_ms=60.92
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-798764797d07443191253b0ac2d1b2f9 cost_tokens=16 duration_ms=64.26
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-6335cf28f9384165b1a085ee563a275f cost_tokens=16 duration_ms=64.87
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-022e7be15933497f8b81cc03ad274556 cost_tokens=16 duration_ms=63.80
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c16-0bd95953fdd642b6884e0f70e91001cf decode_ms=349.91 output_tokens=17
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c16 answer=['ShippingAgent'] probe=['ShippingAgent', 'EscalationAgent', 'AccountAgent', 'BillingAgent', 'ReturnsAgent', 'SecurityAgent', 'TechSupportAgent', 'ProductQAAgent', 'IntegrationAgent', 'PrivacyAgent', 'FinanceAgent', 'SubscriptionAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-00864834fffb493a97bce25cf49f66b5 cost_tokens=16 duration_ms=59.13
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-3a4f233e8d864dfebbd00003de2ab4de cost_tokens=128 duration_ms=37.03
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-3355d60d2f104dea8500e2a4f11fa838 cost_tokens=128 duration_ms=38.03
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-95d8375eaf5941b083df5e54b99ba225 cost_tokens=128 duration_ms=38.16
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-07e29785bdf7443f81ae9ff6405f9249 cost_tokens=128 duration_ms=38.43
+[36m[DEBUG][0m call from big_fan_out#1 key='ShippingAgent.resolve_shipping'
+[prefill] prefill-ShippingAgent.resolve_shipping@110:26-1105656e40404d4c9866d9cb3f83e1e1 cost_tokens=128 duration_ms=3.55 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:ShippingAgent.resolve_shipping:s1c17-d11e5278559241aabf2eb9a7a589debb duration_ms=84.56 cached_tokens=720 prompt_tokens=868
+[prefill] prefill-Agent.summarize@230:28-4d97297d65b24182ad1f1c8f505acb49 cost_tokens=16 duration_ms=54.17
+[prefill] prefill-Agent.summarize@230:28-8f5931a339a545828d5e7720697d55e5 cost_tokens=16 duration_ms=64.56
+[prefill] prefill-Agent.summarize@230:28-1e128be70c9f4f9bbf8af0cb8e6550f9 cost_tokens=16 duration_ms=64.54
+[prefill] prefill-Agent.summarize@230:28-5dc5485abc9b40b6b2691f15dd9b46c8 cost_tokens=16 duration_ms=64.56
+[prefill] prefill-Agent.summarize@230:28-9491f59fa4584be69b3903f2922ba569 cost_tokens=16 duration_ms=64.71
+[prefill] prefill-Agent.summarize@230:28-96ac13ff51f449179549850d61219e94 cost_tokens=16 duration_ms=64.64
+[prefill] prefill-Agent.summarize@230:28-210c7373895640ab9d1286abf553bafc cost_tokens=16 duration_ms=64.30
+[prefill] prefill-Agent.summarize@230:28-4cce313855164f35b7aada5aa81fdee1 cost_tokens=1 duration_ms=59.93
+[36m[DEBUG][0m [decode] big_fan_out:ShippingAgent.resolve_shipping:s1c17-d11e5278559241aabf2eb9a7a589debb decode_ms=4447.63 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:ShippingAgent.resolve_shipping:s1c17 typed_ok=True output="<think>\nOkay, let's tackle this. The user's request is about tracking not moving for nine days and the delivery estimate passed. The playbook says to open a car"
+[prefill] prefill-Agent.summarize@230:28-f9c8ebacb108480d9a628979c4f79b9d cost_tokens=128 duration_ms=23.86
+[prefill] prefill-Agent.summarize@230:28-f7e1e1ff32a8469dbff279a6caaaac7f cost_tokens=128 duration_ms=36.77
+[prefill] prefill-Agent.summarize@230:28-7bb6891150c84327b7f4c3adb544c4bb cost_tokens=88 duration_ms=37.59
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c18-8e02953b6ef54d5aaa4659e88b160682 duration_ms=102.97 cached_tokens=336 prompt_tokens=636
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c18-8e02953b6ef54d5aaa4659e88b160682 decode_ms=2797.80 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c18 typed_ok=True output="<think>\nOkay, let's see. The task is to summarize the desk's resolution into a two-sentence note for the ticket log. The desk here is the shipping desk, and the"
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c19 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c19-340241514a2f4311807515f617a19ac1 duration_ms=35.67 cached_tokens=1216 prompt_tokens=1280
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c19 prefix='{"schema_object_wrapper": ["' top=[('Privacy', -5.090107151772827e-05), ('Esc', -10.62505054473877), ('privacy', -10.75005054473877), ('Security', -12.75005054473877), ('Account', -13.50005054473877)] order=['PrivacyAgent', 'EscalationAgent', 'SecurityAgent', 'AccountAgent', 'IntegrationAgent', 'FinanceAgent', 'ProductQAAgent', 'BillingAgent', 'TechSupportAgent', 'ShippingAgent', 'ReturnsAgent', 'SubscriptionAgent', 'PartnerAgent']
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-c1ee26eb92ce45e3b243ef22967bffd3 cost_tokens=16 duration_ms=63.56
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-d503eed320e8403e95b5c23b139a675d cost_tokens=16 duration_ms=64.59
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-e42a55dcd4ef43788cc7ae234b380882 cost_tokens=16 duration_ms=64.58
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-acfd12f4b2f641f6a41d4d27ece87360 cost_tokens=16 duration_ms=64.29
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c19-340241514a2f4311807515f617a19ac1 decode_ms=347.73 output_tokens=17
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c19 answer=['PrivacyAgent'] probe=['PrivacyAgent', 'EscalationAgent', 'SecurityAgent', 'AccountAgent', 'IntegrationAgent', 'FinanceAgent', 'ProductQAAgent', 'BillingAgent', 'TechSupportAgent', 'ShippingAgent', 'ReturnsAgent', 'SubscriptionAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-63584812ee124d358087367bcdbfdb64 cost_tokens=16 duration_ms=59.19
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-e88bf6be3d3c434f911f13dbbda23e73 cost_tokens=128 duration_ms=36.92
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-a571f8cab7424918af4ff7b9b5ce5b36 cost_tokens=128 duration_ms=37.44
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-d93530658c2b47baa2f60602818b3100 cost_tokens=128 duration_ms=37.86
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-1ef6abf98e1b4c7d8c1226a511457aaf cost_tokens=128 duration_ms=38.42
+[36m[DEBUG][0m call from big_fan_out#1 key='PrivacyAgent.resolve_privacy'
+[prefill] prefill-PrivacyAgent.resolve_privacy@162:26-c4e1e25ba9ef4fc4a299c70addb0c5f7 cost_tokens=128 duration_ms=4.44 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:PrivacyAgent.resolve_privacy:s1c20-a3716a2ef1ae48f5908b8782b86e1ab0 duration_ms=84.45 cached_tokens=720 prompt_tokens=885
+[prefill] prefill-Agent.summarize@230:28-93462c10b4e74c59860ba9f6dec96c83 cost_tokens=16 duration_ms=54.36
+[prefill] prefill-Agent.summarize@230:28-8cfe264f0df8407eba22a1e49e9f573f cost_tokens=16 duration_ms=64.54
+[prefill] prefill-Agent.summarize@230:28-db297ec329b54ed09ba1a883549b62d4 cost_tokens=16 duration_ms=64.59
+[prefill] prefill-Agent.summarize@230:28-a5f7571151184d5c913b7988cca5091e cost_tokens=16 duration_ms=64.85
+[prefill] prefill-Agent.summarize@230:28-bd46ab173ddc45dea6074f2af526f3c6 cost_tokens=16 duration_ms=64.78
+[prefill] prefill-Agent.summarize@230:28-71967e5b280d44ab9799568f92892135 cost_tokens=16 duration_ms=64.91
+[prefill] prefill-Agent.summarize@230:28-ae8622894e11456ea308ae9e9a736f33 cost_tokens=16 duration_ms=64.67
+[prefill] prefill-Agent.summarize@230:28-95a8f95e9cf246139b033f4f062af3e2 cost_tokens=1 duration_ms=59.81
+[36m[DEBUG][0m [decode] big_fan_out:PrivacyAgent.resolve_privacy:s1c20-a3716a2ef1ae48f5908b8782b86e1ab0 decode_ms=4449.46 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:PrivacyAgent.resolve_privacy:s1c20 typed_ok=True output="<think>\nOkay, let's tackle this. The user wants to delete their data under GDPR but first get a data export. The playbook says to deliver the export before eras"
+[prefill] prefill-Agent.summarize@230:28-f0c81baa30de445f883604408c0362d6 cost_tokens=128 duration_ms=23.77
+[prefill] prefill-Agent.summarize@230:28-3ef0a8fb7b3b4d56a1684e00831762d7 cost_tokens=128 duration_ms=36.18
+[prefill] prefill-Agent.summarize@230:28-3ea773d4c5ee4b43a551cc3485805bdc cost_tokens=86 duration_ms=37.60
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c21-896100d59f0a469dabbb1091d74bd411 duration_ms=103.56 cached_tokens=336 prompt_tokens=640
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c21-896100d59f0a469dabbb1091d74bd411 decode_ms=2798.92 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c21 typed_ok=True output="<think>\nOkay, let's see. The user wants a two-sentence summary of the desk's resolution. The desk is the privacy desk, and the answer provided is the agent's th"
+[36m[DEBUG][0m generate from big_fan_out#1 key='__visit@big_fan_out_long.jac:220'
+[36m[DEBUG][0m [route-layout] big_fan_out:__visit@big_fan_out_long.jac:220:s?c22 observed=['here', 'candidates', 'walker'] expected=['here', 'candidates', 'walker'] match=1
+[36m[DEBUG][0m [serve] big_fan_out:__visit@big_fan_out_long.jac:220:s1c22-fb18d0ecf5f1473fadcc641ff03341ba duration_ms=35.87 cached_tokens=1216 prompt_tokens=1279
+[36m[DEBUG][0m [probe] big_fan_out:__visit@big_fan_out_long.jac:220:s1c22 prefix='{"schema_object_wrapper": ["' top=[('Esc', -5.8053239627042785e-05), ('Security', -10.1250581741333), ('Tech', -12.0000581741333), ('Account', -12.0000581741333), ('Privacy', -12.5000581741333)] order=['EscalationAgent', 'SecurityAgent', 'AccountAgent', 'TechSupportAgent', 'PrivacyAgent', 'BillingAgent', 'SubscriptionAgent', 'ReturnsAgent', 'IntegrationAgent', 'ProductQAAgent', 'FinanceAgent', 'ShippingAgent', 'PartnerAgent']
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-3b9de413fa5f41fd9ed72c3cfc65616a cost_tokens=16 duration_ms=62.57
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-1e12e7a05e494e748db9a62fbe4e56df cost_tokens=16 duration_ms=63.52
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-eb8a7a678b3c4baab6e84059e0acfd56 cost_tokens=16 duration_ms=63.42
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-9866ce509ead463cb1217eab3142eb1e cost_tokens=16 duration_ms=63.46
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-a2474b84d50e4dbb87539488b120fa4a cost_tokens=16 duration_ms=63.85
+[36m[DEBUG][0m [decode] big_fan_out:__visit@big_fan_out_long.jac:220:s1c22-fb18d0ecf5f1473fadcc641ff03341ba decode_ms=463.46 output_tokens=22
+[36m[DEBUG][0m [route] big_fan_out:__visit@big_fan_out_long.jac:220:s1c22 answer=['EscalationAgent'] probe=['EscalationAgent', 'SecurityAgent', 'AccountAgent', 'TechSupportAgent', 'PrivacyAgent', 'BillingAgent', 'SubscriptionAgent', 'ReturnsAgent', 'IntegrationAgent', 'ProductQAAgent', 'FinanceAgent', 'ShippingAgent', 'PartnerAgent'] hit=1 first_ok=1
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-024ea0b0b17e4efba1e07b6b5f5b2286 cost_tokens=16 duration_ms=64.79
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-1e8c30e642f84c2ba30338ec0a286582 cost_tokens=128 duration_ms=53.87
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-578480a43d9141b687f3f558b4e92bd9 cost_tokens=128 duration_ms=38.74
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-98a4a82cae7a4f27a667f39d10da3ac8 cost_tokens=128 duration_ms=39.05
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-45e3d3a68a0f4ade8544b7021243d50e cost_tokens=128 duration_ms=39.66
+[36m[DEBUG][0m call from big_fan_out#1 key='EscalationAgent.resolve_escalation'
+[prefill] prefill-EscalationAgent.resolve_escalation@201:26-6cd905544165495fb34f1334e2b7f957 cost_tokens=128 duration_ms=20.32 aborted=1
+[36m[DEBUG][0m [serve] big_fan_out:EscalationAgent.resolve_escalation:s1c23-a3340d69fd264dafab798b5a778e5b5d duration_ms=91.53 cached_tokens=736 prompt_tokens=956
+[prefill] prefill-Agent.summarize@230:28-ba9cd876d9f24780b34f43d3c448a146 cost_tokens=16 duration_ms=63.15
+[prefill] prefill-Agent.summarize@230:28-ccb1f3a7bd80484993a5e8e4bd792545 cost_tokens=16 duration_ms=64.25
+[prefill] prefill-Agent.summarize@230:28-33215e6193fc425da6304debbec16b7e cost_tokens=16 duration_ms=64.57
+[prefill] prefill-Agent.summarize@230:28-e07a0ee9cb3c4893ae4735b7daefe08c cost_tokens=16 duration_ms=65.19
+[prefill] prefill-Agent.summarize@230:28-6860565f4ffa4fbca4df5f53fbac8262 cost_tokens=16 duration_ms=63.97
+[prefill] prefill-Agent.summarize@230:28-3a6b8b00dff647d790eb35ba29ca51b0 cost_tokens=16 duration_ms=64.57
+[prefill] prefill-Agent.summarize@230:28-f94c99df78e44db3b22de7f2abed0741 cost_tokens=16 duration_ms=64.73
+[prefill] prefill-Agent.summarize@230:28-ee810ddd270e47b0b63b5f4ddbca08be cost_tokens=1 duration_ms=59.87
+[36m[DEBUG][0m [decode] big_fan_out:EscalationAgent.resolve_escalation:s1c23-a3340d69fd264dafab798b5a778e5b5d decode_ms=4451.88 output_tokens=220
+[36m[DEBUG][0m [final] big_fan_out:EscalationAgent.resolve_escalation:s1c23 typed_ok=True output="<think>\nOkay, let's tackle this. The user has called the third time about the same fault and wants a supervisor. The playbook says to own the case end to end an"
+[prefill] prefill-Agent.summarize@230:28-738528c6b51744cba91110b2fb84ac2a cost_tokens=128 duration_ms=23.81
+[prefill] prefill-Agent.summarize@230:28-91242d575dff4d5791a5f67b7bafee6d cost_tokens=128 duration_ms=36.84
+[prefill] prefill-Agent.summarize@230:28-f978bf5f046f4f7e8e3040240815234f cost_tokens=102 duration_ms=37.89
+[36m[DEBUG][0m call from big_fan_out#1 key='Agent.summarize'
+[36m[DEBUG][0m [serve] big_fan_out:Agent.summarize:s1c24-37c137243b054de3ab9ffbe94eb572ac duration_ms=103.85 cached_tokens=352 prompt_tokens=672
+[36m[DEBUG][0m [decode] big_fan_out:Agent.summarize:s1c24-37c137243b054de3ab9ffbe94eb572ac decode_ms=2799.79 output_tokens=140
+[36m[DEBUG][0m [final] big_fan_out:Agent.summarize:s1c24 typed_ok=True output="<think>\nOkay, let's see. The task is to summarize the desk's resolution into a two-sentence note for the ticket log. The desk here is 'escalation desk', and the"
+[32m[LOG][0m big_fan_out#1 disconnected
+[36m[DEBUG][0m [guard] dropped big_fan_out#1 (10 sites served)
+(EngineCore pid=1178633) INFO 08-25 16:36:07 [core.py:1332] [shutdown] EngineCore: trigger received signal=SIGTERM
+(EngineCore pid=1178633) INFO 08-25 16:36:07 [core.py:1468] [shutdown] EngineCore: start mode=abort timeout=0s
+(EngineCore pid=1178633) INFO 08-25 16:36:07 [core.py:1499] [shutdown] EngineCore: request processing complete; starting resource teardown
+(EngineCore pid=1178633) INFO 08-25 16:36:07 [core.py:1345] [shutdown] EngineCore: exiting busy loop

@@ -1,39 +1,10 @@
-"""Big-fan-out triage agent: one routed callsite, thirteen possible successors.
-
-The mechanism this file isolates is *fan-out at a routing callsite*. A single
-`visit [->:ServiceDuty:->] by llm(select=1, ...)` on the triage desk chooses one
-of thirteen specialist sub-agents, and every sub-agent carries its own
-`by llm()` callsite. So one routing decision has thirteen distinct successors:
-the routing call is the only thing standing between the served prefix and
-thirteen different next prefixes, which is exactly the branch set a speculating
-server has to reason about.
-
-Shape of one request:
-
-    Agent(request) spawn TriageCenter
-        TriageCenter.serve  -> visit [->:ServiceDuty:->] by llm(select=1)   # 13 candidates
-            <XyzAgent>.handle -> self.resolve_xyz(request, playbook)        # 1 of 13 callsites
-        TriageCenter.wrap   -> self.summarize(...)                          # join point
-
-The routing call is the only wide point: it is served once per request and its
-answer picks which of the thirteen successor prefixes the walker runs next.
-
-Run:
-
-    python start_server.py --model Qwen/Qwen2.5-7B-Instruct \
-        --program big_fan_out:benchmark/mechanisms/big_fan_out.jac:1145
-
-    jac run benchmark/mechanisms/big_fan_out.jac
-
-Inputs: $REQUEST (one request), or $TRIAGE_INDEX into the bundled request list,
-or neither, which runs every bundled request in order.
-"""
+# Big fan-out triage agent with visit by
 
 import os;
 import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
+glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "0");
 
 glob llm = InterceptorLLM(
     model_name=str(os.environ.get("MODEL") or "Qwen/Qwen2.5-7B-Instruct"),
@@ -43,7 +14,6 @@ glob llm = InterceptorLLM(
 );
 
 glob TRIAGE_INTENT: str = "Send the customer's request to the one specialist desk whose duty covers it. Read the walker's request, compare it against each candidate's duty and playbook, and choose exactly one desk. Prefer the desk that owns the customer's actual problem over one that merely shares a word with it.";
-
 
 # ------------------------------------------------------------------ graph shape
 

@@ -8,7 +8,7 @@ from jaclang.byllm.schema import json_to_instance #type: ignore
 from jaclang.jac0core.compile_options import CompileOptions #type: ignore
 from jaclang.jac0core.program import JacProgram #type: ignore
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import AbstractSet, Any, Dict, List, Optional, Tuple
 
 from utils.utils import (SYSTEM_PERSONA, TOOL_INSTRUCTION, FIELD_EXPR_RE, LOOP_STMTS, ROUTE_SYSTEM, ROUTE_ZONE_LABEL, ROUTE_LAYOUT_DEFAULT, ROUTE_LAYOUT_CACHE, norm, clean_type, json_type_of, literal_of, params_of, extract_llm_call, finish_tool_schema, format_tools_for_prompt, schema_entry, render_bindings)
 
@@ -113,7 +113,6 @@ class ByLLMDecl:
         except Exception:
             return False, None
 
-
 class ByLLMCallsite:
     """One invocation site of a byllm decl. Duty includes:
     1. rendering the invariant system prompt and assembling the full prompt with args.
@@ -129,9 +128,6 @@ class ByLLMCallsite:
         # A visit decl is already one-per-location, so its key is the whole identity.
         self.callsite_uuid: str = decl.key if stmt is not None else f"{decl.key}@{call.loc.first_line}:{call.loc.col_start}"
         self.consumers: List[Tuple[str, str]] = []  # (consumer decl key, param) fed by this site's return
-        # A callsite is an immutable compile-time template. Ready parameter reprs
-        # ("bindings": name -> repr, insertion order = warm prefix order) belong to
-        # the running workflow instance and are passed in by the server.
         self._invariant_system: Optional[str] = None
         self._invariant_user: Optional[str] = None
 
@@ -925,7 +921,7 @@ class ProgramTopology:
                     out.append(slot)
         return out
 
-    def _plain_visit_successors(self, stmt: uni.VisitStmt, exclude: set = frozenset()) -> List[str]:
+    def _plain_visit_successors(self, stmt: uni.VisitStmt, exclude: AbstractSet[str] = frozenset()) -> List[str]:
         """Where a plain `visit <edges>` hands control: the first byllm call of every
         ability that fires when this walker arrives at one of its target node types.
         The visit only enqueues — the walker dequeues once the enclosing body ends —
@@ -943,7 +939,7 @@ class ProgramTopology:
                             out.append(key)
         return out
 
-    def _visit_successors(self, decl: ByLLMDecl, exclude: set = frozenset()) -> List[str]:
+    def _visit_successors(self, decl: ByLLMDecl, exclude: AbstractSet[str] = frozenset()) -> List[str]:
         """Where a routing call hands control next: the first byllm call inside each
         candidate node's firing arrival abilities (node side and walker side). The
         router's answer picks one of them at runtime, so all of them are may-run-next.
@@ -998,7 +994,7 @@ class ProgramTopology:
             return list(decl.candidates) if decl is not None else []
         return self._candidate_nodes(st, st.find_parent_of_type(uni.Ability))
 
-    def _visit_targets(self, st: uni.VisitStmt, exclude: set = frozenset()) -> List[str]:
+    def _visit_targets(self, st: uni.VisitStmt, exclude: AbstractSet[str] = frozenset()) -> List[str]:
         """First byllm calls of the arrival abilities a visit's targets fire."""
         if self._visit_by(st) is not None:
             decl = self.get_decls().get(visit_key(st.loc.mod_path, st.loc.first_line))
