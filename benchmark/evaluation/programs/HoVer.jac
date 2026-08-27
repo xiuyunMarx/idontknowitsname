@@ -276,7 +276,7 @@ node Verdict {
 walker HoverAgent {
     has claim: str = "";
     has subclaims: str = "";
-    has gap: str = "";
+    has gap: str;
     has query: str = "";
     has passages: str = "";
     has digest: str = "";

@@ -24,6 +24,30 @@ Bindings = Dict[str, str]  # param name -> repr, insertion order = warm prefix o
 WarmKey = Tuple[str, Tuple[Tuple[str, str], ...], Optional[str]]  # (callsite uuid, bindings, cache salt) = the warmed bytes
 
 
+# --- MoE-verify prompt capture (PROMPT_DUMP=<path.jsonl>); off by default -----
+_PROMPT_DUMP = os.environ.get("PROMPT_DUMP")
+_PROMPT_DUMP_SEEN: set = set()
+
+
+def _dump_prompt(program_name, site, session_id, call_id, turn, messages, text):
+    """Append one served turn plus (once per callsite) its compile-time invariant
+    prefix, so an offline pass can split prefix / args / output tokens."""
+    import json as _json
+    rec = {"program": program_name, "key": site.key, "callsite": site.callsite_uuid,
+           "session": session_id, "call": call_id, "turn": turn,
+           "messages": [dict(m) for m in messages], "output": text}
+    if site.callsite_uuid not in _PROMPT_DUMP_SEEN:
+        _PROMPT_DUMP_SEEN.add(site.callsite_uuid)
+        try:
+            rec["invariant_system"] = site.invariant_system
+            rec["invariant_user"] = site.render_invariant_prompt()
+        except Exception as e:  # never break serving for the dump
+            rec["invariant_error"] = repr(e)
+    with open(_PROMPT_DUMP, "a") as f:
+        f.write(_json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+
 @dataclass
 class _CallState:
     session: ClientSession
@@ -458,6 +482,8 @@ class GuardServer:
             iterations = 0
             while True:
                 text = await self._complete(state.messages, sampling, tag, sess.cache_salt)
+                if _PROMPT_DUMP:
+                    _dump_prompt(program.program_name, site, session.session_id, call_id, iterations, state.messages, text)
 
                 if site.decl.tools:
                     tool_call = self._parse_tool_call(text)
