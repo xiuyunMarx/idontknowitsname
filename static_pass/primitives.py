@@ -234,7 +234,14 @@ class VisitByLLM:
                 parts.append(f"{ROUTE_ZONE_LABEL[zone]}\n{zone_values[zone]}")
         return "\n\n".join(p for p in parts if p)
 
-
+    def full_prompt(self) -> List[Dict[str, str]]:
+        """The complete routing call, return chat tamplate Raises ValueError while any zone is still unbound"""
+        missing = [zone for zone in self.zones if zone not in self.zone_value]
+        if missing:
+            raise ValueError(f"{self.callsite_key}: zones {missing} not bound yet")
+        return [{"role": "system", "content": self.render_system()},
+                {"role": "user", "content": self.render_full(self.zone_value)}]
+    
 # Generation engine the Program drives: (model_name, messages, response_format | None,
 # call_params) -> assistant text. Plugged in by the server layer (InstanceEngine).
 Engine = Callable[[str, List[Dict[str, str]], Optional[Dict[str, Any]], Dict[str, Any]], str]
@@ -301,7 +308,7 @@ class Program:
         self.done, self.produced, self.calls = set(), {}, {}
         for site in self.callsites.values():
             site.reset() #type: ignore
-        return {"type": "registered", "route_layout": "default", "watch": watch_set(self)}
+        return {"type": "registered", "route_layout": "cache", "watch": watch_set(self)}
 
     def on_disconnect(self) -> None:
         self.calls.clear()
@@ -426,6 +433,10 @@ class Program:
             self._send({"type": "error", "id": frame.get("id"), "error": "program has no engine"})
             return
         site = self.site_of(str(frame.get("key", "")), frame.get("site"))
+        if not isinstance(site, VisitByLLM):
+            self._send({"type": "error", "id": frame.get("id"),
+                        "error": f"unknown routing callsite {frame.get('key')!r} at {frame.get('site')!r}"})
+            return
         params = {k: frame[k] for k in ("temperature", "max_tokens", "stop") if frame.get(k) is not None}
         try:
             text = self.engine(str(frame.get("model_name") or ""), list(frame.get("messages") or []),
@@ -434,9 +445,8 @@ class Program:
             self._send({"type": "error", "id": frame.get("id"), "error": str(e)})
             return
         self._send({"type": "result", "id": frame.get("id"), "text": text})
-        if isinstance(site, VisitByLLM):
-            self.done.add(site.callsite_key)
-            self.refresh_bindings(via=site.callsite_key)
+        self.done.add(site.callsite_key)
+        self.refresh_bindings(via=site.callsite_key)
 
     # --------------------------------------------------------------- binding
 

@@ -12,7 +12,6 @@ from vllm.logprobs import Logprob
 from vllm.sampling_params import SamplingParams
 from vllm.v1.engine.async_llm import AsyncLLM
 
-from console_helper.debug_output import console_debug, console_log, console_warn, console_error
 
 class ModelEngine:
     def __init__(self, model_name: str, gpu_memory_utilization: float = 0.9, max_model_len: int = 8192):
@@ -104,7 +103,7 @@ class ModelEngine:
                         self._decode_tasks += 1
                         first_token = False
                         first_token_at = time.perf_counter()
-                        console_debug(f"[serve] {request_id} duration_ms={(first_token_at - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
+                        print(f"[serve] {request_id} duration_ms={(first_token_at - started) * 1000:.2f} cached_tokens={output.num_cached_tokens or 0} prompt_tokens={len(output.prompt_token_ids or [])}")
                     text = output.outputs[0].text
                     out_tokens = len(output.outputs[0].token_ids)
         finally:
@@ -113,7 +112,7 @@ class ModelEngine:
                 self._real_prefills -= 1
             else:
                 self._decode_tasks -= 1
-                console_debug(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
+                print(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} output_tokens={out_tokens}")
         return text
 
     def kill_speculation(self) -> bool:
@@ -224,11 +223,7 @@ class ModelEngine:
         decode_tokens: int,
         warmup_tokens: int,
     ) -> Dict[str, float]:
-        """TBT of `num_decode_tasks` decode streams while one speculative request of
-        `step_tokens` uncached tokens at a time is injected back-to-back — the
-        production pattern (`prefill` is awaited one at a time, priority 1).
-        Returns pooled mean and p95 gap in ms, and the injector's duty (requests
-        completed per decode step) so the curve shows how many steps were hit."""
+        """TBT of `num_decode_tasks` decode streams while one speculative request of `step_tokens` uncached tokens at a time is injected back-to-back."""
         if num_decode_tasks < 1 or step_tokens < 0:
             raise ValueError("num_decode_tasks must be >= 1 and step_tokens >= 0")
 
@@ -296,12 +291,7 @@ class ModelEngine:
     ) -> None:
         """Find, per decode concurrency b, the largest uncached token count N one
         speculative request may carry while `stat` TBT stays within `tbt_slack`
-        of the unloaded baseline. The unit is tokens per engine step: the request
-        lands whole in one step, so N bounds that step's extra compute.
-
-        `stat` is the gate; `aggregate.py`'s no-harm check uses the mean, so the
-        default matches it. The median is deliberately not offered: an injector
-        that hits fewer than half the steps leaves it untouched.
+        of the unloaded baseline.
         """
         if tbt_slack < 0:
             raise ValueError("tbt_slack must be >= 0")

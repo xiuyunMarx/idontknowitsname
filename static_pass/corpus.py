@@ -35,11 +35,12 @@ def route_system_prompt(select) -> str:
 
 
 def route_layout() -> tuple:
-    """Runtime zone order route_visit will use. JAC_ROUTE_CACHE_LAYOUT is read in
-    the *client* process; the server only mirrors it for diagnostics, since the
-    warmable prefix (system + `Goal:`) precedes the zones under either layout."""
+    """Runtime zone order route_visit will use: the cache layout unless
+    JAC_ROUTE_CACHE_LAYOUT=0 opts out. The variable is read in the *client*
+    process; the server only mirrors it for diagnostics, since the warmable
+    prefix (system + `Goal:`) precedes the zones under either layout."""
     import os
-    return ROUTE_LAYOUT_CACHE if os.environ.get("JAC_ROUTE_CACHE_LAYOUT") == "1" else ROUTE_LAYOUT_DEFAULT
+    return ROUTE_LAYOUT_DEFAULT if os.environ.get("JAC_ROUTE_CACHE_LAYOUT") == "0" else ROUTE_LAYOUT_CACHE
 
 
 # --- tool protocol (byllm tool_protocol.jac) ----------------------------------
