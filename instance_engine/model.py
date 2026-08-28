@@ -18,8 +18,10 @@ class Engine:
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
         self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
-        self._spec_task: Optional[asyncio.Task] = None  # consumer of the one speculative request in flight
+        self._spec_tasks: Dict[asyncio.Task, int] = {}  # speculative consumers in flight -> their uncached-token cost
+        self.tier: str = "gpu"  # gpu | host | ssd
         self.sp = SamplingParams(temperature=0.7)
+        self.last: Dict[str, float] = {}  # stats of the last real request (ttft_ms, cached_tokens, prompt_tokens)
 
 
     @classmethod
@@ -30,12 +32,43 @@ class Engine:
 
 
     
+    # ---- tiers: gpu (resident) / host (pinned) / ssd -------------------------
+
     async def offload(self) -> dict:
+        """gpu -> host."""
         self.kill_speculation()  # offload refuses unfinished requests
-        return await self.engine.offload()
+        res = await self.engine.offload()
+        self.tier = "host"
+        return res
+
+    async def kill(self) -> dict:
+        """any -> ssd (host copy dropped)."""
+        self.kill_speculation()
+        res = await self.engine.kill()
+        self.tier = "ssd"
+        return res
+
+    async def prepare(self) -> dict:
+        """ssd -> host."""
+        res = await self.engine.prepare()
+        self.tier = "host"
+        return res
 
     async def load(self, prefill=None) -> dict:
-        return await self.engine.load(prefill)
+        """host -> gpu (via prepare when on ssd), prefilling `prefill` under the weight stream."""
+        if self.tier == "ssd":
+            await self.prepare()
+        res = await self.engine.load(prefill)
+        self.tier = "gpu"
+        return res
+
+    @property
+    def resident(self) -> bool:
+        return self.engine.resident
+
+    @property
+    def busy(self) -> bool:
+        return self._inflight_prefill + self._inflight_decode + len(self._spec_tasks) > 0
 
     # ---- tokenizer helpers ---------------------------------------------------
 
@@ -61,12 +94,13 @@ class Engine:
     # ---- speculative budget --------------------------------------------------
 
     def spec_allowance(self) -> int:
-        """Uncached tokens a speculative request may carry right now."""
-        if self._spec_task is not None or self._inflight_prefill > 0:
-            return 0
-        if not self.engine.output_processor.has_unfinished_requests():
-            return 1 << 30  # idle engine: anything goes
-        return self._spec_tokens_per_step.get(self._inflight_decode, 0)
+        """Uncached tokens a new speculative request may carry right now: the per-step
+        budget at the current decode concurrency minus what in-flight speculation holds."""
+        if self._inflight_prefill > 0:
+            return 0  # a real prefill owns the step
+        if self._inflight_decode == 0:
+            return 1 << 30  # no real decode to protect
+        return self._spec_tokens_per_step.get(self._inflight_decode, 0) - sum(self._spec_tasks.values())
 
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
@@ -108,9 +142,11 @@ class Engine:
                     first_token_at = time.perf_counter()
                     self._inflight_prefill -= 1
                     self._inflight_decode += 1
-                    print(f"[serve] {request_id} ttft_ms={(first_token_at - started) * 1000:.2f} "
-                          f"cached_tokens={output.num_cached_tokens or 0} "
-                          f"prompt_tokens={len(output.prompt_token_ids or [])}", flush=True)
+                    self.last = {"ttft_ms": (first_token_at - started) * 1000,
+                                 "cached_tokens": output.num_cached_tokens or 0,
+                                 "prompt_tokens": len(output.prompt_token_ids or [])}
+                    print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
+                                                            for k, v in self.last.items()), flush=True)
                 text = output.outputs[0].text
                 out_tokens = len(output.outputs[0].token_ids)
         finally:
@@ -125,25 +161,26 @@ class Engine:
 
     # ---- speculative requests ------------------------------------------------
 
-    def kill_speculation(self) -> bool:
-        """Abort the speculative request in flight, if any."""
-        task = self._spec_task
-        if task is None or task.done():
-            return False
-        task.cancel()
-        return True
+    def kill_speculation(self) -> int:
+        """Abort every speculative request in flight; returns how many."""
+        live = [t for t in self._spec_tasks if not t.done()]
+        for t in live:
+            t.cancel()
+        return len(live)
 
-    async def _speculative(self, prompt: Any, sampling_params: SamplingParams, request_id: str) -> Any:
+    async def _speculative(self, prompt: Any, sampling_params: SamplingParams, request_id: str, cost: int = 0) -> Any:
         """Run one priority-1 request to completion; return its last output, or None
         if kill_speculation() aborted it. Consumed in its own task so a real admission
-        can cancel exactly this request (AsyncLLM aborts it when the consumer is cancelled)."""
+        can cancel exactly this request (AsyncLLM aborts it when the consumer is cancelled).
+        `cost` is held against the speculation budget until the request ends."""
         async def consume():
             last = None
             async for out in self.engine.generate(prompt, sampling_params, request_id, priority=1):
                 last = out
             return last
 
-        self._spec_task = task = asyncio.create_task(consume())
+        task = asyncio.create_task(consume())
+        self._spec_tasks[task] = cost
         try:
             return await task
         except asyncio.CancelledError:
@@ -152,7 +189,7 @@ class Engine:
                 raise  # the caller itself is being cancelled (shutdown), not the request
             return None
         finally:
-            self._spec_task = None
+            self._spec_tasks.pop(task, None)
 
     async def prefill(self, prompt: str | List[int], request_id: str, cost: Optional[int] = None,
                       cache_salt: Optional[str] = None) -> bool:
@@ -166,19 +203,20 @@ class Engine:
         elif cost is None:
             cost = len(self.tokenize(prompt))
         sp = SamplingParams(max_tokens=1, temperature=0.0, ignore_eos=True)
-        done = await self._speculative(self._with_salt(prompt, cache_salt), sp, request_id) is not None
+        done = await self._speculative(self._with_salt(prompt, cache_salt), sp, request_id, cost) is not None
         print(f"[prefill] {request_id} cost_tokens={cost} duration_ms={(time.perf_counter() - started) * 1000:.2f}"
               + ("" if done else " aborted=1"), flush=True)
         return done
 
     async def probe(self, prompt: str, request_id: str,
                     cache_salt: Optional[str] = None) -> Optional[Dict[int, Logprob]]:
-        """Greedy one-token probe: top-20 logprobs at the first position. None when a
-        real prefill owns the step or a real admission killed the probe; retry later."""
-        if self._inflight_prefill > 0:
+        """Greedy one-token probe: top-20 logprobs at the first position. None when the
+        budget cannot take it or a real admission killed the probe; retry later."""
+        cost = len(self.tokenize(prompt))
+        if self.spec_allowance() < cost:
             return None
         sp = SamplingParams(max_tokens=1, temperature=0.0, logprobs=20)
-        output = await self._speculative(self._with_salt(prompt, cache_salt), sp, request_id)
+        output = await self._speculative(self._with_salt(prompt, cache_salt), sp, request_id, cost)
         if output is None:
             return None
         if output.outputs and output.outputs[0].logprobs:
@@ -212,7 +250,8 @@ class Engine:
         vocab = len(self.engine.get_tokenizer())  # type: ignore[arg-type]
         return [random.randrange(1000, vocab - 1000) for _ in range(num_tokens)]
 
-    async def _measure_tbt(self, num_decode:int, num_prefill:int, sampling_params:SamplingParams) -> dict:
+    async def _measure_tbt(self, num_decode: int, num_prefill: int, sampling_params: SamplingParams,
+                           injectors: int = 1) -> dict:
         """TBT of `num_decode` decode streams (each `sampling_params.max_tokens` long)
         while priority-1 prefill requests of `num_prefill` uncached tokens are
         injected back-to-back, one at a time. `num_prefill == 0` measures the baseline.
@@ -256,14 +295,13 @@ class Engine:
                 injected += 1
 
         decoders = [asyncio.create_task(decode_worker(i)) for i in range(num_decode)]
-        inj = asyncio.create_task(injector()) if num_prefill > 0 else None
+        injs = [asyncio.create_task(injector()) for _ in range(injectors)] if num_prefill > 0 else []
         try:
             gaps_by_stream = await asyncio.gather(*decoders)
         finally:
             stop.set()
-            decode_started.set()  # release the injector if a decoder died at startup
-            if inj is not None:
-                await asyncio.gather(inj, return_exceptions=True)
+            decode_started.set()  # release the injectors if a decoder died at startup
+            await asyncio.gather(*injs, return_exceptions=True)
 
         gaps = sorted(g for stream in gaps_by_stream for g in stream)
         if len(gaps) < num_decode * 4:

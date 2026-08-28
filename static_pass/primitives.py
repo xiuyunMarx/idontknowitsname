@@ -1,12 +1,10 @@
-import json
-import re
+import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from static_pass.corpus import SYSTEM_PERSONA, TOOL_INSTRUCTION, ROUTE_ZONE_LABEL, format_tools_for_prompt, route_system_prompt
 from static_pass.schema_render import TypeRegistry, schema_entry
-from static_pass.state import Binding, InstanceState, bind_params, watch_set
 
 
 class SourceKind(Enum):
@@ -151,9 +149,7 @@ class ByLLMFunc:
         for name, ty in self.params_type.items():
             row = self.param_schema.get(name) or schema_entry(name, ty, self.param_sem.get(name, ""), TypeRegistry())
             for ln in row.split("\n") if row else []:
-                lines.append("      " + ln)  # byllm indents every line of the entry
-        # response_format is not prompt text: byllm passes it as the API's
-        # response_format (the server turns it into a decoding grammar).
+                lines.append("      " + ln) 
 
         self._system, self._user = system, "\n".join(lines)
         self._invariant = self._system + "\n\n" + self._user
@@ -242,99 +238,43 @@ class VisitByLLM:
         return [{"role": "system", "content": self.render_system()},
                 {"role": "user", "content": self.render_full(self.zone_value)}]
     
-# Generation engine the Program drives: (model_name, messages, response_format | None,
-# call_params) -> assistant text. Plugged in by the server layer (InstanceEngine).
-Engine = Callable[[str, List[Dict[str, str]], Optional[Dict[str, Any]], Dict[str, Any]], str]
-
-_TOOL_CALL_RE = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
-
-
 @dataclass
-class _Call:
-    """One in-flight `call` of the client: the server-driven ReAct sub-conversation."""
-    id: int
-    site: ByLLMFunc
+class RequestHandle:
+    """One generation turn, shared between the Program that needs the text and the
+    server that produces it. The Program awaits `done`; the server fills `text`
+    or `error` and sets it. `program` + `callsite_key` give the server the
+    compile-time picture (successors, bound params) for speculation."""
+    instance: Any                            # instance.ProgramInstance
+    callsite_key: str
     model_name: str
     messages: List[Dict[str, str]]
-    schema: Optional[Dict[str, Any]]
-    call_params: Dict[str, Any]
-    turns: int = 0
-    rejects: int = 0
+    kind: str = "call"                       # call | tool_turn | reject | generate
+    schema: Optional[Dict[str, Any]] = None  # structured-output grammar
+    call_params: Dict[str, Any] = field(default_factory=dict)
+    cache_salt: str = ""                     # prefix-cache tenant; speculation must use the same
+    text: str = ""
+    error: Optional[str] = None
+    done: asyncio.Event = field(default_factory=asyncio.Event)
 
 
 class Program:
     """The static picture of one .jac program (callsites, topology, provenance,
-    schemas) wired to one running instance of it: the InterceptorLLM connects here,
-    pushes field observations, and hands every `by llm()` call over with its
-    model name; the Program renders the prompt, drives the engine, runs the tool
-    loop, and keeps every consumer's bindings current."""
+    schemas). A template: every connected process gets an instance.ProgramInstance
+    that binds values, drives the tool loop and tracks progress on its own copy."""
 
     def __init__(self, name: str):
         self.name: str = name
         self.callsites: Dict[str, Union[ByLLMFunc, VisitByLLM]] = {}
         self.next_call: Dict[str, List[str]] = {}  # callsite_key -> list of next callsite_keys
         self.types: Any = None  # schema_render.TypeRegistry: the module's obj/enum declarations
-
-        # --- the bound runtime instance ---
-        self.instance_address: Tuple[str, int] = ("localhost", 8964)
-        self.link: Any = None                       # link.InstanceLink once wired
-        self.engine: Optional[Engine] = None        # generation backend, keyed by model name per call
-        self.state = InstanceState()                # observed walker/node fields (state / enter frames)
-        self.done: "set[str]" = set()               # callsites that completed at least once
-        self.produced: Dict[str, str] = {}          # callsite_key -> repr of its last output
-        self.calls: Dict[int, _Call] = {}           # in-flight calls by wire id
-        self.max_output_retries: int = 2
+        self.unresolved_models: "set[str]" = set()  # llm variables whose model_name is not a literal
         self.max_react_iterations: int = 8
 
     def build_program(self, path: str) -> "Program":
         from static_pass.parsing import build  # parsing imports the primitives; keep this lazy
         return build(self, path)
 
-    # ------------------------------------------------------------------ wiring
-
-    def wire_instance(self, host: str, port: int, engine: Optional[Engine] = None) -> "Program":
-        """Listen for the one InterceptorLLM instance this Program serves. `engine`
-        generates text for (model_name, messages, schema, call_params)."""
-        from static_pass.link import InstanceLink
-        if engine is not None:
-            self.engine = engine
-        self.link = InstanceLink(self, host, port).listen()
-        self.instance_address = (host, self.link.port)
-        return self
-
-    def on_register(self, hello: dict) -> dict:
-        """The `registered` ack: the observation watch set and the routing layout."""
-        self.state = InstanceState()
-        self.done, self.produced, self.calls = set(), {}, {}
-        for site in self.callsites.values():
-            site.reset() #type: ignore
-        return {"type": "registered", "route_layout": "cache", "watch": watch_set(self)}
-
-    def on_disconnect(self) -> None:
-        self.calls.clear()
-
-    def on_frame(self, frame: dict) -> None:
-        """Every frame after `register`, in wire order."""
-        if self.state.apply(frame):
-            self.refresh_bindings()
-            return
-        kind = frame.get("type")
-        if kind == "call":
-            self._begin_call(frame)
-        elif kind == "tool_result":
-            self._continue_call(int(frame["call"]), {"role": "user", "content": str(frame.get("content", ""))})
-        elif kind == "reject":
-            self._reject_call(int(frame["call"]), str(frame.get("feedback", "")))
-        elif kind == "generate":
-            self._generate(frame)
-        else:
-            self._send({"type": "error", "id": frame.get("id"), "error": f"unknown frame type {kind!r}"})
-
-    def _send(self, frame: dict) -> None:
-        if self.link is not None:
-            self.link.send(frame)
-
-    # ------------------------------------------------------------ call loop
+    # ---------------------------------------------------------------- lookup
 
     def site_of(self, key: str, site: Optional[str]) -> Optional[Union[ByLLMFunc, VisitByLLM]]:
         """The callsite a wire (key, site) names: `Owner.name` + `file.jac:line`."""
@@ -347,122 +287,6 @@ class Program:
                 if s.callsite_key.rsplit("@", 1)[1].split(":")[0] == line:
                     return s
         return cands[0] if cands else None
-
-    def _begin_call(self, frame: dict) -> None:
-        site = self.site_of(str(frame.get("key", "")), frame.get("site"))
-        if not isinstance(site, ByLLMFunc):
-            self._send({"type": "error", "id": frame.get("id"), "error": f"unknown callsite {frame.get('key')!r}"})
-            return
-        args = dict(frame.get("args") or {})
-        self_view = frame.get("self")
-        params = dict(args)
-        if self_view is not None:
-            params["self"] = self_view
-        messages = [{"role": "system", "content": site.render_system()},
-                    {"role": "user", "content": site.render_full(params)}]
-        call = _Call(int(frame["id"]), site, str(frame.get("model_name") or (self.link.model_name if self.link else "")),
-                     messages, frame.get("schema"), dict(frame.get("call_params") or {}))
-        self.calls[call.id] = call
-        self._step(call)
-
-    def _continue_call(self, call_id: int, message: Dict[str, str]) -> None:
-        call = self.calls.get(call_id)
-        if call is None:
-            self._send({"type": "error", "call": call_id, "error": "no such call"})
-            return
-        call.messages.append(message)
-        self._step(call)
-
-    def _reject_call(self, call_id: int, feedback: str) -> None:
-        call = self.calls.get(call_id)
-        if call is None:
-            return
-        call.rejects += 1
-        call.messages.append({"role": "user", "content": feedback})
-        self._step(call)
-
-    def _step(self, call: _Call) -> None:
-        """One engine turn: a tool call goes back to the client, anything else is final."""
-        if self.engine is None:
-            self._send({"type": "error", "call": call.id, "error": "program has no engine"})
-            return
-        try:
-            text = self.engine(call.model_name, list(call.messages), call.schema, call.call_params)
-        except Exception as e:  # the engine's failure is the client's error
-            self._send({"type": "error", "call": call.id, "error": str(e)})
-            self.calls.pop(call.id, None)
-            return
-        call.messages.append({"role": "assistant", "content": text})
-        call.turns += 1
-        site = call.site
-        max_iter = int(call.call_params.get("max_react_iterations") or self.max_react_iterations)
-        tool = self._parse_tool_call(text) if site.tools else None
-        if tool is not None and tool["name"] != "finish_tool" and call.turns < max_iter:
-            self._send({"type": "tool_call", "call": call.id, "name": tool["name"],
-                        "arguments": tool.get("arguments", {}), "text": text})
-            return
-        output = (tool.get("arguments", {}).get("final_output", text) if tool is not None else text)
-        self._finish(call, output, text)
-
-    def _finish(self, call: _Call, output: Any, text: str) -> None:
-        site = call.site
-        self._send({"type": "final", "call": call.id, "output": output, "text": text})
-        self.calls.pop(call.id, None)
-        site.return_value = output
-        self.produced[site.callsite_key] = repr(output)  # the client's typed value reprs the same way
-        self.done.add(site.callsite_key)
-        self.refresh_bindings(via=site.callsite_key)
-
-    @staticmethod
-    def _parse_tool_call(text: str) -> Optional[Dict[str, Any]]:
-        m = _TOOL_CALL_RE.search(text)
-        payload = m.group(1) if m else text.strip()
-        try:
-            call, _ = json.JSONDecoder().raw_decode(payload)
-        except json.JSONDecodeError:
-            return None
-        if not isinstance(call, dict) or not isinstance(call.get("name"), str):
-            return None
-        if not isinstance(call.get("arguments", {}), dict):
-            return None
-        return call
-
-    def _generate(self, frame: dict) -> None:
-        """Single-turn `generate` (visit routing): the client ships full messages."""
-        if self.engine is None:
-            self._send({"type": "error", "id": frame.get("id"), "error": "program has no engine"})
-            return
-        site = self.site_of(str(frame.get("key", "")), frame.get("site"))
-        if not isinstance(site, VisitByLLM):
-            self._send({"type": "error", "id": frame.get("id"),
-                        "error": f"unknown routing callsite {frame.get('key')!r} at {frame.get('site')!r}"})
-            return
-        params = {k: frame[k] for k in ("temperature", "max_tokens", "stop") if frame.get(k) is not None}
-        try:
-            text = self.engine(str(frame.get("model_name") or ""), list(frame.get("messages") or []),
-                               frame.get("schema"), params)
-        except Exception as e:
-            self._send({"type": "error", "id": frame.get("id"), "error": str(e)})
-            return
-        self._send({"type": "result", "id": frame.get("id"), "text": text})
-        self.done.add(site.callsite_key)
-        self.refresh_bindings(via=site.callsite_key)
-
-    # --------------------------------------------------------------- binding
-
-    def bind_ready(self, consumer_key: str, via: Optional[str] = None) -> Dict[str, Binding]:
-        """Bytes of every param of `consumer_key` bindable now (static readiness +
-        produced outputs + observed fields)."""
-        pid = self.link.pid if self.link is not None else -1
-        return bind_params(self, consumer_key, self.done, self.state, pid, via, self.produced)
-
-    def refresh_bindings(self, via: Optional[str] = None) -> None:
-        """Push the current bindable bytes into every ByLLMFunc's `params_value` (in
-        bind order). Called after each observation and each completed call."""
-        for site in self.byLLMs:
-            for name, b in self.bind_ready(site.callsite_key, via).items():
-                if site.params_value.get(name) != b.text:
-                    site.bind(name, b.text)
 
     # ---------------------------------------------------------------- queries
 
@@ -496,6 +320,33 @@ class Program:
         done = set(done) | {callsite_key}
         return {s.callsite_key: self.ready_params(s.callsite_key, done, via=callsite_key)
                 for s in self.successors(callsite_key) if isinstance(s, ByLLMFunc)}
+
+    def model_of(self, site: Union[ByLLMFunc, VisitByLLM], fallback: str) -> str:
+        """The served model of `site`: its literal model_name, else what the client reported."""
+        return fallback if site.model_name in self.unresolved_models else site.model_name
+
+    def expected_paths(self, callsite_key: str, depth: int = 6, min_prob: float = 0.05) -> List[Tuple[List[str], float]]:
+        """Callsite paths that may follow `callsite_key`, with probabilities: each
+        guarded successor is a coin flip, the certain ones share what is left."""
+        out: List[Tuple[List[str], float]] = []
+
+        def walk(key: str, path: List[str], prob: float) -> None:
+            succ = self.successors(key)
+            if not succ or len(path) >= depth:
+                out.append((path, prob))
+                return
+            cond = [x for x in succ if x.guard is not GuardKind.CERTAIN]
+            cert = [x for x in succ if x.guard is GuardKind.CERTAIN]
+            p_cond = min(0.5, 1.0 / len(cond)) if cond else 0.0  # guarded successors: coin flips
+            p_cert = (1.0 - p_cond * len(cond)) / len(cert) if cert else 0.0  # the rest to the sure ones
+            for site in succ:
+                p = prob * (p_cert if site.guard is GuardKind.CERTAIN else p_cond)
+                if p >= min_prob:
+                    walk(site.callsite_key, path + [site.callsite_key], p)
+                else:
+                    out.append((path, p))
+        walk(callsite_key, [], 1.0)
+        return sorted(out, key=lambda t: -t[1])
 
     @property
     def byLLMs(self) -> List["ByLLMFunc"]:

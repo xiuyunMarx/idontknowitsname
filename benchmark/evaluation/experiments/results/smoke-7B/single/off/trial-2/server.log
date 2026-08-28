@@ -1,179 +1,0 @@
-INFO 08-24 16:00:51 [model.py:549] Resolved architecture: Qwen2ForCausalLM
-INFO 08-24 16:00:51 [model.py:1678] Using max model len 8192
-INFO 08-24 16:00:51 [scheduler.py:238] Chunked prefill is enabled with max_num_batched_tokens=2048.
-INFO 08-24 16:00:51 [vllm.py:790] Asynchronous scheduling is enabled.
-(EngineCore pid=568990) INFO 08-24 16:00:53 [core.py:105] Initializing a V1 LLM engine (v0.19.1) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=8192, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=True, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_images_per_batch': 0, 'compile_sizes': [], 'compile_ranges_endpoints': [2048], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'size_asserts': False, 'alignment_asserts': False, 'scalar_asserts': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 256, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
-(EngineCore pid=568990) INFO 08-24 16:00:53 [parallel_state.py:1400] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://141.212.48.140:39315 backend=nccl
-[rank0]:[W824 16:00:53.261737636 ProcessGroupGloo.cpp:511] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
-(EngineCore pid=568990) INFO 08-24 16:00:53 [parallel_state.py:1716] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
-(EngineCore pid=568990) INFO 08-24 16:00:53 [gpu_model_runner.py:4735] Starting to load model Qwen/Qwen2.5-7B-Instruct...
-(EngineCore pid=568990) INFO 08-24 16:00:54 [cuda.py:334] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
-(EngineCore pid=568990) INFO 08-24 16:00:54 [flash_attn.py:596] Using FlashAttention version 2
-(EngineCore pid=568990) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
-(EngineCore pid=568990) <frozen importlib._bootstrap_external>:1325: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
-(EngineCore pid=568990) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
-(EngineCore pid=568990) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:01,  2.18it/s]
-(EngineCore pid=568990) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  2.08it/s]
-(EngineCore pid=568990) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:01<00:00,  2.07it/s]
-(EngineCore pid=568990) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.11it/s]
-(EngineCore pid=568990) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:01<00:00,  2.10it/s]
-(EngineCore pid=568990) 
-(EngineCore pid=568990) INFO 08-24 16:00:56 [default_loader.py:384] Loading weights took 1.96 seconds
-(EngineCore pid=568990) INFO 08-24 16:00:57 [gpu_model_runner.py:4820] Model loading took 14.25 GiB memory and 2.808149 seconds
-(EngineCore pid=568990) INFO 08-24 16:00:59 [backends.py:1051] Using cache directory: /home/xiaoyu/.cache/vllm/torch_compile_cache/45e359ce00/rank_0_0/backbone for vLLM's torch.compile
-(EngineCore pid=568990) INFO 08-24 16:00:59 [backends.py:1111] Dynamo bytecode transform time: 2.18 s
-(EngineCore pid=568990) INFO 08-24 16:01:00 [backends.py:285] Directly load the compiled graph(s) for compile range (1, 2048) from the cache, took 0.552 s
-(EngineCore pid=568990) INFO 08-24 16:01:00 [decorators.py:305] Directly load AOT compilation from path /home/xiaoyu/.cache/vllm/torch_compile_cache/torch_aot_compile/b304d8f0ef26f6143ac2a441070c59e99257ede8fea83499c93c561be27a2c83/rank_0_0/model
-(EngineCore pid=568990) INFO 08-24 16:01:00 [monitor.py:48] torch.compile took 2.89 s in total
-(EngineCore pid=568990) INFO 08-24 16:01:00 [monitor.py:76] Initial profiling/warmup run took 0.09 s
-(EngineCore pid=568990) INFO 08-24 16:01:01 [kv_cache_utils.py:829] Overriding num_gpu_blocks=0 with num_gpu_blocks_override=256
-(EngineCore pid=568990) INFO 08-24 16:01:01 [gpu_model_runner.py:5876] Profiling CUDA graph memory: PIECEWISE=35 (largest=256), FULL=19 (largest=128)
-(EngineCore pid=568990) INFO 08-24 16:01:02 [gpu_model_runner.py:5955] Estimated CUDA graph memory: 0.39 GiB total
-(EngineCore pid=568990) INFO 08-24 16:01:02 [gpu_worker.py:436] Available KV cache memory: 6.56 GiB
-(EngineCore pid=568990) INFO 08-24 16:01:02 [gpu_worker.py:470] In v0.19, CUDA graph memory profiling will be enabled by default (VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1), which more accurately accounts for CUDA graph memory during KV cache allocation. To try it now, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=1 and increase --gpu-memory-utilization from 0.9000 to 0.9165 to maintain the same effective KV cache size.
-(EngineCore pid=568990) INFO 08-24 16:01:02 [kv_cache_utils.py:1319] GPU KV cache size: 122,864 tokens
-(EngineCore pid=568990) INFO 08-24 16:01:02 [kv_cache_utils.py:1324] Maximum concurrency for 8,192 tokens per request: 15.00x
-(EngineCore pid=568990) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 2/35 [00:00<00:02, 13.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  11%|█▏        | 4/35 [00:00<00:02, 13.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  17%|█▋        | 6/35 [00:00<00:02, 13.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  23%|██▎       | 8/35 [00:00<00:01, 14.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▊       | 10/35 [00:00<00:01, 14.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  34%|███▍      | 12/35 [00:00<00:01, 15.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  40%|████      | 14/35 [00:00<00:01, 15.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  46%|████▌     | 16/35 [00:01<00:01, 15.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  54%|█████▍    | 19/35 [00:01<00:00, 18.31it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 22/35 [00:01<00:00, 19.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████▏  | 25/35 [00:01<00:00, 21.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  83%|████████▎ | 29/35 [00:01<00:00, 24.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 33/35 [00:01<00:00, 27.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 35/35 [00:01<00:00, 19.91it/s]
-(EngineCore pid=568990) Capturing CUDA graphs (decode, FULL):   0%|          | 0/19 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):  16%|█▌        | 3/19 [00:00<00:00, 24.82it/s]Capturing CUDA graphs (decode, FULL):  32%|███▏      | 6/19 [00:00<00:00, 25.06it/s]Capturing CUDA graphs (decode, FULL):  47%|████▋     | 9/19 [00:00<00:00, 25.57it/s]Capturing CUDA graphs (decode, FULL):  68%|██████▊   | 13/19 [00:00<00:00, 29.07it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▉ | 17/19 [00:00<00:00, 30.98it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 19/19 [00:00<00:00, 29.48it/s]
-(EngineCore pid=568990) INFO 08-24 16:01:05 [gpu_model_runner.py:6046] Graph capturing finished in 3 secs, took 0.33 GiB
-(EngineCore pid=568990) INFO 08-24 16:01:05 [gpu_worker.py:597] CUDA graph pool memory: 0.33 GiB (actual), 0.39 GiB (estimated), difference: 0.06 GiB (17.8%).
-(EngineCore pid=568990) INFO 08-24 16:01:05 [core.py:283] init engine (profile, create kv cache, warmup model) took 7.75 seconds
-[profile] loaded /home/xiaoyu/proactive_prefill/profile-Qwen2.5-7B-Instruct.json: {1: 48, 2: 48, 3: 48, 4: 48, 5: 48, 6: 48, 7: 48, 8: 48, 9: 48, 10: 48, 11: 48, 12: 48, 13: 48, 14: 48, 15: 48, 16: 48}
-[guard] spec_features=['const', 'probe', 'ret', 'toolturn'] spec_order=static
-WARNING 08-24 16:01:05 [input_processor.py:235] Passing raw prompts to InputProcessor is deprecated and will be removed in v0.18. You should instead pass the outputs of Renderer.render_cmpl() or Renderer.render_chat().
-[warmup] engine ready in 424 ms
-[32m[LOG][0m [guard] warmup done: 19 callsites rendered, 443 ms
-[32m[LOG][0m InterceptorLLMBackend for 'deep_search' listening on localhost:8972
-[32m[LOG][0m InterceptorLLMBackend for 'hover' listening on localhost:8971
-[32m[LOG][0m InterceptorLLMBackend for 'intercode_sql' listening on localhost:8973
-[32m[LOG][0m Accepted connection from ('127.0.0.1', 42174) as hover#1
-[32m[LOG][0m Registered 'hover' (pid 569534, model 'Qwen/Qwen2.5-7B-Instruct') as hover#1
-[36m[DEBUG][0m call from hover#1 key='HoverAgent.decompose_claim'
-[36m[DEBUG][0m [serve] hover:HoverAgent.decompose_claim:s1c1-b549863bc9e24716bb9bc83c64d89a0b duration_ms=58.45 cached_tokens=0 prompt_tokens=137
-[36m[DEBUG][0m [decode] hover:HoverAgent.decompose_claim:s1c1-b549863bc9e24716bb9bc83c64d89a0b decode_ms=763.92 output_tokens=40
-[36m[DEBUG][0m [final] hover:HoverAgent.decompose_claim:s1c1 typed_ok=True output="The founder and director of the People's Union for Civil Liberties is X.\nX was posthumously awarded The Bharat Ratna.\nThe Bharat Ratna is the highest Indian civ"
-[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
-[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c2-c08ea8881b734464b45bd61e4f62b961 duration_ms=60.92 cached_tokens=48 prompt_tokens=229
-[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c2-c08ea8881b734464b45bd61e4f62b961 decode_ms=293.17 output_tokens=16
-[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c2 typed_ok=True output="Who is the founder and director of the People's Union for Civil Liberties?"
-[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
-[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c3-247ac88f3906463d83890ff2e9ee3223 duration_ms=127.57 cached_tokens=32 prompt_tokens=522
-[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c3-247ac88f3906463d83890ff2e9ee3223 decode_ms=625.79 output_tokens=33
-[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c3 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is the founder and director of the People\'s Union for Civil Liberties?"}}'
-[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
-[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c4-7378bcc38e06494e8b21479d76a169c1 duration_ms=67.71 cached_tokens=48 prompt_tokens=262
-[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c4-7378bcc38e06494e8b21479d76a169c1 decode_ms=624.05 output_tokens=33
-[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c4 typed_ok=True output="The passages establish that the founder and director of the People's Union for Civil Liberties is George Fernandes. Therefore, the next hop must follow George F"
-[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
-[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c5-dfa368528e91495f9e605c88a0e70c9c duration_ms=66.15 cached_tokens=48 prompt_tokens=261
-[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c5-dfa368528e91495f9e605c88a0e70c9c decode_ms=760.58 output_tokens=40
-[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c5 typed_ok=True output="The evidence still does not establish: The founder and director of the People's Union for Civil Liberties is George Fernandes. The entity that would settle this"
-[36m[DEBUG][0m call from hover#1 key='SearchData.plan_query'
-[36m[DEBUG][0m [serve] hover:SearchData.plan_query:s1c6-a8bdfd3a06124fc68ee056ab64fa629b duration_ms=38.81 cached_tokens=144 prompt_tokens=268
-[36m[DEBUG][0m [decode] hover:SearchData.plan_query:s1c6-a8bdfd3a06124fc68ee056ab64fa629b decode_ms=293.67 output_tokens=16
-[36m[DEBUG][0m [final] hover:SearchData.plan_query:s1c6 typed_ok=True output="Who is the founder and director of the People's Union for Civil Liberties?"
-[36m[DEBUG][0m call from hover#1 key='SearchData.retrieve_evidence'
-[36m[DEBUG][0m [serve] hover:SearchData.retrieve_evidence:s1c7-a54440a088904e84b3fc35dd5908fa76 duration_ms=35.81 cached_tokens=512 prompt_tokens=522
-[36m[DEBUG][0m [decode] hover:SearchData.retrieve_evidence:s1c7-a54440a088904e84b3fc35dd5908fa76 decode_ms=626.26 output_tokens=33
-[36m[DEBUG][0m [final] hover:SearchData.retrieve_evidence:s1c7 typed_ok=True output='<tool_call>{"name": "search_wiki", "arguments": {"query": "Who is the founder and director of the People\'s Union for Civil Liberties?"}}'
-[36m[DEBUG][0m call from hover#1 key='SearchData.reason_hop'
-[36m[DEBUG][0m [serve] hover:SearchData.reason_hop:s1c8-2ad8a42ce4794b0c982f5aae449bd58b duration_ms=22.18 cached_tokens=256 prompt_tokens=294
-[36m[DEBUG][0m [decode] hover:SearchData.reason_hop:s1c8-2ad8a42ce4794b0c982f5aae449bd58b decode_ms=683.62 output_tokens=36
-[36m[DEBUG][0m [final] hover:SearchData.reason_hop:s1c8 typed_ok=True output='The passages establish that George Fernandes was posthumously awarded The Bharat Ratna, the highest Indian civilian award. Therefore, the next hop must follow G'
-[36m[DEBUG][0m call from hover#1 key='SummarizeData.assess_gap'
-[36m[DEBUG][0m [serve] hover:SummarizeData.assess_gap:s1c9-e8002bfe6b564cb4a872e558bdcf4daf duration_ms=31.11 cached_tokens=144 prompt_tokens=264
-[36m[DEBUG][0m [decode] hover:SummarizeData.assess_gap:s1c9-e8002bfe6b564cb4a872e558bdcf4daf decode_ms=332.69 output_tokens=18
-[36m[DEBUG][0m [final] hover:SummarizeData.assess_gap:s1c9 typed_ok=True output="The founder and director of the People's Union for Civil Liberties is George Fernandes."
-[36m[DEBUG][0m call from hover#1 key='Verdict.verify_claim'
-[36m[DEBUG][0m [serve] hover:Verdict.verify_claim:s1c10-f9cd2680ef024d2da496b72655d76e1d duration_ms=117.10 cached_tokens=112 prompt_tokens=552
-[36m[DEBUG][0m [decode] hover:Verdict.verify_claim:s1c10-f9cd2680ef024d2da496b72655d76e1d decode_ms=3096.65 output_tokens=159
-[36m[DEBUG][0m [final] hover:Verdict.verify_claim:s1c10 typed_ok=True output='<tool_call>{"name": "Verdict.verify_claim", "arguments": {"claim": "The founder and director of the People\'s Union for Civil Liberties was posthumously awarded '
-[36m[DEBUG][0m call from hover#1 key='Verdict.synthesize_answer'
-[36m[DEBUG][0m [serve] hover:Verdict.synthesize_answer:s1c11-6c98fe46026d470d87d95ab9144a12df duration_ms=114.83 cached_tokens=48 prompt_tokens=376
-[36m[DEBUG][0m [decode] hover:Verdict.synthesize_answer:s1c11-6c98fe46026d470d87d95ab9144a12df decode_ms=702.64 output_tokens=37
-[36m[DEBUG][0m [final] hover:Verdict.synthesize_answer:s1c11 typed_ok=True output="NOT_SUPPORTED The evidence digest indicates that George Fernandes, not the founder and director of the People's Union for Civil Liberties, was posthumously awar"
-[32m[LOG][0m hover#1 disconnected
-[36m[DEBUG][0m [guard] dropped hover#1 (7 sites served)
-[32m[LOG][0m Accepted connection from ('127.0.0.1', 58846) as deep_search#2
-[32m[LOG][0m Registered 'deep_search' (pid 569696, model 'Qwen/Qwen2.5-7B-Instruct') as deep_search#2
-[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
-[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c1-222e794a38284ded90089be2d4b8e6db duration_ms=108.69 cached_tokens=48 prompt_tokens=328
-[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c1-222e794a38284ded90089be2d4b8e6db decode_ms=625.55 output_tokens=33
-[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c1 typed_ok=True output='["What published work introduced chunked prefill?", "What problem did the introduced work solve?", "What background does a reader need before understanding the '
-[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
-[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c2-c1fe62897f874ac0b4bcc3fe545dc5cc duration_ms=110.69 cached_tokens=0 prompt_tokens=362
-[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c2-c1fe62897f874ac0b4bcc3fe545dc5cc decode_ms=175.19 output_tokens=10
-[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
-[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c3-2b07b91337af4a0da2b30e9c2f95dc01 duration_ms=120.12 cached_tokens=336 prompt_tokens=631
-[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c3-2b07b91337af4a0da2b30e9c2f95dc01 decode_ms=390.36 output_tokens=21
-[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
-[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c4-f33996a0956c4d98874ef0ee4d440eb5 duration_ms=112.18 cached_tokens=112 prompt_tokens=496
-[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c4-f33996a0956c4d98874ef0ee4d440eb5 decode_ms=409.39 output_tokens=22
-[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c4 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill introduced"}}'
-[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
-[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c5-c8fdd920b7d644e3a375ee7e0841ca51 duration_ms=101.83 cached_tokens=112 prompt_tokens=489
-[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c5-c8fdd920b7d644e3a375ee7e0841ca51 decode_ms=467.75 output_tokens=25
-[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c5 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "What published work introduced chunked prefill"}}'
-[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
-[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c6-4f719f92e3c44aa3b3b6384c1df69ca4 duration_ms=100.62 cached_tokens=112 prompt_tokens=463
-[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c6-4f719f92e3c44aa3b3b6384c1df69ca4 decode_ms=408.99 output_tokens=22
-[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c6 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
-[36m[DEBUG][0m call from deep_search#2 key='ResearchSupervisor.decompose_task'
-[36m[DEBUG][0m [serve] deep_search:ResearchSupervisor.decompose_task:s2c7-44d35dc915964906a7ada96befa04e27 duration_ms=54.71 cached_tokens=224 prompt_tokens=397
-[36m[DEBUG][0m [decode] deep_search:ResearchSupervisor.decompose_task:s2c7-44d35dc915964906a7ada96befa04e27 decode_ms=586.63 output_tokens=31
-[36m[DEBUG][0m [final] deep_search:ResearchSupervisor.decompose_task:s2c7 typed_ok=True output='["What published work introduced chunked prefill, what problem did it solve, and what background does a reader need before the result makes sense?"]'
-[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
-[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c8-1211402b001b46628857850c8d59d5c9 duration_ms=66.49 cached_tokens=288 prompt_tokens=429
-[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c8-1211402b001b46628857850c8d59d5c9 decode_ms=176.03 output_tokens=10
-[36m[DEBUG][0m generate from deep_search#2 key='__visit@deep_search.jac:380'
-[36m[DEBUG][0m [serve] deep_search:__visit@deep_search.jac:380:s2c9-2fdda26b4ed148bd9cc5174950c4d7ed duration_ms=121.34 cached_tokens=400 prompt_tokens=698
-[36m[DEBUG][0m [decode] deep_search:__visit@deep_search.jac:380:s2c9-2fdda26b4ed148bd9cc5174950c4d7ed decode_ms=390.50 output_tokens=21
-[36m[DEBUG][0m call from deep_search#2 key='PaperSearchAgent.paper_research'
-[36m[DEBUG][0m [serve] deep_search:PaperSearchAgent.paper_research:s2c10-f12f860ff88b465a8d3cabb1bc97dcbe duration_ms=35.15 cached_tokens=416 prompt_tokens=494
-[36m[DEBUG][0m [decode] deep_search:PaperSearchAgent.paper_research:s2c10-f12f860ff88b465a8d3cabb1bc97dcbe decode_ms=448.36 output_tokens=24
-[36m[DEBUG][0m [final] deep_search:PaperSearchAgent.paper_research:s2c10 typed_ok=True output='<tool_call>{"name": "paper_search", "arguments": {"query": "chunked prefill introduced problem background"}}'
-[36m[DEBUG][0m call from deep_search#2 key='WebSearchAgent.web_research'
-[36m[DEBUG][0m [serve] deep_search:WebSearchAgent.web_research:s2c11-213f14e66d8e4b89bdeaa536a941dd73 duration_ms=31.74 cached_tokens=400 prompt_tokens=487
-[36m[DEBUG][0m [decode] deep_search:WebSearchAgent.web_research:s2c11-213f14e66d8e4b89bdeaa536a941dd73 decode_ms=507.76 output_tokens=27
-[36m[DEBUG][0m [final] deep_search:WebSearchAgent.web_research:s2c11 typed_ok=True output='<tool_call>{"name": "web_search", "arguments": {"query": "published work introduced chunked prefill problem solution background"}}'
-[36m[DEBUG][0m call from deep_search#2 key='FactCheckAgent.fact_check'
-[36m[DEBUG][0m [serve] deep_search:FactCheckAgent.fact_check:s2c12-2d753428a31a4abfa42d73ed7a931899 duration_ms=38.34 cached_tokens=384 prompt_tokens=461
-[36m[DEBUG][0m [decode] deep_search:FactCheckAgent.fact_check:s2c12-2d753428a31a4abfa42d73ed7a931899 decode_ms=408.55 output_tokens=22
-[36m[DEBUG][0m [final] deep_search:FactCheckAgent.fact_check:s2c12 typed_ok=True output='<tool_call>{"name": "check_source", "arguments": {"topic": "chunked-prefill"}}'
-[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.summarize'
-[36m[DEBUG][0m [serve] deep_search:DeepResearch.summarize:s2c13-781312ec02fc49c9b6767af274de8f4a duration_ms=97.40 cached_tokens=48 prompt_tokens=312
-[36m[DEBUG][0m [decode] deep_search:DeepResearch.summarize:s2c13-781312ec02fc49c9b6767af274de8f4a decode_ms=2410.70 output_tokens=124
-[36m[DEBUG][0m [final] deep_search:DeepResearch.summarize:s2c13 typed_ok=True output='The research task was to identify which published work introduced chunked prefill, the problem it addressed, and the necessary background knowledge for understa'
-[36m[DEBUG][0m call from deep_search#2 key='DeepResearch.build_report'
-[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-180708837dd74a119e1359e18e49a098 duration_ms=68.07 cached_tokens=48 prompt_tokens=232
-[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-180708837dd74a119e1359e18e49a098 decode_ms=3468.60 output_tokens=178
-[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill",\n  "mainText": "The research task was to identify which published work introduced chunked prefill, the problem'
-[36m[DEBUG][0m reject from deep_search#2 key=None
-[36m[DEBUG][0m [reject] deep_search:DeepResearch.build_report:s2c14 feedback="Failed to convert LLM output to 'ResearchReport': 1 validation error for ResearchReport\ntldr\n  Input should be a valid list [type=list_type, input_value='The re"
-[36m[DEBUG][0m [serve] deep_search:DeepResearch.build_report:s2c14-9a49c0ec82ae4b1e9e38addcd406e37a duration_ms=48.81 cached_tokens=400 prompt_tokens=495
-[36m[DEBUG][0m [decode] deep_search:DeepResearch.build_report:s2c14-9a49c0ec82ae4b1e9e38addcd406e37a decode_ms=3469.89 output_tokens=178
-[36m[DEBUG][0m [final] deep_search:DeepResearch.build_report:s2c14 typed_ok=False output='{\n  "title": "Research Report on Chunked Prefill",\n  "mainText": "The research task was to identify which published work introduced chunked prefill, the problem'
-[32m[LOG][0m deep_search#2 disconnected
-[36m[DEBUG][0m [guard] dropped deep_search#2 (7 sites served)
-[32m[LOG][0m Accepted connection from ('127.0.0.1', 40924) as intercode_sql#3
-[32m[LOG][0m Registered 'intercode_sql' (pid 569973, model 'Qwen/Qwen2.5-7B-Instruct') as intercode_sql#3
-[36m[DEBUG][0m call from intercode_sql#3 key='generate_sql'
-[36m[DEBUG][0m [serve] intercode_sql:generate_sql:s3c1-e96d3a62d8844dcb9705d61b9d52d433 duration_ms=286.00 cached_tokens=112 prompt_tokens=1451
-[36m[DEBUG][0m [decode] intercode_sql:generate_sql:s3c1-e96d3a62d8844dcb9705d61b9d52d433 decode_ms=332.97 output_tokens=18
-[36m[DEBUG][0m [final] intercode_sql:generate_sql:s3c1 typed_ok=True output='<tool_call>{"name": "sample_rows", "arguments": {"table": "dogs"}}'
-[36m[DEBUG][0m call from intercode_sql#3 key='diagnose'
-[36m[DEBUG][0m [serve] intercode_sql:diagnose:s3c2-51affadae8764854a880b63982c80609 duration_ms=54.94 cached_tokens=336 prompt_tokens=509
-[36m[DEBUG][0m [decode] intercode_sql:diagnose:s3c2-51affadae8764854a880b63982c80609 decode_ms=999.99 output_tokens=52
-[36m[DEBUG][0m [final] intercode_sql:diagnose:s3c2 typed_ok=True output='<tool_call>{"name": "finish_tool", "arguments": {"final_output": "The query did not work because the environment only runs SELECT statements. The provided SQL s'
-[36m[DEBUG][0m call from intercode_sql#3 key='revise_sql'
-[36m[DEBUG][0m [serve] intercode_sql:revise_sql:s3c3-df6241455eb44a6a84be6a6cef7f2f56 duration_ms=261.92 cached_tokens=48 prompt_tokens=1254
-[36m[DEBUG][0m [decode] intercode_sql:revise_sql:s3c3-df6241455eb44a6a84be6a6cef7f2f56 decode_ms=214.89 output_tokens=12
-[36m[DEBUG][0m [final] intercode_sql:revise_sql:s3c3 typed_ok=True output='SELECT age FROM dogs ORDER BY age DESC LIMIT 1'
-[36m[DEBUG][0m call from intercode_sql#3 key='finalize'
-[36m[DEBUG][0m [serve] intercode_sql:finalize:s3c4-224b82fd29c74728bb21a5a710cfb9f2 duration_ms=31.35 cached_tokens=48 prompt_tokens=161
-[36m[DEBUG][0m [decode] intercode_sql:finalize:s3c4-224b82fd29c74728bb21a5a710cfb9f2 decode_ms=195.63 output_tokens=11
-[36m[DEBUG][0m [final] intercode_sql:finalize:s3c4 typed_ok=True output="The age of the oldest dog is '9'."
-[32m[LOG][0m intercode_sql#3 disconnected
-[36m[DEBUG][0m [guard] dropped intercode_sql#3 (4 sites served)
-(EngineCore pid=568990) INFO 08-24 16:01:44 [core.py:1210] Shutdown initiated (timeout=0)
-(EngineCore pid=568990) INFO 08-24 16:01:44 [core.py:1233] Shutdown complete

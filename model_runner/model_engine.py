@@ -52,7 +52,24 @@ class InstanceEngine(AsyncLLM):
         self._lw_resident = False
         return res
 
-    async def load(self, prefill: Optional[List[str]] = None) -> dict:
+    async def prepare(self) -> dict:
+        """Load the model from disk to host"""
+        if self.output_processor.has_unfinished_requests():
+            raise RuntimeError("cannot prepare with unfinished requests")
+        return await self._rpc("lw_prepare")
+
+    async def kill(self) -> dict:
+        """Regardless of the model's current status, remove it from host and
+        device memory."""
+        pending = list(self.output_processor.request_states.keys())
+        if pending:
+            await self.abort(pending)
+        res = await self._rpc("lw_kill")
+        await self.reset_prefix_cache()
+        self._lw_resident = False
+        return res
+
+    async def load(self, prefill: Optional[List[Any]] = None) -> dict:
         """Stream weights back to the GPU. Parallel with prefill requests if provided"""
         await self.collective_rpc("lw_load")
         prefill_results = []
@@ -74,7 +91,7 @@ class InstanceEngine(AsyncLLM):
         res = await self.collective_rpc(method)
         return res[0] if isinstance(res, list) else res  # rank 0
 
-    async def _prefill_one(self, prompt: str) -> dict:
+    async def _prefill_one(self, prompt: Any) -> dict:
         rid = f"prefill-{uuid.uuid4().hex}"
         n_prompt = 0
         async for out in self.generate(prompt, SamplingParams(max_tokens=1, temperature=0.0), rid):

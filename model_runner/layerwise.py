@@ -52,6 +52,11 @@ class LayerwiseWorkerExtension:
             stages[s].nbytes += p.numel() * p.element_size()
 
         self._lw_stages = stages
+        self._lw_meta: dict[str, tuple[torch.Size, tuple[int, ...], torch.dtype, torch.device]] = {
+            name: (p.shape, p.stride(), p.dtype, p.device)
+            for st in stages
+            for name, p in st.params
+        }
         self._lw_cpu: dict[str, torch.Tensor] = {}
         self._lw_copy_stream = torch.cuda.Stream()
         self._lw_thread: threading.Thread | None = None
@@ -81,9 +86,7 @@ class LayerwiseWorkerExtension:
             st.cpu_ready.clear()
             for name, p in st.params:
                 if name not in self._lw_cpu:
-                    self._lw_cpu[name] = torch.empty_strided(
-                        p.shape, p.stride(), dtype=p.dtype, pin_memory=True
-                    )
+                    self._lw_cpu[name] = self._lw_pinned(name)
                 self._lw_cpu[name].copy_(p.data, non_blocking=True)
                 freed += p.numel() * p.element_size()
         torch.cuda.synchronize()
@@ -100,6 +103,8 @@ class LayerwiseWorkerExtension:
             return {"started": False, "reason": "already resident"}
         if self._lw_thread is not None and self._lw_thread.is_alive():
             return {"started": False, "reason": "load in progress"}
+        if not self._lw_cpu:
+            raise RuntimeError("no host copy of the weights; call lw_prepare first")
         self._lw_error = None
         self._lw_alloc_kv_cache()
         self._lw_thread = threading.Thread(target=self._lw_loader, daemon=True)
@@ -149,6 +154,103 @@ class LayerwiseWorkerExtension:
             "stages_ready": sum(st.cpu_ready.is_set() for st in self._lw_stages),
             "num_stages": len(self._lw_stages),
         }
+
+    def lw_prepare(self) -> dict:
+        """Make sure a full copy of the weights sits in pinned host memory.
+
+        GPU-resident weights are copied down; otherwise (after ``lw_kill``)
+        the checkpoint is read from disk through vLLM's own loader, so the
+        tensor-parallel sharding and fused-projection layout match what
+        ``lw_load`` expects. Weight and KV cache GPU memory are untouched.
+        """
+        self._lw_join()
+        t0 = time.perf_counter()
+        missing = [name for name in self._lw_meta if name not in self._lw_cpu]
+        if not missing:
+            return {"source": "host", "seconds": 0.0, "host_gb": self._lw_host_gb()}
+
+        if self._lw_resident:
+            torch.cuda.synchronize()
+            for st in self._lw_stages:
+                for name, p in st.params:
+                    if name in self._lw_cpu:
+                        continue
+                    self._lw_cpu[name] = self._lw_pinned(name)
+                    self._lw_cpu[name].copy_(p.data, non_blocking=True)
+            torch.cuda.synchronize()
+            source = "device"
+        else:
+            from vllm.model_executor.model_loader.default_loader import DefaultModelLoader
+            from vllm.model_executor.model_loader.utils import process_weights_after_loading
+
+            runner = self.model_runner  # type: ignore[attr-defined]
+            model = runner.get_model()
+            vllm_config = runner.vllm_config
+            # Point every parameter at a pinned host buffer, then let the
+            # model's weight loaders fill them straight from the checkpoint.
+            for name in self._lw_meta:
+                self._lw_cpu[name] = self._lw_pinned(name)
+            for st in self._lw_stages:
+                for name, p in st.params:
+                    p.data = self._lw_cpu[name]
+            loader = DefaultModelLoader(vllm_config.load_config)
+            with torch.device("cpu"):
+                model.load_weights(loader.get_all_weights(vllm_config.model_config, model))
+                process_weights_after_loading(model, vllm_config.model_config, torch.device("cpu"))
+            # Loaders may have replaced param.data; keep whatever they left.
+            for st in self._lw_stages:
+                for name, p in st.params:
+                    t = p.data
+                    if t.device.type != "cpu":
+                        t = t.cpu()
+                    if not t.is_pinned():
+                        t = t.pin_memory()
+                    self._lw_cpu[name] = t
+                    p.data = torch.empty(0, dtype=t.dtype, device=self._lw_meta[name][3])
+            source = "disk"
+            for st in self._lw_stages:
+                st.cpu_ready.clear()
+
+        return {
+            "source": source,
+            "seconds": time.perf_counter() - t0,
+            "host_gb": self._lw_host_gb(),
+        }
+
+    def lw_kill(self) -> dict:
+        """Drop the weights from host and device memory and free the KV cache,
+        whatever state the model is in (resident, offloaded, or mid-load)."""
+        # Unblock any forward gated on a stage so an in-flight load can finish.
+        if self._lw_thread is not None and self._lw_thread.is_alive():
+            self._lw_error = RuntimeError("killed")
+        self._lw_join()
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        freed_dev = self._lw_free_kv_cache()
+        for st in self._lw_stages:
+            for name, p in st.params:
+                freed_dev += p.data.numel() * p.data.element_size()
+                p.data = torch.empty(0, dtype=p.dtype, device=self._lw_meta[name][3])
+            st.cpu_ready.clear()
+            st.gpu_ready = torch.cuda.Event()
+        freed_host = self._lw_host_gb()
+        self._lw_cpu.clear()
+        self._lw_error = None
+        self._lw_resident = False
+        torch.cuda.synchronize()
+        torch.cuda.empty_cache()
+        return {
+            "freed_device_gb": freed_dev / 2**30,
+            "freed_host_gb": freed_host,
+            "seconds": time.perf_counter() - t0,
+        }
+
+    def _lw_pinned(self, name: str) -> torch.Tensor:
+        shape, stride, dtype, _ = self._lw_meta[name]
+        return torch.empty_strided(shape, stride, dtype=dtype, pin_memory=True)
+
+    def _lw_host_gb(self) -> float:
+        return sum(t.numel() * t.element_size() for t in self._lw_cpu.values()) / 2**30
 
     def _lw_free_kv_cache(self) -> int:
         runner = self.model_runner  # type: ignore[attr-defined]

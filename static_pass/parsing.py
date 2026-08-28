@@ -1290,6 +1290,7 @@ def build(program: Program, src_path: str) -> Program:
     registry = build_type_registry(module)
     models = sp.model_names()
     program.types = registry
+    program.unresolved_models = {var for var, m in models.items() if m == var}
 
     sites_of_decl: Dict[str, List[str]] = {}
     for site in sp.sites:
