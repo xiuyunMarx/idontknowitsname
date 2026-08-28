@@ -14,8 +14,8 @@ import os;
 import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
-glob PORT = int(os.environ.get("SERVE_PORT") or "8964");
+glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "0");
+glob PORT = 8964;
 
 glob planner = InterceptorLLM(model_name="Qwen/Qwen2.5-1.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="hover");
 glob reader = InterceptorLLM(model_name="Qwen/Qwen3-1.7B", comm_ip="localhost", comm_port=PORT, program_name="hover");
@@ -279,7 +279,7 @@ node Verdict {
 walker HoverAgent {
     has claim: str = "";
     has subclaims: str = "";
-    has gap: str;
+    has gap: str = "";
     has query: str = "";
     has passages: str = "";
     has digest: str = "";

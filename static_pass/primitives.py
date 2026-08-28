@@ -325,28 +325,30 @@ class Program:
         """The served model of `site`: its literal model_name, else what the client reported."""
         return fallback if site.model_name in self.unresolved_models else site.model_name
 
-    def expected_paths(self, callsite_key: str, depth: int = 6, min_prob: float = 0.05) -> List[Tuple[List[str], float]]:
-        """Callsite paths that may follow `callsite_key`, with probabilities: each
-        guarded successor is a coin flip, the certain ones share what is left."""
-        out: List[Tuple[List[str], float]] = []
-
-        def walk(key: str, path: List[str], prob: float) -> None:
+    def certain_chain(self, callsite_key: str) -> List[str]:
+        """Callsites sure to follow `callsite_key`, in order, up to the first divergence
+        (several successors, a guarded one, or a routing site)."""
+        chain: List[str] = []
+        key = callsite_key
+        while True:
             succ = self.successors(key)
-            if not succ or len(path) >= depth:
-                out.append((path, prob))
-                return
-            cond = [x for x in succ if x.guard is not GuardKind.CERTAIN]
-            cert = [x for x in succ if x.guard is GuardKind.CERTAIN]
-            p_cond = min(0.5, 1.0 / len(cond)) if cond else 0.0  # guarded successors: coin flips
-            p_cert = (1.0 - p_cond * len(cond)) / len(cert) if cert else 0.0  # the rest to the sure ones
-            for site in succ:
-                p = prob * (p_cert if site.guard is GuardKind.CERTAIN else p_cond)
-                if p >= min_prob:
-                    walk(site.callsite_key, path + [site.callsite_key], p)
-                else:
-                    out.append((path, p))
-        walk(callsite_key, [], 1.0)
-        return sorted(out, key=lambda t: -t[1])
+            if len(succ) != 1 or succ[0].guard is not GuardKind.CERTAIN or not isinstance(succ[0], ByLLMFunc):
+                return chain
+            key = succ[0].callsite_key
+            chain.append(key)
+
+    def branch_candidates(self, callsite_key: str) -> List[Tuple[str, float]]:
+        """At the divergence after `callsite_key`'s certain chain: the possible next
+        callsites with probabilities (each guarded successor a coin flip, the certain
+        ones sharing what is left)."""
+        last = (self.certain_chain(callsite_key) or [callsite_key])[-1]
+        succ = [x for x in self.successors(last) if isinstance(x, ByLLMFunc)]
+        cond = [x for x in succ if x.guard is not GuardKind.CERTAIN]
+        cert = [x for x in succ if x.guard is GuardKind.CERTAIN]
+        p_cond = min(0.5, 1.0 / len(cond)) if cond else 0.0
+        p_cert = (1.0 - p_cond * len(cond)) / len(cert) if cert else 0.0
+        return sorted(((x.callsite_key, p_cert if x.guard is GuardKind.CERTAIN else p_cond) for x in succ),
+                      key=lambda t: -t[1])
 
     @property
     def byLLMs(self) -> List["ByLLMFunc"]:

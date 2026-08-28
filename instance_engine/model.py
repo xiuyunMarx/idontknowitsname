@@ -36,14 +36,14 @@ class Engine:
 
     async def offload(self) -> dict:
         """gpu -> host."""
-        self.kill_speculation()  # offload refuses unfinished requests
+        await self.drain_speculation()  # offload refuses unfinished requests
         res = await self.engine.offload()
         self.tier = "host"
         return res
 
     async def kill(self) -> dict:
         """any -> ssd (host copy dropped)."""
-        self.kill_speculation()
+        await self.drain_speculation()
         res = await self.engine.kill()
         self.tier = "ssd"
         return res
@@ -167,6 +167,12 @@ class Engine:
         for t in live:
             t.cancel()
         return len(live)
+
+    async def drain_speculation(self) -> None:
+        """kill_speculation, then wait until the aborts have actually gone through."""
+        self.kill_speculation()
+        if self._spec_tasks:
+            await asyncio.gather(*list(self._spec_tasks), return_exceptions=True)
 
     async def _speculative(self, prompt: Any, sampling_params: SamplingParams, request_id: str, cost: int = 0) -> Any:
         """Run one priority-1 request to completion; return its last output, or None

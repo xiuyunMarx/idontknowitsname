@@ -13,7 +13,7 @@ import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
-glob PORT = int(os.environ.get("SERVE_PORT") or "8964");
+glob PORT = 8964;
 
 glob rewriter = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="rag_qa");
 glob reranker = InterceptorLLM(model_name="Qwen/Qwen3-0.6B", comm_ip="localhost", comm_port=PORT, program_name="rag_qa");

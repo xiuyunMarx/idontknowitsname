@@ -14,7 +14,7 @@ import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
-glob PORT = int(os.environ.get("SERVE_PORT") or "8964");
+glob PORT = 8964;
 
 glob supervisor = InterceptorLLM(model_name="Qwen/Qwen3-4B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
 glob router = InterceptorLLM(model_name="Qwen/Qwen3-0.6B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");

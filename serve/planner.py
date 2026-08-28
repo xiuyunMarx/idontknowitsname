@@ -13,7 +13,8 @@ def scs_order(seqs: Sequence[Sequence[str]], cost: Callable[[str], float],
               resident: "set[str]" = frozenset(), max_seqs: int = 6, depth: int = 4) -> List[str]: #type: ignore[no-untyped-def]
     """Load order minimising total load cost; models already resident are free
     while they stay at the front (one of them can run before any load)."""
-    seqs = [tuple(s[:depth]) for s in seqs if s][:max_seqs]
+    seqs = [tuple(s[:depth]) for s in seqs if s]
+    seqs = seqs[:max_seqs] + [s[:1] for s in seqs[max_seqs:]]  # beyond the window only the immediate need counts
     if not seqs:
         return []
 

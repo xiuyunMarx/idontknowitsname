@@ -6,8 +6,9 @@ import asyncio
 import copy
 import json
 import re
+import traceback
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from static_pass.link import Connection
 from static_pass.primitives import ByLLMFunc, Program, RequestHandle, VisitByLLM
@@ -38,8 +39,9 @@ class ProgramInstance:
         self.done: "set[str]" = set()             # callsites that completed at least once
         self.produced: Dict[str, str] = {}        # callsite_key -> repr of its last output
         self.calls: Dict[int, _Call] = {}         # in-flight calls by wire id
-        self.expected_path: List[str] = []        # predicted callsites after the current call
+        self.expected_path: List[str] = []        # callsites sure to follow the current call (to the first divergence)
         self.expected: List[str] = []             # ... their models, consecutive duplicates merged (planner input)
+        self.guesses: List[Tuple[str, str, float]] = []  # (callsite, model, prob) possible after the divergence
         self.connections = 0
 
     async def serve(self, conn: Connection, hello: dict) -> None:
@@ -66,9 +68,21 @@ class ProgramInstance:
         elif kind == "reject":
             self._reject_call(int(frame["call"]), str(frame.get("feedback", "")), conn)
         elif kind == "generate":
-            asyncio.create_task(self._generate(frame, conn))
+            self._spawn(self._generate(frame, conn), conn, {"id": frame.get("id")})
         else:
             conn.send({"type": "error", "id": frame.get("id"), "error": f"unknown frame type {kind!r}"})
+
+    def _spawn(self, coro, conn: Connection, ref: dict) -> None:
+        """Run a call step; a server-side bug becomes an error frame, never a silent hang."""
+        async def guarded():
+            try:
+                await coro
+            except Exception as e:
+                traceback.print_exc()
+                if "call" in ref:
+                    self.calls.pop(ref["call"], None)
+                conn.send({"type": "error", **ref, "error": f"server bug: {e!r}"})
+        asyncio.create_task(guarded())
 
     def site_of(self, key: str, site: Optional[str]) -> Optional[Union[ByLLMFunc, VisitByLLM]]:
         tpl = self.program.site_of(key, site)
@@ -91,7 +105,7 @@ class ProgramInstance:
                      {**site.call_params, **(frame.get("call_params") or {})})  # literal llm(...) kwargs + wire
         self.calls[call.id] = call
         self._predict(site.callsite_key, model)
-        asyncio.create_task(self._step(call, "call"))
+        self._spawn(self._step(call, "call"), conn, {"call": call.id})
 
     def _continue_call(self, call_id: int, message: Dict[str, str], kind: str, conn: Connection) -> None:
         call = self.calls.get(call_id)
@@ -99,7 +113,7 @@ class ProgramInstance:
             conn.send({"type": "error", "call": call_id, "error": "no such call"})
             return
         call.messages.append(message)
-        asyncio.create_task(self._step(call, kind))
+        self._spawn(self._step(call, kind), conn, {"call": call.id})
 
     def _reject_call(self, call_id: int, feedback: str, conn: Connection) -> None:
         call = self.calls.get(call_id)
@@ -120,12 +134,14 @@ class ProgramInstance:
         return f"{self.program.name}:{self.pid}"
 
     def _predict(self, callsite_key: str, model: str) -> None:
-        self.expected_path = self.program.expected_paths(callsite_key)[0][0] if self.program.next_call.get(callsite_key) else []
+        self.expected_path = self.program.certain_chain(callsite_key)
         self.expected = []
         for key in self.expected_path:
             m = self.program.model_of(self.sites[key], model)
             if not self.expected or self.expected[-1] != m:
                 self.expected.append(m)
+        self.guesses = [(key, self.program.model_of(self.sites[key], model), p)
+                        for key, p in self.program.branch_candidates(callsite_key)]
 
     async def _step(self, call: _Call, kind: str) -> None:
         """One engine turn: a tool call goes back to the client, anything else is final."""

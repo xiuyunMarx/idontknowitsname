@@ -15,7 +15,7 @@ import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
-glob PORT = int(os.environ.get("SERVE_PORT") or "8964");
+glob PORT = 8964;
 
 glob coder = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="text2sql");
 glob critic = InterceptorLLM(model_name="Qwen/Qwen3-1.7B", comm_ip="localhost", comm_port=PORT, program_name="text2sql");

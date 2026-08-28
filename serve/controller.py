@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+import traceback
 import uuid
 from typing import Dict, List, Optional, Tuple
 
@@ -14,6 +15,14 @@ from static_pass.instance import ProgramInstance
 from static_pass.primitives import ByLLMFunc, Program, RequestHandle
 
 DEFAULT_LOAD_COST = {"gpu": 0.0, "host": 1.0, "ssd": 3.0}  # relative, until measured
+
+
+def _bare_schema(schema: dict) -> dict:
+    """The JSON schema itself, out of an OpenAI-style response_format wrapper if given one."""
+    if schema.get("type") == "json_schema" and isinstance(schema.get("json_schema"), dict):
+        inner = schema["json_schema"]
+        return inner.get("schema", inner)
+    return schema
 
 
 class Controller:
@@ -46,7 +55,8 @@ class Controller:
             self.engine_kwargs[model_name] = kwargs
             eng = await Engine.create(model_name=model_name, **{"max_num_batched_tokens": 8192, "max_model_len": 8192, **kwargs})
             await eng.warmup()
-            await eng.offload()
+            # await eng.offload()
+            await eng.kill() 
             self.engine_pool[model_name] = eng
         return self.engine_pool[model_name]
 
@@ -88,12 +98,13 @@ class Controller:
             p = handle.call_params
             sp = SamplingParams(
                 temperature=p.get("temperature", 0.7), max_tokens=p.get("max_tokens"), stop=p.get("stop"),
-                structured_outputs=StructuredOutputsParams(json=handle.schema) if handle.schema else None)
+                structured_outputs=StructuredOutputsParams(json=_bare_schema(handle.schema)) if handle.schema else None)
             handle.text = await engine.generate(engine.render(handle.messages),
                                                 f"{handle.kind}-{uuid.uuid4().hex}", sp, handle.cache_salt)
             self.stats.append((handle.callsite_key, handle.kind, dict(engine.last)))
         except Exception as e:
-            handle.error = str(e)
+            handle.error = repr(e)
+            traceback.print_exc()
         finally:
             self.active[handle.model_name] -= 1
             self.last_used[handle.model_name] = time.perf_counter()
@@ -130,6 +141,17 @@ class Controller:
                 out.append(seq)
         return out
 
+    def guesses(self) -> List[Tuple[str, float]]:
+        """Models that may be needed after some instance's divergence, by summed
+        probability; only instances with no certain demand left contribute."""
+        acc: Dict[str, float] = {}
+        for inst in self.instances.values():
+            if inst.expected or inst.calls or any(h.instance is inst for hs in self.pending.values() for h in hs):
+                continue
+            for _, m, p in inst.guesses:
+                acc[m] = acc.get(m, 0.0) + p
+        return sorted(acc.items(), key=lambda t: -t[1])
+
     def cost(self, model: str) -> float:
         eng = self.engine_pool.get(model)
         tier = eng.tier if eng is not None else "ssd"
@@ -140,7 +162,7 @@ class Controller:
         if self.planner == "reactive":
             return fifo_order([[h.model_name] for hs in self.pending.values() for h in hs])
         resident = {m for m, e in self.engine_pool.items() if e.resident}
-        return scs_order(seqs, self.cost, resident)
+        return scs_order(seqs, self.cost, resident, depth=8) # TODO: Figure out how to set depth
 
     def _victim(self, order: List[str]) -> Optional[Engine]:
         """An idle resident engine to evict: the one the plan needs latest (LRU on ties)."""
@@ -157,8 +179,10 @@ class Controller:
             self._wake.clear()
             try:
                 await self._plan_step()
-            except Exception as e:  # keep planning; the failed load surfaces on the next wake
-                print(f"[planner] error: {e!r}", flush=True)
+            except Exception:
+                traceback.print_exc()
+                await asyncio.sleep(1.0)
+                self._wake.set()  # retry rather than wait for an event that may never come
 
     async def _plan_step(self) -> None:
             self._dispatch()
@@ -175,17 +199,32 @@ class Controller:
                     await self._trim_host()
                 await self._load(target)
                 self._dispatch()
+            # No certain demand left unserved: use a free slot (never an eviction) for the
+            # likeliest post-divergence model, prefilling the prefixes that lead to it.
+            if sum(e.resident for e in self.engine_pool.values()) < self.gpu_slots:
+                guess = next((m for m, _ in self.guesses() if not (m in self.engine_pool and self.engine_pool[m].resident)), None)
+                if guess is not None:
+                    await self._load(guess, speculative=True)
 
-    async def _load(self, model: str) -> None:
-        """Bring `model` to the GPU, prefilling the waiting prompts and the predicted
-        static prefixes of instances heading to it under the weight stream."""
+    async def _load(self, model: str, speculative: bool = False) -> None:
+        """Bring `model` to the GPU, prefilling under the weight stream the waiting
+        prompts and the static prefixes of the callsites heading to it (certain next
+        steps, or the guessed ones when the load itself is speculative)."""
         eng = self.engine_pool.get(model)
         if eng is None:
             eng = await self.add_engine(model)
         prompts = [eng._with_salt(eng.render(h.messages), h.cache_salt) for h in self.pending.get(model, [])]
         for inst in self.instances.values():
-            if inst.expected[:1] == [model] and not any(h.instance is inst for hs in self.pending.values() for h in hs):
-                full = self._spec_prompt(inst, inst.expected_path[0], eng)
+            if any(h.instance is inst for hs in self.pending.values() for h in hs):
+                continue
+            if inst.expected[:1] == [model]:
+                keys = inst.expected_path[:1]
+            elif speculative and not inst.expected:
+                keys = [k for k, m, _ in inst.guesses if m == model]
+            else:
+                continue
+            for key in keys:
+                full = self._spec_prompt(inst, key, eng)
                 if full is not None:
                     prompts.append(eng._with_salt(full, inst.salt()))
         tier = eng.tier
@@ -194,7 +233,8 @@ class Controller:
         secs = time.perf_counter() - t
         self.load_cost.setdefault(model, {})[tier] = secs
         self.loads.append((model, tier, secs, len(prompts)))
-        print(f"[load] {model} from={tier} {secs * 1000:.0f}ms prefilled={len(prompts)}", flush=True)
+        print(f"[load] {model} from={tier} {secs * 1000:.0f}ms prefilled={len(prompts)}"
+              + (" speculative=1" if speculative else ""), flush=True)
 
     async def _trim_host(self) -> None:
         """Keep at most `host_slots` pinned copies; the least recently used go to SSD."""
@@ -221,11 +261,31 @@ class Controller:
     async def _speculate(self, handle: RequestHandle) -> None:
         """Warm each successor callsite whose model is resident (loading is the planner's job)."""
         inst = handle.instance
-        for key in inst.program.successor_readiness(handle.callsite_key, inst.done):
-            model = inst.program.model_of(inst.sites[key], handle.model_name)
-            eng = self.engine_pool.get(model)
-            if eng is None or not eng.resident:
-                continue
-            full = self._spec_prompt(inst, key, eng)
-            if full is not None and eng.spec_allowance() >= len(eng.tokenize(full)):
-                await eng.prefill(full, f"spec-{uuid.uuid4().hex}", cache_salt=handle.cache_salt)
+        try:
+            for key in inst.program.successor_readiness(handle.callsite_key, inst.done):
+                model = inst.program.model_of(inst.sites[key], handle.model_name)
+                eng = self.engine_pool.get(model)
+                if eng is None or not eng.resident:
+                    continue
+                full = self._spec_prompt(inst, key, eng)
+                if full is not None and eng.spec_allowance() >= len(eng.tokenize(full)):
+                    await eng.prefill(full, f"spec-{uuid.uuid4().hex}", cache_salt=handle.cache_salt)
+        except Exception:
+            traceback.print_exc()
+        finally:
+            self._wake.set()  # the engine may have become idle (evictable)
+
+    def dump(self) -> str:
+        """One-line-per-item state for debugging (SIGUSR1 in start_server)."""
+        lines = [f"pending: {{ {', '.join(f'{m.split('/')[-1]}:{len(h)}' for m, h in self.pending.items())} }}",
+                 f"active: {self.active}",
+                 "instances: " + "; ".join(f"{k[0]}#{k[1]} calls={len(i.calls)} expected={[m.split('/')[-1] for m in i.expected]}"
+                                           for k, i in self.instances.items())]
+        for m, e in self.engine_pool.items():
+            lines.append(f"engine {m.split('/')[-1]:<22} tier={e.tier:<4} busy={e.busy} prefill={e._inflight_prefill} "
+                         f"decode={e._inflight_decode} spec={len(e._spec_tasks)} "
+                         f"unfinished={e.engine.output_processor.has_unfinished_requests()}")
+        for t in asyncio.all_tasks():
+            frames = t.get_stack()[-3:]
+            lines.append("task: " + " <- ".join(f"{f.f_code.co_name}:{f.f_lineno}" for f in frames))
+        return "\n".join(lines)
