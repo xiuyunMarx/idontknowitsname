@@ -27,7 +27,7 @@ model_list = [
 
 
 async def main(args) -> None:
-    server = Controller(gpu_slots=args.gpu_slots, host_slots=args.host_slots, planner=args.planner, speculate=not args.no_speculate)
+    server = Controller(gpu_slots=args.gpu_slots, host_slots=args.host_slots, speculate=not args.no_speculate)
     for program in programs:
         server.register_program(path=program)
     for model in model_list:
@@ -35,13 +35,12 @@ async def main(args) -> None:
     await server.listen("localhost", PORT)
     await server.control_listen("localhost", CONTROL_PORT)
     asyncio.get_running_loop().add_signal_handler(signal.SIGUSR1, lambda: print("[dump]\n" + server.dump(), flush=True))
-    print(f"[server] planner={args.planner} gpu_slots={args.gpu_slots} host_slots={args.host_slots} listening on {PORT}", flush=True)
+    print(f"[server] gpu_slots={args.gpu_slots} host_slots={args.host_slots} listening on {PORT}", flush=True)
     await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--planner", choices=["scs", "reactive"], default="scs")
     ap.add_argument("--gpu-slots", type=int, default=1)
     ap.add_argument("--host-slots", type=int, default=3)
     ap.add_argument("--no-speculate", action="store_true")

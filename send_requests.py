@@ -5,8 +5,8 @@ per-program index variable), started at exponential inter-arrival gaps. Reports
 per-program latency and overall throughput plus the server's load/cache counters,
 so server configurations can be compared without restarting it:
 
-    python send_requests.py --set planner=scs --rate 0.5 --count 30 --seed 1
-    python send_requests.py --set planner=reactive --set speculate=false --rate 0.5 --count 30 --seed 1
+    python send_requests.py --rate 0.5 --count 30 --seed 1
+    python send_requests.py --set speculate=false --rate 0.5 --count 30 --seed 1
 
 --set talks to the control port (start_server.CONTROL_PORT); every run starts from
 a reset server (all engines parked on host, caches cleared) unless --no-reset.
@@ -74,7 +74,7 @@ async def main() -> None:
     ap.add_argument("--no-warmup", action="store_true", help="skip the sequential run that warms jac's compile cache")
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
-                    help="server setting: planner=scs|reactive speculate=true|false gpu_slots=N host_slots=N")
+                    help="server setting: speculate=true|false gpu_slots=N host_slots=N")
     ap.add_argument("--no-reset", action="store_true", help="keep the server's engine placement and counters")
     args = ap.parse_args()
 

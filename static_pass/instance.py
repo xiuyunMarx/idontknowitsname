@@ -41,9 +41,8 @@ class ProgramInstance:
         self.done: "set[str]" = set()             # callsites that completed at least once
         self.produced: Dict[str, str] = {}        # callsite_key -> repr of its last output
         self.calls: Dict[Tuple[int, int], _Call] = {}  # (connection, wire id) -> call; ids are per InterceptorLLM object
-        self.expected_path: List[str] = []        # callsites sure to follow the current call (to the first divergence)
-        self.expected: List[str] = []             # ... their models, consecutive duplicates merged (planner input)
-        self.guesses: List[Tuple[str, str, float]] = []  # (callsite, model, prob) possible after the divergence
+        self.predicted: List[Tuple[str, str]] = []  # (callsite, model) predicted after the current call, to the program's end
+        self.last_site: Optional[str] = None      # the callsite that finished most recently (branch-frequency source)
         self.connections = 0
 
     async def serve(self, conn: Connection, hello: dict) -> None:
@@ -108,6 +107,7 @@ class ProgramInstance:
         for k in [k for k, c in self.calls.items() if k[0] == id(conn) and c.finished]:
             del self.calls[k]  # the client moved on; its finished calls can no longer be rejected
         self.calls[(id(conn), call.id)] = call
+        self._observe(site.callsite_key, conn, {"id": frame.get("id")})
         self._predict(site.callsite_key, model)
         self._spawn(self._step(call, "call"), conn, {"call": call.id})
 
@@ -137,15 +137,21 @@ class ProgramInstance:
     def salt(self) -> str:
         return f"{self.program.name}:{self.pid}"
 
+    def _observe(self, callsite_key: str, conn: Connection, ref: dict) -> None:
+        """Count the transition last_site -> `callsite_key`; an unknown edge is reported
+        to the client and re-raised (link.listen swallows ValueError silently)."""
+        if self.last_site is None:
+            return
+        try:
+            self.program.update_branch_probs(self.last_site, callsite_key)
+        except ValueError as e:
+            traceback.print_exc()
+            conn.send({"type": "error", **ref, "error": f"static analysis: {e}"})
+            raise
+
     def _predict(self, callsite_key: str, model: str) -> None:
-        self.expected_path = self.program.certain_chain(callsite_key)
-        self.expected = []
-        for key in self.expected_path:
-            m = self.program.model_of(self.sites[key], model)
-            if not self.expected or self.expected[-1] != m:
-                self.expected.append(m)
-        self.guesses = [(key, self.program.model_of(self.sites[key], model), p)
-                        for key, p in self.program.branch_candidates(callsite_key)]
+        self.predicted = [(key, self.program.model_of(self.sites[key], model))
+                          for key in self.program.predict_path(callsite_key)]
 
     async def _step(self, call: _Call, kind: str) -> None:
         """One engine turn: a tool call goes back to the client, anything else is final."""
@@ -182,6 +188,7 @@ class ProgramInstance:
         site.return_value = output
         self.produced[site.callsite_key] = repr(output)  # the client's typed value reprs the same way
         self.done.add(site.callsite_key)
+        self.last_site = site.callsite_key
         self.refresh_bindings(via=site.callsite_key)
 
     @staticmethod
@@ -207,6 +214,7 @@ class ProgramInstance:
             return
         params = {k: frame[k] for k in ("temperature", "max_tokens", "stop") if frame.get(k) is not None}
         model = self.program.model_of(site, str(frame.get("model_name") or ""))
+        self._observe(site.callsite_key, conn, {"id": frame.get("id")})
         self._predict(site.callsite_key, model)
         try:
             text = await self._request(RequestHandle(
@@ -217,6 +225,7 @@ class ProgramInstance:
             return
         conn.send({"type": "result", "id": frame.get("id"), "text": text})
         self.done.add(site.callsite_key)
+        self.last_site = site.callsite_key
         self.refresh_bindings(via=site.callsite_key)
 
     # --------------------------------------------------------------- binding

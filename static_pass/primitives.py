@@ -272,10 +272,17 @@ class Program:
         self.types: Any = None  # schema_render.TypeRegistry: the module's obj/enum declarations
         self.unresolved_models: "set[str]" = set()  # llm variables whose model_name is not a literal
         self.max_react_iterations: int = 8
+        
+        # branch prediction: callsite_key -> {successor callsite_key: observed frequency},
+        # keyed by the site whose successor is being chosen (prior 1 per topology edge)
+        self.branch_freq: Dict[str, Dict[str, int]] = {}
 
     def build_program(self, path: str) -> "Program":
         from static_pass.parsing import build  # parsing imports the primitives; keep this lazy
-        return build(self, path)
+        program = build(self, path)
+        program.branch_freq = {k: {s: 1 for s in succ} for k, succ in program.next_call.items() if succ}
+        return program
+
 
     # ---------------------------------------------------------------- lookup
 
@@ -328,30 +335,33 @@ class Program:
         """The served model of `site`: its literal model_name, else what the client reported."""
         return fallback if site.model_name in self.unresolved_models else site.model_name
 
-    def certain_chain(self, callsite_key: str) -> List[str]:
-        """Callsites sure to follow `callsite_key`, in order, up to the first divergence
-        (several successors, a guarded one, or a routing site)."""
-        chain: List[str] = []
-        key = callsite_key
-        while True:
-            succ = self.successors(key)
-            if len(succ) != 1 or succ[0].guard is not GuardKind.CERTAIN or not isinstance(succ[0], ByLLMFunc):
-                return chain
-            key = succ[0].callsite_key
-            chain.append(key)
+    def update_branch_probs(self, callsite_key: str, selected: str) -> None:
+        """Count one observed transition `callsite_key` -> `selected`."""
+        if callsite_key not in self.branch_freq:
+            raise ValueError(f"Callsite {callsite_key} has no successors in the static topology.")
+        if selected not in self.branch_freq[callsite_key]:
+            raise ValueError(f"Selected callsite {selected} is not a successor of {callsite_key}.")
+        self.branch_freq[callsite_key][selected] += 1
 
     def branch_candidates(self, callsite_key: str) -> List[Tuple[str, float]]:
-        """At the divergence after `callsite_key`'s certain chain: the possible next
-        callsites with probabilities (each guarded successor a coin flip, the certain
-        ones sharing what is left)."""
-        last = (self.certain_chain(callsite_key) or [callsite_key])[-1]
-        succ = [x for x in self.successors(last) if isinstance(x, ByLLMFunc)]
-        cond = [x for x in succ if x.guard is not GuardKind.CERTAIN]
-        cert = [x for x in succ if x.guard is GuardKind.CERTAIN]
-        p_cond = min(0.5, 1.0 / len(cond)) if cond else 0.0
-        p_cert = (1.0 - p_cond * len(cond)) / len(cert) if cert else 0.0
-        return sorted(((x.callsite_key, p_cert if x.guard is GuardKind.CERTAIN else p_cond) for x in succ),
-                      key=lambda t: -t[1])
+        """Successors of `callsite_key` by observed frequency, most frequent first."""
+        freq = self.branch_freq.get(callsite_key, {})
+        total = sum(freq.values())
+        return sorted(((k, n / total) for k, n in freq.items()), key=lambda t: -t[1]) if total else []
+
+    def predict_path(self, callsite_key: str) -> List[str]:
+        """Most frequent successor at every step from `callsite_key`, until no successor
+        or a site already on the path."""
+        path: List[str] = []
+        seen = {callsite_key}
+        key = callsite_key
+        while True:
+            cands = self.branch_candidates(key)
+            if not cands or cands[0][0] in seen:
+                return path
+            key = cands[0][0]
+            seen.add(key)
+            path.append(key)
 
     @property
     def byLLMs(self) -> List["ByLLMFunc"]:
