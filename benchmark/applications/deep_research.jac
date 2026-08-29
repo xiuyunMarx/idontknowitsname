@@ -13,7 +13,7 @@ import os;
 import time;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "1");
+glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "0");
 glob PORT = 8964;
 
 glob supervisor = InterceptorLLM(model_name="Qwen/Qwen3-4B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
@@ -344,9 +344,6 @@ walker DeepResearch {
             self.task, self.web_findings, self.paper_findings, self.data_findings, self.fact_findings
         );
         visit [-->][?:WorkerAgent] by router(select=(1, 3), intent=DISPATCH_INTENT, temperature=0.0);
-        if self.rounds < ROUNDS {
-            visit [-->][?:ResearchSupervisor];
-        }
     }
 
     can merge with exit {

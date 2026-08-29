@@ -29,6 +29,8 @@ class _Call:
     call_params: Dict[str, Any]
     turns: int = 0
     rejects: int = 0
+    nudged: bool = False     # told once to finish after exhausting its tool budget
+    finished: bool = False   # `final` sent; kept until the client moves on (it may still reject)
 
 
 class ProgramInstance:
@@ -38,7 +40,7 @@ class ProgramInstance:
         self.state = InstanceState()              # observed walker/node fields (state / enter frames)
         self.done: "set[str]" = set()             # callsites that completed at least once
         self.produced: Dict[str, str] = {}        # callsite_key -> repr of its last output
-        self.calls: Dict[int, _Call] = {}         # in-flight calls by wire id
+        self.calls: Dict[Tuple[int, int], _Call] = {}  # (connection, wire id) -> call; ids are per InterceptorLLM object
         self.expected_path: List[str] = []        # callsites sure to follow the current call (to the first divergence)
         self.expected: List[str] = []             # ... their models, consecutive duplicates merged (planner input)
         self.guesses: List[Tuple[str, str, float]] = []  # (callsite, model, prob) possible after the divergence
@@ -80,7 +82,7 @@ class ProgramInstance:
             except Exception as e:
                 traceback.print_exc()
                 if "call" in ref:
-                    self.calls.pop(ref["call"], None)
+                    self.calls.pop((id(conn), ref["call"]), None)
                 conn.send({"type": "error", **ref, "error": f"server bug: {e!r}"})
         asyncio.create_task(guarded())
 
@@ -103,23 +105,25 @@ class ProgramInstance:
         model = self.program.model_of(site, str(frame.get("model_name") or ""))
         call = _Call(int(frame["id"]), conn, site, model, messages, frame.get("schema"),
                      {**site.call_params, **(frame.get("call_params") or {})})  # literal llm(...) kwargs + wire
-        self.calls[call.id] = call
+        for k in [k for k, c in self.calls.items() if k[0] == id(conn) and c.finished]:
+            del self.calls[k]  # the client moved on; its finished calls can no longer be rejected
+        self.calls[(id(conn), call.id)] = call
         self._predict(site.callsite_key, model)
         self._spawn(self._step(call, "call"), conn, {"call": call.id})
 
     def _continue_call(self, call_id: int, message: Dict[str, str], kind: str, conn: Connection) -> None:
-        call = self.calls.get(call_id)
+        call = self.calls.get((id(conn), call_id))
         if call is None:
             conn.send({"type": "error", "call": call_id, "error": "no such call"})
             return
+        call.finished = False
         call.messages.append(message)
         self._spawn(self._step(call, kind), conn, {"call": call.id})
 
     def _reject_call(self, call_id: int, feedback: str, conn: Connection) -> None:
-        call = self.calls.get(call_id)
-        if call is None:
-            return
-        call.rejects += 1
+        call = self.calls.get((id(conn), call_id))
+        if call is not None:
+            call.rejects += 1
         self._continue_call(call_id, {"role": "user", "content": feedback}, "reject", conn)
 
     async def _request(self, handle: RequestHandle) -> str:
@@ -151,7 +155,7 @@ class ProgramInstance:
                 call.schema, call.call_params, self.salt()))
         except Exception as e:  # the server's failure is the client's error
             call.conn.send({"type": "error", "call": call.id, "error": str(e)})
-            self.calls.pop(call.id, None)
+            self.calls.pop((id(call.conn), call.id), None)
             return
         call.messages.append({"role": "assistant", "content": text})
         call.turns += 1
@@ -161,13 +165,20 @@ class ProgramInstance:
             call.conn.send({"type": "tool_call", "call": call.id, "name": tool["name"],
                            "arguments": tool.get("arguments", {}), "text": text})
             return
+        if tool is not None and tool["name"] != "finish_tool" and not call.nudged:
+            # Budget exhausted while still calling tools: one last turn to answer, no tool runs.
+            call.nudged = True
+            call.messages.append({"role": "user", "content": "Tool budget exhausted; no more tools will run. "
+                                  "Call finish_tool(output=...) now with your best final answer from the evidence so far."})
+            await self._step(call, "tool_turn")
+            return
         output = (tool.get("arguments", {}).get("final_output", text) if tool is not None else text)
         self._finish(call, output, text)
 
     def _finish(self, call: _Call, output: Any, text: str) -> None:
         site = call.site
         call.conn.send({"type": "final", "call": call.id, "output": output, "text": text})
-        self.calls.pop(call.id, None)
+        call.finished = True
         site.return_value = output
         self.produced[site.callsite_key] = repr(output)  # the client's typed value reprs the same way
         self.done.add(site.callsite_key)

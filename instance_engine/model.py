@@ -5,7 +5,7 @@ import statistics
 import time
 import uuid
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from vllm import SamplingParams
 from vllm.inputs import TextPrompt, TokensPrompt
 from vllm.logprobs import Logprob
@@ -18,6 +18,10 @@ class Engine:
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
         self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
+        self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
+        self.SPEC_TIMEOUT_S = 20.0
+        self.transitioning = False  # offload/kill/load in progress: no new speculation
+        self.tbt_ms: Optional[float] = None  # profiled single-stream decode step time (planner's time unit)
         self._spec_tasks: Dict[asyncio.Task, int] = {}  # speculative consumers in flight -> their uncached-token cost
         self.tier: str = "gpu"  # gpu | host | ssd
         self.sp = SamplingParams(temperature=0.7)
@@ -36,17 +40,25 @@ class Engine:
 
     async def offload(self) -> dict:
         """gpu -> host."""
-        await self.drain_speculation()  # offload refuses unfinished requests
-        res = await self.engine.offload()
-        self.tier = "host"
-        return res
+        self.transitioning = True
+        try:
+            await self.drain_speculation()  # offload refuses unfinished requests
+            res = await self.engine.offload()
+            self.tier = "host"
+            return res
+        finally:
+            self.transitioning = False
 
     async def kill(self) -> dict:
         """any -> ssd (host copy dropped)."""
-        await self.drain_speculation()
-        res = await self.engine.kill()
-        self.tier = "ssd"
-        return res
+        self.transitioning = True
+        try:
+            await self.drain_speculation()
+            res = await self.engine.kill()
+            self.tier = "ssd"
+            return res
+        finally:
+            self.transitioning = False
 
     async def prepare(self) -> dict:
         """ssd -> host."""
@@ -56,11 +68,15 @@ class Engine:
 
     async def load(self, prefill=None) -> dict:
         """host -> gpu (via prepare when on ssd), prefilling `prefill` under the weight stream."""
-        if self.tier == "ssd":
-            await self.prepare()
-        res = await self.engine.load(prefill)
-        self.tier = "gpu"
-        return res
+        self.transitioning = True
+        try:
+            if self.tier == "ssd":
+                await self.prepare()
+            res = await self.engine.load(prefill)
+            self.tier = "gpu"
+            return res
+        finally:
+            self.transitioning = False
 
     @property
     def resident(self) -> bool:
@@ -70,14 +86,25 @@ class Engine:
     def busy(self) -> bool:
         return self._inflight_prefill + self._inflight_decode + len(self._spec_tasks) > 0
 
+    @property
+    def serving(self) -> bool:
+        """Real requests in flight (speculation alone does not pin an engine: eviction drains it)."""
+        return self._inflight_prefill + self._inflight_decode > 0
+
+    @property
+    def speculable(self) -> bool:
+        return self.resident and not self.transitioning
+
     # ---- tokenizer helpers ---------------------------------------------------
 
     def tokenize(self, prompt: str) -> List[int]:
         return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
 
     def render(self, messages: List[Dict[str, str]]) -> str:
-        return self.engine.get_tokenizer().apply_chat_template(  
-            messages, tokenize=False, add_generation_prompt=True) # type: ignore[union-attr]
+        # Thinking off: the programs expect direct short answers (a 24-token verdict, a
+        # tool call); Qwen3's template would spend the whole budget inside <think>.
+        return self.engine.get_tokenizer().apply_chat_template(  # type: ignore[union-attr]
+            messages, tokenize=False, add_generation_prompt=True, enable_thinking=False)
 
     @staticmethod
     def _with_salt(prompt: Any, cache_salt: Optional[str]) -> Any:
@@ -100,11 +127,14 @@ class Engine:
             return 0  # a real prefill owns the step
         if self._inflight_decode == 0:
             return 1 << 30  # no real decode to protect
-        return self._spec_tokens_per_step.get(self._inflight_decode, 0) - sum(self._spec_tasks.values())
+        budget = self._spec_tokens_per_step.get(self._inflight_decode)
+        if budget is None:  # unprofiled concurrency: a conservative default instead of no speculation at all
+            budget = self.DEFAULT_SPEC_TOKENS_PER_STEP if not self._spec_tokens_per_step else 0
+        return budget - sum(self._spec_tasks.values())
 
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
-            json.dump({"model": self.name, "unit": "tokens_per_step",
+            json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
                        "spec_tokens_per_step": self._spec_tokens_per_step}, f, indent=1)
 
     def load_profile(self, path: str) -> bool:
@@ -116,15 +146,18 @@ class Engine:
         if data.get("model") != self.name or data.get("unit") != "tokens_per_step":
             return False
         self._spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
+        self.tbt_ms = data.get("tbt_ms") or self.tbt_ms
         return True
 
     # ---- real requests -------------------------------------------------------
 
     async def generate(self, prompt: str, request_id: str,
                        sampling_params: Optional[SamplingParams] = None,
-                       cache_salt: Optional[str] = None) -> str:
+                       cache_salt: Optional[str] = None,
+                       progress: Optional[Callable[[float, int], None]] = None) -> str:
         """A real request: prefill until its first token, then decode. Any speculative
-        request in flight is killed on admission so the prefill step is not shared."""
+        request in flight is killed on admission so the prefill step is not shared.
+        `progress(first_token_at, out_tokens)` is called on every output."""
         text = ""
         out_tokens = 0
         prompt = self._with_salt(prompt, cache_salt)
@@ -149,6 +182,8 @@ class Engine:
                                                             for k, v in self.last.items()), flush=True)
                 text = output.outputs[0].text
                 out_tokens = len(output.outputs[0].token_ids)
+                if progress is not None:
+                    progress(first_token_at, out_tokens)
         finally:
             # exactly one decrement per increment, whichever phase we ended in
             if first_token:
@@ -185,7 +220,18 @@ class Engine:
                 last = out
             return last
 
-        task = asyncio.create_task(consume())
+        async def bounded():
+            try:
+                return await asyncio.wait_for(consume(), self.SPEC_TIMEOUT_S)
+            except asyncio.TimeoutError:
+                print(f"[spec] {request_id} timed out after {self.SPEC_TIMEOUT_S}s; aborted", flush=True)
+                try:
+                    await self.engine.abort([request_id])
+                except Exception:
+                    pass
+                return None
+
+        task = asyncio.create_task(bounded())
         self._spec_tasks[task] = cost
         try:
             return await task
@@ -332,6 +378,8 @@ class Engine:
 
         for b in range(1, max_decode + 1):
             base = await self._measure_tbt(b, 0, sp)
+            if b == 1:
+                self.tbt_ms = base["tbt_mean_ms"]
             limit = base["tbt_mean_ms"] * (1.0 + tbt_slack)
             safe = 0
             for n in prefill_sizes:

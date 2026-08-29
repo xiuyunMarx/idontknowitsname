@@ -18,12 +18,13 @@ class RouteSpeculate:
     answer_prefix: str = '{"schema_object_wrapper": ["'
 
     async def probe(self, engine: Engine, prompt: str, num_candidate_tokens: int,
-                    cache_salt: Optional[str] = None) -> str:
-        """Greedy decode of at most `num_candidate_tokens` tokens with thinking suppressed. """
-        if not prompt.rstrip().endswith("</think>"):
-            prompt = prompt + self.no_think
-        prompt = prompt + self.answer_prefix
-        cost = len(engine.tokenize(prompt))
+                    cache_salt: Optional[str] = None, prompt_cached: bool = False) -> str:
+        """Greedy decode of at most `num_candidate_tokens` tokens with thinking suppressed.
+        `prompt_cached`: the real request already prefilled `prompt`, so only the
+        no-think suffix and answer prefix count against the speculation budget."""
+        suffix = ("" if prompt.rstrip().endswith("</think>") else self.no_think) + self.answer_prefix
+        cost = len(engine.tokenize(suffix)) if prompt_cached else len(engine.tokenize(prompt + suffix))
+        prompt = prompt + suffix
         if engine.spec_allowance() < cost:
             return ""  # a real prefill owns the step, or in-flight speculation holds the budget
         sp = SamplingParams(max_tokens=max(1, int(num_candidate_tokens)), temperature=0.0,

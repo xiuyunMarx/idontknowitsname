@@ -238,7 +238,7 @@ class VisitByLLM:
         return [{"role": "system", "content": self.render_system()},
                 {"role": "user", "content": self.render_full(self.zone_value)}]
     
-@dataclass
+@dataclass(eq=False)  # identity: handles live in sets
 class RequestHandle:
     """One generation turn, shared between the Program that needs the text and the
     server that produces it. The Program awaits `done`; the server fills `text`
@@ -255,6 +255,9 @@ class RequestHandle:
     text: str = ""
     error: Optional[str] = None
     done: asyncio.Event = field(default_factory=asyncio.Event)
+    # live progress, written by the engine while the request runs (planner input)
+    first_token_at: float = 0.0              # perf_counter of the first token; 0 while prefilling
+    out_tokens: int = 0
 
 
 class Program:
