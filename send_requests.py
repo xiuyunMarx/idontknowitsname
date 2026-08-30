@@ -50,7 +50,7 @@ async def run_one(path: str, index: int, log: list, verbose: bool) -> None:
 
 
 async def control(req: dict) -> dict:
-    reader, writer = await asyncio.open_connection("localhost", CONTROL_PORT)
+    reader, writer = await asyncio.open_connection("localhost", CONTROL_PORT, limit=1 << 26)  # stats detail can be MBs
     writer.write((json.dumps(req) + "\n").encode())
     await writer.drain()
     resp = json.loads(await reader.readline())

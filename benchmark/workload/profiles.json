@@ -1,0 +1,3331 @@
+{
+ "meta": {
+  "started": "2026-08-29 13:58:08",
+  "server": {
+   "speculate": true,
+   "gpu_slots": 1,
+   "host_slots": 3,
+   "planner": "fifo",
+   "horizon": 4,
+   "hysteresis": 0.1,
+   "tau": 10.0,
+   "gamma": 0.7,
+   "learn_costs": true
+  }
+ },
+ "cost": {
+  "learn": true,
+  "secs_per_b": {
+   "host": 0.3835498142021471,
+   "ssd": 0.8255558897119497
+  },
+  "load_s": {
+   "Qwen/Qwen2.5-0.5B-Instruct|ssd": 0.414,
+   "Qwen/Qwen2.5-0.5B-Instruct|host": 0.315,
+   "Qwen/Qwen3-0.6B|ssd": 0.666,
+   "Qwen/Qwen3-0.6B|host": 0.417,
+   "Qwen/Qwen2.5-1.5B-Instruct|ssd": 1.265,
+   "Qwen/Qwen2.5-1.5B-Instruct|host": 0.493,
+   "Qwen/Qwen3-1.7B|ssd": 0.938,
+   "Qwen/Qwen3-1.7B|host": 0.562,
+   "Qwen/Qwen2.5-3B-Instruct|ssd": 1.693,
+   "Qwen/Qwen2.5-3B-Instruct|host": 0.761,
+   "Qwen/Qwen3-4B|ssd": 2.196,
+   "Qwen/Qwen3-4B|host": 0.946
+  },
+  "load_n": {
+   "Qwen/Qwen2.5-0.5B-Instruct|ssd": 8,
+   "Qwen/Qwen2.5-0.5B-Instruct|host": 21,
+   "Qwen/Qwen3-0.6B|ssd": 6,
+   "Qwen/Qwen3-0.6B|host": 12,
+   "Qwen/Qwen2.5-1.5B-Instruct|ssd": 6,
+   "Qwen/Qwen2.5-1.5B-Instruct|host": 25,
+   "Qwen/Qwen3-1.7B|ssd": 16,
+   "Qwen/Qwen3-1.7B|host": 30,
+   "Qwen/Qwen2.5-3B-Instruct|ssd": 13,
+   "Qwen/Qwen2.5-3B-Instruct|host": 24,
+   "Qwen/Qwen3-4B|ssd": 11,
+   "Qwen/Qwen3-4B|host": 13
+  },
+  "exec_s": {
+   "ResearchSupervisor.decompose_task@343:21": 2.475,
+   "__visit@deep_research.jac:346": 0.658,
+   "WebSearchAgent.web_research@259:32": 0.755,
+   "PaperSearchAgent.paper_research@273:34": 0.511,
+   "DataAnalysisAgent.data_research@287:33": 1.435,
+   "DeepResearch.summarize@351:24": 3.454,
+   "DeepResearch.build_report@354:23": 6.932,
+   "HoverAgent.decompose_claim@306:26": 0.638,
+   "SearchData.plan_query@231:25": 0.473,
+   "SearchData.retrieve_evidence@232:28": 1.092,
+   "SearchData.reason_hop@234:26": 1.021,
+   "SummarizeData.assess_gap@248:23": 0.082,
+   "Verdict.verify_claim@274:27": 0.972,
+   "Verdict.synthesize_answer@275:26": 0.382,
+   "rewrite_query@177:22": 0.176,
+   "rerank@179:21": 0.378,
+   "generate_answer@185:23": 1.416,
+   "generate_sql@323:20": 0.371,
+   "diagnose@329:30": 0.83,
+   "revise_sql@331:24": 0.947,
+   "finalize@336:23": 0.269
+  },
+  "exec_by_model": {
+   "Qwen/Qwen3-4B": 1.4,
+   "Qwen/Qwen3-0.6B": 0.378,
+   "Qwen/Qwen2.5-1.5B-Instruct": 0.306,
+   "Qwen/Qwen3-1.7B": 0.83,
+   "Qwen/Qwen2.5-3B-Instruct": 0.839,
+   "Qwen/Qwen2.5-0.5B-Instruct": 0.266
+  },
+  "arrivals": {
+   "Qwen/Qwen3-4B": 32,
+   "Qwen/Qwen3-0.6B": 16,
+   "Qwen/Qwen2.5-1.5B-Instruct": 29,
+   "Qwen/Qwen3-1.7B": 32,
+   "Qwen/Qwen2.5-3B-Instruct": 32,
+   "Qwen/Qwen2.5-0.5B-Instruct": 24
+  },
+  "rate": {
+   "Qwen/Qwen3-4B": 0.056,
+   "Qwen/Qwen3-0.6B": 0.0282,
+   "Qwen/Qwen2.5-1.5B-Instruct": 0.0514,
+   "Qwen/Qwen3-1.7B": 0.2886,
+   "Qwen/Qwen2.5-3B-Instruct": 0.0762,
+   "Qwen/Qwen2.5-0.5B-Instruct": 0.0646
+  }
+ },
+ "cases": {
+  "deep_research.jac:0": {
+   "program": "benchmark/applications/deep_research.jac",
+   "env": "DEEP_TASK_INDEX",
+   "case_index": 0,
+   "rc": 0,
+   "wall_s": 105.01,
+   "chain": [
+    {
+     "callsite": "ResearchSupervisor.decompose_task@343:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 3.057,
+     "queue_s": 1.831,
+     "gap_s": 0.0,
+     "output_tokens": 90
+    },
+    {
+     "callsite": "__visit@deep_research.jac:346",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.949,
+     "queue_s": 1.46,
+     "gap_s": 0.015,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "WebSearchAgent.web_research@259:32",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.942,
+     "queue_s": 8.146,
+     "gap_s": 0.004,
+     "output_tokens": 44
+    },
+    {
+     "callsite": "PaperSearchAgent.paper_research@273:34",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.529,
+     "queue_s": 6.381,
+     "gap_s": 0.007,
+     "output_tokens": 27
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.605,
+     "queue_s": 2.061,
+     "gap_s": 0.004,
+     "output_tokens": 22
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.489,
+     "queue_s": 0.0,
+     "gap_s": 0.015,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 7.999,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 320
+    },
+    {
+     "callsite": "DeepResearch.summarize@351:24",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 3.666,
+     "queue_s": 5.075,
+     "gap_s": 0.008,
+     "output_tokens": 141
+    },
+    {
+     "callsite": "DeepResearch.build_report@354:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 7.802,
+     "queue_s": 0.0,
+     "gap_s": 0.028,
+     "output_tokens": 205
+    }
+   ]
+  },
+  "deep_research.jac:1": {
+   "program": "benchmark/applications/deep_research.jac",
+   "env": "DEEP_TASK_INDEX",
+   "case_index": 1,
+   "rc": 0,
+   "wall_s": 38.06,
+   "chain": [
+    {
+     "callsite": "ResearchSupervisor.decompose_task@343:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 3.233,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 130
+    },
+    {
+     "callsite": "__visit@deep_research.jac:346",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.524,
+     "queue_s": 1.741,
+     "gap_s": 0.009,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "WebSearchAgent.web_research@259:32",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.965,
+     "queue_s": 0.975,
+     "gap_s": 0.004,
+     "output_tokens": 58
+    },
+    {
+     "callsite": "PaperSearchAgent.paper_research@273:34",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.636,
+     "queue_s": 1.3,
+     "gap_s": 0.003,
+     "output_tokens": 34
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.488,
+     "queue_s": 3.177,
+     "gap_s": 0.003,
+     "output_tokens": 22
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.411,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 63
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 4.977,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 185
+    },
+    {
+     "callsite": "DeepResearch.summarize@351:24",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 4.006,
+     "queue_s": 3.475,
+     "gap_s": 0.006,
+     "output_tokens": 169
+    },
+    {
+     "callsite": "DeepResearch.build_report@354:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 7.258,
+     "queue_s": 0.0,
+     "gap_s": 0.009,
+     "output_tokens": 306
+    }
+   ]
+  },
+  "deep_research.jac:2": {
+   "program": "benchmark/applications/deep_research.jac",
+   "env": "DEEP_TASK_INDEX",
+   "case_index": 2,
+   "rc": 0,
+   "wall_s": 24.39,
+   "chain": [
+    {
+     "callsite": "ResearchSupervisor.decompose_task@343:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.311,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 55
+    },
+    {
+     "callsite": "__visit@deep_research.jac:346",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.501,
+     "queue_s": 1.37,
+     "gap_s": 0.007,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "WebSearchAgent.web_research@259:32",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.414,
+     "queue_s": 1.857,
+     "gap_s": 0.004,
+     "output_tokens": 25
+    },
+    {
+     "callsite": "PaperSearchAgent.paper_research@273:34",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.406,
+     "queue_s": 1.622,
+     "gap_s": 0.005,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.447,
+     "queue_s": 2.134,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.444,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.444,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.444,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.44,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.617,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 80
+    },
+    {
+     "callsite": "DeepResearch.summarize@351:24",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.542,
+     "queue_s": 2.652,
+     "gap_s": 0.003,
+     "output_tokens": 64
+    },
+    {
+     "callsite": "DeepResearch.build_report@354:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 3.37,
+     "queue_s": 0.0,
+     "gap_s": 0.004,
+     "output_tokens": 139
+    }
+   ]
+  },
+  "deep_research.jac:3": {
+   "program": "benchmark/applications/deep_research.jac",
+   "env": "DEEP_TASK_INDEX",
+   "case_index": 3,
+   "rc": 0,
+   "wall_s": 36.02,
+   "chain": [
+    {
+     "callsite": "ResearchSupervisor.decompose_task@343:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 2.256,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 91
+    },
+    {
+     "callsite": "__visit@deep_research.jac:346",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.501,
+     "queue_s": 1.324,
+     "gap_s": 0.008,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "WebSearchAgent.web_research@259:32",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.677,
+     "queue_s": 0.969,
+     "gap_s": 0.004,
+     "output_tokens": 42
+    },
+    {
+     "callsite": "PaperSearchAgent.paper_research@273:34",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.504,
+     "queue_s": 2.039,
+     "gap_s": 0.005,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.624,
+     "queue_s": 2.073,
+     "gap_s": 0.005,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.643,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.553,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.945,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 42
+    },
+    {
+     "callsite": "DataAnalysisAgent.data_research@287:33",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 2.879,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 129
+    },
+    {
+     "callsite": "DeepResearch.summarize@351:24",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 4.28,
+     "queue_s": 3.686,
+     "gap_s": 0.005,
+     "output_tokens": 172
+    },
+    {
+     "callsite": "DeepResearch.build_report@354:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 8.272,
+     "queue_s": 0.0,
+     "gap_s": 0.012,
+     "output_tokens": 259
+    }
+   ]
+  },
+  "hover.jac:0": {
+   "program": "benchmark/applications/hover.jac",
+   "env": "HOVER_CLAIM_INDEX",
+   "case_index": 0,
+   "rc": 0,
+   "wall_s": 30.03,
+   "chain": [
+    {
+     "callsite": "HoverAgent.decompose_claim@306:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.652,
+     "queue_s": 1.639,
+     "gap_s": 0.0,
+     "output_tokens": 40
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.465,
+     "queue_s": 2.317,
+     "gap_s": 0.004,
+     "output_tokens": 28
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.862,
+     "queue_s": 1.256,
+     "gap_s": 0.003,
+     "output_tokens": 45
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.684,
+     "queue_s": 2.162,
+     "gap_s": 0.003,
+     "output_tokens": 33
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.07,
+     "queue_s": 1.138,
+     "gap_s": 0.004,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.47,
+     "queue_s": 1.874,
+     "gap_s": 0.004,
+     "output_tokens": 28
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.881,
+     "queue_s": 0.938,
+     "gap_s": 0.003,
+     "output_tokens": 45
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.81,
+     "queue_s": 1.184,
+     "gap_s": 0.003,
+     "output_tokens": 37
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.139,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.56,
+     "queue_s": 3.383,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.554,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 22
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.525,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.525,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "Verdict.synthesize_answer@275:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.409,
+     "queue_s": 1.64,
+     "gap_s": 0.003,
+     "output_tokens": 28
+    }
+   ]
+  },
+  "hover.jac:1": {
+   "program": "benchmark/applications/hover.jac",
+   "env": "HOVER_CLAIM_INDEX",
+   "case_index": 1,
+   "rc": 0,
+   "wall_s": 28.08,
+   "chain": [
+    {
+     "callsite": "HoverAgent.decompose_claim@306:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.446,
+     "queue_s": 0.758,
+     "gap_s": 0.0,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.436,
+     "queue_s": 2.258,
+     "gap_s": 0.004,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.83,
+     "queue_s": 1.277,
+     "gap_s": 0.003,
+     "output_tokens": 43
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.752,
+     "queue_s": 2.85,
+     "gap_s": 0.005,
+     "output_tokens": 35
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.462,
+     "queue_s": 1.137,
+     "gap_s": 0.005,
+     "output_tokens": 22
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.508,
+     "queue_s": 1.877,
+     "gap_s": 0.004,
+     "output_tokens": 26
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.027,
+     "queue_s": 0.939,
+     "gap_s": 0.003,
+     "output_tokens": 43
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.919,
+     "queue_s": 1.186,
+     "gap_s": 0.003,
+     "output_tokens": 39
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.255,
+     "queue_s": 1.139,
+     "gap_s": 0.003,
+     "output_tokens": 12
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.517,
+     "queue_s": 3.582,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "Verdict.synthesize_answer@275:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.366,
+     "queue_s": 1.193,
+     "gap_s": 0.003,
+     "output_tokens": 26
+    }
+   ]
+  },
+  "hover.jac:2": {
+   "program": "benchmark/applications/hover.jac",
+   "env": "HOVER_CLAIM_INDEX",
+   "case_index": 2,
+   "rc": 0,
+   "wall_s": 28.14,
+   "chain": [
+    {
+     "callsite": "HoverAgent.decompose_claim@306:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.773,
+     "queue_s": 0.764,
+     "gap_s": 0.0,
+     "output_tokens": 48
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.544,
+     "queue_s": 2.229,
+     "gap_s": 0.003,
+     "output_tokens": 33
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.966,
+     "queue_s": 1.278,
+     "gap_s": 0.003,
+     "output_tokens": 50
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.116,
+     "queue_s": 2.112,
+     "gap_s": 0.003,
+     "output_tokens": 52
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.138,
+     "gap_s": 0.004,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.553,
+     "queue_s": 1.872,
+     "gap_s": 0.003,
+     "output_tokens": 33
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.974,
+     "queue_s": 0.937,
+     "gap_s": 0.003,
+     "output_tokens": 50
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.719,
+     "queue_s": 1.182,
+     "gap_s": 0.003,
+     "output_tokens": 33
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.067,
+     "queue_s": 1.139,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.527,
+     "queue_s": 3.675,
+     "gap_s": 0.004,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "Verdict.synthesize_answer@275:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.524,
+     "queue_s": 1.166,
+     "gap_s": 0.003,
+     "output_tokens": 36
+    }
+   ]
+  },
+  "hover.jac:3": {
+   "program": "benchmark/applications/hover.jac",
+   "env": "HOVER_CLAIM_INDEX",
+   "case_index": 3,
+   "rc": 0,
+   "wall_s": 32.18,
+   "chain": [
+    {
+     "callsite": "HoverAgent.decompose_claim@306:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.593,
+     "queue_s": 0.778,
+     "gap_s": 0.0,
+     "output_tokens": 35
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.063,
+     "queue_s": 2.244,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.422,
+     "queue_s": 1.283,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.461,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.462,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.391,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.4,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.432,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.208,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 66
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.985,
+     "queue_s": 1.908,
+     "gap_s": 0.003,
+     "output_tokens": 46
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.137,
+     "gap_s": 0.004,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.872,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.4,
+     "queue_s": 0.944,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.442,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.437,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.379,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.378,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.432,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.187,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 66
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.884,
+     "queue_s": 1.184,
+     "gap_s": 0.003,
+     "output_tokens": 43
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.138,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.374,
+     "queue_s": 3.185,
+     "gap_s": 0.003,
+     "output_tokens": 56
+    },
+    {
+     "callsite": "Verdict.synthesize_answer@275:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.439,
+     "queue_s": 1.188,
+     "gap_s": 0.003,
+     "output_tokens": 30
+    }
+   ]
+  },
+  "hover.jac:4": {
+   "program": "benchmark/applications/hover.jac",
+   "env": "HOVER_CLAIM_INDEX",
+   "case_index": 4,
+   "rc": 0,
+   "wall_s": 37.86,
+   "chain": [
+    {
+     "callsite": "HoverAgent.decompose_claim@306:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.658,
+     "queue_s": 0.772,
+     "gap_s": 0.0,
+     "output_tokens": 39
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.657,
+     "queue_s": 2.298,
+     "gap_s": 0.004,
+     "output_tokens": 39
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.023,
+     "queue_s": 1.294,
+     "gap_s": 0.003,
+     "output_tokens": 57
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.552,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 30
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.564,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 30
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.391,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.38,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.377,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 2.266,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 126
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.175,
+     "queue_s": 1.915,
+     "gap_s": 0.003,
+     "output_tokens": 57
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.066,
+     "queue_s": 1.138,
+     "gap_s": 0.004,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "SearchData.plan_query@231:25",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.654,
+     "queue_s": 1.872,
+     "gap_s": 0.004,
+     "output_tokens": 39
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.076,
+     "queue_s": 0.938,
+     "gap_s": 0.005,
+     "output_tokens": 57
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.576,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 30
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.576,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 30
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.409,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.391,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.39,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "SearchData.retrieve_evidence@232:28",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 2.396,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 126
+    },
+    {
+     "callsite": "SearchData.reason_hop@234:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.14,
+     "queue_s": 1.182,
+     "gap_s": 0.003,
+     "output_tokens": 57
+    },
+    {
+     "callsite": "SummarizeData.assess_gap@248:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-1.5B-Instruct",
+     "exec_s": 0.065,
+     "queue_s": 1.141,
+     "gap_s": 0.003,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "Verdict.verify_claim@274:27",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.409,
+     "queue_s": 3.214,
+     "gap_s": 0.004,
+     "output_tokens": 60
+    },
+    {
+     "callsite": "Verdict.synthesize_answer@275:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.256,
+     "queue_s": 1.209,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    }
+   ]
+  },
+  "rag_qa.jac:0": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 0,
+   "rc": 0,
+   "wall_s": 8.24,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.059,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 3
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.624,
+     "queue_s": 0.918,
+     "gap_s": 0.005,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 2.386,
+     "queue_s": 1.17,
+     "gap_s": 0.003,
+     "output_tokens": 98
+    }
+   ]
+  },
+  "rag_qa.jac:1": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 1,
+   "rc": 0,
+   "wall_s": 7.39,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.167,
+     "queue_s": 1.125,
+     "gap_s": 0.0,
+     "output_tokens": 11
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.615,
+     "queue_s": 0.605,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.626,
+     "queue_s": 1.17,
+     "gap_s": 0.003,
+     "output_tokens": 25
+    }
+   ]
+  },
+  "rag_qa.jac:2": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 2,
+   "rc": 0,
+   "wall_s": 7.9,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.239,
+     "queue_s": 1.123,
+     "gap_s": 0.0,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.605,
+     "queue_s": 0.607,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.081,
+     "queue_s": 1.164,
+     "gap_s": 0.003,
+     "output_tokens": 44
+    }
+   ]
+  },
+  "rag_qa.jac:3": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 3,
+   "rc": 0,
+   "wall_s": 7.56,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.227,
+     "queue_s": 1.123,
+     "gap_s": 0.0,
+     "output_tokens": 15
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.156,
+     "queue_s": 0.601,
+     "gap_s": 0.003,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.228,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 51
+    }
+   ]
+  },
+  "rag_qa.jac:4": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 4,
+   "rc": 0,
+   "wall_s": 6.87,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.158,
+     "queue_s": 1.123,
+     "gap_s": 0.0,
+     "output_tokens": 11
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.155,
+     "queue_s": 0.6,
+     "gap_s": 0.003,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.534,
+     "queue_s": 1.171,
+     "gap_s": 0.003,
+     "output_tokens": 22
+    }
+   ]
+  },
+  "rag_qa.jac:5": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 5,
+   "rc": 0,
+   "wall_s": 8.29,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.131,
+     "queue_s": 1.121,
+     "gap_s": 0.0,
+     "output_tokens": 9
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.607,
+     "queue_s": 0.601,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.591,
+     "queue_s": 1.169,
+     "gap_s": 0.003,
+     "output_tokens": 68
+    }
+   ]
+  },
+  "rag_qa.jac:6": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 6,
+   "rc": 0,
+   "wall_s": 7.12,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.094,
+     "queue_s": 1.126,
+     "gap_s": 0.0,
+     "output_tokens": 6
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.605,
+     "queue_s": 0.6,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.51,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    }
+   ]
+  },
+  "rag_qa.jac:7": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 7,
+   "rc": 0,
+   "wall_s": 7.21,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.262,
+     "queue_s": 1.121,
+     "gap_s": 0.0,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.602,
+     "queue_s": 0.6,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 0.444,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 18
+    }
+   ]
+  },
+  "rag_qa.jac:8": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 8,
+   "rc": 0,
+   "wall_s": 8.63,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.14,
+     "queue_s": 1.123,
+     "gap_s": 0.0,
+     "output_tokens": 9
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.601,
+     "queue_s": 0.603,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.99,
+     "queue_s": 1.164,
+     "gap_s": 0.003,
+     "output_tokens": 85
+    }
+   ]
+  },
+  "rag_qa.jac:9": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 9,
+   "rc": 0,
+   "wall_s": 7.57,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.157,
+     "queue_s": 1.117,
+     "gap_s": 0.0,
+     "output_tokens": 11
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.134,
+     "queue_s": 0.602,
+     "gap_s": 0.003,
+     "output_tokens": 6
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.388,
+     "queue_s": 1.164,
+     "gap_s": 0.003,
+     "output_tokens": 59
+    }
+   ]
+  },
+  "rag_qa.jac:10": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 10,
+   "rc": 0,
+   "wall_s": 8.54,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.158,
+     "queue_s": 1.122,
+     "gap_s": 0.0,
+     "output_tokens": 11
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.592,
+     "queue_s": 0.6,
+     "gap_s": 0.003,
+     "output_tokens": 32
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.878,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 78
+    }
+   ]
+  },
+  "rag_qa.jac:11": {
+   "program": "benchmark/applications/rag_qa.jac",
+   "env": "RAG_INDEX",
+   "case_index": 11,
+   "rc": 0,
+   "wall_s": 7.68,
+   "chain": [
+    {
+     "callsite": "rewrite_query@177:22",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.212,
+     "queue_s": 1.126,
+     "gap_s": 0.0,
+     "output_tokens": 15
+    },
+    {
+     "callsite": "rerank@179:21",
+     "kind": "call",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.15,
+     "queue_s": 0.606,
+     "gap_s": 0.003,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "generate_answer@185:23",
+     "kind": "call",
+     "model": "Qwen/Qwen3-4B",
+     "exec_s": 1.331,
+     "queue_s": 1.164,
+     "gap_s": 0.003,
+     "output_tokens": 55
+    }
+   ]
+  },
+  "text2sql.jac:0": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 0,
+   "rc": 0,
+   "wall_s": 32.75,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.43,
+     "queue_s": 2.346,
+     "gap_s": 0.0,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 5.167,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 256
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.328,
+     "queue_s": 1.582,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.384,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.328,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 2.16,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 119
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.276,
+     "queue_s": 1.185,
+     "gap_s": 0.004,
+     "output_tokens": 63
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.326,
+     "queue_s": 1.175,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.326,
+     "queue_s": 0.0,
+     "gap_s": 0.007,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.205,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 65
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 2.154,
+     "queue_s": 1.184,
+     "gap_s": 0.003,
+     "output_tokens": 107
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.341,
+     "queue_s": 1.17,
+     "gap_s": 0.005,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.352,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.906,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 100
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.987,
+     "queue_s": 1.184,
+     "gap_s": 0.01,
+     "output_tokens": 48
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.215,
+     "queue_s": 1.955,
+     "gap_s": 0.003,
+     "output_tokens": 15
+    }
+   ]
+  },
+  "text2sql.jac:1": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 1,
+   "rc": 0,
+   "wall_s": 11.48,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.162,
+     "queue_s": 1.021,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.323,
+     "queue_s": 1.168,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.342,
+     "queue_s": 0.0,
+     "gap_s": 0.002,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.361,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.552,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 81
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.203,
+     "queue_s": 1.176,
+     "gap_s": 0.01,
+     "output_tokens": 9
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.12,
+     "queue_s": 1.949,
+     "gap_s": 0.003,
+     "output_tokens": 8
+    }
+   ]
+  },
+  "text2sql.jac:2": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 2,
+   "rc": 0,
+   "wall_s": 11.87,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.167,
+     "queue_s": 1.008,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.301,
+     "queue_s": 1.164,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.32,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.36,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.808,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 101
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.26,
+     "queue_s": 1.186,
+     "gap_s": 0.003,
+     "output_tokens": 12
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.226,
+     "queue_s": 1.935,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    }
+   ]
+  },
+  "text2sql.jac:3": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 3,
+   "rc": 0,
+   "wall_s": 12.93,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.169,
+     "queue_s": 1.022,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.316,
+     "queue_s": 1.167,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.357,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.334,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 3.013,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 162
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.077,
+     "queue_s": 1.181,
+     "gap_s": 0.004,
+     "output_tokens": 51
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.24,
+     "queue_s": 0.976,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    }
+   ]
+  },
+  "text2sql.jac:4": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 4,
+   "rc": 0,
+   "wall_s": 16.91,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.172,
+     "queue_s": 1.022,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.322,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.379,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.382,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.426,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 74
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.714,
+     "queue_s": 1.208,
+     "gap_s": 0.003,
+     "output_tokens": 33
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.377,
+     "queue_s": 1.766,
+     "gap_s": 0.003,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.392,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.262,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 66
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.74,
+     "queue_s": 1.182,
+     "gap_s": 0.004,
+     "output_tokens": 34
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.271,
+     "queue_s": 0.976,
+     "gap_s": 0.003,
+     "output_tokens": 19
+    }
+   ]
+  },
+  "text2sql.jac:5": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 5,
+   "rc": 0,
+   "wall_s": 10.31,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.172,
+     "queue_s": 1.017,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.316,
+     "queue_s": 1.167,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.323,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.323,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.022,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 56
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.493,
+     "queue_s": 1.187,
+     "gap_s": 0.005,
+     "output_tokens": 23
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.223,
+     "queue_s": 0.976,
+     "gap_s": 0.003,
+     "output_tokens": 15
+    }
+   ]
+  },
+  "text2sql.jac:6": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 6,
+   "rc": 0,
+   "wall_s": 25.73,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.167,
+     "queue_s": 1.042,
+     "gap_s": 0.0,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.308,
+     "queue_s": 1.166,
+     "gap_s": 0.003,
+     "output_tokens": 16
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.346,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.343,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.294,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 70
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.044,
+     "queue_s": 1.185,
+     "gap_s": 0.003,
+     "output_tokens": 50
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.388,
+     "queue_s": 1.756,
+     "gap_s": 0.003,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.382,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.384,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.804,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 100
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.066,
+     "queue_s": 1.183,
+     "gap_s": 0.003,
+     "output_tokens": 52
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.342,
+     "queue_s": 1.754,
+     "gap_s": 0.003,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.342,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.341,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.495,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 82
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.081,
+     "queue_s": 1.18,
+     "gap_s": 0.005,
+     "output_tokens": 52
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.351,
+     "queue_s": 1.94,
+     "gap_s": 0.003,
+     "output_tokens": 26
+    }
+   ]
+  },
+  "text2sql.jac:7": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 7,
+   "rc": 0,
+   "wall_s": 10.67,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.369,
+     "queue_s": 1.006,
+     "gap_s": 0.0,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.41,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.13,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 54
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.379,
+     "queue_s": 1.165,
+     "gap_s": 0.003,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.831,
+     "queue_s": 1.18,
+     "gap_s": 0.003,
+     "output_tokens": 38
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.184,
+     "queue_s": 0.976,
+     "gap_s": 0.003,
+     "output_tokens": 13
+    }
+   ]
+  },
+  "text2sql.jac:8": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 8,
+   "rc": 0,
+   "wall_s": 8.92,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.364,
+     "queue_s": 1.012,
+     "gap_s": 0.0,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.402,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.961,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 93
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.186,
+     "queue_s": 1.946,
+     "gap_s": 0.003,
+     "output_tokens": 13
+    }
+   ]
+  },
+  "text2sql.jac:9": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 9,
+   "rc": 0,
+   "wall_s": 32.74,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.415,
+     "queue_s": 1.024,
+     "gap_s": 0.0,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.373,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.37,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 5.249,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 253
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 2.875,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 143
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.393,
+     "queue_s": 1.168,
+     "gap_s": 0.003,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.39,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.392,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.88,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 48
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 2.036,
+     "queue_s": 1.182,
+     "gap_s": 0.003,
+     "output_tokens": 101
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.39,
+     "queue_s": 1.757,
+     "gap_s": 0.003,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.991,
+     "queue_s": 1.183,
+     "gap_s": 0.003,
+     "output_tokens": 101
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.375,
+     "queue_s": 1.762,
+     "gap_s": 0.003,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 2.035,
+     "queue_s": 1.182,
+     "gap_s": 0.003,
+     "output_tokens": 101
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.304,
+     "queue_s": 1.946,
+     "gap_s": 0.003,
+     "output_tokens": 22
+    }
+   ]
+  },
+  "text2sql.jac:10": {
+   "program": "benchmark/applications/text2sql.jac",
+   "env": "SQL_TASK_INDEX",
+   "case_index": 10,
+   "rc": 0,
+   "wall_s": 31.4,
+   "chain": [
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.401,
+     "queue_s": 1.006,
+     "gap_s": 0.0,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.365,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 0.443,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 21
+    },
+    {
+     "callsite": "generate_sql@323:20",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 5.099,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 256
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.325,
+     "queue_s": 1.176,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.323,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.08,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 59
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.636,
+     "queue_s": 1.184,
+     "gap_s": 0.003,
+     "output_tokens": 81
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.324,
+     "queue_s": 1.76,
+     "gap_s": 0.003,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.324,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 17
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.355,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 18
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 2.176,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 120
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.011,
+     "queue_s": 1.192,
+     "gap_s": 0.003,
+     "output_tokens": 50
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "call",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.364,
+     "queue_s": 1.168,
+     "gap_s": 0.003,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.362,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 19
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 0.378,
+     "queue_s": 0.0,
+     "gap_s": 0.001,
+     "output_tokens": 20
+    },
+    {
+     "callsite": "diagnose@329:30",
+     "kind": "tool_turn",
+     "model": "Qwen/Qwen3-1.7B",
+     "exec_s": 1.357,
+     "queue_s": 0.0,
+     "gap_s": 0.0,
+     "output_tokens": 75
+    },
+    {
+     "callsite": "revise_sql@331:24",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-3B-Instruct",
+     "exec_s": 1.171,
+     "queue_s": 1.183,
+     "gap_s": 0.003,
+     "output_tokens": 57
+    },
+    {
+     "callsite": "finalize@336:23",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.253,
+     "queue_s": 1.938,
+     "gap_s": 0.003,
+     "output_tokens": 18
+    }
+   ]
+  },
+  "triage.jac:0": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 0,
+   "rc": 0,
+   "wall_s": 5.82,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.268,
+     "queue_s": 0.635,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.182,
+     "queue_s": 0.606,
+     "gap_s": 0.005,
+     "output_tokens": 13
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.662,
+     "queue_s": 0.0,
+     "gap_s": 0.012,
+     "output_tokens": 50
+    }
+   ]
+  },
+  "triage.jac:1": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 1,
+   "rc": 0,
+   "wall_s": 5.55,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.2,
+     "queue_s": 0.624,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.119,
+     "queue_s": 0.603,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.565,
+     "queue_s": 0.0,
+     "gap_s": 0.011,
+     "output_tokens": 42
+    }
+   ]
+  },
+  "triage.jac:2": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 2,
+   "rc": 0,
+   "wall_s": 5.53,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.209,
+     "queue_s": 0.608,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.118,
+     "queue_s": 0.609,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.566,
+     "queue_s": 0.0,
+     "gap_s": 0.01,
+     "output_tokens": 42
+    }
+   ]
+  },
+  "triage.jac:3": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 3,
+   "rc": 0,
+   "wall_s": 5.7,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.203,
+     "queue_s": 0.608,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.184,
+     "queue_s": 0.603,
+     "gap_s": 0.004,
+     "output_tokens": 13
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.645,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 47
+    }
+   ]
+  },
+  "triage.jac:4": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 4,
+   "rc": 0,
+   "wall_s": 5.51,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.205,
+     "queue_s": 0.623,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.126,
+     "queue_s": 0.605,
+     "gap_s": 0.006,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.566,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 41
+    }
+   ]
+  },
+  "triage.jac:5": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 5,
+   "rc": 0,
+   "wall_s": 5.42,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.203,
+     "queue_s": 0.611,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.12,
+     "queue_s": 0.603,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.524,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 38
+    }
+   ]
+  },
+  "triage.jac:6": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 6,
+   "rc": 0,
+   "wall_s": 5.55,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.202,
+     "queue_s": 0.628,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.132,
+     "queue_s": 0.61,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.579,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 42
+    }
+   ]
+  },
+  "triage.jac:7": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 7,
+   "rc": 0,
+   "wall_s": 5.69,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.206,
+     "queue_s": 0.613,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.12,
+     "queue_s": 0.609,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.566,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 41
+    }
+   ]
+  },
+  "triage.jac:8": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 8,
+   "rc": 0,
+   "wall_s": 5.62,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.208,
+     "queue_s": 0.628,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.107,
+     "queue_s": 0.609,
+     "gap_s": 0.004,
+     "output_tokens": 7
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.526,
+     "queue_s": 0.0,
+     "gap_s": 0.009,
+     "output_tokens": 39
+    }
+   ]
+  },
+  "triage.jac:9": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 9,
+   "rc": 0,
+   "wall_s": 5.52,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.2,
+     "queue_s": 0.617,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.12,
+     "queue_s": 0.607,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.571,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 41
+    }
+   ]
+  },
+  "triage.jac:10": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 10,
+   "rc": 0,
+   "wall_s": 5.45,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.202,
+     "queue_s": 0.625,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.118,
+     "queue_s": 0.609,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.5,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 37
+    }
+   ]
+  },
+  "triage.jac:11": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 11,
+   "rc": 0,
+   "wall_s": 5.7,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.219,
+     "queue_s": 0.618,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.188,
+     "queue_s": 0.604,
+     "gap_s": 0.004,
+     "output_tokens": 13
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.66,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 49
+    }
+   ]
+  },
+  "triage.jac:12": {
+   "program": "benchmark/applications/triage.jac",
+   "env": "TRIAGE_INDEX",
+   "case_index": 12,
+   "rc": 0,
+   "wall_s": 5.42,
+   "chain": [
+    {
+     "callsite": "__visit@triage.jac:231",
+     "kind": "generate",
+     "model": "Qwen/Qwen3-0.6B",
+     "exec_s": 0.208,
+     "queue_s": 0.607,
+     "gap_s": 0.0,
+     "output_tokens": 10
+    },
+    {
+     "callsite": "AccountAgent.resolve_account@58:26",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.121,
+     "queue_s": 0.604,
+     "gap_s": 0.004,
+     "output_tokens": 8
+    },
+    {
+     "callsite": "Agent.summarize@239:28",
+     "kind": "call",
+     "model": "Qwen/Qwen2.5-0.5B-Instruct",
+     "exec_s": 0.502,
+     "queue_s": 0.0,
+     "gap_s": 0.003,
+     "output_tokens": 36
+    }
+   ]
+  }
+ }
+}

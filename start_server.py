@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import os
 import signal
 
 from serve.controller import Controller
@@ -27,8 +28,12 @@ model_list = [
 
 
 async def main(args) -> None:
-    server = Controller(gpu_slots=args.gpu_slots, host_slots=args.host_slots, speculate=not args.no_speculate)
+    server = Controller(gpu_slots=args.gpu_slots, host_slots=args.host_slots, speculate=not args.no_speculate,
+                        planner=args.planner)
     for program in programs:
+        if not os.path.exists(program):
+            print(f"[server] skipping missing program {program}", flush=True)
+            continue
         server.register_program(path=program)
     for model in model_list:
         await server.add_engine(model_name=model, gpu_memory_utilization=0.8, max_model_len=4096)
@@ -44,4 +49,5 @@ if __name__ == "__main__":
     ap.add_argument("--gpu-slots", type=int, default=1)
     ap.add_argument("--host-slots", type=int, default=3)
     ap.add_argument("--no-speculate", action="store_true")
+    ap.add_argument("--planner", default="fifo", choices=["fifo", "greedy", "dp"])
     asyncio.run(main(ap.parse_args()))

@@ -258,6 +258,10 @@ class RequestHandle:
     # live progress, written by the engine while the request runs (planner input)
     first_token_at: float = 0.0              # perf_counter of the first token; 0 while prefilling
     out_tokens: int = 0
+    # lifecycle, written by the controller (queue wait = dispatched - created)
+    created_at: float = 0.0                  # perf_counter at submit
+    dispatched_at: float = 0.0               # perf_counter when its model was resident and it was released
+    done_at: float = 0.0
 
 
 class Program:
