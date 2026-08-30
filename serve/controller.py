@@ -14,14 +14,16 @@ from serve.cost import CostModel
 from serve.planner import (INF, Chain, PlanInput, Step, choose, dp_order, fifo_order, greedy_order, keep_value,
                            next_use)
 from serve.predict import predicted_chain
-from static_pass import link
-from static_pass.instance import ProgramInstance
-from static_pass.primitives import ByLLMFunc, Program, RequestHandle
+from serve import http_api
+from serve.handle import RequestHandle
+from serve.session import Session
+from trace_extractor.primitives import ByLLMCallsite, Program, VisitByCallsite
 
 PLANNERS = ("fifo", "greedy", "dp")
 SETTINGS = {"speculate": bool, "gpu_slots": int, "host_slots": int, "planner": str, "horizon": int,
-            "hysteresis": float, "tau": float, "gamma": float, "learn_costs": bool}
-MAX_CHAIN = 12  # predicted steps the cost-aware planners look at per instance
+            "hysteresis": float, "tau": float, "gamma": float, "learn_costs": bool, "session_idle_s": float}
+MAX_CHAIN = 12  # predicted steps the cost-aware planners look at per session
+REAP_EVERY_S = 5.0  # how often idle sessions are closed
 
 
 def _bare_schema(schema: dict) -> dict:
@@ -41,8 +43,8 @@ def _ms(xs: List[float]) -> dict:
 
 
 class Controller:
-    """Multi-tenant FaaS layer: clients queue RequestHandles per model; the planner
-    orders the models to put on the GPU (FIFO over each instance's predicted chain,
+    """Multi-tenant FaaS layer: HTTP clients queue RequestHandles per model; the planner
+    orders the models to put on the GPU (FIFO over each session's predicted chain,
     or the cost-aware greedy / DP of serve.planner), loads the next one with the
     waiting prompts prefilled under the weight stream, and releases the bucket.
     `gpu_slots` engines may be resident at once; `host_slots` may keep a pinned host
@@ -51,8 +53,10 @@ class Controller:
     def __init__(self, gpu_slots: int = 1, host_slots: int = 8, speculate: bool = True, planner: str = "fifo"):
         self.engine_pool: Dict[str, Engine] = {}
         self.engine_kwargs: Dict[str, dict] = {}     # model -> Engine.create kwargs
-        self.program_template: Dict[str, Program] = {}
-        self.instances: Dict[Tuple[str, int], ProgramInstance] = {}
+        self.programs: Dict[str, Program] = {}       # name -> workflow learned from history
+        self.sessions: Dict[str, Session] = {}       # "program:pid" -> live client process
+        self.session_idle_s = 30.0                   # close a session this long after its last reply
+        self.history_path: Optional[str] = None
         self.pending: Dict[str, List[RequestHandle]] = {}
         self.gpu_slots, self.host_slots, self.speculate = gpu_slots, host_slots, speculate
         self.planner, self.horizon, self.hysteresis, self.tau, self.gamma = planner, 4, 0.10, 10.0, 1.0
@@ -66,9 +70,10 @@ class Controller:
         self.plan_stats = {"plans": 0, "deviations": 0, "fallbacks": 0, "plan_ms": 0.0}
         self._plan_cache: Tuple[Optional[tuple], List[str]] = (None, [])
         self._last_pi: Optional[PlanInput] = None
-        self._branches: Optional[Dict[str, dict]] = None   # program -> branch_freq snapshot restored on reset
+        self._branches: Optional[Dict[str, dict]] = None   # program -> Program.to_dict snapshot restored on reset
         self._wake = asyncio.Event()
         self._task: Optional[asyncio.Task] = None
+        self._reaper: Optional[asyncio.Task] = None
 
     # ---- setup -----------------------------------------------------------------
 
@@ -84,31 +89,59 @@ class Controller:
             self.cost.register(model_name)
         return self.engine_pool[model_name]
 
-    def register_program(self, path: str) -> Program:
-        name = os.path.splitext(os.path.basename(path))[0]  # InterceptorLLM's program_name
-        self.program_template[name] = Program(name=name).build_program(path)
-        return self.program_template[name]
+    # ---- programs & sessions -------------------------------------------------------
 
-    async def listen(self, host: str, port: int) -> asyncio.AbstractServer:
-        """One port for every program; connections of one process share a ProgramInstance."""
+    def program(self, name: str) -> Program:
+        """The workflow known for `name` (a fresh, empty one the first time it is seen)."""
+        return self.programs.setdefault(name, Program(name))
+
+    def load_history(self, path: str) -> int:
+        """Warm start: programs learned by an earlier run (Program.to_dict per name)."""
+        with open(path) as f:
+            for name, d in json.load(f).items():
+                self.programs[name] = Program.from_dict(d)
+        self.history_path = path
+        return len(self.programs)
+
+    def save_history(self, path: Optional[str] = None) -> Optional[str]:
+        path = path or self.history_path
+        if path:
+            with open(path, "w") as f:
+                json.dump({name: p.to_dict() for name, p in self.programs.items()}, f)
+        return path
+
+    def session(self, user: str) -> Session:
+        """The live session for the OpenAI `user` field "program:pid" (created on first use)."""
+        sess = self.sessions.get(user)
+        if sess is None:
+            name = user.split(":", 1)[0] if ":" in user else "default"
+            sess = self.sessions[user] = Session(user, self.program(name), MAX_CHAIN)
+        return sess
+
+    def close_session(self, user: str) -> bool:
+        sess = self.sessions.pop(user, None)
+        if sess is None:
+            return False
+        sess.close()
+        self._wake.set()
+        return True
+
+    async def _reap_sessions(self) -> None:
+        """Close sessions whose client went quiet (HTTP has no disconnect): idle is counted
+        from the last reply, so a request waiting behind a model load never times out."""
+        while True:
+            await asyncio.sleep(REAP_EVERY_S)
+            now = time.perf_counter()
+            for user, sess in list(self.sessions.items()):
+                if sess.inflight == 0 and now - sess.last_seen > self.session_idle_s:
+                    print(f"[session] {user} idle {now - sess.last_seen:.0f}s, closed", flush=True)
+                    self.close_session(user)
+
+    async def listen(self, host: str, port: int, trace_path: Optional[str] = None):
+        """The OpenAI-compatible endpoint (serve.http_api); one port for every program."""
         self._task = self._task or asyncio.create_task(self.run())
-
-        async def on_client(conn: link.Connection, hello: dict) -> None:
-            name = str(hello.get("program_name") or "")
-            program = self.program_template.get(name) or (
-                next(iter(self.program_template.values())) if len(self.program_template) == 1 else None)
-            if program is None:
-                conn.send({"type": "error", "error": f"unknown program {name!r}"})
-                return
-            key = (program.name, int(hello.get("pid", -1)))
-            inst = self.instances.get(key) or self.instances.setdefault(key, ProgramInstance(program, self, key[1]))
-            try:
-                await inst.serve(conn, hello)
-            finally:
-                if inst.connections == 0:
-                    self.instances.pop(key, None)
-                    self._wake.set()
-        return await link.listen(host, port, on_client)
+        self._reaper = self._reaper or asyncio.create_task(self._reap_sessions())
+        return await http_api.start(self, host, port, trace_path)
 
     async def control_listen(self, host: str, port: int) -> asyncio.AbstractServer:
         """Runtime control: one JSON line in, one JSON line out.
@@ -117,9 +150,11 @@ class Controller:
         {"reset": true[, "cold": true]}   park every engine on host (cold: on SSD), clear caches and counters
         {"calibrate": true}   load every engine once from SSD and once from host to fill the cost table
         {"forget": true}      drop the cost table back to its priors
-        {"freeze_branches": true}   snapshot every program's branch predictor; each reset restores it
+        {"freeze_branches": true}   snapshot every program's learned workflow; each reset restores it
         {"stats": true[, "detail": true]}   loads / requests since the last reset (detail: per request)
         {"cost": true}        the cost table
+        {"history": true}     the learned workflows (Program.describe per program)
+        {"save_history": path}   write them as JSON (start_server --history reloads it)
         {"dump": true}"""
         async def serve(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
             try:
@@ -163,11 +198,11 @@ class Controller:
             self.loads.clear(); self.stats.clear(); self.last_used.clear(); self.requests.clear()
             self.plan_stats = {"plans": 0, "deviations": 0, "fallbacks": 0, "plan_ms": 0.0}
             self._plan_cache = (None, [])
+            self.sessions.clear()
             if self._branches is not None:
-                for name, freq in self._branches.items():
-                    self.program_template[name].branch_freq = {k: dict(v) for k, v in freq.items()}
+                self.programs = {name: Program.from_dict(d) for name, d in self._branches.items()}
         if req.get("freeze_branches"):
-            self._branches = {name: {k: dict(v) for k, v in p.branch_freq.items()} for name, p in self.program_template.items()}
+            self._branches = {name: p.to_dict() for name, p in self.programs.items()}
         if req.get("forget"):
             self.cost = CostModel(learn=self.cost.learn)
             for m in self.engine_pool:
@@ -197,6 +232,10 @@ class Controller:
                 out["requests"] = list(self.requests)
         if req.get("cost"):
             out["cost"] = self.cost.export(now=time.perf_counter())
+        if req.get("history"):
+            out["history"] = {name: p.describe() for name, p in self.programs.items()}
+        if req.get("save_history"):
+            out["saved"] = self.save_history(str(req["save_history"]))
         if req.get("dump"):
             out["dump"] = self.dump()
         return out
@@ -249,15 +288,17 @@ class Controller:
             t0 = time.perf_counter()
             handle.text = await engine.generate(engine.render(handle.messages),
                                                 f"{handle.kind}-{uuid.uuid4().hex}", sp, handle.cache_salt, progress)
+            handle.prompt_tokens = int(engine.last.get("prompt_tokens", 0) or 0)
             self.cost.observe_exec(handle.callsite_key, handle.model_name, time.perf_counter() - t0,
-                                   first_turn=handle.kind in ("call", "generate"))
+                                   first_turn=handle.turn == 0)
             self.stats.append((handle.callsite_key, handle.kind, {**engine.last, "output_tokens": handle.out_tokens}))
         except Exception as e:
             handle.error = repr(e)
             traceback.print_exc()
         finally:
             handle.done_at = time.perf_counter()
-            self.requests.append({"callsite": handle.callsite_key, "kind": handle.kind, "model": handle.model_name,
+            self.requests.append({"callsite": handle.session.program.label(handle.callsite_key), "key": handle.callsite_key,
+                                  "kind": handle.kind, "model": handle.model_name,
                                   "created_at": handle.created_at, "dispatched_at": handle.dispatched_at,
                                   "first_token_at": handle.first_token_at, "done_at": handle.done_at,
                                   "output_tokens": handle.out_tokens, "error": handle.error})
@@ -283,31 +324,35 @@ class Controller:
 
     # ---- planning ----------------------------------------------------------------
 
-    def _head(self, inst: ProgramInstance, now: float):
-        """(model, kind, exec seconds, callsite_key, waited seconds) for the step `inst` is on
+    def _exec_est(self, program, key: str, model: str) -> float:
+        """Engine seconds one execution of `key` costs: the learned median when history has
+        it, else the cost model's EMA/prior."""
+        return program.exec_s(key) or self.cost.exec_s(key, model)
+
+    def _head(self, sess: Session, now: float):
+        """(model, kind, exec seconds, callsite_key, waited seconds) for the step `sess` is on
         now: the request it waits for, the one running for it, or the call it is mid-way
         through on the client (a tool loop between turns); None between calls."""
-        waiting = [h for hs in self.pending.values() for h in hs if h.instance is inst]
+        waiting = [h for hs in self.pending.values() for h in hs if h.session is sess]
         if waiting:
             h = waiting[0]
-            return h.model_name, "waiting", self.cost.exec_s(h.callsite_key, h.model_name), h.callsite_key, now - h.created_at
-        running = [h for h in self.running if h.instance is inst]
+            return h.model_name, "waiting", self._exec_est(sess.program, h.callsite_key, h.model_name), h.callsite_key, now - h.created_at
+        running = [h for h in self.running if h.session is sess]
         if running:
             h = running[0]
-            left = self.cost.exec_s(h.callsite_key, h.model_name) - (now - h.dispatched_at)
+            left = self._exec_est(sess.program, h.callsite_key, h.model_name) - (now - h.dispatched_at)
             return h.model_name, "running", max(0.0, left), h.callsite_key, 0.0
-        open_calls = [c for c in inst.calls.values() if not c.finished]
-        if open_calls:
-            c = open_calls[0]
-            return c.model_name, "open", self.cost.exec_s(c.site.callsite_key, c.model_name), c.site.callsite_key, 0.0
+        if sess.open_call:
+            key, model = sess.open_call
+            return model, "open", self._exec_est(sess.program, key, model), key, 0.0
         return None
 
     def sequences(self) -> List[List[str]]:
-        """Per live instance: the model it waits for or runs on, then the models of
+        """Per live session: the model it waits for or runs on, then the models of
         its predicted path to the end of the program, one per callsite."""
         out = []
         now = time.perf_counter()
-        for inst in self.instances.values():
+        for inst in self.sessions.values():
             head = self._head(inst, now)
             seq: List[str] = [head[0]] if head else []
             seq.extend(m for _, m in inst.predicted)
@@ -316,25 +361,32 @@ class Controller:
         return out
 
     def plan_input(self) -> PlanInput:
-        """What the cost-aware planners see: per instance its current step (weighted by how
-        long it has waited) and up to MAX_CHAIN predicted steps (discounted by gamma**j),
-        predicted loop-aware from the current callsite (serve.predict) rather than by
-        `inst.predicted`, which stops at the first lap of a loop."""
+        """What the cost-aware planners see:
+        1. per session's current step (weighted by how long it has waited) 
+        2. up to MAX_CHAIN predicted steps (discounted by gamma**j),
+        predicted loop-aware from the current callsite (serve.predict).
+        Each step carries the history-learned time to reach it: its exec estimate and
+        arrives_in_s, the client-side gap after the previous callsite (tool runs, compute)."""
         now = time.perf_counter()
         chains = []
-        for inst in self.instances.values():
+        for inst in self.sessions.values():
             steps: List[Step] = []
             head = self._head(inst, now)
             kind = "predicted"
             if head is not None:
                 model, kind, exec_s, key, waited = head
                 w = 1.0 + waited / self.tau if kind == "waiting" else 1.0
-                steps.append(Step(model, exec_s, w, False, key))
+                arrive = inst.program.tool_gap_s(key) if kind == "open" else 0.0
+                steps.append(Step(model, exec_s, w, False, key, arrive))
                 predicted = predicted_chain(inst.program, key, model, MAX_CHAIN)
+                prev_key = key
             else:
                 predicted = list(inst.predicted)
+                prev_key = inst.last_key
             for j, (key, m) in enumerate(predicted, 1):
-                steps.append(Step(m, self.cost.exec_s(key, m), self.gamma ** j, True, key))
+                arrive = inst.program.gap_s(prev_key, key) if prev_key is not None else 0.0
+                steps.append(Step(m, self._exec_est(inst.program, key, m), self.gamma ** j, True, key, arrive))
+                prev_key = key
             if steps:
                 chains.append(Chain(inst, tuple(steps[:MAX_CHAIN]), kind))
         resident = frozenset(m for m, e in self.engine_pool.items() if e.resident and not e.transitioning)
@@ -345,7 +397,7 @@ class Controller:
 
     def _fingerprint(self, pi: PlanInput) -> tuple:
         return (tuple(id(h) for hs in self.pending.values() for h in hs), tuple(sorted(id(h) for h in self.running)),
-                tuple(sorted(pi.resident)), tuple(sorted(pi.tier.items())), tuple(id(i) for i in self.instances.values()),
+                tuple(sorted(pi.resident)), tuple(sorted(pi.tier.items())), tuple(id(i) for i in self.sessions.values()),
                 self.planner, self.horizon, self.hysteresis, self.gpu_slots)
 
     def plan(self) -> List[str]:
@@ -368,9 +420,8 @@ class Controller:
         return order
 
     def _pinned(self) -> "set[str]":
-        """Models some instance is in the middle of a call on (a tool loop between
-        turns): its next turn is imminent, so evicting them only forces a reload."""
-        return {c.model_name for inst in self.instances.values() for c in inst.calls.values() if not c.finished}
+        """Pin models that are currently being used by a session's open call"""
+        return {s.open_call[1] for s in self.sessions.values() if s.open_call}
 
     def _keep(self, model: str, reload: Optional[float] = None) -> float:
         """keep_value of a resident/hosted model under the last plan input (0 = nobody wants it)."""
@@ -427,8 +478,8 @@ class Controller:
         if eng is None:
             eng = await self.add_engine(model)
         prompts = [eng._with_salt(eng.render(h.messages), h.cache_salt) for h in self.pending.get(model, [])]
-        for inst in self.instances.values():
-            if any(h.instance is inst for hs in self.pending.values() for h in hs):
+        for inst in self.sessions.values():
+            if any(h.session is inst for hs in self.pending.values() for h in hs):
                 continue
             for key, m in inst.predicted:
                 if m != model:
@@ -458,29 +509,39 @@ class Controller:
 
     # ---- speculation --------------------------------------------------------------
 
-    def _spec_prompt(self, inst: ProgramInstance, key: str, eng: Engine) -> Optional[str]:
-        """The prefix of callsite `key` known now: full prompt if every param is bound,
-        else the static part plus bound params (a partial user turn)."""
-        site = inst.sites.get(key)
-        if not isinstance(site, ByLLMFunc):
+    def _spec_prompt(self, sess: Session, key: str, eng: Engine) -> Optional[str]:
+        """The part of callsite `key`'s prompt that is the same every time it runs: the
+        system prompt (tool block included) and the fixed head of the user message — the
+        signature/schema rows of a by-llm call, the `Goal:` line of a visit routing call.
+        Rendered without the assistant prompt so it is a byte prefix of the real request."""
+        site = sess.program.callsites.get(key)
+        if isinstance(site, ByLLMCallsite):
+            user = site.context_desc
+        elif isinstance(site, VisitByCallsite):
+            user = f"Goal: {site.intent}" if site.intent else ""
+        else:
             return None
-        ready = inst.program.ready_params(key, inst.done)
-        user = site.render_full({})
-        full = eng.render([{"role": "system", "content": site.render_system()}, {"role": "user", "content": user}])
-        if not all(r.ready and not r.needs_state for r in ready.values()):
-            full = full[:full.rindex(user) + len(user)]
-        return full
+        if not user:
+            return None
+        full = eng.render([{"role": "system", "content": site.system_prompt}, {"role": "user", "content": user}])
+        return full[:full.rindex(user) + len(user)]
 
     async def _speculate(self, handle: RequestHandle) -> None:
-        """Warm each successor callsite whose model is resident (loading is the planner's job)."""
-        inst = handle.instance
+        """Warm the fixed prefix of each likely successor callsite whose model is resident
+        (loading is the planner's job). Skipped mid-call: the next turn extends a transcript
+        the cache already holds."""
+        sess = handle.session
+        if sess.open_call:
+            return
         try:
-            for key in inst.program.successor_readiness(handle.callsite_key, inst.done):
-                model = inst.program.model_of(inst.sites[key], handle.model_name)
+            for key, p in sess.program.branch_candidates(handle.callsite_key)[:3]:
+                if p < 0.2:
+                    break
+                model = sess.program.model_of(key, handle.model_name)
                 eng = self.engine_pool.get(model)
                 if eng is None or not eng.speculable:
                     continue
-                full = self._spec_prompt(inst, key, eng)
+                full = self._spec_prompt(sess, key, eng)
                 if full is not None and eng.spec_allowance() >= len(eng.tokenize(full)):
                     await eng.prefill(full, f"spec-{uuid.uuid4().hex}", cache_salt=handle.cache_salt)
         except Exception:
@@ -493,8 +554,7 @@ class Controller:
         lines = [f"pending: {{ {', '.join(f'{m.split('/')[-1]}:{len(h)}' for m, h in self.pending.items())} }}",
                  f"active: {self.active}",
                  f"planner: {self.planner} {self.plan_stats}",
-                 "instances: " + "; ".join(f"{k[0]}#{k[1]} calls={sum(not c.finished for c in i.calls.values())} predicted={[m.split('/')[-1] for _, m in i.predicted]}"
-                                           for k, i in self.instances.items())]
+                 "sessions: " + "; ".join(s.describe() for s in self.sessions.values())]
         for m, e in self.engine_pool.items():
             lines.append(f"engine {m.split('/')[-1]:<22} tier={e.tier:<4} busy={e.busy} prefill={e._inflight_prefill} "
                          f"decode={e._inflight_decode} spec={len(e._spec_tasks)} "

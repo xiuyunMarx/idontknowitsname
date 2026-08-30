@@ -18,8 +18,9 @@ prices any order under the same model):
 
   action           a model at the head of at least one unfinished chain
   advance(m)       every chain whose head is m runs through its consecutive m-steps;
-                   a chain's run costs the SUM of its steps (sequential turns), the
-                   batch costs the MAX over chains (they share the residency)
+                   a chain's run costs the SUM of its steps (sequential turns) plus the
+                   client gaps between them (arrives_in_s), the batch costs the MAX over
+                   chains (they share the residency)
   load(m)          0 if resident, else load_s(m, tier); a model evicted inside the
                    plan reloads from host (host->ssd trimming is not modelled)
   cost(m)          (load + exec) x total weight of unfinished chains
@@ -39,6 +40,9 @@ class Step:
     weight: float          # waiting head: 1 + age/tau; running/open head: 1; j-th predicted: gamma**j
     predicted: bool
     key: str = ""
+    arrives_in_s: float = 0.0  # client-side gap (tool run, compute) after the previous step of the
+                               # chain completes before this step's request arrives; 0 for a head
+                               # that already arrived, the expected tool gap for an "open" head
 
 
 @dataclass(frozen=True)
@@ -112,7 +116,7 @@ def advance(pi: PlanInput, prog: Tuple[int, ...], m: str) -> Tuple[Tuple[int, ..
         if j < len(steps) and steps[j].model == m:
             run = 0.0
             while j < len(steps) and steps[j].model == m:
-                run += steps[j].exec_s
+                run += steps[j].arrives_in_s + steps[j].exec_s
                 j += 1
             nxt[c] = j
             exec_s = max(exec_s, run)
@@ -120,12 +124,14 @@ def advance(pi: PlanInput, prog: Tuple[int, ...], m: str) -> Tuple[Tuple[int, ..
 
 
 def next_use(pi: PlanInput, prog: Optional[Tuple[int, ...]] = None) -> Dict[str, float]:
-    """Seconds of chain work until each model is next needed (0 for a current head), inf if never."""
+    """Seconds until each model is next needed: chain work plus the client gaps between
+    steps (0 for a current waiting/running head), inf if never."""
     prog = prog if prog is not None else tuple(0 for _ in pi.chains)
     out: Dict[str, float] = {}
     for c, j in enumerate(prog):
         t = 0.0
         for s in pi.chains[c].steps[j:]:
+            t += s.arrives_in_s
             if t < out.get(s.model, INF):
                 out[s.model] = t
             t += s.exec_s
@@ -240,21 +246,19 @@ class _Budget(Exception):
 
 def dp_order(pi: PlanInput, horizon: int = 4, budget: int = 500, rollout: int = 64, window: float = 30.0,
              info: Optional[dict] = None) -> List[str]:
-    """Minimise the sum of waiting over the next `horizon` loads; past it, a greedy rollout
-    (to the end of the chains, or `rollout` loads) prices the tail and every model still
-    resident earns `window * lambda * reload` for the reloads it is expected to save.
-    Falls back to `greedy_order` past `budget` nodes."""
+    """Minimise the sum of waiting over the next `horizon` loads"""
     memo: Dict[Tuple[State, int], Tuple[float, List[str]]] = {}
     nodes = [0]
 
     def value(st: State, d: int) -> Tuple[float, List[str]]:
-        hd = heads(pi, st.prog)
-        if not hd:
-            return 0.0, []
         if d >= horizon:
             cost, acts = _rollout(pi, st, rollout)
             bonus = window * sum(pi.rate.get(m, 0.0) * pi.load_s(m, "host") for m in st.resident)
             return cost - bonus, acts
+        
+        hd = heads(pi, st.prog)
+        if not hd:
+            return 0.0, []
         key = (st, d)
         if key in memo:
             return memo[key]
@@ -304,17 +308,45 @@ def evaluate(pi: PlanInput, order: Sequence[str]) -> Tuple[float, float]:
         wall += d
 
 
-def choose(pi: PlanInput, fifo: Sequence[str], cand: Sequence[str], hysteresis: float = 0.10,
-           floor: float = 1.0) -> Tuple[List[str], bool]:
-    """The order to execute and whether it deviates from FIFO: `cand` when its next load
-    differs from FIFO's and it saves more than `hysteresis` of FIFO's estimated waiting
-    (and at least `floor` weighted seconds); otherwise FIFO, so estimator noise cannot
-    reorder loads for nothing."""
-    t_c, t_f = first_nonresident(cand, pi.resident), first_nonresident(fifo, pi.resident)
-    if t_c is None or t_c == t_f:
-        return list(cand), False
-    j_f, _ = evaluate(pi, fifo)
-    j_c, _ = evaluate(pi, cand)
-    if j_f - j_c > hysteresis * j_f and j_f - j_c > floor:
-        return list(cand), True
+def choose(
+    pi: PlanInput,
+    fifo: Sequence[str],
+    candidate: Sequence[str],
+    hysteresis: float = 0.10,
+    floor: float = 1.0,
+) -> Tuple[List[str], bool]:
+    """
+    Choose between the candidate schedule and FIFO.
+
+    If both schedules would load the same next non-resident model, use the
+    candidate directly because it does not change the model-loading order.
+
+    Otherwise, use the candidate only if its estimated cost improves over FIFO
+    by both:
+      - more than `hysteresis` times the FIFO cost, and
+      - more than `floor` weighted seconds.
+
+    This avoids changing the load order for small or noisy estimated gains.
+
+    Returns:
+        chosen_order: The schedule to execute.
+        reordered: True if we intentionally changed the next model load away
+                   from FIFO because the candidate was sufficiently better.
+    """
+    candidate_next_load = first_nonresident(candidate, pi.resident)
+    fifo_next_load = first_nonresident(fifo, pi.resident)
+
+    # Candidate does not change the next model load.
+    if candidate_next_load is None or candidate_next_load == fifo_next_load:
+        return list(candidate), False
+
+    fifo_cost, _ = evaluate(pi, fifo)
+    candidate_cost, _ = evaluate(pi, candidate)
+
+    improvement = fifo_cost - candidate_cost
+    required_improvement = max(hysteresis * fifo_cost, floor)
+
+    if improvement > required_improvement:
+        return list(candidate), True
+
     return list(fifo), False

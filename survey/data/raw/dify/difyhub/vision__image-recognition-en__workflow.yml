@@ -1,0 +1,198 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: Image Recognition
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/siliconflow:0.0.33@6792acf632f24f1c41a3192a78ef181f7149811a8dfd9a16ade984978613f79c
+    version: null
+kind: app
+version: 0.4.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1761802790930-source-1761803537660-target
+      source: '1761802790930'
+      sourceHandle: source
+      target: '1761803537660'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1761803537660-source-1761804280993-target
+      source: '1761803537660'
+      sourceHandle: source
+      target: '1761804280993'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: Start
+        type: start
+        variables:
+        - allowed_file_extensions: []
+          allowed_file_types:
+          - image
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          default: ''
+          hint: ''
+          label: imageUrl
+          max_length: 48
+          options: []
+          placeholder: ''
+          required: true
+          type: file
+          variable: imageUrl
+      height: 88
+      id: '1761802790930'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1761802790930'
+          - imageUrl
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: Qwen/Qwen2.5-VL-32B-Instruct
+          provider: langgenius/siliconflow/siliconflow
+        prompt_template:
+        - id: e426600e-833d-4738-be00-b17f5faae9c2
+          role: system
+          text: '#### Task
+
+Extract the core information from the image and output a concise and accurate description of the image content.
+
+#### Requirements:
+
+1.  The core is to understand the image scene and the focus of the shot.
+2.  Express precisely; do not pile up keywords, and forbid mechanical splicing.
+3.  Control each description to be within 30 words (in English), highlighting the main subject and key points.
+4.  Do not output any other content unrelated to the image.
+5.  Describe the image based on the specific content provided; strictly prohibit autonomous speculation.'
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          configs:
+            detail: high
+            variable_selector:
+            - '1761802790930'
+            - imageUrl
+          enabled: true
+      height: 88
+      id: '1761803537660'
+      position:
+        x: 358.4951347910047
+        y: 282
+      positionAbsolute:
+        x: 358.4951347910047
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1761803537660'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: End
+        type: end
+      height: 88
+      id: '1761804280993'
+      position:
+        x: 684
+        y: 282
+      positionAbsolute:
+        x: 684
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: -7.135081408729377
+      y: -55.02417358835129
+      zoom: 1.1486983549970353
+  rag_pipeline_variables: []

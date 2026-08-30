@@ -1,0 +1,254 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: 智能图表生成助手
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.6@dd589dc093c8084925858034ab5ec1fdf0d33819f43226c2f8c4a749a9acbbb2
+    version: null
+kind: app
+version: 0.4.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: document-extractor
+      id: 1763707640053-source-1763710131991-target
+      source: '1763707640053'
+      sourceHandle: source
+      target: '1763710131991'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: document-extractor
+        targetType: llm
+      id: 1763710131991-source-1763710271780-target
+      source: '1763710131991'
+      sourceHandle: source
+      target: '1763710271780'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1763710271780-source-1763710406908-target
+      source: '1763710271780'
+      sourceHandle: source
+      target: '1763710406908'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - allowed_file_extensions: []
+          allowed_file_types:
+          - document
+          allowed_file_upload_methods:
+          - local_file
+          - remote_url
+          default: ''
+          hint: ''
+          label: 上传Excel文件
+          max_length: 5
+          options: []
+          placeholder: ''
+          required: true
+          type: file-list
+          variable: file
+        - default: ''
+          hint: ''
+          label: 图表类型
+          max_length: 48
+          options:
+          - 柱状图
+          - 折线图
+          - 饼图
+          - 堆叠图
+          placeholder: ''
+          required: true
+          type: select
+          variable: chart_type
+      height: 114
+      id: '1763707640053'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        is_array_file: true
+        selected: false
+        title: 文档提取器
+        type: document-extractor
+        variable_selector:
+        - '1763707640053'
+        - file
+      height: 92
+      id: '1763710131991'
+      position:
+        x: 382
+        y: 282
+      positionAbsolute:
+        x: 382
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        default_value:
+        - key: text
+          type: string
+          value: error
+        error_strategy: default-value
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-coder
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - role: system
+          text: "# Role: 前端可视化专家\n\n# Task\n你是一个精通 ECharts 的前端工程师。请根据用户提供的【Excel文本数据】和【图表类型】，编写一个完整的\
+            \ HTML 文件。\n\n# Inputs\n1. 原始数据：{{#1763710131991.text#}}\n2. 图表类型：{{#1763707640053.chart_type#}}\n\
+            \n# Requirements\n1. **核心库**：必须在 HTML 的 <head> 中引入 ECharts 官方 CDN：\n \
+            \  `https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js`\n\
+            2. **页面布局**：\n   - 页面顶部：生成一个美观的 HTML 表格，展示解析后的原始数据（添加简单的 CSS 边框样式）。\n\
+            \   - 页面中部：创建一个 `div` 容器，ID 为 `chart-container`，宽度 100%，高度 600px。\n3.\
+            \ **逻辑处理**：\n   - 自动解析输入的文本数据，识别第一行为维度（Dimensions），后续行为数值。\n   - 根据用户选择的\
+            \ `图表类型`，生成对应的 ECharts `option` 配置。\n   - **必须配置**：`tooltip` (提示框)、`legend`\
+            \ (图例)、`toolbox` (工具箱-支持保存图片)。\n   - 如果数据包含多个系列（如多列数值），请自动生成多系列（Series）。\n\
+            4. **输出格式**：\n   - **只输出一个 Markdown 代码块** (即 ```html ... ```)。\n   - 不要输出任何解释性文字、问候语，直接输出代码。\n\
+            \n# Output Template\n```html\n<!DOCTYPE html>\n<html>\n<head>\n    <meta\
+            \ charset=\"utf-8\">\n    <title>AI 数据可视化报表</title>\n    <script src=\"\
+            [https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js](https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js)\"\
+            ></script>\n    <style>\n        body { font-family: Arial, sans-serif;\
+            \ padding: 20px; }\n        table { border-collapse: collapse; width:\
+            \ 100%; margin-bottom: 30px; }\n        th, td { border: 1px solid #ddd;\
+            \ padding: 8px; text-align: center; }\n        th { background-color:\
+            \ #f2f2f2; }\n    </style>\n</head>\n<body>\n    <h2>原始数据概览</h2>\n   \
+            \ <div id=\"table-wrapper\">...</div>\n    \n    <h2>可视化分析</h2>\n    <div\
+            \ id=\"chart-container\"></div>\n    \n    <script>\n        var chartDom\
+            \ = document.getElementById('chart-container');\n        var myChart =\
+            \ echarts.init(chartDom);\n        var option;\n\n        // TODO: 根据解析的数据填充\
+            \ option\n        option = { ... };\n\n        option && myChart.setOption(option);\n\
+            \        window.addEventListener('resize', () => myChart.resize());\n\
+            \    </script>\n</body>\n</html>"
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 124
+      id: '1763710271780'
+      position:
+        x: 684
+        y: 282
+      positionAbsolute:
+        x: 684
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1763710271780'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: 结束
+        type: end
+      height: 88
+      id: '1763710406908'
+      position:
+        x: 986
+        y: 282
+      positionAbsolute:
+        x: 986
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 41.5
+      y: 2.5
+      zoom: 1
+  rag_pipeline_variables: []

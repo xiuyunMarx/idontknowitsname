@@ -1,0 +1,570 @@
+app:
+  icon: face_with_monocle
+  icon_background: '#D5F5F6'
+  mode: workflow
+  name: 'If/Else: Mythbuster'
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1776058803969-source-1776058835966-target
+      source: '1776058803969'
+      sourceHandle: source
+      target: '1776058835966'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: if-else
+      id: 1776058835966-source-1776059116968-target
+      source: '1776058835966'
+      sourceHandle: source
+      target: '1776059116968'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1776059116968-true-1776059577752-target
+      source: '1776059116968'
+      sourceHandle: 'true'
+      target: '1776059577752'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: if-else
+        targetType: llm
+      id: 1776059116968-false-1776059582017-target
+      source: '1776059116968'
+      sourceHandle: 'false'
+      target: '1776059582017'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1776059577752-source-1776059952434-target
+      source: '1776059577752'
+      sourceHandle: source
+      target: '1776059952434'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1776059582017-source-1776059952434-target
+      source: '1776059582017'
+      sourceHandle: source
+      target: '1776059952434'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: Send a fact or statement.
+        selected: false
+        title: User Input
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: Fact
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: fact
+      height: 137
+      id: '1776058803969'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: LLM checks if it's true or false.
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-5.4-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 52c2b5e1-a64c-45b5-a112-1e8c6939151f
+          role: system
+          text: "You are a strict, highly accurate trivia judge and fact-checker.\
+            \ Your job is to evaluate statements and determine if they are historically,\
+            \ scientifically, or objectively true or false.\n\nCRITICAL RULE: You\
+            \ are only allowed to output a single word. \nIf the statement is true,\
+            \ output exactly: TRUE \nIf the statement is a myth, rumor, or false,\
+            \ output exactly: FALSE\nDo not include any punctuation, periods, explanations,\
+            \ or conversational filler. Output only the single word."
+        - id: c9a5448a-eccd-45b1-b3f3-2d5844a45dd0
+          role: user
+          text: 'Evaluate this statement: {{#1776058803969.fact#}}'
+        selected: false
+        title: Judge LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 116
+      id: '1776058835966'
+      position:
+        x: 481.24727454112156
+        y: 303
+      positionAbsolute:
+        x: 481.24727454112156
+        y: 303
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            id: 17883e2c-4803-4089-a5b4-1699fcfb0021
+            value: 'TRUE'
+            varType: string
+            variable_selector:
+            - '1776058835966'
+            - text
+          id: 'true'
+          logical_operator: and
+        desc: Route to different paths based on LLM's output.
+        selected: false
+        title: IF/ELSE
+        type: if-else
+      height: 168
+      id: '1776059116968'
+      position:
+        x: 956.8714292207274
+        y: 303
+      positionAbsolute:
+        x: 956.8714292207274
+        y: 303
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: LLM provides additional information if the statement is true.
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-5.4-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: dc0c6aa1-5b1b-4cf3-9792-ce0553860380
+          role: system
+          text: "If the LLM output is true, please tell the user they are correct\
+            \ and provides a little more fascinating context about the fact. \n\n\
+            Tone: Act like a game show host!"
+        - id: b8956374-01f3-46f1-a9e4-ea3b1b1e8625
+          role: user
+          text: 'LLM output:{{#1776058835966.text#}}
+
+            fact:{{#1776058803969.fact#}}'
+        selected: false
+        title: 'TRUE'
+        type: llm
+        vision:
+          enabled: false
+      height: 132
+      id: '1776059577752'
+      position:
+        x: 1493.7662088873517
+        y: 202.43148125583645
+      positionAbsolute:
+        x: 1493.7662088873517
+        y: 202.43148125583645
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: LLM tells the truth if the statement is false.
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-5.4-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 507d2e93-197a-4f7f-bfce-1697856a391e
+          role: system
+          text: 'If the LLM output is false, you tell the user it''s a myth, and explains
+            the real truth behind the rumor.
+
+
+            Tone: Friendly.'
+        - id: 2b14bd96-f878-4991-b26d-82448b1ed4ad
+          role: user
+          text: LLM output:{{#1776058803969.fact#}}
+        selected: true
+        title: 'FALSE'
+        type: llm
+        vision:
+          enabled: false
+      height: 132
+      id: '1776059582017'
+      position:
+        x: 1493.7662088873517
+        y: 477.870257868404
+      positionAbsolute:
+        x: 1493.7662088873517
+        y: 477.870257868404
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        desc: Here's the final answer.
+        outputs:
+        - value_selector:
+          - '1776059577752'
+          - text
+          value_type: string
+          variable: 'True'
+        - value_selector:
+          - '1776059582017'
+          - text
+          value_type: string
+          variable: 'False'
+        selected: false
+        title: Output
+        type: end
+      height: 142
+      id: '1776059952434'
+      position:
+        x: 1854.3440508014078
+        y: 331.68584196991367
+      positionAbsolute:
+        x: 1854.3440508014078
+        y: 331.68584196991367
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 337
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"What\u2019s\
+          \ Next: Play the Game!\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textFormat\":1,\"textStyle\":\"font-size: 16px;\"},{\"children\":[{\"detail\"\
+          :0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"Time to test the logic!\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\":[],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textStyle\":\"font-size: 14px;\",\"textFormat\":0},{\"children\":[{\"detail\"\
+          :0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"Step 1:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" Hit \",\"type\"\
+          :\"text\",\"version\":1},{\"detail\":0,\"format\":1,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"Publish\",\"type\":\"text\",\"\
+          version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\" and \",\"type\":\"text\",\"version\":1},{\"\
+          detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\"Run App\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          . \",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Step 2 (The True Fact):\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" Try typing something\
+          \ you know is true, like: \\\"The inventor of the jigsaw puzzle was a mapmaker.\\\
+          \" Watch the IF/ELSE node successfully route it to the Celebration path!\
+          \ \",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Step 3 (The Myth):\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" Run it again, but type\
+          \ a common myth, like: \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"\
+          format\":2,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          \\\"C\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"ats have nine lives\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":2,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"\\\"\",\"type\":\"text\"\
+          ,\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\" Watch the IF/ELSE node catch the \\\"\
+          FALSE\\\" verdict and route it down to the Mythbuster path to explain why\
+          \ felines lack sweet taste buds!\",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\"}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}"
+        theme: green
+        title: ''
+        type: ''
+        width: 659
+      height: 337
+      id: '1776060077284'
+      position:
+        x: 2185.3342202441722
+        y: 202.43148125583645
+      positionAbsolute:
+        x: 2185.3342202441722
+        y: 202.43148125583645
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 659
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 296
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"What is this\
+          \ workflow?\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" \",\"\
+          type\":\"text\",\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"\
+          detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\"This a True or False trivia workflow!\",\"type\":\"text\",\"\
+          version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\"\
+          },{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"Start by submitting a random \\\"fact\\\
+          \", and LLM will decide if f it's actually true or a total myth. Then, depending\
+          \ on the verdict, the workflow automatically routes the game to a different\
+          \ AI to either celebrate the correct answer or bust the myth!\",\"type\"\
+          :\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"What you are\
+          \ going to learn today?\",\"type\":\"text\",\"version\":1},{\"type\":\"\
+          linebreak\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"By exploring this template, you\
+          \ will learn basic conditional routing with If/Else Node. Instead of letting\
+          \ the AI guess what to do next, we'll decide the path to\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size:\
+          \ 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\"\
+          ,\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"Happy building! \U0001F680\
+          \",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 14px;\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"\
+          type\":\"root\",\"version\":1}}"
+        theme: yellow
+        title: ''
+        type: ''
+        width: 569
+      height: 296
+      id: '1776060224115'
+      position:
+        x: -534.6330293399494
+        y: 202.43148125583645
+      positionAbsolute:
+        x: -534.6330293399494
+        y: 202.43148125583645
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 569
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 370
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"The Switchboard:\
+          \ IF/ELSE Node\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 16px;\"},{\"children\":[],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 16px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"How it\
+          \ works:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" Think of the\
+          \ IF/ELSE node like a checkpoint. It looks at a specific piece of data\u2014\
+          in our case, the Judge LLM's final word (\",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":16,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"TRUE\",\"type\":\"text\",\"version\":1},{\"detail\"\
+          :0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\" or \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":16,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"FALSE\",\"type\"\
+          :\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\").\",\"type\":\"text\",\"version\"\
+          :1},{\"type\":\"linebreak\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 14px;\"},{\"children\":[{\"children\":[{\"detail\"\
+          :0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"IF\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" the data is exactly\
+          \ \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":16,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"TRUE\",\"type\":\"\
+          text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"\
+          style\":\"font-size: 14px;\",\"text\":\", the workflow goes down the top\
+          \ path to TRUE node.\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"listitem\",\"version\":1,\"value\"\
+          :1},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"ELSE\",\"type\":\"text\",\"version\":1},{\"\
+          detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\" (if the data is literally anything else), it defaults to sending\
+          \ it down the bottom path to FALSE.\",\"type\":\"text\",\"version\":1},{\"\
+          type\":\"linebreak\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"listitem\",\"version\":1,\"value\":2}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"list\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 14px;\",\"listType\":\"bullet\",\"start\"\
+          :1,\"tag\":\"ul\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"Unlike a Question Classifier\
+          \ that tries to guess a user's intent, the IF/ELSE node uses strict, exact\
+          \ matching. It's the perfect tool for binary decisions (Pass/Fail, Yes/No,\
+          \ True/False, Business Hours/After Hours).\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"\U0001F4DA \",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"Want to dive in?\",\"type\":\"text\",\"version\":1},{\"\
+          detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\" Dive deeper into more logic in If/Else node by checking out\
+          \ the \",\"type\":\"text\",\"version\":1},{\"children\":[{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          Dify Official Documentation on IF/ELSE nodes\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"link\",\"\
+          version\":1,\"rel\":\"noreferrer\",\"target\":null,\"title\":\"null\",\"\
+          url\":\"https://docs.dify.ai/en/use-dify/nodes/ifelse\"},{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          .\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 14px;\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"\
+          type\":\"root\",\"version\":1}}"
+        theme: blue
+        title: ''
+        type: ''
+        width: 592
+      height: 370
+      id: '1776063488729'
+      position:
+        x: 806.7103592329543
+        y: -147.8072695576134
+      positionAbsolute:
+        x: 806.7103592329543
+        y: -147.8072695576134
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 592
+      zIndex: 0
+    viewport:
+      x: 43.85113008802659
+      y: 335.1359099654606
+      zoom: 0.5779791472322606

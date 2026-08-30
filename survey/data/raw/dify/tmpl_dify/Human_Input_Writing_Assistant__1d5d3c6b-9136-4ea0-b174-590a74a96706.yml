@@ -1,0 +1,620 @@
+app:
+  icon: technologist
+  icon_background: '#D5F5F6'
+  mode: workflow
+  name: 'Human Input: Writing Assistant'
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1776678374633-source-1776679152089-target
+      source: '1776678374633'
+      sourceHandle: source
+      target: '1776679152089'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: human-input
+      id: 1776679152089-source-1776701083763-target
+      source: '1776679152089'
+      sourceHandle: source
+      target: '1776701083763'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: human-input
+        targetType: llm
+      id: 1776701083763-Regenerate-1776701247449-target
+      source: '1776701083763'
+      sourceHandle: Regenerate
+      target: '1776701247449'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1776701247449-source-1776701291598-target
+      source: '1776701247449'
+      sourceHandle: source
+      target: '1776701291598'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: human-input
+        targetType: end
+      id: 1776701083763-Approve-1776701350047-target
+      source: '1776701083763'
+      sourceHandle: Approve
+      target: '1776701350047'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: Provide context for AI by defining what we need, who is this for, etc.
+          so that AI doesn't have to guess.
+        selected: false
+        title: User Input
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: Topic
+          options: []
+          placeholder: ''
+          required: true
+          type: paragraph
+          variable: topic
+        - hint: ''
+          label: Platform
+          options:
+          - X
+          - LinkedIn
+          - Facebook
+          - Instagram
+          placeholder: ''
+          required: true
+          type: select
+          variable: platform
+        - default: ''
+          hint: ''
+          label: Target Audience
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: target_audience
+        - default: ''
+          hint: ''
+          label: Goal
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: goal
+      height: 247
+      id: '1776678374633'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: Create a draft based on the information you provided.
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-5.4-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: a1154ae6-cbb3-4cf0-9535-fc5347bd51b3
+          role: system
+          text: 'You are an expert Content Strategist. Your task is to generate a
+            high-quality first draft for a {{platform}} post.
+
+
+            **Handling User Inputs:**
+
+            1. **Platform (Required):** Always format specifically for {{platform}}.
+
+            2. **Topic (Required):** Keep the core message strictly focused on {{topic}}.
+
+            3. **Audience (Optional):** If {{target_audience}} is provided, tailor
+            the tone for them. If empty, assume a general professional audience.
+
+            4. **Goal (Optional):** If {{goal}} is provided, optimize the draft to
+            achieve it. If empty, focus on making the content clear, engaging, and
+            informative.
+
+
+            **Formatting:** Use Markdown. Use bullet points and bold text to make
+            it scannable.'
+        - id: 95b3af81-bf4f-419e-a076-be1c6e54812c
+          role: user
+          text: 'platform:{{#1776678374633.platform#}}
+
+            topic:{{#1776678374633.topic#}}
+
+            target_audience:{{#1776678374633.target_audience#}}
+
+            goal:{{#1776678374633.goal#}}'
+        selected: true
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 132
+      id: '1776679152089'
+      position:
+        x: 564.4025937418602
+        y: 303
+      positionAbsolute:
+        x: 564.4025937418602
+        y: 303
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        delivery_methods:
+        - enabled: true
+          id: 8a65abee-e7d7-49b5-8409-313dfdb949a1
+          type: webapp
+        desc: This node pauses the workflow and sends a notification to the user.
+        form_content: 'The generated content is as below:
+
+          {{#1776679152089.text#}}
+
+
+          If you''re satisfied, click Approve.
+
+          If not, leave your feedback here, then click Regenerate.
+
+
+          {{#$output.feedback#}}
+
+          '
+        inputs:
+        - default:
+            selector: []
+            type: constant
+            value: ''
+          output_variable_name: feedback
+          type: paragraph
+        selected: false
+        timeout: 3
+        timeout_unit: day
+        title: Human Input
+        type: human-input
+        user_actions:
+        - button_style: primary
+          id: Approve
+          title: Approve
+        - button_style: default
+          id: Regenerate
+          title: Regenerate
+      height: 234
+      id: '1776701083763'
+      position:
+        x: 1046.6116235053155
+        y: 303
+      positionAbsolute:
+        x: 1046.6116235053155
+        y: 303
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: It takes the human's feedback and the first draft to create a refined,
+          high-quality final version.
+        model:
+          completion_params: {}
+          mode: chat
+          name: claude-opus-4-7
+          provider: langgenius/anthropic/anthropic
+        prompt_template:
+        - id: 6e15c3fd-a7ae-4c27-aa20-8d77046b21ad
+          role: system
+          text: "You are a Senior Editor. You will receive an initial draft and human\
+            \ feedback.\n\n**Your Protocol:**\n1. **Prioritize Feedback:** The human\
+            \ feedback is your absolute priority.\n2. **Context Awareness:** - If\
+            \ a specific audience was defined as {{target_audience}}, maintain that\
+            \ voice. \n   - If a specific goal was defined as {{goal}}, ensure the\
+            \ final version hits that mark.\n   - If those fields were left blank,\
+            \ focus on general high-quality professional writing.\n3. **Style:** Keep\
+            \ the style appropriate for {{platform}}.\n4. **Output:** Provide only\
+            \ the final polished text. No \"Here is your update\" intro text."
+        - id: 003b43cd-3837-485e-94f8-7593209781bf
+          role: user
+          text: 'Feedback:{{#1776701083763.feedback#}}
+
+            Draft:{{#1776679152089.text#}}
+
+            '
+        selected: false
+        title: LLM 2
+        type: llm
+        vision:
+          enabled: false
+      height: 148
+      id: '1776701247449'
+      position:
+        x: 1633.865688045773
+        y: 544.7025880582211
+      positionAbsolute:
+        x: 1633.865688045773
+        y: 544.7025880582211
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        desc: This is where your final, human-approved content is displayed.
+        outputs:
+        - value_selector:
+          - '1776701247449'
+          - text
+          value_type: string
+          variable: text2
+        selected: false
+        title: Output 2
+        type: end
+      height: 132
+      id: '1776701291598'
+      position:
+        x: 2006.1754630043256
+        y: 544.7025880582211
+      positionAbsolute:
+        x: 2006.1754630043256
+        y: 544.7025880582211
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        desc: Check approved content here.
+        outputs:
+        - value_selector:
+          - '1776679152089'
+          - text
+          value_type: string
+          variable: text1
+        selected: false
+        title: Output 1
+        type: end
+      height: 116
+      id: '1776701350047'
+      position:
+        x: 1633.865688045773
+        y: 217.5235275071865
+      positionAbsolute:
+        x: 1633.865688045773
+        y: 217.5235275071865
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 354
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"\U0001F44B \
+          \ Explore your AI content generation assistant.\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 16px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"This template is a \",\"type\":\"text\"\
+          ,\"version\":1},{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"Human-in-the-Loop (HITL)\",\"type\":\"\
+          text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"\
+          style\":\"font-size: 14px;\",\"text\":\" content generator. Instead of letting\
+          \ an AI post content automatically, this workflow creates a checkpoint where\
+          \ a human must review and approve the draft before it's finalized.\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"What You\u2019\
+          ll Learn:\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"- Context\
+          \ Control:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" How to use\
+          \ variables like \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :16,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"{platform}\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" and \",\"type\":\"text\"\
+          ,\"version\":1},{\"detail\":0,\"format\":16,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"{topic}\",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\" to provide context to AI for better results.\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"- The Pause Mechanic:\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" How to add a checkpoint\
+          \ in your workflow with human input.\",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\"},{\"children\"\
+          :[{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"- Iterative Editing: \",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"Work with another model to refine work based on specific\
+          \ critiques.\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 14px;\"}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"root\",\"version\":1}}"
+        theme: yellow
+        title: ''
+        type: ''
+        width: 707
+      height: 354
+      id: '1776702822490'
+      position:
+        x: -719.816559278268
+        y: 249.40547402062293
+      positionAbsolute:
+        x: -719.816559278268
+        y: 249.40547402062293
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 707
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 365
+        selected: false
+        showAuthor: false
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          16px;","text":"What''s Next?","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          16px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":2,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":"Click test run to check the draft, and here are a few ways
+          for you to go further. ","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":"font-size:
+          14px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Customize the Form:","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" You can add more fields to the ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"User Input","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" node, like Tone of Voice or Language.","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Edit the Prompts:","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" Open the LLM nodes and change the writing style or formatting
+          (e.g., changing from bullet points to paragraphs).","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Connect Your Tools:","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" Connect this workflow with ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Google Sheets","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" or ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Slack.","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" This way, once you click Approve, the content is automatically
+          saved or sent to your team!","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":"Find more tools in Dify Marketplace: ","type":"text","version":1},{"children":[{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":"https://marketplace.dify.ai/","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"link","version":1,"rel":"noreferrer","target":null,"title":null,"url":"https://marketplace.dify.ai/"}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":"font-size:
+          14px;"}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: green
+        title: ''
+        type: ''
+        width: 639
+      height: 365
+      id: '1776702964042'
+      position:
+        x: 2385.797991303709
+        y: 217.5235275071865
+      positionAbsolute:
+        x: 2385.797991303709
+        y: 217.5235275071865
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 639
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 420
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"\u23F8\uFE0F\
+          \  \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":1,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"Human-in-the-Loop\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 16px;\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"This node is your\
+          \ Pause Button. It lets you review the draft before it's finalized, preventing\
+          \ hallucinations or errors.\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\":[],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textStyle\":\"font-size: 14px;\",\"textFormat\":0},{\"children\":[{\"detail\"\
+          :0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"Delivery Method\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :0,\"textStyle\":\"font-size: 14px;\"},{\"children\":[{\"children\":[{\"\
+          detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\"Webapp:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          \ Display directly in the web app for users to respond right away.\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"listitem\",\"version\":1,\"value\":1},{\"children\":[{\"detail\"\
+          :0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"Email: \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Send an email\
+          \ containing the request link to one or more recipients.\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"listitem\",\"version\":1,\"value\":2}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"list\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 14px;\",\"listType\":\"bullet\",\"start\":1,\"tag\":\"ul\"\
+          },{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"\
+          type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"\
+          textFormat\":0},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"Your Actions:\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size:\
+          \ 14px;\"},{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Approve:\",\"type\"\
+          :\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\" Send the draft to the final\
+          \ node for publishing.\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"listitem\",\"version\":1,\"\
+          value\":1},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"Provide Feedback:\",\"type\"\
+          :\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\" Leave specific changes and hit\
+          \ regenerate to fix the draft.\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"listitem\",\"version\":1,\"\
+          value\":2},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"Timeout:\",\"type\":\"text\"\
+          ,\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\" Check node settings to ensure the time\
+          \ slot is long enough for you to respond!\",\"type\":\"text\",\"version\"\
+          :1},{\"type\":\"linebreak\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"listitem\",\"version\":1,\"value\":3}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"list\",\"version\"\
+          :1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\",\"listType\":\"bullet\"\
+          ,\"start\":1,\"tag\":\"ul\"},{\"children\":[{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\U0001F4D6 \
+          \ Find additional Info in our official docs:\",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\" \",\"type\":\"text\",\"version\":1},{\"children\"\
+          :[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"https://docs.dify.ai/en/use-dify/nodes/human-input\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\"\
+          :null,\"title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/nodes/human-input\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\"\
+          :1}}"
+        theme: blue
+        title: ''
+        type: ''
+        width: 674
+      height: 420
+      id: '1776703024508'
+      position:
+        x: 827.602399371204
+        y: -217.84079233995269
+      positionAbsolute:
+        x: 827.602399371204
+        y: -217.84079233995269
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 674
+      zIndex: 0
+    viewport:
+      x: 189.25742708302437
+      y: 344.4102999791697
+      zoom: 0.4151435327903984

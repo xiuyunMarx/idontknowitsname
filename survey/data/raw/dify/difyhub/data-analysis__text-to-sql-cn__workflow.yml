@@ -1,0 +1,349 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  mode: workflow
+  name: Text-to-SQL 分析师
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/siliconflow:0.0.33@6792acf632f24f1c41a3192a78ef181f7149811a8dfd9a16ade984978613f79c
+    version: null
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.6@dd589dc093c8084925858034ab5ec1fdf0d33819f43226c2f8c4a749a9acbbb2
+    version: null
+kind: app
+version: 0.4.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_size_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1762410999955-source-1762411226070-target
+      source: '1762410999955'
+      sourceHandle: source
+      target: '1762411226070'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: http-request
+      id: 1762411226070-source-1762413012087-target
+      source: '1762411226070'
+      sourceHandle: source
+      target: '1762413012087'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: llm
+      id: 1762413012087-source-1762413553007-target
+      source: '1762413012087'
+      sourceHandle: source
+      target: '1762413553007'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1762413553007-source-1762413702593-target
+      source: '1762413553007'
+      sourceHandle: source
+      target: '1762413702593'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: user_request
+          max_length: 200
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: user_request
+      height: 88
+      id: '1762410999955'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: true
+          variable_selector:
+          - '1762410999955'
+          - user_request
+        desc: sql_expert
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-coder
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 976a4bdb-c917-4736-813a-2bc7d2813de2
+          role: system
+          text: "# 你是数据分析专家，精通MySQL，能够根据用户的问题生成高效的SQL查询\n\n## 核心规则\n1.  **严格遵从**：仅使用提供的表和字段。\n\
+            2.  **兼容性**：确保 SQL 语句完全兼容 MySQL 语法。\n3. 格式要求：严格仅输出单个完整的 SQL 语句。严禁包含任何注释、解释、思考过程（如\
+            \ <think> 标签）或 markdown 标记（如 \\``sql）。`\n4.  **结果限制**：所有查询必须包含 `LIMIT\
+            \ 100` 以防止数据量过大。\n5.  **当前状态**：查询\"当前\"或\"在职\"员工，请在 `salaries`, `titles`,\
+            \ `dept_emp`, `dept_manager` 表上使用 `WHERE to_date = '9999-01-01'`。\n\n\
+            ---\n## 数据库表结构 (Schema)\n\n**employees (员工表)**\n```sql\nCREATE TABLE employees\
+            \ (\n  emp_no      INT          NOT NULL,\n  first_name  VARCHAR(14) \
+            \ NOT NULL,\n  last_name   VARCHAR(16)  NOT NULL,\n  gender      ENUM\
+            \ ('M','F') NOT NULL,    \n  hire_date   DATE         NOT NULL,\n  PRIMARY\
+            \ KEY (emp_no)\n);\n\n**departments (部门表)**\n\nSQL\n\n```\nCREATE TABLE\
+            \ departments (\n  dept_no     CHAR(4)        NOT NULL,\n  dept_name \
+            \  VARCHAR(40)    NOT NULL,\n  PRIMARY KEY (dept_no),\n  UNIQUE  KEY (dept_name)\n\
+            );\n```\n\n**dept_manager (部门经理表)**\n\nSQL\n\n```\nCREATE TABLE dept_manager\
+            \ (\n emp_no       INT            NOT NULL,\n dept_no      CHAR(4)   \
+            \     NOT NULL,\n from_date    DATE           NOT NULL,\n to_date    \
+            \  DATE           NOT NULL,\n PRIMARY KEY (emp_no,dept_no)\n); \n```\n\
+            \n**dept_emp (部门员工关系表)**\n\nSQL\n\n```\nCREATE TABLE dept_emp (\n  emp_no\
+            \      INT            NOT NULL,\n  dept_no     CHAR(4)        NOT NULL,\n\
+            \  from_date   DATE           NOT NULL,\n  to_date     DATE          \
+            \ NOT NULL,\n  PRIMARY KEY (emp_no,dept_no)\n);\n```\n\n**titles (职位表)**\n\
+            \nSQL\n\n```\nCREATE TABLE titles (\n  emp_no      INT            NOT\
+            \ NULL,\n  title       VARCHAR(50)    NOT NULL,\n  from_date   DATE  \
+            \         NOT NULL,\n  to_date     DATE,\n  PRIMARY KEY (emp_no,title,\
+            \ from_date)\n); \n```\n\n**salaries (薪资表)**\n\nSQL\n\n```\nCREATE TABLE\
+            \ salaries (\n  emp_no      INT            NOT NULL,\n  salary      INT\
+            \            NOT NULL,\n  from_date   DATE           NOT NULL,\n  to_date\
+            \     DATE           NOT NULL,\n  PRIMARY KEY (emp_no, from_date)\n);\
+            \ \n```\n\n---\n\n## 查询示例\n\n### 1. 查询当前薪资最高的员工\n\nSELECT CONCAT(e.first_name,\
+            \ ' ', e.last_name) as name, s.salary FROM employees e JOIN salaries s\
+            \ ON e.emp_no = s.emp_no WHERE s.to_date = '9999-01-01' ORDER BY s.salary\
+            \ DESC LIMIT 100\n\n### 2. 查询 'Engineering' 部门的当前所有员工\n\nSELECT CONCAT(e.first_name,\
+            \ ' ', e.last_name) as name, d.dept_name FROM employees e JOIN dept_emp\
+            \ de ON e.emp_no = de.emp_no JOIN departments d ON de.dept_no = d.dept_no\
+            \ WHERE d.dept_name = 'Engineering' AND de.to_date = '9999-01-01' LIMIT\
+            \ 100\n\n### 3. 查询 'Engineering' 部门的当前经理\n\nSELECT CONCAT(e.first_name,\
+            \ ' ', e.last_name) as name, d.dept_name FROM employees e JOIN dept_manager\
+            \ dm ON e.emp_no = dm.emp_no JOIN departments d ON dm.dept_no = d.dept_no\
+            \ WHERE d.dept_name = 'Engineering' AND dm.to_date = '9999-01-01' LIMIT\
+            \ 100\n\n---\n\n用户问题: {{#1762410999955.user_request#}}\n\n输出sql："
+        selected: false
+        structured_output_enabled: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 116
+      id: '1762411226070'
+      position:
+        x: 381
+        y: 282
+      positionAbsolute:
+        x: 381
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-94
+            key: ''
+            type: text
+            value: "{\n          \"sql_query\": \"{{#1762411226070.text#}}\"\n}"
+          type: json
+        headers: X-API-Key:******
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP 请求
+        type: http-request
+        url: http://sql_api:35003/execute_query
+        variables: []
+      height: 137
+      id: '1762413012087'
+      position:
+        x: 683
+        y: 282
+      positionAbsolute:
+        x: 683
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: data_analyst
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: Pro/moonshotai/Kimi-K2-Instruct
+          provider: langgenius/siliconflow/siliconflow
+        prompt_template:
+        - id: c0169765-5494-44ee-a8fa-50b0864b7adc
+          role: system
+          text: '# 角色：数据分析专家
+
+            你是一个专业的数据分析师。你的任务是基于用户的问题和查询到的JSON数据，生成一份简洁、易读的分析报告。
+
+
+            ## 核心规则
+
+            1.  数据源：严格基于提供的JSON数据集 `{{#1762413012087.body#}}` 进行分析。
+
+            2.  用户问题：你的分析需要直接回答用户的原始问题 `{{#1762410999955.user_request#}}`。
+
+            3.  空数据：如果数据集为空 (例如 `[]`)，请回答："没有查询到相关数据"。
+
+            4.  格式：使用 Markdown 格式化回答。
+
+            5.  表格：在分析开头，将JSON数据转换为 Markdown 表格。
+
+            6.  ECharts：在报告最后，根据数据生成一个 ECharts JSON 配置，并包裹在 ```echarts ... ``` 代码块中。
+
+
+            ---
+
+            用户问题: {{#1762410999955.user_request#}}
+
+            查询结果 (JSON): {{#1762413012087.body#}}
+
+            ---
+
+
+            请开始你的分析报告：'
+        selected: true
+        structured_output_enabled: true
+        title: LLM 2
+        type: llm
+        vision:
+          enabled: false
+      height: 116
+      id: '1762413553007'
+      position:
+        x: 985
+        y: 282
+      positionAbsolute:
+        x: 985
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1762413553007'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: 结束
+        type: end
+      height: 88
+      id: '1762413702593'
+      position:
+        x: 1287
+        y: 282
+      positionAbsolute:
+        x: 1287
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 28.216108055362724
+      y: 5.992000402513838
+      zoom: 0.575905908803869
+  rag_pipeline_variables: []

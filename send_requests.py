@@ -25,7 +25,6 @@ CONTROL_PORT = 8965
 
 # program -> (env var selecting its input, number of inputs)
 PROGRAMS = {
-    "benchmark/applications/cascade.jac": ("CASCADE_INDEX", 16),
     "benchmark/applications/deep_research.jac": ("DEEP_TASK_INDEX", 4),
     "benchmark/applications/hover.jac": ("HOVER_CLAIM_INDEX", 5),
     "benchmark/applications/rag_qa.jac": ("RAG_INDEX", 12),

@@ -1,0 +1,512 @@
+app:
+  icon: "\U0001F310"
+  icon_background: '#E4FBCC'
+  mode: workflow
+  name: 'Trigger: Website Health Guard'
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: trigger-schedule
+        targetType: http-request
+      id: 1776678042601-source-1776698648023-target
+      selected: false
+      source: '1776678042601'
+      sourceHandle: source
+      target: '1776698648023'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: llm
+      id: 1776698648023-fail-branch-1776698858456-target
+      selected: false
+      source: '1776698648023'
+      sourceHandle: fail-branch
+      target: '1776698858456'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1776698858456-source-1776699817363-target
+      selected: false
+      source: '1776698858456'
+      sourceHandle: source
+      target: '1776699817363'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        config:
+          frequency: daily
+          mode: visual
+          timezone: UTC
+          visual_config:
+            monthly_days:
+            - 1
+            on_minute: 0
+            time: 12:00 AM
+            weekdays:
+            - sun
+        desc: Set up a time to automatic run this workflow without human intervention.
+        frequency: weekly
+        mode: visual
+        selected: false
+        timezone: America/New_York
+        title: Schedule Trigger
+        type: trigger-schedule
+        visual_config:
+          monthly_days:
+          - 1
+          on_minute: 0
+          time: 12:00 AM
+          weekdays:
+          - sun
+      height: 174
+      id: '1776678042601'
+      position:
+        x: -478.2192474250863
+        y: 282
+      positionAbsolute:
+        x: -478.2192474250863
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: []
+          type: none
+        desc: Check if the website is actually working.
+        error_strategy: fail-branch
+        headers: ''
+        method: get
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP Request
+        type: http-request
+        url: http://www.this-website-is-completely-fake.invalid
+        variables: []
+      height: 217
+      id: '1776698648023'
+      position:
+        x: 306.9656723110761
+        y: 303
+      positionAbsolute:
+        x: 306.9656723110761
+        y: 303
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: Transfer raw data to readable information.
+        model:
+          completion_params: {}
+          mode: chat
+          name: chat-latest
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 9b7a58dc-0c16-40b9-86da-1044617ca9a3
+          role: system
+          text: "The website monitor has detected an exception of type {{#1776698648023.error_type#}}.\
+            \ \nThe specific error reported was {{#1776698648023.error_message#}}.\
+            \ \nPlease explain what this 404 error means for a user and what the admin\
+            \ should check in a concise and clear format."
+        selected: true
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 132
+      id: '1776698858456'
+      position:
+        x: 752.076746319864
+        y: 410.82495023746094
+      positionAbsolute:
+        x: 752.076746319864
+        y: 410.82495023746094
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        desc: Explain the problem with suggested solutions.
+        outputs:
+        - value_selector:
+          - '1776698858456'
+          - text
+          value_type: string
+          variable: alert
+        selected: false
+        title: Output
+        type: end
+      height: 132
+      id: '1776699817363'
+      position:
+        x: 1192.436743614376
+        y: 410.82495023746094
+      positionAbsolute:
+        x: 1192.436743614376
+        y: 410.82495023746094
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 338
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"\U0001F44B Make\
+          \ sure your website is always on the right track.\",\"type\":\"text\",\"\
+          version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 16px;\"\
+          },{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\"},{\"children\"\
+          :[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"Instead of manually checking if your site is down,\
+          \ this workflow does it for you on a schedule. \",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\"If the site is up, it stays quiet (or sends\
+          \ a small \\\"all-clear\\\"); if the site is down, it uses AI to analyze\
+          \ the error and tell you exactly what went wrong.\",\"type\":\"text\",\"\
+          version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"\
+          },{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"What You'll Learn:\",\"type\":\"text\"\
+          ,\"version\":1},{\"type\":\"linebreak\",\"version\":1},{\"detail\":0,\"\
+          format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          - Automation:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" A new\
+          \ way to run your workflow automatically with Trigger.\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size:\
+          \ 14px;\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"- Data Fetching:\",\"type\":\"\
+          text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"\
+          style\":\"font-size: 14px;\",\"text\":\" How to pull real-time information\
+          \ from the live web.\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"- Error\
+          \ Resilience:\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\" How to\
+          \ build a Fail Branch so your app doesn't crash when it hits a snag.\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"- AI Interpretation:\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" Using LLM to translate\
+          \ technical terms (like 404 errors) into plain English.\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size:\
+          \ 14px;\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          root\",\"version\":1}}"
+        theme: yellow
+        title: ''
+        type: ''
+        width: 686
+      height: 338
+      id: '1776700490934'
+      position:
+        x: -1398.1228955368292
+        y: 241.1695852499971
+      positionAbsolute:
+        x: -1398.1228955368292
+        y: 241.1695852499971
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 686
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 336
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"Trigger\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"\
+          font-size: 16px;\"},{\"children\":[],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"\
+          style\":\"font-size: 14px;\",\"text\":\"Every automated workflow starts\
+          \ with a \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Trigger\",\"\
+          type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\". Think of this as the alarm\
+          \ clock or the Start button for your app.\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"In Dify, there are two types of triggers:\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Scheduled:\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" This tells the app to\
+          \ run at specific times (e.g., Every Monday at 9 AM or Every 5 minutes).\
+          \ You can pick a time or use Cron expression for precise settings.\",\"\
+          type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"listitem\",\"version\":1,\"value\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"list\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 14px;\",\"listType\":\"bullet\",\"start\"\
+          :1,\"tag\":\"ul\"},{\"children\":[],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Webhook:\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\" This tells the app to\
+          \ wait for an event from another app (e.g. someone filling out a form).\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"listitem\",\"version\":1,\"value\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"list\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 14px;\",\"listType\":\"bullet\",\"start\"\
+          :1,\"tag\":\"ul\"},{\"children\":[],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\U0001F4D6 \
+          \ Read more about Triggers in our docs: \",\"type\":\"text\",\"version\"\
+          :1},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"https://docs.dify.ai/en/use-dify/nodes/trigger\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\"\
+          :null,\"title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/nodes/trigger\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\"\
+          :1}}"
+        theme: blue
+        title: ''
+        type: ''
+        width: 670
+      height: 336
+      id: '1776700580916'
+      position:
+        x: -663.4471509570657
+        y: -122.40558558988296
+      positionAbsolute:
+        x: -663.4471509570657
+        y: -122.40558558988296
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 670
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 334
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"HTTP Request\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 16px;\"},{\"children\":[],\"direction\":null,\"format\":\"\
+          \",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"\
+          textStyle\":\"\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"It heads to a URL just\
+          \ like you do in a browser, but instead of showing the page, it retrieves\
+          \ data from external API or services. \",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\"\
+          :[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\":0},{\"\
+          children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\"Feel free to paste a link in the API session\
+          \ for testing.\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :0,\"textStyle\":\"font-size: 14px;\"},{\"children\":[],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\"\
+          :\"font-size: 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          Note: We intentionally enabled the \",\"type\":\"text\",\"version\":1},{\"\
+          detail\":0,\"format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\"\
+          ,\"text\":\"Fail Branch\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"\
+          format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          \ on this node to ensure your workflow stays resilient. If the request fails,\
+          \ the workflow smoothly routes to an alternative path\u2014such as returning\
+          \ a fallback message (e.g., Service is currently unavailable).\",\"type\"\
+          :\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\U0001F4D6 Find\
+          \ more informatino about HTTP Request in our docs: \",\"type\":\"text\"\
+          ,\"version\":1},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"https://docs.dify.ai/en/use-dify/nodes/http-request\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\"\
+          :null,\"title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/nodes/http-request\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"\
+          type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"\
+          textFormat\":0}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"root\",\"version\":1}}"
+        theme: blue
+        title: ''
+        type: ''
+        width: 756
+      height: 334
+      id: '1776700777496'
+      position:
+        x: 150.96308110802602
+        y: -122.40558558988296
+      positionAbsolute:
+        x: 150.96308110802602
+        y: -122.40558558988296
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 756
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 332
+        selected: false
+        showAuthor: false
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          16px;","text":"What''s Next","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          16px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          16px;"},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"Add
+          API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Head
+          into the HTTP Request node and plug in your own API URL and authorization
+          headers. You can easily connect this to any external tool your team uses
+          daily!","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"Add
+          Conditional Routing","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"
+          ","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Drop
+          an IF/ELSE node right after the HTTP Request to handle specific ","type":"text","version":1},{"detail":0,"format":16,"mode":"normal","style":"","text":"status_code","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"
+          numbers differently. ","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"Publish
+          for Your Team","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"
+          ","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"Click
+          Publish to share this workflow as a Web App. It''s the fast way to let everyone
+          on your team to understand.","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: green
+        title: ''
+        type: ''
+        width: 567
+      height: 332
+      id: '1776700820828'
+      position:
+        x: 1613.8753316764248
+        y: 251.92425749005054
+      positionAbsolute:
+        x: 1613.8753316764248
+        y: 251.92425749005054
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 567
+      zIndex: 0
+    viewport:
+      x: -115.566949382968
+      y: 205.1733041320332
+      zoom: 0.45210042714216725

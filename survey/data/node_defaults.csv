@@ -1,0 +1,15 @@
+corpus,node_type,type_version,default_model,source,note
+n8n,lmChatOpenAi,current,gpt-5-mini,n8n master LmChatOpenAi.node.ts,"default changed over time (gpt-3.5-turbo -> gpt-4o-mini -> gpt-4.1-mini -> gpt-5-mini) without a typeVersion bump; templates saved without an explicit model resolve to whatever the default was when authored"
+n8n,lmChatGoogleGemini,current,gemini-2.5-flash / gemini-3-flash-preview,n8n master LmChatGoogleGemini.node.ts,"typeVersion 1 only; default moved across gemini-1.0-pro / 1.5-flash / 2.x / 2.5-flash / 3-flash-preview"
+n8n,lmChatAnthropic,1.x,claude-3-sonnet-20240229 / claude-3-5-sonnet-20240620,n8n master LmChatAnthropic.node.ts,per-version default
+n8n,lmChatDeepSeek,1,deepseek-chat,n8n master LmChatDeepSeek.node.ts,
+n8n,lmChatGroq,1,llama3-8b-8192,n8n master LmChatGroq.node.ts,open-weight default
+n8n,lmChatMistralCloud,1,mistral-small,n8n master LmChatMistralCloud.node.ts,
+n8n,lmChatOpenRouter,1,openai/gpt-4.1-mini,n8n master LmChatOpenRouter.node.ts,
+n8n,lmOpenAi,1,gpt-3.5-turbo-instruct,n8n master LmOpenAi.node.ts,legacy completion node
+n8n,lmChatOllama,1,(none; loadOptions),n8n master LmChatOllama.node.ts,model must be picked from the running Ollama instance; exported templates often omit it
+n8n,lmChatAzureOpenAi,1,(deployment name required),n8n master LmChatAzureOpenAi.node.ts,
+n8n,openAi (vendor node; resource=text),1.x-2.x,gpt-4o-mini / gpt-4.1-mini (version-dependent),n8n master vendors/OpenAi,not fetched; treated as default-class
+n8n,googleGemini (vendor node),1.x,gemini-3-flash-preview,n8n master vendors/GoogleGemini text/message.operation.ts,
+n8n,embeddingsOpenAi,1.x,text-embedding-ada-002 / text-embedding-3-small,n8n source,embedding; excluded from headline
+langflow,Agent / LanguageModelComponent,all,(empty in export),langflow starter_projects,provider+model chosen at runtime; corpus reported as site counts only

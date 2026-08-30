@@ -1,0 +1,440 @@
+app:
+  icon: "\U0001F4AC"
+  icon_background: '#FEF7C3'
+  mode: advanced-chat
+  name: 'Chatflow Basic: Chatbot'
+kind: app
+version: 0.7.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 50
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: Hi! How can I help you today?
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: answer
+      id: llm-answer
+      source: llm
+      sourceHandle: source
+      target: answer
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1776072202913-source-llm-target
+      source: '1776072202913'
+      sourceHandle: source
+      target: llm
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: Capture user's chat messages and files.
+        selected: false
+        title: User Input
+        type: start
+        variables: []
+      height: 117
+      id: '1776072202913'
+      position:
+        x: 114.61618082003986
+        y: 282
+      positionAbsolute:
+        x: 114.61618082003986
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        desc: Take the user's input, check the conversation history, and generate
+          a response.
+        memory:
+          query_prompt_template: '{{#sys.query#}}
+
+
+            {{#sys.files#}}'
+          role_prefix:
+            assistant: ''
+            user: ''
+          window:
+            enabled: false
+            size: 10
+        model:
+          completion_params: {}
+          mode: chat
+          name: gpt-5.4-mini
+          provider: langgenius/openai/openai
+        prompt_template:
+        - id: 603f57fd-55d0-492d-a6ae-5fdb8bdc70cb
+          role: system
+          text: 'Role: You are a highly capable and professional AI assistant.
+
+
+            Task: Provide accurate, well-structured, and concise answers to the user''s
+            queries.
+
+            Tone: Polite, objective, and neutral.
+
+
+            Guidelines:
+
+            Break down complex explanations using bullet points or numbered lists.
+
+            Prioritize clarity and factual accuracy.
+
+            If you do not know the answer to a question, politely state that you do
+            not have that information rather than guessing.'
+        selected: true
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 148
+      id: llm
+      position:
+        x: 583.6475025505555
+        y: 303
+      positionAbsolute:
+        x: 583.6475025505555
+        y: 303
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        answer: '{{#llm.text#}}'
+        desc: Generate response for the user and continue the conversation.
+        selected: false
+        title: Answer
+        type: answer
+        variables: []
+      height: 147
+      id: answer
+      position:
+        x: 1042
+        y: 303
+      positionAbsolute:
+        x: 1042
+        y: 303
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 374
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"What's this\
+          \ chatflow?\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 16px;\"},{\"children\":[],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :0,\"textStyle\":\"\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"This is your very\
+          \ first conversational AI in Dify. \",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\"\
+          :[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\"Unlike standard workflows that run once and stop, this\
+          \ is a \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Chatflow with\
+          \ built-in memory\",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\". It remembers\
+          \ your entire conversation history. You can ask a question, get an answer,\
+          \ and then ask a follow-up without having to repeat everything again.\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\
+          \",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"\
+          textStyle\":\"\"},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\"\U0001F9E0  What you'll\
+          \ learn?\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"- How to\
+          \ build a basic back-and-forth conversation\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\"- How the LLM node handles context and memory\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\"\
+          :\"font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\
+          \",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"\
+          font-size: 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Curious\
+          \ about the difference about workflow and chatflow? Click \",\"type\":\"\
+          text\",\"version\":1},{\"children\":[{\"detail\":0,\"format\":0,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"here\",\"type\":\"\
+          text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"\
+          type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\":null,\"\
+          title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/build/workflow-chatflow#workflow-vs-chatflow\"\
+          },{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\" to learn more.\",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\"\
+          :[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":1,\"textStyle\":\"\"},{\"children\":[],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":0,\"textStyle\":\"\"}],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}"
+        theme: yellow
+        title: ''
+        type: ''
+        width: 594
+      height: 374
+      id: '1776072886890'
+      position:
+        x: -555.3721982945708
+        y: 196.6524212121251
+      positionAbsolute:
+        x: -555.3721982945708
+        y: 196.6524212121251
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 594
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 594
+        selected: false
+        showAuthor: false
+        text: "{\"root\":{\"children\":[{\"children\":[{\"detail\":0,\"format\":1,\"\
+          mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"What's Next\uFF1F\
+          \",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\"\
+          :\"font-size: 16px;\"},{\"children\":[],\"direction\":null,\"format\":\"\
+          \",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 16px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 16px;\",\"text\":\"The chatbot\
+          \ is all set, click Preview for running tests. These are a few tips for\
+          \ you to \",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"\
+          textStyle\":\"font-size: 16px;\"},{\"children\":[],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\"\
+          :1,\"textStyle\":\"font-size: 16px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Explore\
+          \ Features\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":1,\"\
+          textStyle\":\"font-size: 14px;\"},{\"children\":[{\"detail\":0,\"format\"\
+          :0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Click the\
+          \ \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":1,\"mode\"\
+          :\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"Features\",\"type\"\
+          :\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\" button at the top of the screen\
+          \ and toggle on \",\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\"\
+          :1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"File Upload\"\
+          ,\"type\":\"text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"\
+          normal\",\"style\":\"font-size: 14px;\",\"text\":\". This allows users to\
+          \ drop images or documents into the chat for the AI to analyze (make sure\
+          \ your selected LLM supports vision/documents!).\",\"type\":\"text\",\"\
+          version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"\
+          },{\"children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"You can also toggle on \",\"type\":\"text\"\
+          ,\"version\":1},{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"Follow-up\",\"type\":\"text\",\"version\"\
+          :1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size:\
+          \ 14px;\",\"text\":\". This will automatically generate clickable, suggested\
+          \ next questions for the user at the end of every AI response, keeping the\
+          \ conversation flowing effortlessly.\",\"type\":\"text\",\"version\":1}],\"\
+          direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"\
+          version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"children\"\
+          :[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\":0},{\"\
+          children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\"Find more information at: \",\"type\":\"text\"\
+          ,\"version\":1},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"https://docs.dify.ai/en/use-dify/build/additional-features\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\"\
+          :null,\"title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/build/additional-features\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 16px;\"\
+          },{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"Customize the AI persona\",\"type\":\"\
+          text\",\"version\":1},{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"\
+          style\":\"font-size: 14px;\",\"text\":\" \",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\",\"style\":\"\
+          font-size: 14px;\",\"text\":\"Open the LLM node and update the SYSTEM prompt\
+          \ to give your chatbot a specific role (e.g., a professional customer support\
+          \ agent, a pirate, or a strict grammar tutor).\",\"type\":\"text\",\"version\"\
+          :1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textStyle\":\"font-size: 14px;\",\"textFormat\"\
+          :0},{\"children\":[{\"detail\":0,\"format\":1,\"mode\":\"normal\",\"style\"\
+          :\"font-size: 14px;\",\"text\":\"Try a Different Model\",\"type\":\"text\"\
+          ,\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\"\
+          :\"paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size:\
+          \ 14px;\"},{\"children\":[{\"detail\":0,\"format\":0,\"mode\":\"normal\"\
+          ,\"style\":\"font-size: 14px;\",\"text\":\"Different models have different\
+          \ strengths. Run and find for faster, cheaper or more creative ones to meet\
+          \ your needs\",\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\"\
+          :\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"\
+          textStyle\":\"font-size: 14px;\"},{\"children\":[],\"direction\":null,\"\
+          format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\"\
+          :\"font-size: 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"\
+          format\":1,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"\
+          Connect to Your Knowledge Base\",\"type\":\"text\",\"version\":1}],\"direction\"\
+          :null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"\
+          textFormat\":1,\"textStyle\":\"font-size: 14px;\"},{\"children\":[{\"detail\"\
+          :0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"Add knowledge retrieval node, then connect it to your knowledge base.\
+          \ Now, this chatbot can generate response based on the data.\",\"type\"\
+          :\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"indent\"\
+          :0,\"type\":\"paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\
+          font-size: 14px;\"},{\"children\":[],\"direction\":null,\"format\":\"\"\
+          ,\"indent\":0,\"type\":\"paragraph\",\"version\":1,\"textStyle\":\"font-size:\
+          \ 14px;\",\"textFormat\":0},{\"children\":[{\"detail\":0,\"format\":0,\"\
+          mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\":\"For a quick\
+          \ setup: \",\"type\":\"text\",\"version\":1},{\"children\":[{\"detail\"\
+          :0,\"format\":0,\"mode\":\"normal\",\"style\":\"font-size: 14px;\",\"text\"\
+          :\"https://docs.dify.ai/en/use-dify/knowledge/create-knowledge/introduction\"\
+          ,\"type\":\"text\",\"version\":1}],\"direction\":null,\"format\":\"\",\"\
+          indent\":0,\"type\":\"link\",\"version\":1,\"rel\":\"noreferrer\",\"target\"\
+          :null,\"title\":null,\"url\":\"https://docs.dify.ai/en/use-dify/knowledge/create-knowledge/introduction\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"paragraph\"\
+          ,\"version\":1,\"textFormat\":0,\"textStyle\":\"font-size: 14px;\"},{\"\
+          children\":[],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"\
+          paragraph\",\"version\":1,\"textFormat\":1,\"textStyle\":\"font-size: 14px;\"\
+          }],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"\
+          version\":1}}"
+        theme: pink
+        title: ''
+        type: ''
+        width: 795
+      height: 594
+      id: '1776073032757'
+      position:
+        x: 1330.5541789064723
+        y: 196.6524212121251
+      positionAbsolute:
+        x: 1330.5541789064723
+        y: 196.6524212121251
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 795
+      zIndex: 0
+    - data:
+        author: Anne
+        desc: ''
+        height: 232
+        selected: false
+        showAuthor: false
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          16px;","text":"LLM Node","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          16px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":"This node comes with ","type":"text","version":1},{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"Built-in Memory.","type":"text","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":" It automatically remembers previous back-and-forth messages
+          so users can continue the conversations with follow-up questions.","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":"font-size:
+          14px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[{"detail":0,"format":1,"mode":"normal","style":"font-size:
+          14px;","text":"System Prompt","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"font-size:
+          14px;","text":"You can define how the AI behaves by filling out the SYSTEM
+          field. You can check thr pre-filled version and edit it for additional information.","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":1,"textStyle":"font-size:
+          14px;"}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 658
+      height: 232
+      id: '1776665049022'
+      position:
+        x: 365.28437991013845
+        y: -6.764841957179314
+      positionAbsolute:
+        x: 365.28437991013845
+        y: -6.764841957179314
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 658
+      zIndex: 0
+    viewport:
+      x: 352.4879638609707
+      y: 277.49094444854285
+      zoom: 0.5219364025271104
