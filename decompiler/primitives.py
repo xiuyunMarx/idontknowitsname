@@ -737,32 +737,42 @@ class Program:
         self.nodes, self.graph, self.exit_freq = nodes, graph, exits
 
     # Prediction
-    def _context_node(self, walked: List[str]) -> Tuple[TrieNode, int]:
-        """Find the longest observed suffix of the current call history."""
+    def _dist(self, walked: List[str]) -> Tuple[Dict[str, float], float, int]:
+        """Next-symbol distribution under Witten-Bell backoff: every observed
+        suffix of the history is blended shallow-to-deep, each with the say
+        w = n/(n+T) its sample size n earns (T = distinct outcomes seen there).
+        A deep context seen once shades — not overrides — the well-supported
+        shorter ones. Returns (probs, end probability, deepest support n)."""
         ctx = ([START] + list(walked))[-self.k:]
-        for i in range(len(ctx)):
+        probs: Dict[str, float] = {}
+        end = 0.0
+        support = 0
+        for i in range(len(ctx), -1, -1):  # i == len(ctx): empty suffix, the root
             node: Optional[TrieNode] = self.ctx
             for key in ctx[i:]:
                 node = node.children.get(key)
                 if node is None:
                     break
-            if node is not None and node.resolved > 0:
-                return node, len(ctx) - i
-        return self.ctx, 0
+            if node is None or node.resolved == 0:
+                continue
+            n = node.resolved
+            t = len(node.children) + (1 if node.end else 0)
+            w = n / (n + t)
+            probs = {x: (1 - w) * p for x, p in probs.items()}
+            for x, c in node.children.items():
+                probs[x] = probs.get(x, 0.0) + w * (c.count / n)
+            end = (1 - w) * end + w * (node.end / n)
+            support = n
+        return probs, end, support
 
     def branch_probs(self, walked: List[str]) -> List[Tuple[str, float]]:
         """Return possible next calls ordered by probability."""
-        node, depth = self._context_node(walked)
-        if depth == 0 or node.resolved == 0:
-            return []
-        out = [(k, c.count / node.resolved) for k, c in node.children.items()]
-        out.sort(key=lambda kv: -kv[1])
-        return out
+        probs, _, _ = self._dist(walked)
+        return sorted(probs.items(), key=lambda kv: -kv[1])
 
     def end_prob(self, walked: List[str]) -> float:
         """Return the probability that the current session is complete."""
-        node, depth = self._context_node(walked)
-        return node.end / node.resolved if depth and node.resolved else 0.0
+        return self._dist(walked)[1]
 
     def _step_ro(self, q: str, key: str) -> str:
         """Find the next state without changing the graph."""
@@ -802,13 +812,13 @@ class Program:
         out: List[Tuple[str, float, float]] = []
         p, t = 1.0, 0.0
         while len(out) < max_steps:
-            node, depth = self._context_node(ctx)
-            if depth == 0 or not node.children:
+            probs, end, support = self._dist(ctx)
+            if not probs or support == 0:
                 break
-            key, child = max(node.children.items(), key=lambda kv: kv[1].count)
-            if node.end > child.count:
+            key, p_step = max(probs.items(), key=lambda kv: kv[1])
+            if end > p_step:
                 break
-            p *= child.count / node.resolved
+            p *= p_step
             nq = self._step_ro(q, key)
             if ctx:
                 t += self._gap_s(q, nq, ctx[-1], key)

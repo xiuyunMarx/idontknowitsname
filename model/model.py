@@ -13,15 +13,26 @@ import uuid
 import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from vllm import SamplingParams
+from vllm.config import KVTransferConfig
 from vllm.engine.arg_utils import AsyncEngineArgs
 from vllm.v1.engine.async_llm import AsyncLLM
 from vllm.inputs import TextPrompt, TokensPrompt
 from vllm.logprobs import Logprob
 
+HOST_KV_GB = 8.0  # host-DRAM KV tier: GPU evictions demote here, prefetch promotes back
+
 class Engine:
     def __init__(self, model_name: str, **engine_kwargs) -> None:
         engine_kwargs.setdefault("scheduling_policy", "priority")
         engine_kwargs.setdefault("enable_prefix_caching", True)
+        # Two-tier KV cache is always on: a block evicted from the GPU survives in
+        # host memory, so a predicted prefix is promoted over PCIe instead of
+        # recomputed. `host_cache_gb=0` disables the tier (measurement baseline).
+        host_gb = float(engine_kwargs.pop("host_cache_gb", HOST_KV_GB))
+        if host_gb > 0:
+            engine_kwargs.setdefault("kv_transfer_config", KVTransferConfig(
+                kv_connector="OffloadingConnector", kv_role="kv_both",
+                kv_connector_extra_config={"cpu_bytes_to_use": int(host_gb * (1 << 30))}))
         self.name = model_name
         self.engine = AsyncLLM.from_engine_args(AsyncEngineArgs(model=model_name, **engine_kwargs))  # type: ignore
 

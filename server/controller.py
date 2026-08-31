@@ -34,7 +34,7 @@ from decompiler.primitives import (Callsite, CallObservation, Program, VisitByCa
 from model.model import Engine
 from server.http_server import HttpServer, PendingRequest
 
-P_MIN = 0.2            # prefill only steps predicted at least this likely
+P_MIN = 0.02            # prefill only steps predicted at least this likely
 P_ROUTE = 0.3          # act on probed routing choices at least this likely
 REFRESH_S = 30.0       # a static prefix touched more recently than this is already warm
 SPEC_WAIT_S = 5.0      # longest queued speculative work waits for budget
@@ -309,15 +309,11 @@ class Controller:
 
     async def _probe_route(self, sess: LiveSession, epoch: int, dedup: str,
                            site: VisitByCallsite, user_text: str) -> None:
-        """Speculatively execute a predicted routing call: land its prompt KV, read
-        the choice distribution off the first scaffold token, and prefill the
-        winners' own calls before the routing request even arrives."""
+        """Speculatively execute a predicted routing call"""
         try:
             parts = _strip_hint(user_text).split("Candidates (choose by handle):\n", 1)
             lines = parts[1].split("\n") if len(parts) > 1 else []
             cands = [c for c in (parse_candidate_line(l) for l in lines) if c]
-            # Scaffold: the shared reply head, cut before the first handle — when every
-            # observed reply made the same choice, the LCP swallows that choice too.
             head = site.resp_head
             for i in sorted(head.find(c["handle"]) for c in cands):
                 if i >= 0:
