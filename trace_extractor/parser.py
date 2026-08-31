@@ -87,9 +87,14 @@ def _call_user(req: Dict[str, Any]) -> str:
 
 
 def _strip_hint(text: str) -> str:
-    """inject_schema_hint appends '\\n\\nSchema requirements:\\n- ...' to the user message."""
-    i = text.rfind("\n\n" + HINT_HEADER + "\n")
-    return text[:i] if i >= 0 else text
+    """inject_schema_hint appends 'Schema requirements:\\n- ...' to the user message — after a
+    blank line in string content, or as a separate text part in multimodal content (which
+    _content joins with a single newline)."""
+    for sep in ("\n\n" + HINT_HEADER + "\n", "\n" + HINT_HEADER + "\n"):
+        i = text.rfind(sep)
+        if i >= 0:
+            return text[:i]
+    return text
 
 
 def _turn(req: Dict[str, Any]) -> int:
@@ -194,16 +199,15 @@ def parse_byllm(rec: TraceRecord) -> Tuple[ByLLMCallsite, Call]:
     tools = sorted(t["function"]["name"] for t in (req.get("tools") or []) if t.get("function", {}).get("name"))
     if not tools and TOOL_BLOCK_HEADER in system:  # text tool protocol: tools live in the system prompt
         tools = sorted(_TEXT_TOOL.findall(system.split(TOOL_BLOCK_HEADER, 1)[1]))
-    # The key ignores the tool block and the tool list: when a ReAct call exhausts its budget,
-    # byllm re-sends the transcript once more with tool_choice="none" — same callsite, but the
-    # system prompt loses its "# Calling tools" block (text protocol) or the request its tools.
-    key = _sha(system.split(TOOL_BLOCK_HEADER, 1)[0].rstrip(), ctx, req.get("model", ""))
-    site = ByLLMCallsite(key=key, kind=CallsiteType.TOOL if tools else CallsiteType.BYLLM, label=qual,
+    # Identity (site.key) is derived from qualname + typed params + model, so it is stable
+    # across the tool block hopping in and out of the system prompt (byllm's forced final
+    # pass), typed retries, and sem-only edits.
+    site = ByLLMCallsite(kind=CallsiteType.TOOL if tools else CallsiteType.BYLLM, label=qual,
                          model=req.get("model", ""), system_prompt=system,
                          response_format=req.get("response_format"), temperature=req.get("temperature"),
                          max_tokens=req.get("max_tokens"), context_desc=ctx, qualname=qual, params=params,
                          return_type=ret, sem=sem, tools=tools)
-    call = Call(key=key, session=rec.session, t_arrive=rec.t_arrive, t_done=rec.t_done,
+    call = Call(key=site.key, session=rec.session, t_arrive=rec.t_arrive, t_done=rec.t_done,
                 model=site.model, turn=_turn(req), bindings=bindings, self_view=self_view,
                 response=rec.response, raw=req, engine_s=rec.engine_s)
     return site, call
@@ -265,14 +269,13 @@ def parse_visit(rec: TraceRecord) -> Tuple[VisitByCallsite, Call]:
     zones = split_visit_user(_call_user(req))
     handles = [c["handle"] for c in zones["candidates"]]
     edges = sorted({c["edge"] for c in zones["candidates"] if c["edge"]})
-    key = _sha(system, zones["intent"], req.get("model", ""))
     intent = zones["intent"]
     label = "visit: " + (intent[:50] + ("..." if len(intent) > 50 else "") if intent else "(no intent)")
-    site = VisitByCallsite(key=key, kind=CallsiteType.VISITBY, label=label, model=req.get("model", ""),
+    site = VisitByCallsite(kind=CallsiteType.VISITBY, label=label, model=req.get("model", ""),
                            system_prompt=system, response_format=req.get("response_format"),
                            temperature=req.get("temperature"), max_tokens=req.get("max_tokens"),
                            intent=intent, select=_select_text(system), candidates=handles, edges=edges)
-    call = Call(key=key, session=rec.session, t_arrive=rec.t_arrive, t_done=rec.t_done, model=site.model,
+    call = Call(key=site.key, session=rec.session, t_arrive=rec.t_arrive, t_done=rec.t_done, model=site.model,
                 walker=zones["walker"], here=zones["here"], candidates=handles, response=rec.response, raw=req,
                 engine_s=rec.engine_s)
     return site, call
@@ -281,19 +284,32 @@ def parse_visit(rec: TraceRecord) -> Tuple[VisitByCallsite, Call]:
 # --------------------------------------------------------------------------- one request
 def parse_request(rec: TraceRecord) -> Tuple[LLMCallsite, Call]:
     kind = classify(rec.request)
-    return parse_visit(rec) if kind is CallsiteType.VISITBY else parse_byllm(rec)
+    site, call = parse_visit(rec) if kind is CallsiteType.VISITBY else parse_byllm(rec)
+    if call.turn == 0:  # later ReAct turns re-send the same first user message
+        site.stable_prefix, site.prefix_n = _call_user(rec.request), 1
+    return site, call
 
 
 # --------------------------------------------------------------------------- sessions
+def _norm_msgs(msgs: list) -> list:
+    """Messages reduced to what identifies a transcript position: role, text content with
+    the injected "Schema requirements" hint stripped (byllm appends it to the LAST user
+    message, so it hops to the feedback turn on a typed retry), and the tool calls."""
+    return [(m.get("role"), _strip_hint(_content(m)), str(m.get("tool_calls") or "")) for m in msgs]
+
+
 def is_continuation(prev: Dict[str, Any], cur: Dict[str, Any]) -> bool:
-    """True when `cur` is the next ReAct turn of the call `prev` started: same model and
-    tools, and cur.messages extends prev.messages (the transcript only grows)."""
-    pm, cm = prev.get("messages") or [], cur.get("messages") or []
-    if len(cm) <= len(pm) or prev.get("model") != cur.get("model"):
+    """True when `cur` continues the call `prev` started: the next ReAct turn or a typed
+    retry. Same model, and cur.messages extends prev.messages (the transcript grows by
+    tool/feedback turns) — or equals it, byllm's retry re-sending the same body after a
+    failed parse. Two genuinely separate calls with byte-identical consecutive bodies
+    would fold too; that shape does not occur in byllm programs."""
+    pm, cm = _norm_msgs(prev.get("messages") or []), _norm_msgs(cur.get("messages") or [])
+    if len(cm) < len(pm) or not pm or prev.get("model") != cur.get("model"):
         return False
     # The system message may change between turns: byllm's forced final pass (budget
     # exhausted, tool_choice="none") drops the tool block from it. Compare the rest.
-    start = 1 if pm and pm[0].get("role") == "system" and cm[0].get("role") == "system" else 0
+    start = 1 if pm[0][0] == "system" and cm[0][0] == "system" else 0
     return cm[start:len(pm)] == pm[start:]
 
 
@@ -328,31 +344,46 @@ class SessionBuilder:
         return inst, new
 
 
-def build_sessions(records: Iterable[TraceRecord], programs: Optional[Dict[str, Program]] = None
-                   ) -> Dict[str, Session]:
-    """Order every session's requests by arrival and fold ReAct turns into one CallInstance.
-    If `programs` is given, callsites are registered there (per program) as they are met."""
+def build_sessions(records: Iterable[TraceRecord]) -> Dict[str, Session]:
+    """Order every session's requests by arrival and fold ReAct turns into one CallInstance."""
+    return {sid: builder.session for sid, (builder, _) in _fold(records).items()}
+
+
+def _fold(records: Iterable[TraceRecord]) -> Dict[str, Tuple[SessionBuilder, list]]:
+    """session id -> (its folded builder, the parsed callsites in arrival order)."""
     by_session: Dict[str, List[TraceRecord]] = defaultdict(list)
     for r in records:
         by_session[r.session].append(r)
-    sessions: Dict[str, Session] = {}
+    out: Dict[str, Tuple[SessionBuilder, list]] = {}
     for sid, recs in by_session.items():
         recs.sort(key=lambda r: r.t_arrive)
-        builder = SessionBuilder(sid, recs[0].program)
+        builder, sites = SessionBuilder(sid, ""), []
         for rec in recs:
             site, call = parse_request(rec)
-            if programs is not None:
-                programs.setdefault(builder.session.program, Program(builder.session.program)).add_callsite(site)
+            sites.append(site)
             builder.step(call)
-        sessions[sid] = builder.session
-    return sessions
+        out[sid] = (builder, sites)
+    return out
 
 
 def build_programs(records: Iterable[TraceRecord]) -> Dict[str, Program]:
-    """Sessions grouped by program ("<program>:<pid>" session ids), statistics folded in."""
+    """Programs discovered from content: a session belongs to the program whose entry
+    callsite (its first request) it shares. No program name crosses the wire; a program's
+    id is its entry callsite's key, its display name that callsite's label."""
     programs: Dict[str, Program] = {}
-    for sess in build_sessions(list(records), programs).values():
-        programs.setdefault(sess.program, Program(sess.program)).observe(sess)
+    folded = sorted(_fold(records).values(),
+                    key=lambda bs: bs[0].session.calls[0].t_arrive if bs[0].session.calls else 0.0)
+    for builder, sites in folded:
+        if not sites:
+            continue
+        entry = sites[0]
+        prog = programs.get(entry.key)
+        if prog is None:
+            prog = programs[entry.key] = Program(entry.label)
+        for site in sites:
+            prog.add_callsite(site)
+        builder.session.program = prog.name
+        prog.observe(builder.session)
     return programs
 
 

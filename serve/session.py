@@ -7,17 +7,21 @@ mid-call (between two ReAct turns, running a tool)."""
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from serve.predict import predicted_chain
 from trace_extractor.parser import SessionBuilder, parse_request
 from trace_extractor.primitives import (CallInstance, CallsiteType, LLMCallsite, Program, TraceRecord)
 
 
 class Session:
-    def __init__(self, session_id: str, program: Program, max_chain: int = 12) -> None:
+    def __init__(self, session_id: str, program, max_chain: int = 12) -> None:
+        """`program` is a Program, or a resolver Callable[[LLMCallsite], Program] invoked
+        with the session's first callsite — FaaS: the wire carries no program identity,
+        so which program a session runs is discovered from what it asks for."""
         self.id = session_id
-        self.program = program
+        self._resolve = program if callable(program) else None
+        self.program: Optional[Program] = None if callable(program) else program
         self.max_chain = max_chain
-        self.builder = SessionBuilder(session_id, program.name)
+        self.builder = SessionBuilder(session_id, self.program.name if self.program else "")
+        self._active = self.program.begin_session() if self.program else []
         self.predicted: List[Tuple[str, str]] = []            # [(callsite key, model)] after the current call
         self.open_call: Optional[Tuple[str, str]] = None      # (key, model) while the client runs a tool
         self.inflight = 0                                     # requests submitted, not yet answered
@@ -39,15 +43,20 @@ class Session:
         """A request arrived: identify its callsite, extend the history, predict what follows.
         Returns (callsite, its instance, kind for the cost model, turn index)."""
         site, call = parse_request(TraceRecord(session=self.id, t_arrive=t_arrive, t_done=0.0, request=body))
+        if self.program is None:  # first request: its callsite names the program
+            self.program = self._resolve(site)
+            self.builder.session.program = self.program.name
+            self._active = self.program.begin_session()
         site = self.program.add_callsite(site)
         before = list(self.calls)
         inst, new = self.builder.step(call)
-        if new and len(before) >= 1:
-            # the previous instance is complete now that its successor is known
-            self.program.observe_call(before[-2] if len(before) > 1 else None, before[-1], inst)
+        if new:
+            if before:  # the previous instance is complete now that its successor arrived
+                self.program.observe_times(before[-1], inst)
+            self._active = self.program.extend(self._active, inst.key)
         turn = len(inst.turns) - 1
         kind = "generate" if site.kind is CallsiteType.VISITBY else ("call" if turn == 0 else "tool_turn")
-        self.predicted = predicted_chain(self.program, site.key, site.model, self.max_chain)
+        self.predicted = self.program.predict_models([c.key for c in self.calls], self.max_chain)
         self.open_call = None
         self.inflight += 1
         return site, inst, kind, turn
@@ -72,9 +81,15 @@ class Session:
         self.closed = True
         self.open_call = None
         self.predicted = []
-        self.program.close_session(self.builder.session)
+        if self.program is None:
+            return
+        if self.calls:
+            self.program.observe_times(self.calls[-1], None)
+        self.program.finish_session(self._active, self.builder.session)
 
     def describe(self) -> str:
+        if self.program is None:
+            return f"{self.id}: (no requests yet)"
         return (f"{self.id}: " + " -> ".join(self.program.label(c.key) for c in self.calls)
                 + (f" [open {self.program.label(self.open_call[0])}]" if self.open_call else "")
                 + f" predicted={[m.split('/')[-1] for _, m in self.predicted]}")

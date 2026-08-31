@@ -55,12 +55,19 @@ def main(argv: List[str]) -> int:
     programs = build_programs(load_trace(argv[0]))
     with open(argv[1]) as f:
         truth = truth_sequences(json.load(f))
-    got = recovered_sequences(programs)
+    got_raw = recovered_sequences(programs)          # keyed by entry callsite key
+    heads = {seqs[0][0]: app for app, seqs in truth.items() if seqs and seqs[0]}
+    got, byname = {}, {}
+    for pkey, seqs in got_raw.items():               # programs carry no declared name:
+        head = seqs[0][0] if seqs and seqs[0] else pkey   # match to an app by the entry callsite
+        app = heads.get(head, programs[pkey].name)
+        got[app] = seqs
+        byname[app] = programs[pkey]
     bad = 0
     for name in sorted(set(truth) | set(got)):
         t, g = truth.get(name, []), got.get(name, [])
         print(f"== {name}: {len(g)} recovered session(s), {len(t)} ground-truth case(s), "
-              f"{len(programs[name].callsites) if name in programs else 0} callsite(s)")
+              f"{len(byname[name].callsites) if name in byname else 0} callsite(s)")
         for i, seq in enumerate(g):
             ref = t[i] if i < len(t) else None
             ok = ref == seq
@@ -69,14 +76,15 @@ def main(argv: List[str]) -> int:
             print(f"  {mark} #{i}: " + " -> ".join(seq))
             if ref is not None and not ok:
                 print(f"       truth: " + " -> ".join(ref))
-        if name in programs:
-            p = programs[name]
+        if name in byname:
+            p = byname[name]
             for key, turns in p.turns.items():
                 if max(turns) > 1:
                     print(f"  turns {p.label(key)}: {turns}")
-            for (a, b), c in p.succ2.items():
-                if a == b or any(k == a for k in c):
-                    print(f"  loop  {p.label(a)} -> {p.label(b)} -> {dict((p.label(k), n) for k, n in c.items())}")
+            for key in p.callsites:
+                node = p.root.children.get(key)
+                if node is not None and key in node.children:
+                    print(f"  self-loop {p.label(key)} (n={node.children[key].count}/{node.count})")
     print(f"\n{bad} session(s) differ from ground truth")
     for p in programs.values():
         print()

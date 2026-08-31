@@ -13,11 +13,10 @@ from instance_engine.model import Engine
 from serve.cost import CostModel
 from serve.planner import (INF, Chain, PlanInput, Step, choose, dp_order, fifo_order, greedy_order, keep_value,
                            next_use)
-from serve.predict import predicted_chain
 from serve import http_api
 from serve.handle import RequestHandle
 from serve.session import Session
-from trace_extractor.primitives import ByLLMCallsite, Program, VisitByCallsite
+from trace_extractor.primitives import START, ByLLMCallsite, LLMCallsite, Program, VisitByCallsite
 
 PLANNERS = ("fifo", "greedy", "dp")
 SETTINGS = {"speculate": bool, "gpu_slots": int, "host_slots": int, "planner": str, "horizon": int,
@@ -53,8 +52,9 @@ class Controller:
     def __init__(self, gpu_slots: int = 1, host_slots: int = 8, speculate: bool = True, planner: str = "fifo"):
         self.engine_pool: Dict[str, Engine] = {}
         self.engine_kwargs: Dict[str, dict] = {}     # model -> Engine.create kwargs
-        self.programs: Dict[str, Program] = {}       # name -> workflow learned from history
-        self.sessions: Dict[str, Session] = {}       # "program:pid" -> live client process
+        self.programs: Dict[str, Program] = {}       # entry callsite key -> workflow learned from history
+        self._entry: Dict[str, Program] = {}         # any observed entry callsite key -> its program
+        self.sessions: Dict[str, Session] = {}       # opaque instance id (pid) -> live client process
         self.session_idle_s = 30.0                   # close a session this long after its last reply
         self.history_path: Optional[str] = None
         self.pending: Dict[str, List[RequestHandle]] = {}
@@ -91,15 +91,33 @@ class Controller:
 
     # ---- programs & sessions -------------------------------------------------------
 
-    def program(self, name: str) -> Program:
-        """The workflow known for `name` (a fresh, empty one the first time it is seen)."""
-        return self.programs.setdefault(name, Program(name))
+    def program_for(self, site: LLMCallsite) -> Program:
+        """The program owning entry callsite `site` — discovered from content, never declared:
+        a session is matched by its first callsite (FaaS: the wire carries only an
+        opaque instance id, nothing the client self-reports)."""
+        prog = self._entry.get(site.key)
+        if prog is None:
+            prog = Program(site.label)
+            self.programs[site.key] = prog
+            self._entry[site.key] = prog
+            print(f"[program] discovered {site.label!r}", flush=True)
+        return prog
+
+    def _reindex(self) -> None:
+        """entry callsite key -> Program, over every observed entry of every program."""
+        self._entry = {}
+        for pkey, prog in self.programs.items():
+            self._entry[pkey] = prog
+            start = prog.root.children.get(START)
+            for k in (start.children if start is not None else {}):
+                self._entry.setdefault(k, prog)
 
     def load_history(self, path: str) -> int:
         """Warm start: programs learned by an earlier run (Program.to_dict per name)."""
         with open(path) as f:
-            for name, d in json.load(f).items():
-                self.programs[name] = Program.from_dict(d)
+            for pkey, d in json.load(f).items():
+                self.programs[pkey] = Program.from_dict(d)
+        self._reindex()
         self.history_path = path
         return len(self.programs)
 
@@ -111,11 +129,11 @@ class Controller:
         return path
 
     def session(self, user: str) -> Session:
-        """The live session for the OpenAI `user` field "program:pid" (created on first use)."""
+        """The live session for the opaque `user` instance id (created on first use). Its
+        program is resolved from the content of its first callsite, not declared."""
         sess = self.sessions.get(user)
         if sess is None:
-            name = user.split(":", 1)[0] if ":" in user else "default"
-            sess = self.sessions[user] = Session(user, self.program(name), MAX_CHAIN)
+            sess = self.sessions[user] = Session(user, self.program_for, MAX_CHAIN)
         return sess
 
     def close_session(self, user: str) -> bool:
@@ -201,6 +219,7 @@ class Controller:
             self.sessions.clear()
             if self._branches is not None:
                 self.programs = {name: Program.from_dict(d) for name, d in self._branches.items()}
+                self._reindex()
         if req.get("freeze_branches"):
             self._branches = {name: p.to_dict() for name, p in self.programs.items()}
         if req.get("forget"):
@@ -329,6 +348,12 @@ class Controller:
         it, else the cost model's EMA/prior."""
         return program.exec_s(key) or self.cost.exec_s(key, model)
 
+    def _duration_est(self, program, key: str, model: str) -> float:
+        """Wall seconds one execution of `key` occupies: for a multi-turn ReAct call the
+        whole conversation (engine time + tool gaps between turns); falls back to the
+        engine estimate when history knows nothing."""
+        return program.duration_s(key) or self.cost.exec_s(key, model)
+
     def _head(self, sess: Session, now: float):
         """(model, kind, exec seconds, callsite_key, waited seconds) for the step `sess` is on
         now: the request it waits for, the one running for it, or the call it is mid-way
@@ -344,7 +369,7 @@ class Controller:
             return h.model_name, "running", max(0.0, left), h.callsite_key, 0.0
         if sess.open_call:
             key, model = sess.open_call
-            return model, "open", self._exec_est(sess.program, key, model), key, 0.0
+            return model, "open", self._duration_est(sess.program, key, model), key, 0.0
         return None
 
     def sequences(self) -> List[List[str]]:
@@ -376,16 +401,15 @@ class Controller:
             if head is not None:
                 model, kind, exec_s, key, waited = head
                 w = 1.0 + waited / self.tau if kind == "waiting" else 1.0
-                arrive = inst.program.tool_gap_s(key) if kind == "open" else 0.0
+                arrive = inst.program.tool_gap_s(key) if kind == "open" else 0.0 # type: ignore
                 steps.append(Step(model, exec_s, w, False, key, arrive))
-                predicted = predicted_chain(inst.program, key, model, MAX_CHAIN)
                 prev_key = key
             else:
-                predicted = list(inst.predicted)
                 prev_key = inst.last_key
+            predicted = list(inst.predicted)  # greedy tree walk from the session's full context
             for j, (key, m) in enumerate(predicted, 1):
-                arrive = inst.program.gap_s(prev_key, key) if prev_key is not None else 0.0
-                steps.append(Step(m, self._exec_est(inst.program, key, m), self.gamma ** j, True, key, arrive))
+                arrive = inst.program.gap_s(prev_key, key) if prev_key is not None else 0.0  # type: ignore
+                steps.append(Step(m, self._duration_est(inst.program, key, m), self.gamma ** j, True, key, arrive))
                 prev_key = key
             if steps:
                 chains.append(Chain(inst, tuple(steps[:MAX_CHAIN]), kind))
@@ -507,20 +531,31 @@ class Controller:
         for e in hosted[:max(0, len(hosted) - self.host_slots)]:
             await e.kill()
 
+
     # ---- speculation --------------------------------------------------------------
 
     def _spec_prompt(self, sess: Session, key: str, eng: Engine) -> Optional[str]:
         """The part of callsite `key`'s prompt that is the same every time it runs: the
-        system prompt (tool block included) and the fixed head of the user message — the
-        signature/schema rows of a by-llm call, the `Goal:` line of a visit routing call.
-        Rendered without the assistant prompt so it is a byte prefix of the real request."""
-        site = sess.program.callsites.get(key)
+        system prompt (tool block included) and the byte-stable head of the user message.
+        With one observation that head is the structural one (signature + schema rows of a
+        by-llm call, the `Goal:` line of a visit routing call); from two observations on,
+        the longest common prefix learned across real requests — for a visit call that
+        adds the whole graph zone (current node, candidate list). On top of that the
+        learned value flow may resolve the next call's actual parameter values from what
+        this session has already shown (Program.value_prefix). Rendered without the
+        assistant prompt so it is a byte prefix of the real request."""
+        site = sess.program.callsites.get(key)  # type: ignore
         if isinstance(site, ByLLMCallsite):
             user = site.context_desc
         elif isinstance(site, VisitByCallsite):
             user = f"Goal: {site.intent}" if site.intent else ""
         else:
             return None
+        if site.prefix_n >= 2 and len(site.stable_prefix) > len(user):
+            user = site.stable_prefix
+        value = sess.program.value_prefix(key, sess.calls)  # type: ignore
+        if len(value) > len(user):
+            user = value
         if not user:
             return None
         full = eng.render([{"role": "system", "content": site.system_prompt}, {"role": "user", "content": user}])
@@ -534,7 +569,7 @@ class Controller:
         if sess.open_call:
             return
         try:
-            for key, p in sess.program.branch_candidates(handle.callsite_key)[:3]:
+            for key, p in sess.program.branch_candidates([c.key for c in sess.calls])[:3]:
                 if p < 0.2:
                     break
                 model = sess.program.model_of(key, handle.model_name)
