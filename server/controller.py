@@ -26,12 +26,11 @@ from dataclasses import dataclass, field
 from math import exp
 from typing import Any, Dict, List, Optional, Tuple
 
-from vllm import SamplingParams
 
 from decompiler.parser import _strip_hint, decompose, is_continuation, parse_candidate_line
 from decompiler.primitives import (Callsite, CallObservation, Program, VisitByCallsite, _lcp,
                                    chosen_candidates, node_type)
-from model.model import Engine
+from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 
 P_MIN = 0.02            # prefill only steps predicted at least this likely
@@ -133,12 +132,12 @@ class Controller:
             ob = self._advance(sess, req)
         prompt = self.engine.render(body["messages"], tools=body.get("tools"))
         t = body.get("temperature")
-        sp = SamplingParams(temperature=0.7 if t is None else t,
-                            max_tokens=body.get("max_tokens") or MAX_TOKENS,
-                            stop=body.get("stop"))
+        sp = {"temperature": 0.7 if t is None else t,
+              "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
+              "stop": body.get("stop")}
         rid = f"{sess.id}-{sess.epoch}t{ob.n_turns}-{uuid.uuid4().hex[:8]}"  # type: ignore[union-attr]
         t0 = time.perf_counter()
-        text = await self.engine.generate(prompt, rid, sp, priority=-1 if cont else 0)
+        text = await self.engine.generate(prompt, rid, sp, priority=PRIORITY_CONT if cont else PRIORITY_REAL)
         ob.engine_s += time.perf_counter() - t0  # type: ignore[union-attr]
         ob.t_done = time.monotonic()  # type: ignore[union-attr]
         ob.response = text  # type: ignore[union-attr]
@@ -299,9 +298,9 @@ class Controller:
                             toks: List[int], warm_key: Optional[str]) -> None:
         """Land one predicted prefix in the prefix cache."""
         try:
-            if not await self._await_budget(sess, epoch, len(toks)):
+            if not await self._await_budget(sess, epoch, self.engine.uncached_cost(toks)):
                 return
-            if await self.engine.prefill(toks, f"spec-{uuid.uuid4().hex[:8]}", cost=len(toks)):
+            if await self.engine.prefill(toks, f"spec-{uuid.uuid4().hex[:8]}"):
                 if warm_key:
                     self.warm[warm_key] = time.monotonic()
         finally:
@@ -322,7 +321,7 @@ class Controller:
             prompt = self.engine.render([{"role": "system", "content": site.system_prompt},
                                          {"role": "user", "content": user_text}]) + head
             base = self.engine.tokenize(prompt)
-            if not await self._await_budget(sess, epoch, len(base)):
+            if not await self._await_budget(sess, epoch, self.engine.uncached_cost(base)):
                 return
             res = await self.engine.probe(prompt, f"probe-{uuid.uuid4().hex[:8]}")
             if not res or sess.epoch != epoch or sess.id not in self.sessions:
@@ -395,7 +394,7 @@ class Controller:
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True) -> None:
     server = HttpServer(port=port)
     await server.start()
-    await Controller(model, server, speculate=speculate, max_model_len=16384).start_serving()
+    await Controller(model, server, speculate=speculate, context_length=16384).start_serving()
 
 
 if __name__ == "__main__":
