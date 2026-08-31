@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional, Dict, Any, Tuple, Union
 from dataclasses import dataclass, field
 from statistics import median
@@ -40,6 +41,7 @@ class CallMetadata:
     response_format: Optional[Dict[str, Any]] = None   # Shared request format.
     stable_prefix: str = ""                  # Shared prefix of first user messages.
     prefix_n: int = 0                        # Messages included in stable_prefix.
+    hint: str = ""                           # Schema-requirements tail appended to the user message.
     exec_stats: ExecStats = field(default_factory=ExecStats)  # Running timing data.
 
     @property
@@ -83,6 +85,8 @@ class VisitByCallsite(CallMetadata):
     """Describe an LLM call that selects from a list."""
     intent: str = ""
     select: str = ""                                          # "exactly one" / "exactly 3" / "between 1 and 3" / "all"
+    resp_head: str = ""                                       # Shared prefix of observed replies (probe scaffold).
+    resp_n: int = 0                                           # Replies folded into resp_head.
 
     @property
     def key(self) -> str:
@@ -141,9 +145,228 @@ class CallObservation:
     t_arrive: float
     t_done: float
     engine_s: float = 0.0
-    n_turns: int = 1
+    n_turns: int = 1 # turns of this logical call.
     tool_gaps: List[float] = field(default_factory=list)
-    candidates: List[Tuple[str, str]] = field(default_factory=list)  # Options offered by a visit call.
+    candidates: List[Tuple[str, str]] = field(default_factory=list)  # (handle, node repr) offered by a visit.
+    bindings: Dict[str, str] = field(default_factory=dict)  # Parameter reprs of a byllm call.
+    self_view: Optional[str] = None      # Repr of the owning object.
+    walker: Optional[str] = None         # Repr of a visit call's walker.
+    here: Optional[str] = None           # Repr of a visit call's current node.
+    cand_block: str = ""                 # Raw candidate lines of a visit call.
+    response: str = ""                   # Assistant reply text.
+    user_text: str = ""                  # Raw first user message, for reconstruction checks.
+
+
+# ------------------------------------------------------------------------- value flow
+
+def _split_top(body: str) -> Optional[List[str]]:
+    """Split on commas at nesting depth zero, honouring quotes and escapes."""
+    parts, depth, quote, esc, start = [], 0, None, False, 0
+    for j, ch in enumerate(body):
+        if quote:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == quote:
+                quote = None
+            continue
+        if ch in "'\"":
+            quote = ch
+        elif ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+            if depth < 0:
+                return None
+        elif ch == "," and depth == 0:
+            parts.append(body[start:j])
+            start = j + 1
+    if quote or depth:
+        return None
+    parts.append(body[start:])
+    return parts
+
+
+def _valid_key(k: str) -> bool:
+    """A field key is `name` or `name (its sem text)` — byllm renders both."""
+    if k.isidentifier():
+        return True
+    head, sep, _ = k.partition(" (")
+    return bool(sep) and head.isidentifier() and k.endswith(")")
+
+
+def field_name(key: str) -> str:
+    return key.partition(" (")[0]
+
+
+def parse_fields(text: str) -> Optional[Tuple[str, List[Tuple[str, str]]]]:
+    """Split a repr like Type(a=1, b='x') into its type text and field rows.
+    The type text is free-form (byllm substitutes a type's sem for its name) so
+    the field list is the paren group that closes at the final character; keys
+    keep their `name (sem)` annotations verbatim."""
+    text = text.strip()
+    if len(text) < 3 or not text.endswith(")"):
+        return None
+    stack: List[int] = []
+    quote: Optional[str] = None
+    esc = False
+    opener = None
+    for j, ch in enumerate(text):
+        if quote:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == quote:
+                quote = None
+            continue
+        if ch in "'\"":
+            quote = ch
+        elif ch == "(":
+            stack.append(j)
+        elif ch == ")":
+            if not stack:
+                return None
+            k = stack.pop()
+            if j == len(text) - 1:
+                opener = k
+    if quote or stack or not opener:
+        return None
+    parts = _split_top(text[opener + 1:-1])
+    if parts is None:
+        return None
+    fields: List[Tuple[str, str]] = []
+    for part in parts:
+        if not part.strip():
+            continue
+        k, eq, v = part.partition("=")
+        if not eq or not _valid_key(k.strip()):
+            return None
+        fields.append((k.strip(), v.strip()))
+    return text[:opener], fields
+
+
+def build_fields(name: str, fields: List[Tuple[str, str]]) -> str:
+    return f"{name}({', '.join(f'{k}={v}' for k, v in fields)})"
+
+
+def _find_in_result(result: Any, v: str) -> Optional[list]:
+    """Where repr-text `v` sits inside a call's result: [] when it is the raw text,
+    ["j", *path] when it is the JSON value at `path` (the whole parse included),
+    None when absent."""
+    if not isinstance(result, str):
+        return None
+    if repr(result) == v:
+        return []
+    try:
+        parsed = json.loads(result)
+    except Exception:
+        return None
+    stack: List[Tuple[Any, list]] = [(parsed, ["j"])]
+    while stack:
+        x, path = stack.pop()
+        if repr(x) == v:
+            return path
+        if isinstance(x, dict):
+            stack.extend((val, path + [k]) for k, val in x.items())
+        elif isinstance(x, list):
+            stack.extend((val, path + [i]) for i, val in enumerate(x))
+    return None
+
+
+def _value_at(result: Any, path: list) -> Optional[str]:
+    """The repr text at `path` of a result (inverse of _find_in_result)."""
+    if not isinstance(result, str):
+        return None
+    if not path:
+        return repr(result)
+    if path[0] != "j":
+        return None
+    try:
+        x: Any = json.loads(result)
+        for p in path[1:]:
+            x = x[p]
+    except Exception:
+        return None
+    return repr(x)
+
+
+def _find_word(text: str, w: str) -> int:
+    """First occurrence of `w` in `text` not embedded in a larger identifier."""
+    i = 0
+    while True:
+        i = text.find(w, i)
+        if i < 0:
+            return -1
+        before = text[i - 1] if i else ""
+        after = text[i + len(w):i + len(w) + 1]
+        if not (before.isalnum() or before == "_") and not (after.isalnum() or after == "_"):
+            return i
+        i += 1
+
+
+def chosen_candidates(ob: CallObservation) -> List[Tuple[str, str]]:
+    """The (handle, node repr) candidates a visit reply selected, in reply order."""
+    picks = []
+    for h, node in ob.candidates:
+        i = ob.response.find(f'"{h}"')
+        if i < 0:
+            i = _find_word(ob.response, h)
+        if i >= 0:
+            picks.append((i, h, node))
+    picks.sort()
+    return [(h, node) for _, h, node in picks]
+
+
+def _named_values(ob: CallObservation) -> Dict[str, str]:
+    """Every value of one call a later call could draw from — and, symmetrically,
+    every dynamic part of this call that needs explaining. Structured reprs
+    contribute both the whole text and each field."""
+    out = dict(ob.bindings)
+    for tag, text in (("self", ob.self_view), ("walker", ob.walker), ("here", ob.here)):
+        if text is None:
+            continue
+        out[tag] = text
+        parsed = parse_fields(text)
+        if parsed is not None:
+            for f, v in parsed[1]:
+                out[f"{tag}.{field_name(f)}"] = v
+    if ob.cand_block:
+        out["cands"] = ob.cand_block
+    return out
+
+
+def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
+    """Which earlier value of the session explains `name = v`: the same name again
+    (copy), a call's response or a JSON field of it (resp), any other named value
+    (take), the candidate a visit reply chose (cand), else the literal itself — a
+    value that only ever repeats across sessions accumulates support as a constant,
+    a fresh one never does."""
+    if any(_named_values(e).get(name) == v for e in earlier):
+        return "copy"
+    for e in reversed(earlier):
+        path = _find_in_result(e.response, v)
+        if path is not None:
+            return f"resp:{e.key}\x00{json.dumps(path)}"
+    for e in reversed(earlier):
+        for n2, w in _named_values(e).items():
+            if w == v and n2 != name:
+                return f"take:{e.key}\x00{n2}"
+    for e in reversed(earlier):
+        for _, node in chosen_candidates(e):
+            if node == v:
+                return f"cand:{e.key}\x00"
+            parsed = parse_fields(node)
+            if parsed is not None:
+                for f, w in parsed[1]:
+                    if w == v:
+                        return f"cand:{e.key}\x00{field_name(f)}"
+    return f"const:{v}"
+
+
+def node_type(node_repr: str) -> str:
+    return node_repr.split("(", 1)[0].strip()
 
 
 @dataclass
@@ -216,6 +439,9 @@ class Program:
         self.graph: Dict[str, List[Edge]] = defaultdict(list)  # Outgoing moves by state ID.
         self.exit_freq: Dict[str, int] = defaultdict(int)    # Sessions ending at each state.
         self.gap: Dict[Tuple[str, str], List[float]] = defaultdict(list)  # Delays between call pairs.
+        self.flow: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> provenance rule -> count.
+        self.type_succ: Dict[str, Counter] = defaultdict(Counter)  # Node type -> symbol called on it.
+        self.proto: Dict[str, Dict[str, Any]] = {}           # Symbol -> user-message layout template.
         self.seqs: Counter = Counter()                       # Completed call sequences.
         self.ctx = TrieNode()
         self.n_sessions = 0
@@ -266,7 +492,7 @@ class Program:
         self.seqs[tuple(walked)] += 1
         self.n_sessions += 1
         q, prev = START, None
-        for key, ob in zip(walked, obs):
+        for i, (key, ob) in enumerate(zip(walked, obs)):
             nid = self._step(q, key)
             e = self.edge(q, nid)
             e.taken_freq += 1
@@ -278,10 +504,11 @@ class Program:
             site = self.sites.get(key)
             if site is not None:
                 site.exec_stats.observe(ob.engine_s, ob.n_turns, ob.tool_gaps)
-            # Candidate counts are updated after their call keys are known.
+            self._observe_values(key, ob, obs[:i], walked[i + 1:])
             q, prev = nid, ob
         self.exit_freq[q] += 1
         self._trie_fold(walked)
+        self._observe_offers(walked, obs)
 
     def _trie_fold(self, keys: List[str]) -> None:
         """Add recent call sequences to the prediction history."""
@@ -300,6 +527,160 @@ class Program:
         for node, _ in active:
             if node is not self.ctx:
                 node.end += 1
+
+    # Value flow
+    def _observe_values(self, key: str, ob: CallObservation, earlier: List[CallObservation],
+                        rest: List[str]) -> None:
+        """Fold one call's values into the flow rules, routing linkage and template."""
+        for name, v in _named_values(ob).items():
+            self.flow[(key, name)][_provenance(earlier, name, v)] += 1
+        site = self.sites.get(key)
+        if isinstance(site, VisitByCallsite) and ob.response:
+            site.resp_head = _lcp(site.resp_head, ob.response) if site.resp_n else ob.response
+            site.resp_n += 1
+            # The reply names the nodes the walker visits next, in order: link each
+            # chosen node's type to the symbol that then ran on it.
+            for j, (_, node) in enumerate(chosen_candidates(ob)):
+                if j < len(rest):
+                    self.type_succ[node_type(node)][rest[j]] += 1
+        self._observe_proto(key, ob, earlier)
+
+    def _observe_proto(self, key: str, ob: CallObservation, earlier: List[CallObservation]) -> None:
+        """Remember how this call's user message is laid out, and count how often the
+        learned rules rebuild it byte-for-byte (speculation trusts only checked layouts)."""
+        p = self.proto.setdefault(key, {"ok": 0, "n": 0})
+        p["order"] = list(ob.bindings)
+        p["self"] = ob.self_view is not None
+        p["self_gap"] = "\n\nself = " in ob.user_text
+        p["self_fields"] = parse_fields(ob.self_view) if ob.self_view is not None else None
+        if ob.self_view is not None and ob.user_text:
+            # The type-member rows after the self line are part of the message and
+            # byte-stable for the site.
+            site = self.sites.get(key)
+            hint = site.hint if site is not None else ""
+            stripped = ob.user_text[:-len(hint)] if hint and ob.user_text.endswith(hint) else ob.user_text
+            i = stripped.find("\nself = ")
+            j = stripped.find("\n", i + 1) if i >= 0 else -1
+            p["self_rows"] = stripped[j:] if j >= 0 else ""
+        for tag, text in (("walker", ob.walker), ("here", ob.here)):
+            if text is not None:
+                p[tag] = parse_fields(text)
+        if ob.user_text:
+            p["n"] += 1
+            built, complete = self.resolve_user(key, list(earlier))
+            if complete and built == ob.user_text:
+                p["ok"] += 1
+
+    def _observe_offers(self, walked: List[str], obs: List[CallObservation]) -> None:
+        """Count each offered candidate against its learned successor edge, so
+        seen_freq/taken_freq gives P(branch taken | branch offered)."""
+        q = START
+        for key, ob in zip(walked, obs):
+            q = self._step_ro(q, key)
+            for _, node in ob.candidates:
+                succ = self.type_succ.get(node_type(node))
+                if not succ:
+                    continue
+                s = succ.most_common(1)[0][0]
+                for e in self.graph.get(q, ()):
+                    n = self.nodes.get(e.endpoint)
+                    if n is not None and n.symbol == s:
+                        e.seen_freq += 1
+                        break
+
+    def _flow_value(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
+        """Apply the dominant flow rule of (key, name) to the live session."""
+        rules = self.flow.get((key, name))
+        if not rules:
+            return None
+        rule, n = max(rules.items(), key=lambda kv: kv[1])
+        if n < 2 or 2 * n < sum(rules.values()):
+            return None
+        if rule == "copy":
+            return next((v for e in reversed(obs_list)
+                         for nm, v in _named_values(e).items() if nm == name), None)
+        kind, _, rest = rule.partition(":")
+        if kind == "const":
+            return rest
+        src, _, arg = rest.partition("\x00")
+        for e in reversed(obs_list):
+            if e.key != src:
+                continue
+            if kind == "resp":
+                return _value_at(e.response, json.loads(arg))
+            if kind == "take":
+                return _named_values(e).get(arg)
+            if kind == "cand":
+                picks = chosen_candidates(e)
+                if not picks:
+                    return None
+                node = picks[0][1]
+                if not arg:
+                    return node
+                parsed = parse_fields(node)
+                return next((w for f, w in (parsed[1] if parsed else ()) if field_name(f) == arg), None)
+        return None
+
+    def resolve_user(self, key: str, obs_list: List[CallObservation]) -> Tuple[str, bool]:
+        """Rebuild the head of `key`'s next user message from values the live session
+        already carries; the bool says whether the whole message resolved."""
+        site = self.sites.get(key)
+        p = self.proto.get(key)
+        if site is None or p is None:
+            return "", False
+        if isinstance(site, VisitByCallsite):
+            return self._resolve_visit(site, p, obs_list)
+        return self._resolve_byllm(site, p, obs_list)
+
+    def _resolve_byllm(self, site: ByLLMCallsite, p: Dict[str, Any],
+                       obs_list: List[CallObservation]) -> Tuple[str, bool]:
+        parts = [site.context_desc]
+        for name in p.get("order", ()):
+            v = self._flow_value(site.key, name, obs_list)
+            if v is None:
+                return "\n".join(parts), False
+            parts.append(f"{name} = {v}")
+        if p.get("self"):
+            v = self._resolve_repr(site.key, "self", p.get("self_fields"), obs_list)
+            if v is None:
+                return "\n".join(parts), False
+            if p.get("self_gap"):
+                parts.append("")
+            line = f"self = {v} ---- {site.owner_sem}" if site.owner_sem else f"self = {v}"
+            parts.append(line + p.get("self_rows", ""))
+        return "\n".join(parts) + site.hint, True
+
+    def _resolve_repr(self, key: str, tag: str, spec: Optional[Tuple[str, List[Tuple[str, str]]]],
+                      obs_list: List[CallObservation]) -> Optional[str]:
+        """Rebuild one structured repr field by field, or as a whole when it never
+        parsed as one."""
+        if spec is not None:
+            tname, rows = spec
+            vals = []
+            for f, _ in rows:
+                v = self._flow_value(key, f"{tag}.{field_name(f)}", obs_list)
+                if v is None:
+                    break
+                vals.append((f, v))
+            else:
+                return build_fields(tname, vals)
+        return self._flow_value(key, tag, obs_list)
+
+    def _resolve_visit(self, site: VisitByCallsite, p: Dict[str, Any],
+                       obs_list: List[CallObservation]) -> Tuple[str, bool]:
+        zones = [f"Goal: {site.intent}"] if site.intent else []
+        for tag, header in (("walker", "Walker:\n"), ("here", "Current node:\n")):
+            if tag not in p:
+                continue
+            body = self._resolve_repr(site.key, tag, p[tag], obs_list)
+            if body is None:
+                return "\n\n".join(zones), False
+            zones.append(header + body)
+        block = self._flow_value(site.key, "cands", obs_list)
+        if block is None:
+            return "\n\n".join(zones), False
+        zones.append("Candidates (choose by handle):\n" + block)
+        return "\n\n".join(zones) + site.hint, True
 
     def rebuild(self, alpha: float = 0.05) -> None:
         """Rebuild the automaton from the observed call sequences"""

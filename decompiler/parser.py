@@ -32,7 +32,13 @@ _RUNS = re.compile(r" \[runs: (?P<runs>.*)\]$")
 class CallExtras:
     """Per-call facts that identify nothing; they feed the session's CallObservation."""
     turn: int = 0                                                    # ReAct turn of this request
-    candidates: List[Tuple[str, str]] = field(default_factory=list)  # (handle, node type) offered
+    candidates: List[Tuple[str, str]] = field(default_factory=list)  # (handle, node repr) offered
+    bindings: Dict[str, str] = field(default_factory=dict)           # Parameter reprs of a byllm call
+    self_view: Optional[str] = None                                  # Repr of the owning object
+    walker: Optional[str] = None                                     # Repr of a visit call's walker
+    here: Optional[str] = None                                       # Repr of the visit call's node
+    cand_block: str = ""                                             # Raw candidate lines
+    user_text: str = ""                                              # Raw first user message
 
 
 # --------------------------------------------------------------------------- small helpers
@@ -143,7 +149,7 @@ def split_byllm_user(user: str) -> Tuple[str, List[str], Dict[str, str], Optiona
 
 def _parse_byllm(body: Dict[str, Any]) -> Tuple[ByLLMCallsite, CallExtras]:
     system = _system(body)
-    ctx, names, _bindings, _self_view, self_sem = split_byllm_user(_call_user(body))
+    ctx, names, bindings, self_view, self_sem = split_byllm_user(_call_user(body))
     header = ctx.split("\n", 1)[0]
     m = _HEADER.match(header)
     qual = m["qual"] if m else header[:40]
@@ -170,7 +176,7 @@ def _parse_byllm(body: Dict[str, Any]) -> Tuple[ByLLMCallsite, CallExtras]:
         return_type=(m["ret"] or "").strip() if m else "",
         sem=(m["sem"] or "").strip() if m else "",
         owner_sem=self_sem or "", tool_schema=body.get("tools"))
-    return site, CallExtras(turn=_turn(body))
+    return site, CallExtras(turn=_turn(body), bindings=bindings, self_view=self_view)
 
 
 # --------------------------------------------------------------------------- visit by
@@ -202,7 +208,8 @@ def parse_candidate_line(line: str) -> Optional[Dict[str, str]]:
 def split_visit_user(user: str) -> Dict[str, Any]:
     """Zones of a route_visit user message, whatever their order."""
     user = _strip_hint(user)
-    out: Dict[str, Any] = {"intent": "", "walker": None, "here": None, "candidates": [], "extra": []}
+    out: Dict[str, Any] = {"intent": "", "walker": None, "here": None, "candidates": [],
+                           "cand_block": "", "extra": []}
     for part in user.split("\n\n"):
         if part.startswith("Goal: "):
             out["intent"] = part[len("Goal: "):]
@@ -212,6 +219,7 @@ def split_visit_user(user: str) -> Dict[str, Any]:
             out["here"] = part[len("Current node:\n"):]
         elif part.startswith("Candidates (choose by handle):"):
             block = part.split("\n", 1)[1] if "\n" in part else ""
+            out["cand_block"] = block
             out["candidates"] = [c for c in (parse_candidate_line(l) for l in block.split("\n")) if c]
         elif part:
             out["extra"].append(part)
@@ -230,8 +238,9 @@ def _parse_visit(body: Dict[str, Any]) -> Tuple[VisitByCallsite, CallExtras]:
                            max_tokens=body.get("max_tokens"), system_prompt=system,
                            response_format=body.get("response_format"),
                            intent=zones["intent"], select=_select_text(system))
-    cands = [(c["handle"], c["node"].split("(", 1)[0].strip()) for c in zones["candidates"]]
-    return site, CallExtras(turn=_turn(body), candidates=cands)
+    cands = [(c["handle"], c["node"]) for c in zones["candidates"]]
+    return site, CallExtras(turn=_turn(body), candidates=cands, walker=zones["walker"],
+                            here=zones["here"], cand_block=zones["cand_block"])
 
 
 # --------------------------------------------------------------------------- one request
@@ -242,7 +251,10 @@ def decompose(body: Dict[str, Any]) -> Tuple[Callsite, CallExtras]:
     else:
         site, extras = _parse_byllm(body)
     if extras.turn == 0:  # later ReAct turns re-send the same first user message
-        site.stable_prefix, site.prefix_n = _call_user(body), 1
+        user = _call_user(body)
+        site.stable_prefix, site.prefix_n = user, 1
+        site.hint = user[len(_strip_hint(user)):]  # per-site stable schema tail
+        extras.user_text = user
     return site, extras
 
 

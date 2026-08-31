@@ -16,12 +16,7 @@ import from jaclang.byllm.llm { InterceptorLLM }
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "0");
 glob PORT = 8964;
 
-glob supervisor = InterceptorLLM(model_name="Qwen/Qwen3-4B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
-glob router = InterceptorLLM(model_name="Qwen/Qwen3-0.6B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
-glob web_llm = InterceptorLLM(model_name="Qwen/Qwen2.5-1.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
-glob paper_llm = InterceptorLLM(model_name="Qwen/Qwen3-1.7B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
-glob data_llm = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
-glob fact_llm = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", comm_ip="localhost", comm_port=PORT, program_name="deep_research");
 
 glob ROUNDS = int(os.environ.get("DEEP_ROUNDS") or "2");
 
@@ -237,7 +232,7 @@ obj ResearchReport {
 node ResearchSupervisor {
     has charter: str = "run one round at a time: name the open questions, hand them to the sub-agents that own them, and stop once the questions are answered";
 
-    def decompose_task(task: str, web: str, papers: str, data: str, facts: str) -> list[str] by supervisor(
+    def decompose_task(task: str, web: str, papers: str, data: str, facts: str) -> list[str] by llm(
         temperature=0.0,
         max_tokens=512,
         max_output_retries=3
@@ -247,7 +242,7 @@ node ResearchSupervisor {
 node WorkerAgent {}
 
 node WebSearchAgent(WorkerAgent) {
-    def web_research(task: str, plan: list[str]) -> str by web_llm(
+    def web_research(task: str, plan: list[str]) -> str by llm(
         tools=[web_search, open_page],
         temperature=0.0,
         max_tokens=320,
@@ -261,7 +256,7 @@ node WebSearchAgent(WorkerAgent) {
 }
 
 node PaperSearchAgent(WorkerAgent) {
-    def paper_research(task: str, plan: list[str]) -> str by paper_llm(
+    def paper_research(task: str, plan: list[str]) -> str by llm(
         tools=[paper_search, read_abstract],
         temperature=0.0,
         max_tokens=320,
@@ -275,7 +270,7 @@ node PaperSearchAgent(WorkerAgent) {
 }
 
 node DataAnalysisAgent(WorkerAgent) {
-    def data_research(task: str, plan: list[str]) -> str by data_llm(
+    def data_research(task: str, plan: list[str]) -> str by llm(
         tools=[metric_series, compute_stats],
         temperature=0.0,
         max_tokens=320,
@@ -289,7 +284,7 @@ node DataAnalysisAgent(WorkerAgent) {
 }
 
 node FactCheckAgent(WorkerAgent) {
-    def fact_check(task: str, plan: list[str]) -> str by fact_llm(
+    def fact_check(task: str, plan: list[str]) -> str by llm(
         tools=[check_source],
         temperature=0.0,
         max_tokens=256,
@@ -313,12 +308,12 @@ walker DeepResearch {
     has summary: str = "";
     has report: ResearchReport | None = None;
 
-    def summarize(task: str, web: str, papers: str, data: str, facts: str) -> str by supervisor(
+    def summarize(task: str, web: str, papers: str, data: str, facts: str) -> str by llm(
         temperature=0.0,
         max_tokens=384
     );
 
-    def build_report(summary: str) -> ResearchReport by supervisor(
+    def build_report(summary: str) -> ResearchReport by llm(
         temperature=0.0,
         max_tokens=384,
         max_output_retries=3
@@ -343,7 +338,7 @@ walker DeepResearch {
         self.plan = here.decompose_task(
             self.task, self.web_findings, self.paper_findings, self.data_findings, self.fact_findings
         );
-        visit [-->][?:WorkerAgent] by router(select=(1, 3), intent=DISPATCH_INTENT, temperature=0.0);
+        visit [-->][?:WorkerAgent] by llm(select=(1, 3), intent=DISPATCH_INTENT, temperature=0.0);
     }
 
     can merge with exit {

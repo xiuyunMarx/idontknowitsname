@@ -16,7 +16,8 @@ the controller, whose whole interface is:
 
 kind == "completion": body is a /v1/chat/completions JSON; reply with the
     assistant text (str) or a full assistant message dict (native tool calls).
-kind == "close": explicit session end (/v1/session/close, body {"user": id});
+kind == "close": explicit session end (/v1/sessions/close, body {"user": id} —
+    the path InterceptorLLM's atexit hook posts to);
     reply with a bool (was the session known).
 GET /health is answered here directly and never enters the pool.
 """
@@ -86,7 +87,7 @@ class HttpServer:
         `pool` before the controller is ready simply wait there."""
         app = web.Application(client_max_size=MAX_BODY_BYTES)
         app.router.add_post("/v1/chat/completions", self._completions)
-        app.router.add_post("/v1/session/close", self._close)
+        app.router.add_post("/v1/sessions/close", self._close)
         app.router.add_get("/health", self._health)
         self._runner = web.AppRunner(app)
         await self._runner.setup()

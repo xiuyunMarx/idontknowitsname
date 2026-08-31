@@ -1,12 +1,3 @@
-"""Customer-support triage: one routed fan-out over 13 desks spread across six models.
-
-    visit by router[Qwen3-0.6B] -> exactly one of 13 resolve_*[desk model] -> summarize[0.5B]
-
-The desk is chosen by the router at run time, so the second model in the
-sequence is a data-dependent branch: this is the misprediction workload.
-Desk models: 0.5B x3, 1.5B x3, 2.5-3B x3, Qwen3-1.7B x2, Qwen3-4B x2.
-Inputs: $REQUEST or $TRIAGE_INDEX (default: all inline requests in turn)."""
-
 import os;
 import time;
 import from jaclang.byllm.llm { InterceptorLLM }
@@ -14,21 +5,7 @@ import from jaclang.byllm.llm { InterceptorLLM }
 glob TOOL_SCALE = float(os.environ.get("TOOL_DELAY_SCALE") or "0");
 glob PORT = 8964;
 
-glob router = InterceptorLLM(model_name="Qwen/Qwen3-0.6B", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob writer = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_account = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_billing = InterceptorLLM(model_name="Qwen/Qwen2.5-1.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_tech = InterceptorLLM(model_name="Qwen/Qwen3-4B", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_qa = InterceptorLLM(model_name="Qwen/Qwen2.5-1.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_finance = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_shipping = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_returns = InterceptorLLM(model_name="Qwen/Qwen2.5-0.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_security = InterceptorLLM(model_name="Qwen/Qwen3-4B", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_subscription = InterceptorLLM(model_name="Qwen/Qwen2.5-1.5B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_privacy = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_integration = InterceptorLLM(model_name="Qwen/Qwen3-1.7B", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_partner = InterceptorLLM(model_name="Qwen/Qwen2.5-3B-Instruct", comm_ip="localhost", comm_port=PORT, program_name="triage");
-glob m_escalation = InterceptorLLM(model_name="Qwen/Qwen3-1.7B", comm_ip="localhost", comm_port=PORT, program_name="triage");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", comm_ip="localhost", comm_port=PORT, program_name="triage");
 
 glob TRIAGE_INTENT: str = "Send the customer's request to the one specialist desk whose duty covers it. Read the walker's request, compare it against each candidate's duty and playbook, and choose exactly one desk. Prefer the desk that owns the customer's actual problem over one that merely shares a word with it.";
 
@@ -47,7 +24,7 @@ node SubAgent {
 }
 
 node AccountAgent(SubAgent) {
-    def resolve_account(request: str, playbook: str) -> str by m_account(
+    def resolve_account(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -60,7 +37,7 @@ node AccountAgent(SubAgent) {
 }
 
 node BillingAgent(SubAgent) {
-    def resolve_billing(request: str, playbook: str) -> str by m_billing(
+    def resolve_billing(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -73,7 +50,7 @@ node BillingAgent(SubAgent) {
 }
 
 node TechSupportAgent(SubAgent) {
-    def resolve_tech(request: str, playbook: str) -> str by m_tech(
+    def resolve_tech(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -86,7 +63,7 @@ node TechSupportAgent(SubAgent) {
 }
 
 node ProductQAAgent(SubAgent) {
-    def resolve_qa(request: str, playbook: str) -> str by m_qa(
+    def resolve_qa(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -99,7 +76,7 @@ node ProductQAAgent(SubAgent) {
 }
 
 node FinanceAgent(SubAgent) {
-    def resolve_finance(request: str, playbook: str) -> str by m_finance(
+    def resolve_finance(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -112,7 +89,7 @@ node FinanceAgent(SubAgent) {
 }
 
 node ShippingAgent(SubAgent) {
-    def resolve_shipping(request: str, playbook: str) -> str by m_shipping(
+    def resolve_shipping(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -125,7 +102,7 @@ node ShippingAgent(SubAgent) {
 }
 
 node ReturnsAgent(SubAgent) {
-    def resolve_returns(request: str, playbook: str) -> str by m_returns(
+    def resolve_returns(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -138,7 +115,7 @@ node ReturnsAgent(SubAgent) {
 }
 
 node SecurityAgent(SubAgent) {
-    def resolve_security(request: str, playbook: str) -> str by m_security(
+    def resolve_security(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -151,7 +128,7 @@ node SecurityAgent(SubAgent) {
 }
 
 node SubscriptionAgent(SubAgent) {
-    def resolve_subscription(request: str, playbook: str) -> str by m_subscription(
+    def resolve_subscription(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -164,7 +141,7 @@ node SubscriptionAgent(SubAgent) {
 }
 
 node PrivacyAgent(SubAgent) {
-    def resolve_privacy(request: str, playbook: str) -> str by m_privacy(
+    def resolve_privacy(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -177,7 +154,7 @@ node PrivacyAgent(SubAgent) {
 }
 
 node IntegrationAgent(SubAgent) {
-    def resolve_integration(request: str, playbook: str) -> str by m_integration(
+    def resolve_integration(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -190,7 +167,7 @@ node IntegrationAgent(SubAgent) {
 }
 
 node PartnerAgent(SubAgent) {
-    def resolve_partner(request: str, playbook: str) -> str by m_partner(
+    def resolve_partner(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -203,7 +180,7 @@ node PartnerAgent(SubAgent) {
 }
 
 node EscalationAgent(SubAgent) {
-    def resolve_escalation(request: str, playbook: str) -> str by m_escalation(
+    def resolve_escalation(request: str, playbook: str) -> str by llm(
         temperature=0.0,
         max_tokens=220
     );
@@ -222,13 +199,13 @@ walker Agent {
     has answer: str = "";
     has summary: str = "";
 
-    def summarize(request: str, desk: str, answer: str) -> str by writer(
+    def summarize(request: str, desk: str, answer: str) -> str by llm(
         temperature=0.0,
         max_tokens=140
     );
 
     can serve with TriageCenter entry {
-        visit [->:ServiceDuty:->] by router(select=1, intent=TRIAGE_INTENT, temperature=0.0);
+        visit [->:ServiceDuty:->] by llm(select=1, intent=TRIAGE_INTENT, temperature=0.0);
     }
 
     can wrap with TriageCenter exit {

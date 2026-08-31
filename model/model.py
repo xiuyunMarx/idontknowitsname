@@ -51,10 +51,15 @@ class Engine:
         return self.engine.get_tokenizer().encode(prompt)  # type: ignore[union-attr]
 
     def render(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> str:
-        """Disable thinking. `tools` must be passed for native-tools requests so the
-        rendered bytes match what the client-side template would produce."""
+        """Disable thinking. Multimodal content lists are flattened to their text
+        parts first — the chat template renders non-string content as empty.
+        `tools` must be passed for native-tools requests so the rendered bytes
+        match what the client-side template would produce."""
+        msgs = [dict(m, content="\n".join(str(p.get("text", "")) for p in m["content"]
+                                          if isinstance(p, dict) and p.get("type") == "text"))
+                if isinstance(m.get("content"), list) else m for m in messages]
         return self.engine.get_tokenizer().apply_chat_template(
-            messages, tools=tools, tokenize=False, add_generation_prompt=True, enable_thinking=False) # type: ignore[union-attr]
+            msgs, tools=tools, tokenize=False, add_generation_prompt=True, enable_thinking=False) # type: ignore[union-attr]
 
     @staticmethod
     def _with_salt(prompt: Any, cache_salt: Optional[str]) -> Any:
