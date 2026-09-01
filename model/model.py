@@ -7,6 +7,7 @@ probes that stay within a profiled per-step token budget.
 """
 
 import asyncio
+import functools
 import random
 import statistics
 import time
@@ -16,6 +17,9 @@ from collections import OrderedDict
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 
 from sglang.srt.entrypoints.engine import Engine as SGLangEngine
+
+from model.device_profiler import DeviceProfile
+import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
 
 # Host-DRAM KV tier (HiCache L2): GPU evictions demote here, prefetch promotes back.
 # HiCache asserts the host pool is larger than the device pool, so this has to stay
@@ -177,6 +181,7 @@ class Engine:
         self._inflight_decode:int = 0
         self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
         self._oneshot_tokens_per_step:Dict[int, int] = {} # single isolated injection (probe lane), same keying
+        self.device_profile: Optional[DeviceProfile] = None  # measured rates; see model.device_profiler
         self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
         self.SPEC_TIMEOUT_S = 20.0
         self.tbt_ms: Optional[float] = None  # profiled single-stream decode step time (planner's time unit)
@@ -305,7 +310,9 @@ class Engine:
         with open(path, "w") as f:
             json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
                        "spec_tokens_per_step": self._spec_tokens_per_step,
-                       "oneshot_tokens_per_step": self._oneshot_tokens_per_step}, f, indent=1)
+                       "oneshot_tokens_per_step": self._oneshot_tokens_per_step,
+                       "device": self.device_profile.as_dict() if self.device_profile else None},
+                      f, indent=1)
 
     def load_profile(self, path: str) -> bool:
         try:
@@ -315,8 +322,12 @@ class Engine:
             return False
         if data.get("model") != self.name or data.get("unit") != "tokens_per_step":
             return False
-        if "oneshot_tokens_per_step" not in data:
-            return False  # pre-oneshot profile: re-measure both lanes
+        if "oneshot_tokens_per_step" not in data or not data.get("device"):
+            return False  # older profile: re-measure everything
+        try:
+            self.device_profile = DeviceProfile.from_dict(data["device"])
+        except (KeyError, TypeError, ValueError):
+            return False  # measured under an older definition: re-measure
         self._spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
         self._oneshot_tokens_per_step = {int(k): int(v)
                                          for k, v in data["oneshot_tokens_per_step"].items()}
@@ -449,6 +460,7 @@ class Engine:
         except Exception:
             pass
 
+
     async def prefill(self, prompt: str | List[int], request_id: str, cost: Optional[int] = None) -> bool:
         """Speculative prefill: one PRIORITY_SPEC request that leaves the prompt's KV in
         the radix cache. `cost` defaults to the tokens not already cached."""
@@ -474,6 +486,23 @@ class Engine:
               f"duration_ms={duration * 1000:.2f}"
               + ("" if done else " aborted=1"), flush=True)
         return done
+
+    async def promote(self, toks: List[int], request_id: str, wait: bool = False) -> bool:
+        """Host→device promotion (and LRU touch) of `toks`' cached prefix with no
+        request: a scheduler RPC starts HiCache's own load-back (model.promote).
+        Runs in a thread — the reply waits for the scheduler's next loop turn."""
+        started = time.perf_counter()
+        rpc = functools.partial(self.engine.collective_rpc, "hicache_promote",
+                                token_ids=list(toks), rid=request_id, wait=wait)
+        try:
+            await asyncio.get_running_loop().run_in_executor(None, rpc)
+        except AssertionError as e:
+            print(f"[promote] {request_id} failed: {e}", flush=True)
+            return False
+        self.note_landed(toks)   # the ledger's belief; the next real request calibrates
+        print(f"[promote-rpc] {request_id} tokens={len(toks)} "
+              f"duration_ms={(time.perf_counter() - started) * 1000:.2f}", flush=True)
+        return True
 
     async def probe(self, prompt: str, request_id: str) -> Optional[Dict[int, Logprob]]:
         """Greedy one-token probe: top-20 logprobs at the first position. None when the

@@ -1,13 +1,7 @@
-# Math pipeline: the honest null case of the suite. A fixed linear chain of
-# three short-prompt calls with no tools, no routing and no think-time gaps —
-# structure prediction and value flow both work here, but prompts are small and
-# windows are pure client round trips, so an identity-level baseline should
-# match us. Call chain seen by the server:
-#   MathDesk.solve -> MathDesk.verify -> MathDesk.format_answer
 import os;
 import sys;
 import from jaclang.byllm.llm { InterceptorLLM }
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", call_params={"temperature": 0.0});
 
 obj MathDesk{
     def solve(problem: str) -> str by llm();

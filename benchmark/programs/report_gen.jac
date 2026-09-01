@@ -10,7 +10,7 @@ import os;
 import sys;
 import time;
 import from jaclang.byllm.llm { InterceptorLLM }
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", call_params={"temperature": 0.0});
 
 glob MAX_SECTIONS = 4,
      THINK_S = 0.3;   # note-gathering pause between calls: the prefill window

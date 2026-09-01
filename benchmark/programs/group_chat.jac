@@ -9,7 +9,7 @@ import sys;
 import time;
 import random;
 import from jaclang.byllm.llm { InterceptorLLM }
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", call_params={"temperature": 0.0});
 
 # Deterministic per-session randomness: same query -> same tool latency/content.
 glob rng = random.Random(0);
@@ -18,9 +18,7 @@ node TriageCenter{
     def make_primary_reply(user_query: str) -> str by llm();
 
     def log_ticket(note: str) -> None{
-        # bookkeeping between the triage reply and the routing decision:
-        # ticket write + dedup lookup. This think-time gap is where the server
-        # can probe the routing choice ahead of the request.
+        # bookkeeping between the triage reply and the routing decision, dummy here
         time.sleep(0.25);
     }
 }

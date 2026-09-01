@@ -15,7 +15,7 @@ use. An eviction the planner can repair in time is free; the objective is to
 minimize Σ p(call) × exposed prefill at its arrival.
 
 The engine is duck-typed (serving / spec_allowance / prefill / probe / cost /
-ledger / prefill_rate_tps / _stride); the module imports no engine code.
+ledger / device_profile / promote / _stride); the module imports no engine code.
 """
 import asyncio
 import time
@@ -40,6 +40,7 @@ class Job:
     work: int                   # uncached tokens at submission
     host: int                   # promotable host-tier tokens at submission
     done_upto: int = 0          # chunk progress: token index already prefilled
+    chunk_cap: int = 0          # per-pick chunk limit (one-shot lane); 0 = full CHUNK
     attempts: int = 0           # aborted executions since the last progress
     state: str = "queued"       # queued | running | done | void
     on_result: Optional[Callable[[Any, "Job"], None]] = None  # probe follow-up hook
@@ -54,12 +55,12 @@ class KVPlanner:
     STEER_AT = 0.85             # device-fill fraction that arms eviction steering
     STEER_TAIL = 0.25           # LRU tail fraction considered endangered
     MAX_TOUCH_PER_TICK = 4
-    DEFAULT_RATE_TPS = 4000.0   # idle prefill throughput until the EMA has a sample
-    PROMOTE_RATE_TPS = 20000.0  # host->device over PCIe; conservative
     BACKOFF_ABORTS = 3          # consecutive kills that mean the engine has no headroom
+    RELEASE_SLACK_S = 0.5       # release ahead of the latest start
 
-    def __init__(self, engine) -> None:
+    def __init__(self, engine, manage_only: bool = False) -> None:
         self.engine = engine
+        self.manage_only = manage_only  # only promotion/steering/probe: no bulk creation
         self._jobs: Dict[str, Dict[str, Job]] = {}   # sid -> job key -> job
         self._wake = asyncio.Event()
         self._last_over = 0   # ledger over-drift watermark: rising = the engine is evicting
@@ -92,6 +93,24 @@ class KVPlanner:
                 if k not in keep and prev.state in ("queued", "running"):
                     prev.state = "void"
 
+    def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
+        """Ground-truth feedback: a call just arrived. Log how its plan stood —
+        deadline error (positive = the call came after our deadline, the healthy
+        direction) and prefill progress — so a run audits prediction validity
+        end to end. `done` jobs are kept in the table for exactly this readout."""
+        js = [j for j in self._jobs.get(sid, {}).values()
+              if j.site == site and j.kind != "touch"]
+        if not js:
+            print(f"[timing] {sid} unplanned site={site[:48]}", flush=True)
+            return
+        # a loop revisits the same site: only the newest epoch's jobs describe
+        # THIS arrival — an older iteration's done job would report stale numbers
+        newest = max(j.epoch for j in js)
+        j = max((j for j in js if j.epoch == newest), key=lambda x: x.done_upto)
+        print(f"[timing] {sid} err_s={t_arrive - j.deadline:+.2f} "
+              f"done={j.done_upto}/{len(j.toks)} kind={j.kind} state={j.state} "
+              f"site={site[:48]}", flush=True)
+
     def void_session(self, sid: str, keep_epoch: int) -> None:
         """The session advanced: everything planned before `keep_epoch` is stale."""
         for j in self._jobs.get(sid, {}).values():
@@ -123,16 +142,18 @@ class KVPlanner:
                 await self._execute(job)
 
     def _latest_start(self, job: Job, now: float) -> float:
-        """Deadline minus the remaining work, each tier at its own rate: creation at
-        the profiled prefill rate, promotion at PCIe speed, device residency free."""
-        rate = getattr(self.engine, "prefill_rate_tps", None) or self.DEFAULT_RATE_TPS
+        """Deadline minus the remaining work, each tier at its own profiled rate:
+        creation at the loaded prefill rate (the job runs beside real decodes, so
+        the idle rate would release it too late), promotion at the host-load rate,
+        device residency free."""
+        prof = self.engine.device_profile
         unc, host = self.engine.cost(job.toks)
-        return job.deadline - unc / rate - host / self.PROMOTE_RATE_TPS
+        return job.deadline - unc / prof.prefill_tps_loaded - host / prof.promote_tps
 
     def _released(self, job: Job, now: float) -> bool:
-        """Idle windows are free — otherwise wait until the job must start to make
-        its deadline (prefetching earlier only invites eviction before use)."""
-        return not self.engine.serving or now >= self._latest_start(job, now)
+        """Release in idle window or before the deadline"""
+        return (not self.engine.serving
+                or now >= self._latest_start(job, now) - self.RELEASE_SLACK_S)
 
     def _pick(self, now: float) -> Optional[Job]:
         """EDF over the released AND affordable jobs — an unaffordable early deadline
@@ -143,16 +164,12 @@ class KVPlanner:
         finish before any other session's predicted next arrival (the earliest queued
         deadline is that proxy) — a chunk that cannot is guaranteed to be killed by
         the very request it delays, and the abort lands on that request's TTFT."""
-        # Congestion backoff: every recent execution was killed by a real
-        # admission, so the engine has no headroom — even "free" promotions and
-        # touches ride a scheduler slot the reals need. Probes are exempt: one
-        # isolated injection per routing decision, priced by the one-shot lane,
-        # and a killed probe costs the real request almost nothing.
+
         congested = self._aborts_row >= self.BACKOFF_ABORTS and self.engine.serving
         best: Optional[Job] = None
         allowance = self.engine.spec_allowance()
         oneshot = getattr(self.engine, "oneshot_allowance", self.engine.spec_allowance)
-        rate = getattr(self.engine, "prefill_rate_tps", None) or self.DEFAULT_RATE_TPS
+        rate = self.engine.device_profile.prefill_tps_loaded
         arrival: Dict[str, float] = {}   # sid -> earliest predicted next call
         for sid, held in self._jobs.items():
             ds = [j.deadline for j in held.values()
@@ -164,17 +181,32 @@ class KVPlanner:
             for j in held.values():
                 if j.state != "queued" or not self._released(j, now):
                     continue
-                if congested and j.kind != "probe":
+                unc = self.engine.cost(j.toks)[0]
+                slotless = len(j.toks) - unc > j.done_upto   # promotion/touch: an RPC, no request
+                if congested and j.kind != "probe" and not slotless:
                     continue
                 if best is not None and (j.deadline, -j.value) >= (best.deadline, -best.value):
                     continue
-                unc = self.engine.cost(j.toks)[0]
                 if j.kind == "probe":
                     if unc > 0 and (oneshot() < unc or now + unc / rate > horizon):
                         continue
                 elif len(j.toks) - unc <= j.done_upto:  # next chunk is uncached compute
                     need = min(self._chunk(), max(1, unc))
-                    if allowance < need or now + need / rate > horizon:
+                    # a queued probe on the same site makes this its ammunition:
+                    # small enabling chunks may ride the one-shot lane, shrinking
+                    # the probe's uncached suffix below its own admission cap
+                    enabling = any(p.kind == "probe" and p.state == "queued"
+                                   and p.site == j.site for p in held.values())
+                    if self.manage_only and not enabling:
+                        continue
+                    j.chunk_cap = 0
+                    if allowance < need:
+                        stride = getattr(self.engine, "_stride", 1)
+                        cap = (oneshot() if enabling else 0) // stride * stride
+                        if cap <= 0 or now + cap / rate > horizon:
+                            continue
+                        j.chunk_cap = cap
+                    elif now + need / rate > horizon:
                         continue
                 best = j
         return best
@@ -204,10 +236,11 @@ class KVPlanner:
         unc = self.engine.cost(job.toks)[0]
         cached_end = len(job.toks) - unc
         if cached_end > job.done_upto:
-            end = cached_end   # the whole cached frontier at once: promotion is compute-free
+            end = cached_end   # the whole cached frontier at once: no request, no slot
+            ok = await self.engine.promote(job.toks[:end], rid)
         else:
-            end = min(len(job.toks), job.done_upto + self._chunk())
-        ok = await self.engine.prefill(job.toks[:end], rid)
+            end = min(len(job.toks), job.done_upto + (job.chunk_cap or self._chunk()))
+            ok = await self.engine.prefill(job.toks[:end], rid)
         if job.state == "void":
             return
         if not ok:
@@ -228,9 +261,11 @@ class KVPlanner:
         job.state = "void" if job.attempts >= self.MAX_ATTEMPTS else "queued"
 
     def _gc(self, now: float) -> None:
+        # done jobs stay until replaced or the session drops: note_arrival reads
+        # them back when the predicted call lands
         for sid, held in list(self._jobs.items()):
             for k, j in list(held.items()):
-                if j.state in ("void", "done"):
+                if j.state == "void":
                     del held[k]
                 elif j.state == "queued" and now > j.t90 + self.STALE_SLACK_S:
                     j.state = "void"  # the predicted call never came

@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from decompiler.parser import _strip_hint, decompose, is_continuation, parse_candidate_line
 from decompiler.primitives import (Callsite, CallObservation, PredictedCall, Program,
                                    VisitByCallsite, _lcp, chosen_candidates, node_type)
+from model.device_profiler import profile_device
 from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 from server.kv_planner import Job, KVPlanner
@@ -82,6 +83,7 @@ class Controller:
         if not self.engine.load_profile(profile):
             await self.engine._profile()
             await self.engine._profile_oneshot()
+            await profile_device(self.engine)
             self.engine.save_profile(profile)
         asyncio.create_task(self._sweep())
         if self.planner is not None:
@@ -154,7 +156,7 @@ class Controller:
         try:
             body = req.body
             prompt = self.engine.render(body["messages"], tools=body.get("tools"))
-            sp = {"temperature": 0.7 if body.get("temporature") is None else body.get("temperature"),
+            sp = {"temperature": 0.7 if body.get("temperature") is None else body.get("temperature"),
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
             rid = f"{sess.id}-{sess.epoch}t{ob.n_turns}-{uuid.uuid4().hex[:8]}"
@@ -201,6 +203,7 @@ class Controller:
                                         here=extras.here, cand_block=extras.cand_block,
                                         user_text=extras.user_text)
         if self.planner is not None:
+            self.planner.note_arrival(sess.id, site.key, req.t_arrive)
             self.planner.void_session(sess.id, sess.epoch)
             self._plan_session(sess)  # overlap the successors' work with this call's decode
         return sess.open_obs
@@ -457,12 +460,23 @@ class Controller:
         return True
 
 
-async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True) -> None:
+async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True,
+               manage_only: bool = False, kv_tokens: Optional[int] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    await Controller(model, server, speculate=speculate, context_length=16384).start_serving()
+    kwargs: Dict[str, Any] = {"context_length": 16384}
+    if kv_tokens:
+        kwargs["max_total_tokens"] = kv_tokens   # real device pool cap (sglang server arg)
+    ctrl = Controller(model, server, speculate=speculate, **kwargs)
+    if ctrl.planner is not None:
+        ctrl.planner.manage_only = manage_only
+    await ctrl.start_serving()
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a != "--no-spec"]
-    asyncio.run(main(*args[:1], speculate="--no-spec" not in sys.argv))  # type: ignore
+    argv = sys.argv[1:]
+    kv = int(argv[argv.index("--kv") + 1]) if "--kv" in argv else None
+    pos = [a for i, a in enumerate(argv) if not a.startswith("--")
+           and (i == 0 or argv[i - 1] != "--kv")]
+    asyncio.run(main(*pos[:1], speculate="--no-spec" not in argv,
+                     manage_only="--manage-only" in argv, kv_tokens=kv))  # type: ignore

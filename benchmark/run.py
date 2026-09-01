@@ -150,11 +150,25 @@ CALL_RE = re.compile(r"\[call\] (\d+) #(\d+) (.+?)(?: predicted=(hit|miss))?$")
 
 
 def parse_server_log(path, pid2app):
-    """Pull per-request serve stats (joined to apps by pid) and planner activity."""
-    serves, calls = [], []
+    """Pull per-request serve stats (joined to apps by pid), planner activity, and
+    the [timing] prediction-validity feedback (deadline error + prefill progress
+    at each real arrival)."""
+    serves, calls, timings = [], [], []
     counters = {"probe": 0, "probe-miss": 0, "steer": 0, "prefill-plan": 0,
-                "prefill-aborted": 0, "drift-lines": 0}
+                "prefill-aborted": 0, "promote": 0, "drift-lines": 0, "unplanned": 0}
     for ln in _lines(path):
+        if ln.startswith("[timing] "):
+            parts = ln.split()
+            if parts[1] in pid2app:
+                if parts[2] == "unplanned":
+                    counters["unplanned"] += 1
+                else:
+                    kv = dict(p.split("=", 1) for p in parts[2:] if "=" in p)
+                    done, total = kv.get("done", "0/0").split("/")
+                    timings.append({"app": pid2app[parts[1]], "err": float(kv["err_s"]),
+                                    "done": int(done), "total": int(total),
+                                    "kind": kv.get("kind", "")})
+            continue
         m = SERVE_RE.match(ln)
         if m:
             pid, epoch, turn = m.group(1), int(m.group(2)), int(m.group(3))
@@ -176,16 +190,18 @@ def parse_server_log(path, pid2app):
         elif ln.startswith("[prefill] plan-"):
             counters["prefill-plan"] += 1
             counters["prefill-aborted"] += "aborted=1" in ln
+        elif ln.startswith("[promote-rpc] plan-"):
+            counters["promote"] += 1
         elif ln.startswith("[ledger] drift"):
             counters["drift-lines"] += 1
-    return serves, calls, counters
+    return serves, calls, counters, timings
 
 
 def _pct(xs, q):
     return sorted(xs)[int(q * (len(xs) - 1))] if xs else float("nan")
 
 
-def report(tag, records, serves, calls, counters):
+def report(tag, records, serves, calls, counters, timings=()):
     measured = [r for r in records if r["phase"] == "measured"]
     print(f"\n[{tag}] ==== client side ({len(measured)} measured sessions) ====")
     for app in sorted({r["app"] for r in measured}):
@@ -220,6 +236,16 @@ def report(tag, records, serves, calls, counters):
               f" (host {host / prompt * 100 if prompt else 0:4.1f}%)"
               f" predicted={hits}/{len(preds)}")
     print(f"[{tag}] planner: " + " ".join(f"{k}={v}" for k, v in counters.items()))
+    if timings:
+        errs = sorted(t["err"] for t in timings)
+        prog = [(t["done"], t["total"]) for t in timings if t["total"]]
+        full = sum(1 for d, n in prog if d >= n)
+        part = sum(1 for d, n in prog if 0 < d < n)
+        print(f"[{tag}] prediction validity: planned arrivals={len(timings)} "
+              f"unplanned={counters.get('unplanned', 0)} "
+              f"deadline_err p50={_pct(errs, .5):+.2f}s p90={_pct(errs, .9):+.2f}s "
+              f"(pos = call after deadline) prefilled full={full} partial={part} "
+              f"none={len(prog) - full - part}")
 
 
 def main():
@@ -251,8 +277,8 @@ def main():
             prior = json.load(f)
         pid2app = {str(r["pid"]): r["app"] for r in prior["records"]
                    if r["phase"] == "measured" and r["pid"]}
-        serves, calls, counters = parse_server_log(args.server_log, pid2app)
-        report(args.tag, prior["records"], serves, calls, counters)
+        serves, calls, counters, timings = parse_server_log(args.server_log, pid2app)
+        report(args.tag, prior["records"], serves, calls, counters, timings)
         return
 
     apps = [a for a in args.apps.split(",") if a in APPS]
@@ -269,16 +295,16 @@ def main():
     print(f"[{args.tag}] warmup done ({len(records)} sessions)", flush=True)
     records += run_measured(args, trace, logdir)
 
-    serves, calls, counters = [], [], {}
+    serves, calls, counters, timings = [], [], {}, []
     if args.server_log and os.path.exists(args.server_log):
         pid2app = {str(r["pid"]): r["app"] for r in records
                    if r["phase"] == "measured" and r["pid"]}
-        serves, calls, counters = parse_server_log(args.server_log, pid2app)
-    report(args.tag, records, serves, calls, counters)
+        serves, calls, counters, timings = parse_server_log(args.server_log, pid2app)
+    report(args.tag, records, serves, calls, counters, timings)
     if args.out:
         with open(args.out, "w") as f:
             json.dump({"args": vars(args), "records": records, "serves": serves,
-                       "calls": calls, "counters": counters}, f, indent=1)
+                       "calls": calls, "counters": counters, "timings": timings}, f, indent=1)
         print(f"[{args.tag}] wrote {args.out}")
 
 
