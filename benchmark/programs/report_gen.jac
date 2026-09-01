@@ -9,11 +9,14 @@
 import os;
 import sys;
 import time;
+import random;
 import from jaclang.byllm.llm { InterceptorLLM }
 glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", call_params={"temperature": 0.0});
 
-glob MAX_SECTIONS = 4,
-     THINK_S = 0.3;   # note-gathering pause between calls: the prefill window
+glob MAX_SECTIONS = 4;
+# Figure lookup between calls, 2-3 s seeded per document (paired runs replay it):
+# long enough for pool churn to evict the document KV under the draft_section
+# header, so the next section is a repair the server can plan.
 
 obj ReportStudio{
     has style: str = "concise executive tone";
@@ -35,13 +38,14 @@ with entry {
     document = f.read();
     f.close();
 
+    rng = random.Random(document);
     studio = ReportStudio();
     titles = studio.outline_document(document);
     drafts: list = [];
     for title in titles[:MAX_SECTIONS] {
-        time.sleep(THINK_S);
+        time.sleep(rng.uniform(2.0, 3.0));
         drafts.append(studio.draft_section(document, title));
     }
-    time.sleep(THINK_S);
+    time.sleep(rng.uniform(2.0, 3.0));
     print(studio.finalize_report(document, drafts));
 }

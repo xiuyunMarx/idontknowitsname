@@ -478,5 +478,5 @@ if __name__ == "__main__":
     kv = int(argv[argv.index("--kv") + 1]) if "--kv" in argv else None
     pos = [a for i, a in enumerate(argv) if not a.startswith("--")
            and (i == 0 or argv[i - 1] != "--kv")]
-    asyncio.run(main(*pos[:1], speculate="--no-spec" not in argv,
+    asyncio.run(main(*pos[:1], speculate="--no-spec" not in argv, #type: ignore
                      manage_only="--manage-only" in argv, kv_tokens=kv))  # type: ignore

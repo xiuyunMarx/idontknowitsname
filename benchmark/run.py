@@ -1,6 +1,6 @@
 """Open-loop benchmark over the four real jac programs.
 
-    python -m benchmark.run --rate 0.3 --duration 240 --warmup 3 --seed 7 \
+    python -m benchmark.run --rate 0.45 --duration 240 --seed 7 \
         --tag spec --server-log /path/to/server.log
 
 Arrival model (CacheScout-style): session starts are a Poisson process at
@@ -9,7 +9,11 @@ Arrival model (CacheScout-style): session starts are a Poisson process at
 `--seed`, so a spec run and a --no-spec run on fresh servers replay the
 identical trace. Before the measured window, `--warmup` sessions per app run
 in four parallel per-app lanes (sequential within a lane) so the server can
-learn each program online; warmup sessions are excluded from the report.
+learn each program online; warmup cycles the dataset labels (kb/web/calc,
+shop/library/clinic) so every routed callsite is seen at least twice (the
+const/copy rules and the prefix LCP all need two observations). Warmup
+sessions are excluded from the report. `--docs` caps the report_gen pool so
+documents are contended AND revisited across sessions.
 
 Each session is one `jac run` subprocess: its pid is the server session id
 (InterceptorLLM sends `user=<pid>` and closes the session at exit), which is
@@ -41,17 +45,20 @@ def _lines(path):
         return [ln.rstrip("\n") for ln in f if ln.strip()]
 
 
-def _tsv_col(path, col):
-    return [ln.split("\t", 1)[col] for ln in _lines(path)]
+def _tsv_rows(path):
+    return [tuple(ln.split("\t", 1)) for ln in _lines(path)]
 
 
+# app -> (payload env var, pool of (label, payload)); the label is the routed
+# target where there is one, so warmup can cover every target evenly
 APPS = {
-    "group_chat": ("GC_QUERY", lambda: _tsv_col(os.path.join(DATA, "chat", "queries.tsv"), 1)),
-    "text2sql": ("T2S_QUESTION", lambda: _tsv_col(os.path.join(DATA, "sql", "questions.tsv"), 1)),
-    "report_gen": ("RG_DOC", lambda: sorted(
+    "group_chat": ("GC_QUERY", lambda: _tsv_rows(os.path.join(DATA, "chat", "queries.tsv"))),
+    "text2sql": ("T2S_QUESTION", lambda: _tsv_rows(os.path.join(DATA, "sql", "questions.tsv"))),
+    "report_gen": ("RG_DOC", lambda: [("doc", p) for p in sorted(
         os.path.join(DATA, "docs", f) for f in os.listdir(os.path.join(DATA, "docs"))
-        if f.endswith(".txt"))),
-    "math_pipeline": ("MP_QUESTION", lambda: _lines(os.path.join(DATA, "math", "questions.txt"))),
+        if f.endswith(".txt"))]),
+    "math_pipeline": ("MP_QUESTION", lambda: [
+        ("math", q) for q in _lines(os.path.join(DATA, "math", "questions.txt"))]),
 }
 
 
@@ -65,7 +72,7 @@ def make_trace(args, apps, pools):
         if t >= args.duration:
             break
         app = rng.choices(apps, weights=weights[:len(apps)])[0]
-        trace.append((round(t, 3), app, rng.choice(pools[app])))
+        trace.append((round(t, 3), app, rng.choice(pools[app])[1]))
     return trace
 
 
@@ -104,7 +111,11 @@ class Session(threading.Thread):
 def run_warmup(args, apps, pools, logdir):
     """`--warmup` sessions per app: parallel across apps, sequential within one."""
     rng = random.Random(args.seed + 1)
-    plans = {app: [rng.choice(pools[app]) for _ in range(args.warmup)] for app in apps}
+    plans = {}
+    for app in apps:
+        labels = sorted({lb for lb, _ in pools[app]})
+        plans[app] = [rng.choice([p for lb, p in pools[app] if lb == labels[i % len(labels)]])
+                      for i in range(args.warmup)]
     records, lock = [], threading.Lock()
 
     def lane(app):
@@ -253,7 +264,8 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--rate", type=float, default=0.3, help="sessions per second")
     ap.add_argument("--duration", type=float, default=240.0)
-    ap.add_argument("--warmup", type=int, default=3, help="learning sessions per app")
+    ap.add_argument("--warmup", type=int, default=6,
+                    help="learning sessions per app, cycling the routed targets")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--mix", default=None, help="app weights, e.g. 1,1,1,1")
     ap.add_argument("--apps", default=",".join(APPS))
@@ -261,7 +273,7 @@ def main():
                     or os.path.join(os.path.dirname(sys.executable), "jac"))
     ap.add_argument("--timeout", type=float, default=300.0, help="per-session kill timeout")
     ap.add_argument("--max-live", type=int, default=48)
-    ap.add_argument("--docs", type=int, default=0,
+    ap.add_argument("--docs", type=int, default=3,
                     help="cap the report_gen doc pool (0 = all): a small pool makes doc KV "
                          "contended AND reused, the regime where eviction policy matters")
     ap.add_argument("--tag", default="run")
