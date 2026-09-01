@@ -7,6 +7,14 @@ from math import log, sqrt
 TOOL_BLOCK_HEADER = "\n# Calling tools\n"  # Header for tools included in the system prompt.
 
 
+def _quantile(xs: List[float], q: float) -> float:
+    """Empirical quantile of raw samples; 0.0 when empty."""
+    if not xs:
+        return 0.0
+    s = sorted(xs)
+    return s[min(len(s) - 1, int(q * len(s)))]
+
+
 @dataclass
 class ExecStats:
     """Store timing data for completed calls."""
@@ -30,6 +38,11 @@ class ExecStats:
         turns = median(self.turns) if self.turns else 1.0
         gap = median(self.tool_gap_s) if self.tool_gap_s else 0.0
         return self.exec_s + gap * max(0.0, turns - 1.0)
+
+    def duration_q(self, q: float) -> float:
+        """Quantile analogue of duration_s, for deadline estimates."""
+        turns = median(self.turns) if self.turns else 1.0
+        return _quantile(self.engine_s, q) + _quantile(self.tool_gap_s, q) * max(0.0, turns - 1.0)
 
 
 @dataclass
@@ -797,6 +810,13 @@ class Program:
         xs = self.gap.get((ka, kb))
         return median(xs) if xs else 0.0
 
+    def _gap_q(self, qa: str, qb: str, ka: str, kb: str, q: float) -> float:
+        """Quantile of the delay between two consecutive calls."""
+        for e in self.graph.get(qa, ()):
+            if e.endpoint == qb and e.gap_time:
+                return _quantile(e.gap_time, q)
+        return _quantile(self.gap.get((ka, kb), []), q)
+
     def _duration_s(self, nid: str, key: str) -> float:
         """Estimate the total duration of a call."""
         node = self.nodes.get(nid)
@@ -804,6 +824,14 @@ class Program:
             return node.stats.duration_s
         site = self.sites.get(key)
         return site.exec_stats.duration_s if site is not None else 0.0
+
+    def _duration_qq(self, nid: str, key: str, q: float) -> float:
+        """Quantile of a call's total duration."""
+        node = self.nodes.get(nid)
+        if node is not None and node.stats.engine_s:
+            return node.stats.duration_q(q)
+        site = self.sites.get(key)
+        return site.exec_stats.duration_q(q) if site is not None else 0.0
 
     def predict(self, walked: List[str], max_steps: int = 8) -> List[Tuple[str, float, float]]:
         """Predict likely next calls, probabilities, and arrival times."""
@@ -827,3 +855,59 @@ class Program:
             ctx.append(key)
             q = nq
         return out
+
+    def predict_tree(self, walked: List[str], p_min: float = 0.02, horizon_s: float = 120.0,
+                     max_nodes: int = 64, top_k: int = 3, max_depth: int = 8) -> List["PredictedCall"]:
+        """Fan-out prediction: expand the top_k continuations at every step (not just
+        the argmax chain) and report, per future callsite, the total probability mass
+        of the paths that reach it and its earliest-arrival time quantiles. Times are
+        seconds after the last call's completion — the anchor the gap samples share.
+        Arrival spread compounds hop-wise as the root of the summed squared
+        quantile gaps (independent-hop approximation)."""
+        out: Dict[str, PredictedCall] = {}
+        # frontier rows: (path probability, ctx, graph state, t50 so far, spread² so far, depth)
+        frontier: List[Tuple[float, List[str], str, float, float, int]] = [
+            (1.0, list(walked), self._trace(walked), 0.0, 0.0, 0)]
+        expanded = 0
+        while frontier and expanded < max_nodes:
+            frontier.sort(key=lambda row: -row[0])
+            path_p, ctx, q, t50, var, depth = frontier.pop(0)
+            expanded += 1
+            probs, _, support = self._dist(ctx)
+            if support == 0:
+                continue
+            last = ctx[-1] if ctx else START
+            for key, p_step in sorted(probs.items(), key=lambda kv: -kv[1])[:top_k]:
+                p = path_p * p_step
+                if p < p_min:
+                    continue
+                nq = self._step_ro(q, key)
+                g50 = self._gap_q(q, nq, last, key, 0.5)
+                g90 = self._gap_q(q, nq, last, key, 0.9)
+                a50 = t50 + g50
+                if a50 > horizon_s:
+                    continue
+                spread2 = var + (g90 - g50) ** 2
+                a90 = a50 + sqrt(spread2)
+                known = out.get(key)
+                if known is None:
+                    out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90)
+                else:
+                    known.p = min(1.0, known.p + p)
+                    if a50 < known.t50:
+                        known.t50, known.t90 = a50, a90
+                if depth + 1 < max_depth:
+                    d50 = self._duration_qq(nq, key, 0.5)
+                    d90 = self._duration_qq(nq, key, 0.9)
+                    frontier.append((p, ctx + [key], nq, a50 + d50,
+                                     spread2 + (d90 - d50) ** 2, depth + 1))
+        return sorted(out.values(), key=lambda c: -c.p)
+
+
+@dataclass
+class PredictedCall:
+    """One future call the tree search expects, with arrival-time quantiles."""
+    key: str
+    p: float      # probability mass over every tree path reaching the call in the horizon
+    t50: float    # earliest-arrival median, seconds after the last call's completion
+    t90: float    # p90 of that same arrival

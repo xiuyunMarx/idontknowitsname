@@ -1,0 +1,41 @@
+"""Generate the group_chat query pool: questions labeled with the sub-agent
+that should answer them (kb = KnowledgeBase, web = WebResearcher, calc =
+DataAnalyst), so visit-by routing accuracy is checkable. The kb queries hit
+the keyword lists inside search_base; queries stay apostrophe-free because
+they land verbatim inside prompts the server field parser must survive.
+
+    python benchmark/datasets/gen_chat.py [out_dir]
+"""
+import os
+import sys
+
+QUERIES = [
+    ("kb", "What is the API rate limit on the pro plan?"),
+    ("kb", "How much does the pro plan cost per seat?"),
+    ("kb", "How many projects does the free tier allow?"),
+    ("kb", "Login keeps looping after SSO, how do we fix it?"),
+    ("kb", "How long are backups retained and when do they run?"),
+    ("kb", "Can we burst above the API quota, and by how much?"),
+    ("kb", "Is there a way to restore data from three weeks ago?"),
+    ("kb", "Why would auth cookies cause a redirect loop on our domain?"),
+    ("web", "What did the latest MLPerf inference round report for 8B class models?"),
+    ("web", "What is the current consensus on the best open embedding model this year?"),
+    ("web", "Summarize the newest PCIe 6.0 adoption numbers reported this year."),
+    ("web", "What figure do recent benchmarks give for NVMe random read latency?"),
+    ("web", "Find the measured energy overhead of confidential computing reported recently."),
+    ("web", "What do current reviews measure for USB4 enclosure throughput?"),
+    ("calc", "If a job processes 1450 records per minute, how many records is that in 6.5 hours?"),
+    ("calc", "A cluster of 12 nodes each stores 3.2 TB at 68 percent full; how many TB are used in total?"),
+    ("calc", "Convert 250 megabits per second into gigabytes per hour."),
+    ("calc", "We pay 29 dollars per seat for 47 seats monthly; what is the annual bill?"),
+    ("calc", "What is 17.5 percent of 3840, minus 96?"),
+    ("calc", "How many 512 token chunks fit into a 31830 token budget, and how many tokens remain?"),
+]
+
+if __name__ == "__main__":
+    out_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "chat")
+    os.makedirs(out_dir, exist_ok=True)
+    qp = os.path.join(out_dir, "queries.tsv")
+    with open(qp, "w") as f:
+        f.write("\n".join(f"{agent}\t{q}" for agent, q in QUERIES) + "\n")
+    print(f"{qp}: {len(QUERIES)} queries across 3 sub-agents")

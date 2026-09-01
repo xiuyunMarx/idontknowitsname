@@ -12,7 +12,8 @@ import statistics
 import time
 import uuid
 import json
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
+from collections import OrderedDict
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 
 from sglang.srt.entrypoints.engine import Engine as SGLangEngine
 
@@ -34,13 +35,138 @@ class Logprob(NamedTuple):
     logprob: float
 
 
+class KVLedger:
+    """Shadow model of the engine's two-tier KV cache, in stride-sized blocks.
+
+    Chain-hashed prefixes mirror the radix cache's content addressing; dict order is
+    the LRU order. The host tier is inclusive of the device tier (HiCache writes
+    through), so a device overflow just drops the device entry — the host copy is
+    what makes the eviction repairable by promotion. The shadow cannot see the
+    engine's true eviction order, so every real request's measured cache split
+    recalibrates it: drift is bounded by one request, not by the session."""
+
+    def __init__(self, stride: int, device_cap_tokens: int, host_cap_tokens: int) -> None:
+        self.stride = stride
+        self.device_cap = max(1, device_cap_tokens // stride)   # capacities in blocks
+        self.host_cap = host_cap_tokens // stride               # 0: host tier disabled
+        self._device: "OrderedDict[int, float]" = OrderedDict() # hash -> landed_at; order = LRU
+        self._host: "OrderedDict[int, float]" = OrderedDict()   # includes every device block
+        self.drift = {"over": 0, "under": 0}                    # calibration corrections
+
+    def hashes(self, toks: List[int]):
+        """Chain hash of each stride-aligned prefix of `toks`, shortest first."""
+        h = 0
+        for i in range(0, len(toks) - self.stride + 1, self.stride):
+            h = hash((h, tuple(toks[i:i + self.stride])))
+            yield h
+
+    def tier(self, h: int) -> str:
+        return "device" if h in self._device else ("host" if h in self._host else "gone")
+
+    def land(self, toks: List[int], now: float) -> None:
+        """Record that every prefix block of `toks` was just computed on the device."""
+        for h in self.hashes(toks):
+            self._device[h] = now
+            self._device.move_to_end(h)
+            if self.host_cap:
+                self._host[h] = now
+                self._host.move_to_end(h)
+        self._trim()
+
+    def _trim(self) -> None:
+        while len(self._device) > self.device_cap:  # LRU falls off; the host copy survives
+            self._device.popitem(last=False)
+        while self.host_cap and len(self._host) > self.host_cap:
+            victim = next((h for h in self._host if h not in self._device), None)
+            if victim is None:
+                break
+            del self._host[victim]
+
+    def touch(self, toks: List[int], now: float) -> int:
+        """MRU-bump the contiguous device-resident prefix; returns its token count."""
+        n = 0
+        for h in self.hashes(toks):
+            if h not in self._device:
+                break
+            self._device[h] = now
+            self._device.move_to_end(h)
+            if h in self._host:
+                self._host.move_to_end(h)
+            n += self.stride
+        return n
+
+    def cost(self, toks: List[int]) -> Tuple[int, int]:
+        """(uncached, host) token counts for `toks`. Uncached is everything past the
+        longest hole-free cached prefix — a gone block kills the radix prefix match —
+        and host counts the matched blocks that need promotion rather than sitting on
+        the device. Conservative: a partly-cached stride counts as uncached."""
+        matched = host = 0
+        for h in self.hashes(toks):
+            if h in self._device:
+                pass
+            elif h in self._host:
+                host += self.stride
+            else:
+                break
+            matched += self.stride
+        return len(toks) - matched, host
+
+    def resident_prefix(self, toks: List[int]) -> int:
+        """Token count of the longest all-device prefix."""
+        n = 0
+        for h in self.hashes(toks):
+            if h not in self._device:
+                break
+            n += self.stride
+        return n
+
+    def calibrate(self, toks: List[int], device_hit: int, host_hit: int, now: float) -> None:
+        """Reconcile with a request's measured cache split: its first `device_hit`
+        prompt tokens came from the device, the next `host_hit` from the host, the
+        rest were recomputed. Fixes exactly those blocks; the caller lands the whole
+        prompt afterwards (it is on the device now either way)."""
+        edge_d = device_hit // self.stride * self.stride
+        edge_h = (device_hit + host_hit) // self.stride * self.stride
+        tiers = ("gone", "host", "device")
+        off = 0
+        for h in self.hashes(toks):
+            truth = "device" if off < edge_d else ("host" if off < edge_h else "gone")
+            off += self.stride
+            said = self.tier(h)
+            if said == truth:
+                continue
+            self.drift["over" if tiers.index(said) > tiers.index(truth) else "under"] += 1
+            self._device.pop(h, None)
+            self._host.pop(h, None)
+            if truth == "device":
+                self._device[h] = now
+            if truth != "gone" and self.host_cap:
+                self._host[h] = now
+        self._trim()
+
+    def device_used_tokens(self) -> int:
+        return len(self._device) * self.stride
+
+    def device_cap_tokens(self) -> int:
+        return self.device_cap * self.stride
+
+    def device_tail(self, frac: float) -> Set[int]:
+        """The oldest `frac` of device blocks — next in line for LRU eviction."""
+        n = int(len(self._device) * frac)
+        out: Set[int] = set()
+        for h in self._device:
+            if len(out) >= n:
+                break
+            out.add(h)
+        return out
+
+
 class Engine:
     def __init__(self, model_name: str, **engine_kwargs) -> None:
         engine_kwargs.setdefault("enable_priority_scheduling", True)
-        # Two-tier KV cache is always on: a block evicted from the GPU survives in
-        # host memory, so a predicted prefix is promoted over PCIe instead of
-        # recomputed. `host_cache_gb=0` disables the tier (measurement baseline).
         host_gb = int(engine_kwargs.pop("host_cache_gb", HOST_KV_GB))
+        device_kv_tokens = engine_kwargs.pop("device_kv_tokens", None)
+        kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
         if host_gb > 0:
             engine_kwargs.setdefault("enable_hierarchical_cache", True)
             engine_kwargs.setdefault("hicache_size", host_gb)  # gigabytes; overrides hicache_ratio
@@ -50,16 +176,36 @@ class Engine:
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
         self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
+        self._oneshot_tokens_per_step:Dict[int, int] = {} # single isolated injection (probe lane), same keying
         self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
         self.SPEC_TIMEOUT_S = 20.0
         self.tbt_ms: Optional[float] = None  # profiled single-stream decode step time (planner's time unit)
+        self.prefill_rate_tps: Optional[float] = None  # EMA of idle uncached-prefill throughput
         self._spec_tasks: Dict[asyncio.Task, int] = {}  # speculative consumers in flight -> their uncached-token cost
-        self._landed: Dict[int, float] = {}   # chain hash of a computed prefix -> when it landed
-        self.LANDED_MAX = 1 << 16
+        if device_kv_tokens is None:
+            init = getattr(self.engine, "_scheduler_init_result", None)
+            infos = getattr(init, "scheduler_infos", None) or [{}]
+            device_kv_tokens = infos[0].get("max_total_num_tokens") or (1 << 20)
+        kvb = int(kv_bytes_per_token or self._kv_bytes_per_token())
+        host_tokens = int(host_gb * 1e9 // kvb) if host_gb > 0 else 0  # sglang's host-pool math
+        self.ledger = KVLedger(self._stride, int(device_kv_tokens), host_tokens)
+        print(f"[ledger] device={device_kv_tokens} tokens host={host_tokens} tokens "
+              f"stride={self._stride} kv_bytes_per_token={kvb}", flush=True)
         self.sp: Dict[str, Any] = {"temperature": 0.7}
         # stats of the last real request: ttft_ms, prompt_tokens, and the cached total split
         # by tier (cached_device / cached_host) — a host hit is a promotion, not a recompute.
         self.last: Dict[str, float] = {}
+
+    def _kv_bytes_per_token(self) -> int:
+        """2 (K,V) × layers × kv heads × head_dim × dtype bytes, mirroring sglang's
+        host-pool sizing; falls back to Qwen3-8B's 147456."""
+        try:
+            cfg = self.engine.tokenizer_manager.model_config.hf_config #type: ignore
+            heads = getattr(cfg, "num_key_value_heads", None) or cfg.num_attention_heads
+            head_dim = getattr(cfg, "head_dim", None) or cfg.hidden_size // cfg.num_attention_heads
+            return 2 * cfg.num_hidden_layers * heads * head_dim * 2
+        except Exception:
+            return 147456
 
 
     @property
@@ -78,21 +224,21 @@ class Engine:
 
     @property
     def _tokenizer(self):
-        return self.engine.tokenizer_manager.tokenizer
+        return self.engine.tokenizer_manager.tokenizer #type: ignore
 
     def tokenize(self, prompt: str) -> List[int]:
-        return self._tokenizer.encode(prompt)
+        return self._tokenizer.encode(prompt) #type: ignore
 
     def render(self, messages: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]] = None) -> str:
         """Disable thinking. Multimodal content lists are flattened to their text
         parts first — the chat template renders non-string content as empty.
         `tools` must be passed for native-tools requests so the rendered bytes
-        match what the client-side template would produce."""
+        match what the client-side template would produce ."""
         msgs = [dict(m, content="\n".join(str(p.get("text", "")) for p in m["content"]
                                           if isinstance(p, dict) and p.get("type") == "text"))
                 if isinstance(m.get("content"), list) else m for m in messages]
-        return self._tokenizer.apply_chat_template(
-            msgs, tools=tools, tokenize=False, add_generation_prompt=True, enable_thinking=False)
+        return self._tokenizer.apply_chat_template( #type: ignore
+            msgs, tools=tools, tokenize=False, add_generation_prompt=True, enable_thinking=False) #type: ignore
 
     # ---- speculative budget --------------------------------------------------
 
@@ -107,6 +253,24 @@ class Engine:
             budget = self.DEFAULT_SPEC_TOKENS_PER_STEP if not self._spec_tokens_per_step else 0
         return budget - sum(self._spec_tasks.values())
 
+    def oneshot_allowance(self) -> int:
+        """Budget for one isolated ride-along request (the probe pattern). The
+        sustained-injection profile answers "can we do this every step"; a probe
+        happens once per routing decision, and its cost is a one-off stall of a
+        couple of decode steps — profiled separately in `_oneshot_tokens_per_step`.
+        Same hard rules as the sustained lane: never beside a real prefill,
+        unlimited when nothing decodes, one ride-along at a time."""
+        if self._inflight_prefill > 0:
+            return 0
+        if self._inflight_decode == 0:
+            return 1 << 30
+        if self._spec_tasks or not self._oneshot_tokens_per_step:
+            return 0
+        keys = sorted(self._oneshot_tokens_per_step)
+        b = self._inflight_decode
+        key = next((k for k in keys if k >= b), keys[-1])
+        return self._oneshot_tokens_per_step[key]
+
     @property
     def _stride(self) -> int:
         """Bookkeeping step, rounded up to a whole number of radix-cache pages so that
@@ -114,40 +278,34 @@ class Engine:
         page = getattr(self.engine.server_args, "page_size", None) or 1
         return page * max(1, LANDED_STRIDE // page)
 
-    def _prefix_hashes(self, toks: List[int]):
-        """Chain hash of each `_stride`-aligned prefix of `toks`, shortest first."""
-        step, h = self._stride, 0
-        for i in range(0, len(toks) - step + 1, step):
-            h = hash((h, tuple(toks[i:i + step])))
-            yield h
-
     def note_landed(self, toks: List[int]) -> None:
         """Record that this prompt's KV was computed, so a later prompt sharing its
         prefix is not charged again for it."""
-        now = time.monotonic()
-        for h in self._prefix_hashes(toks):
-            self._landed[h] = now
-        if len(self._landed) > self.LANDED_MAX:  # drop the older half
-            cut = statistics.median(self._landed.values())
-            self._landed = {k: v for k, v in self._landed.items() if v >= cut}
+        self.ledger.land(toks, time.monotonic())
 
     def uncached_cost(self, toks: List[int]) -> int:
         """Tokens the engine would actually have to compute for `toks`: everything past
-        the longest prefix we have already landed. The speculation budget is denominated
-        in *uncached* tokens, so charging the full length rejects work that is nearly
-        free — exactly the promotion-shaped work worth doing when the GPU is busy.
-        Conservative by construction: a partly-cached stride counts as uncached."""
-        matched = 0
-        for i, h in enumerate(self._prefix_hashes(toks), start=1):
-            if h not in self._landed:
-                break
-            matched = i * self._stride
-        return len(toks) - matched
+        the longest prefix the ledger believes is still cached. The speculation budget
+        is denominated in *uncached* tokens, so charging the full length rejects work
+        that is nearly free — exactly the promotion-shaped work worth doing when the
+        GPU is busy."""
+        return self.ledger.cost(toks)[0]
+
+    def cost(self, toks: List[int]) -> Tuple[int, int]:
+        """(uncached, host) token counts: what must be computed vs what a host→device
+        promotion covers. The planner prices creation and promotion differently."""
+        return self.ledger.cost(toks)
+
+    def touch_ledger(self, toks: List[int]) -> int:
+        """MRU-bump the shadow ledger only. The engine's real radix LRU is refreshed
+        by prefilling a resident prefix (~zero uncached tokens), not by this."""
+        return self.ledger.touch(toks, time.monotonic())
 
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
             json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
-                       "spec_tokens_per_step": self._spec_tokens_per_step}, f, indent=1)
+                       "spec_tokens_per_step": self._spec_tokens_per_step,
+                       "oneshot_tokens_per_step": self._oneshot_tokens_per_step}, f, indent=1)
 
     def load_profile(self, path: str) -> bool:
         try:
@@ -157,7 +315,11 @@ class Engine:
             return False
         if data.get("model") != self.name or data.get("unit") != "tokens_per_step":
             return False
+        if "oneshot_tokens_per_step" not in data:
+            return False  # pre-oneshot profile: re-measure both lanes
         self._spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
+        self._oneshot_tokens_per_step = {int(k): int(v)
+                                         for k, v in data["oneshot_tokens_per_step"].items()}
         self.tbt_ms = data.get("tbt_ms") or self.tbt_ms
         return True
 
@@ -173,13 +335,14 @@ class Engine:
         `progress(first_token_at, out_tokens)` is called on every output."""
         text = ""
         out_tokens = 0
+        ids = self.tokenize(prompt)
         started = time.perf_counter()
         first_token_at = started
         first_token = True
         self._inflight_prefill += 1
         self.kill_speculation()
         try:
-            async for out in await self.engine.async_generate(
+            async for out in await self.engine.async_generate(  #type: ignore
                     prompt=prompt, sampling_params=sampling_params or self.sp,
                     rid=request_id, priority=priority, stream=True):
                 meta = out.get("meta_info") or {}
@@ -188,7 +351,9 @@ class Engine:
                     first_token_at = time.perf_counter()
                     self._inflight_prefill -= 1
                     self._inflight_decode += 1
-                    self.last = self._cache_stats(meta)
+                    stats = self._cache_stats(meta)  # local: `last` is shared across requests
+                    self._calibrate(ids, stats)
+                    self.last = stats
                     self.last["ttft_ms"] = (first_token_at - started) * 1000
                     print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
                                                             for k, v in self.last.items()), flush=True)
@@ -202,10 +367,24 @@ class Engine:
                 self._inflight_prefill -= 1
             else:
                 self._inflight_decode -= 1
-                self.note_landed(self.tokenize(prompt))  # a served prompt is cached too
+                self.note_landed(ids)  # a served prompt is cached too
                 print(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} "
                       f"output_tokens={out_tokens}", flush=True)
         return text
+
+    def _calibrate(self, ids: List[int], stats: Dict[str, float]) -> None:
+        """Reconcile the ledger with a request's measured cache split. Builds without
+        per-tier details report only the total: count it as device."""
+        dev, host = int(stats["cached_device"]), int(stats["cached_host"])
+        if not dev and not host:
+            dev = int(stats["cached_tokens"])
+        before = dict(self.ledger.drift)
+        self.ledger.calibrate(ids, dev, host, time.monotonic())
+        d = {k: self.ledger.drift[k] - before[k] for k in before}
+        if d["over"] or d["under"]:
+            print(f"[ledger] drift +over={d['over']} +under={d['under']} "
+                  f"(total {self.ledger.drift}) device_used={self.ledger.device_used_tokens()}",
+                  flush=True)
 
     @staticmethod
     def _cache_stats(meta: Dict[str, Any]) -> Dict[str, float]:
@@ -236,7 +415,7 @@ class Engine:
         until the request ends."""
         async def consume():
             last = None
-            async for out in await self.engine.async_generate(
+            async for out in await self.engine.async_generate( #type: ignore
                     prompt=prompt, input_ids=input_ids, sampling_params=sampling_params,
                     rid=request_id, priority=PRIORITY_SPEC, stream=True, **kwargs):
                 last = out
@@ -266,7 +445,7 @@ class Engine:
     def _abort(self, request_id: str) -> None:
         """Cancelling the consumer does not reach the scheduler; tell it explicitly."""
         try:
-            self.engine.tokenizer_manager.abort_request(rid=request_id)
+            self.engine.tokenizer_manager.abort_request(rid=request_id) #type: ignore
         except Exception:
             pass
 
@@ -277,12 +456,22 @@ class Engine:
         ids = list(prompt) if isinstance(prompt, list) else self.tokenize(prompt)
         if cost is None:
             cost = self.uncached_cost(ids)
+        was_idle = not self.serving
         sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
-        done = await self._speculative(None, ids, sp, request_id, cost) is not None
+        out = await self._speculative(None, ids, sp, request_id, cost)
+        done = out is not None
+        duration = time.perf_counter() - started
         if done:
+            meta = out.get("meta_info") or {}
+            if meta.get("prompt_tokens"):
+                self._calibrate(ids, self._cache_stats(meta))  # free ground truth
             self.note_landed(ids)
+            if was_idle and cost > 64 and duration > 0:  # a clean sample of idle prefill throughput
+                rate = cost / duration
+                self.prefill_rate_tps = rate if self.prefill_rate_tps is None else \
+                    0.7 * self.prefill_rate_tps + 0.3 * rate
         print(f"[prefill] {request_id} tokens={len(ids)} cost_tokens={cost} "
-              f"duration_ms={(time.perf_counter() - started) * 1000:.2f}"
+              f"duration_ms={duration * 1000:.2f}"
               + ("" if done else " aborted=1"), flush=True)
         return done
 
@@ -291,7 +480,7 @@ class Engine:
         budget cannot take it or a real admission killed the probe; retry later."""
         ids = self.tokenize(prompt)
         cost = self.uncached_cost(ids)
-        if self.spec_allowance() < cost:
+        if self.oneshot_allowance() < cost:  # probe rides the one-shot lane, not the sustained one
             return None
         sp = {"max_new_tokens": 1, "temperature": 0.0}
         output = await self._speculative(None, ids, sp, request_id, cost,
@@ -312,7 +501,7 @@ class Engine:
         self.render([{"role": "system", "content": "warmup"}, {"role": "user", "content": "warmup"}])
         decode = {"max_new_tokens": 4, "temperature": 0.0, "ignore_eos": True}
         for n in (64, 512):
-            async for _ in await self.engine.async_generate(
+            async for _ in await self.engine.async_generate(  #type: ignore
                 input_ids=self._random_ids(n), sampling_params=decode,
                 rid=f"warmup-real-{n}-{uuid.uuid4().hex}", priority=PRIORITY_REAL, stream=True
             ):
@@ -329,7 +518,7 @@ class Engine:
     # ------------------ Internal helpers ---------------------------------------------------
     def _random_ids(self, num_tokens: int) -> List[int]:
         """`num_tokens` ids no earlier request has seen: an uncached prompt of exact length."""
-        vocab = len(self._tokenizer)
+        vocab = len(self._tokenizer)  #type: ignore
         return [random.randrange(1000, vocab - 1000) for _ in range(num_tokens)]
 
     async def _measure_tbt(self, num_decode: int, num_prefill: int, sampling_params: Dict[str, Any],
@@ -353,7 +542,7 @@ class Engine:
         async def decode_worker(index: int) -> List[float]:
             nonlocal started
             ts: List[float] = []
-            async for _ in await self.engine.async_generate(
+            async for _ in await self.engine.async_generate(  #type: ignore
                 input_ids=self._random_ids(24), sampling_params=sampling_params,
                 rid=f"profile-decode-{index}-{uuid.uuid4().hex}", priority=PRIORITY_REAL, stream=True,
             ):
@@ -369,7 +558,7 @@ class Engine:
             await decode_started.wait()
             sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
             while not stop.is_set():
-                async for _ in await self.engine.async_generate(
+                async for _ in await self.engine.async_generate(  #type: ignore
                     input_ids=self._random_ids(num_prefill), sampling_params=sp,
                     rid=f"profile-prefill-{uuid.uuid4().hex}", priority=PRIORITY_SPEC, stream=True,
                 ):
@@ -395,7 +584,7 @@ class Engine:
             "duty": injected / steps,
         }
 
-    async def _profile(self, tbt_slack: float = 0.05, max_decode: int = 16,
+    async def _profile(self, tbt_slack: float = 0.15, max_decode: int = 16,
                        prefill_sizes: Tuple[int, ...] = (16, 32, 48, 64, 96, 128, 192, 256),
                        decode_tokens: int = 128) -> Dict[int, int]:
         """Per decode concurrency b, the largest uncached prefill size one PRIORITY_SPEC
@@ -425,3 +614,93 @@ class Engine:
             if safe == 0:
                 break
         return self._spec_tokens_per_step
+
+    async def _measure_oneshot(self, num_decode: int, num_prefill: int,
+                               sampling_params: Dict[str, Any], shots: int = 3) -> dict:
+        """Stall cost of a SINGLE isolated n-token PRIORITY_SPEC injection on running
+        decode streams — the probe pattern, as opposed to `_measure_tbt`'s sustained
+        back-to-back injection. Fires `shots` well-separated injections into one run;
+        the quiet gaps of the same run are the baseline. Returns quiet p50/p95 and the
+        worst gap that overlaps an injection window (all ms)."""
+        stop = asyncio.Event()
+        decode_started = asyncio.Event()
+        started = 0
+        windows: List[Tuple[float, float]] = []
+
+        async def decode_worker(index: int) -> List[Tuple[float, float]]:
+            nonlocal started
+            ts: List[float] = []
+            async for _ in await self.engine.async_generate(  #type: ignore
+                    input_ids=self._random_ids(24), sampling_params=sampling_params,
+                    rid=f"oneshot-decode-{index}-{uuid.uuid4().hex}",
+                    priority=PRIORITY_REAL, stream=True):
+                ts.append(time.perf_counter())
+                if len(ts) == 1:
+                    started += 1
+                    if started == num_decode:
+                        decode_started.set()
+            return [(ts[i], ts[i] - ts[i - 1]) for i in range(9, len(ts))]
+
+        async def shooter() -> None:
+            await decode_started.wait()
+            sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
+            for _ in range(shots):
+                await asyncio.sleep(0.35)   # let the streams run quiet between shots
+                if stop.is_set():
+                    return
+                t0 = time.perf_counter()
+                async for _ in await self.engine.async_generate(  #type: ignore
+                        input_ids=self._random_ids(num_prefill), sampling_params=sp,
+                        rid=f"oneshot-prefill-{uuid.uuid4().hex}",
+                        priority=PRIORITY_SPEC, stream=True):
+                    pass
+                windows.append((t0, time.perf_counter()))
+
+        decoders = [asyncio.create_task(decode_worker(i)) for i in range(num_decode)]
+        shoot = asyncio.create_task(shooter())
+        try:
+            gaps_by_stream = await asyncio.gather(*decoders)
+        finally:
+            stop.set()
+            decode_started.set()
+            await asyncio.gather(shoot, return_exceptions=True)
+        if not windows:
+            raise RuntimeError("oneshot: no injection landed; raise max_new_tokens")
+        pad = 0.05  # settle margin after an injection returns
+        quiet: List[float] = []
+        stall: List[float] = []
+        for t, g in (x for stream in gaps_by_stream for x in stream):
+            hit = any(t >= w0 and t - g <= w1 + pad for w0, w1 in windows)
+            (stall if hit else quiet).append(g)
+        quiet.sort()
+        return {
+            "quiet_p50_ms": quiet[len(quiet) // 2] * 1000 if quiet else 0.0,
+            "quiet_p95_ms": quiet[min(len(quiet) - 1, int(0.95 * (len(quiet) - 1)))] * 1000 if quiet else 0.0,
+            "stall_max_ms": max(stall) * 1000 if stall else 0.0,
+            "shots": len(windows),
+        }
+
+    async def _profile_oneshot(self, bs: Tuple[int, ...] = (1, 2, 4, 8),
+                               sizes: Tuple[int, ...] = (32, 64, 128, 256, 384, 512),
+                               decode_tokens: int = 192) -> Dict[int, int]:
+        """Per decode concurrency, the largest single-injection size whose worst-hit
+        token is delayed by no more than ~two extra decode steps. Fills the probe
+        admission lane `_oneshot_tokens_per_step`."""
+        sp = {"max_new_tokens": decode_tokens, "temperature": 0.0, "ignore_eos": True}
+        self._oneshot_tokens_per_step.clear()
+        for b in bs:
+            safe = 0
+            for n in sizes:
+                m = await self._measure_oneshot(b, n, sp)
+                limit = max(3 * m["quiet_p50_ms"], m["quiet_p95_ms"] + m["quiet_p50_ms"])
+                print(f"[profile-oneshot] b={b} n={n} stall_max={m['stall_max_ms']:.1f}ms "
+                      f"quiet_p50={m['quiet_p50_ms']:.1f} p95={m['quiet_p95_ms']:.1f} "
+                      f"shots={m['shots']}", flush=True)
+                if m["stall_max_ms"] > limit:
+                    break
+                safe = n
+            self._oneshot_tokens_per_step[b] = safe
+            print(f"[profile-oneshot] decode={b} oneshot_tokens={safe}", flush=True)
+            if safe == 0:
+                break
+        return self._oneshot_tokens_per_step
