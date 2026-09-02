@@ -226,10 +226,7 @@ class Controller:
             relayout_body(body, site.layout)
 
     def _bind(self, sess: LiveSession, site: Callsite) -> Program:
-        """Bind the session to its Program by content — the entry callsite identifies
-        the program, nothing else crosses the wire. A first call matching only the
-        middle of a known program is a resumed process: serve it there, but keep the
-        half session out of the statistics."""
+        """Bind the session to its Program by content, entry callsite identifies the program"""
         if sess.program is None:
             prog = self.programs.get(site.key)
             if prog is None:

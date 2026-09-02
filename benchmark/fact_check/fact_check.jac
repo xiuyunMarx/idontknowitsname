@@ -11,7 +11,9 @@ N independent questions (follow-up questions may build on answers already found:
 multi-hop), each EvidenceScout searches and assesses one question, and the
 EvidenceAnalyzer decides SUPPORTED / NOT_SUPPORTED / NEED_MORE over all evidence.
 NEED_MORE (or an unmet FC_MIN_ROUNDS) loops back for another round, up to
-FC_ROUNDS.
+FC_ROUNDS. Defaults are few scouts and many rounds (2 x 6) so each round adds a
+small increment to a long history: the reuse shape of a LangChain / ReAct
+scratchpad, which is what PBKV's HoVer workload has.
 
 KV-cache shape. `evidences` only grows within a session and is the second
 parameter of every LLM call, right after the session-constant `claim`, so the
@@ -21,8 +23,8 @@ the new findings are the transient tail. Each Evidence keeps the retrieved
 passage (FC_PASSAGE_CHARS), so the history is ~1k tokens per finding and a
 cache miss on a late round re-prefills the whole session's evidence.
 
-Env: FC_CLAIM (or argv[1]), FC_ROUNDS (max rounds, 3), FC_MIN_ROUNDS (2),
-FC_SCOUTS (4), FC_PASSAGE_CHARS (4000), FC_CACHE_DIR (benchmark/reproduce/wiki_cache;
+Env: FC_CLAIM (or argv[1]), FC_ROUNDS (max rounds, 6), FC_MIN_ROUNDS (6),
+FC_SCOUTS (2), FC_PASSAGE_CHARS (4000), FC_CACHE_DIR (benchmark/reproduce/wiki_cache;
 Wikipedia results are cached per query so reruns are offline and deterministic).
 """
 

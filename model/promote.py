@@ -11,8 +11,15 @@ dependency of its producer and waits per layer (start_loading(deps)).
 Present in the scheduler subprocess because `spawn` re-imports the parent
 __main__, so `model.model` must import this module at module level.
 
-Concurrency, KVFlow-style: one promotion pending or in flight (Deferred
-otherwise; the caller retries). It is never refused because requests are queued.
+Concurrency: up to MAX_INFLIGHT_PROMOTIONS promotions pending or in flight
+(Deferred beyond that; the planner retries next tick). The fork queues them on one
+low-priority stream, so more in flight means a deeper FIFO, not more PCIe
+contention; each promotion's nodes are locked until its copy lands, so concurrent
+ones cannot evict each other. Space: a promotion uses free device slots plus
+RETIRED nodes it may reclaim, never active cache, and only if a real prefill
+chunk stays free afterwards (prefetch_prefix reserve) — locked promotion slots
+sit outside the scheduler's admission budget, so without the reserve concurrent
+promotions can lock the whole pool and the next prefill dies with OOM.
 
 Eviction steering (`kv_priority` RPC), KVFlow's scheme on SGLang's own
 `TreeNode.priority`: four bands, lowest evicted first.
@@ -35,6 +42,7 @@ from sglang.srt.mem_cache.evict_policy import EvictionStrategy
 RETIRED = -2
 TRANSIENT = -1
 PLAN_BASE = 10
+MAX_INFLIGHT_PROMOTIONS = 8   # concurrent sessions x a couple of predicted calls each
 
 
 class Deferred(RuntimeError):
@@ -56,13 +64,24 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
     until the copy lands (profiling only)."""
     t0 = time.perf_counter()
     tc = getattr(self.tree_cache, "inner", self.tree_cache)   # SessionAwareCache wraps
-    if tc.ongoing_promote:
-        raise Deferred("deferred: a promotion is in flight")
-    device, host, started, event = tc.prefetch_prefix(list(token_ids))
+    if len(tc.ongoing_promote) >= MAX_INFLIGHT_PROMOTIONS:
+        raise Deferred(f"deferred: {len(tc.ongoing_promote)} promotions in flight")
+    # PBKV's conservative rule: a speculative load takes free space plus retired
+    # cache only, and leaves one real prefill chunk free so the scheduler can never
+    # find the pool fully locked (that was the c=2 OOM with 8 promotions in flight)
+    reserve = self.chunked_prefill_size or self.max_prefill_tokens
+    device, host, started, event = tc.prefetch_prefix(
+        list(token_ids), reserve=reserve, evict_max_priority=RETIRED)
+    free = tc.cache_controller.mem_pool_device_allocator.available_size()
+    print(f"[promote] {rid} tokens={len(token_ids)} device={device} host={host} "
+          f"started={started} free={free} reserve={reserve} "
+          f"ms={(time.perf_counter() - t0) * 1000:.1f}", flush=True)
+    if host > 0 and started == 0:
+        # declined for space: keep the job queued so the planner retries once
+        # retired cache or free slots appear, instead of believing it landed
+        raise Deferred(f"deferred: no room for {host} host tokens (free={free}, reserve={reserve})")
     if wait and event is not None:
         event.finish_event.synchronize()
-    print(f"[promote] {rid} tokens={len(token_ids)} device={device} host={host} "
-          f"started={started} ms={(time.perf_counter() - t0) * 1000:.1f}", flush=True)
 
 
 def _band_tail(tc, ids: List[int], fixed_len: int, band: int) -> int:

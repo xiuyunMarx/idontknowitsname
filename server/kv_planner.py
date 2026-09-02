@@ -99,10 +99,7 @@ class KVPlanner:
         self._dirty = True
 
     def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
-        """Ground-truth feedback: a call just arrived. Log how its plan stood —
-        deadline error (positive = the call came after our deadline, the healthy
-        direction) and prefill progress — so a run audits prediction validity
-        end to end. `done` jobs are kept in the table for exactly this readout."""
+        """A call arrived, update ground truth for the next prediction"""
         js = [j for j in self._jobs.get(sid, {}).values() if j.site == site]
         if not js:
             print(f"[timing] {sid} unplanned site={site[:48]}", flush=True)
