@@ -108,25 +108,41 @@ def split_byllm_user(user: str) -> Tuple[str, List[str], Dict[str, str], Optiona
     lines that are not a known binding are glued to the previous value."""
     user = _strip_hint(user)
     lines = user.split("\n")
-    header = lines[0]
+    names = _sig_names(lines[0])
+    ctx = lines[:_schema_end(lines)]
+    spans, self_view, self_sem = _scan_bindings(lines, names)
+    bindings: Dict[str, str] = {}
+    for name, start, end in spans:
+        bindings[name] = "\n".join(lines[start:end])[len(name) + 3:]   # past "name = "
+    return "\n".join(ctx), names, bindings, self_view, self_sem
+
+
+def _sig_names(header: str) -> List[str]:
+    """Parameter names in the header's signature, in declaration order."""
     m = _HEADER.match(header)
-    names: List[str] = []
-    if m:
-        for part in m["sig"].split(","):
-            part = part.strip()
-            if part:
-                names.append(part.split(":")[0].split("=")[0].strip())
-    ctx = [header]
+    if not m:
+        return []
+    return [part.split(":")[0].split("=")[0].strip() for part in m["sig"].split(",") if part.strip()]
+
+
+def _schema_end(lines: List[str]) -> int:
+    """Index of the first line after the header and its schema rows."""
     i = 1
     while i < len(lines) and lines[i].startswith(SCHEMA_INDENT):
-        ctx.append(lines[i])
         i += 1
-    bindings: Dict[str, str] = {}
+    return i
+
+
+def _scan_bindings(lines: List[str], names: List[str]) -> Tuple[List[Tuple[str, int, int]], Optional[str], Optional[str]]:
+    """Binding blocks after the schema rows as (name, first line, line past the last),
+    plus the self view and sem. A line that is not a known binding continues the
+    previous binding's value (multi-line __repr__)."""
+    spans: List[List[Any]] = []
     self_view: Optional[str] = None
     self_sem: Optional[str] = None
     last: Optional[str] = None
     in_self = False
-    while i < len(lines):
+    for i in range(_schema_end(lines), len(lines)):
         line = lines[i]
         sm = _SELF.match(line)
         if sm and not in_self:
@@ -138,13 +154,45 @@ def split_byllm_user(user: str) -> Tuple[str, List[str], Dict[str, str], Optiona
             pass  # self's indented type-member rows: not a binding
         else:
             bm = _BINDING.match(line)
-            if bm and (bm["name"] in names or not names or last is not None or not bindings):
-                bindings[bm["name"]] = bm["value"]
+            if bm and (bm["name"] in names or not names or last is not None or not spans):
+                spans.append([bm["name"], i, i + 1])
                 last = bm["name"]
             elif last is not None and line != "":
-                bindings[last] += "\n" + line
-        i += 1
-    return "\n".join(ctx), names, bindings, self_view, self_sem
+                spans[-1][2] = i + 1
+    return [(n, s, e) for n, s, e in spans], self_view, self_sem
+
+
+def relayout_user(user: str, layout: List[str]) -> str:
+    """The same byllm user message with its binding blocks in `layout` order (names
+    absent from `layout` keep their relative order after the listed ones). Header,
+    schema rows, self block and hint tail are untouched byte for byte; idempotent.
+    Returns the input unchanged when the blocks are not contiguous."""
+    body = _strip_hint(user)
+    lines = body.split("\n")
+    spans, _, _ = _scan_bindings(lines, _sig_names(lines[0]))
+    if len(spans) < 2 or sum(e - s for _, s, e in spans) != spans[-1][2] - spans[0][1]:
+        return user
+    rank = {n: i for i, n in enumerate(layout)}
+    order = sorted(spans, key=lambda sp: rank.get(sp[0], len(layout)))   # stable
+    if order == spans:
+        return user
+    lo, hi = spans[0][1], spans[-1][2]
+    out = lines[:lo] + [l for _, s, e in order for l in lines[s:e]] + lines[hi:]
+    return "\n".join(out) + user[len(body):]
+
+
+def relayout_body(body: Dict[str, Any], layout: List[str]) -> bool:
+    """Apply relayout_user to the request's call message in place (string content
+    only). True when the message changed."""
+    for m in body.get("messages") or []:
+        c = m.get("content")
+        if m.get("role") == "user" and isinstance(c, str) and not c.startswith(TOOL_RESPONSE_TAG):
+            new = relayout_user(c, layout)
+            if new != c:
+                m["content"] = new
+                return True
+            return False
+    return False
 
 
 def _parse_byllm(body: Dict[str, Any]) -> Tuple[ByLLMCallsite, CallExtras]:
@@ -252,7 +300,6 @@ def decompose(body: Dict[str, Any]) -> Tuple[Callsite, CallExtras]:
         site, extras = _parse_byllm(body)
     if extras.turn == 0:  # later ReAct turns re-send the same first user message
         user = _call_user(body)
-        site.stable_prefix, site.prefix_n = user, 1
         site.hint = user[len(_strip_hint(user)):]  # per-site stable schema tail
         extras.user_text = user
     return site, extras
@@ -279,3 +326,4 @@ def is_continuation(prev: Dict[str, Any], cur: Dict[str, Any]) -> bool:
     # exhausted, tool_choice="none") drops the tool block from it. Compare the rest.
     start = 1 if pm[0][0] == "system" and cm[0][0] == "system" else 0
     return cm[start:len(pm)] == pm[start:]
+

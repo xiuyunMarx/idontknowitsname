@@ -14,7 +14,7 @@ import time
 import uuid
 import json
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from sglang.srt.entrypoints.engine import Engine as SGLangEngine
 
@@ -86,19 +86,6 @@ class KVLedger:
                 break
             del self._host[victim]
 
-    def touch(self, toks: List[int], now: float) -> int:
-        """MRU-bump the contiguous device-resident prefix; returns its token count."""
-        n = 0
-        for h in self.hashes(toks):
-            if h not in self._device:
-                break
-            self._device[h] = now
-            self._device.move_to_end(h)
-            if h in self._host:
-                self._host.move_to_end(h)
-            n += self.stride
-        return n
-
     def cost(self, toks: List[int]) -> Tuple[int, int]:
         """(uncached, host) token counts for `toks`. Uncached is everything past the
         longest hole-free cached prefix — a gone block kills the radix prefix match —
@@ -154,16 +141,6 @@ class KVLedger:
     def device_cap_tokens(self) -> int:
         return self.device_cap * self.stride
 
-    def device_tail(self, frac: float) -> Set[int]:
-        """The oldest `frac` of device blocks — next in line for LRU eviction."""
-        n = int(len(self._device) * frac)
-        out: Set[int] = set()
-        for h in self._device:
-            if len(out) >= n:
-                break
-            out.add(h)
-        return out
-
 
 class Engine:
     def __init__(self, model_name: str, **engine_kwargs) -> None:
@@ -173,7 +150,8 @@ class Engine:
         kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
         if host_gb > 0:
             engine_kwargs.setdefault("enable_hierarchical_cache", True)
-            engine_kwargs.setdefault("hicache_size", host_gb)  # gigabytes; overrides hicache_ratio
+            engine_kwargs.setdefault("hicache_size", host_gb) 
+            engine_kwargs.setdefault("hicache_io_backend", "direct") # DMA copy
         self.name = model_name
         self.engine = SGLangEngine(model_path=model_name, **engine_kwargs)
 
@@ -301,11 +279,6 @@ class Engine:
         promotion covers. The planner prices creation and promotion differently."""
         return self.ledger.cost(toks)
 
-    def touch_ledger(self, toks: List[int]) -> int:
-        """MRU-bump the shadow ledger only. The engine's real radix LRU is refreshed
-        by prefilling a resident prefix (~zero uncached tokens), not by this."""
-        return self.ledger.touch(toks, time.monotonic())
-
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
             json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
@@ -339,14 +312,16 @@ class Engine:
     async def generate(self, prompt: str, request_id: str,
                        sampling_params: Optional[Dict[str, Any]] = None,
                        priority: int = PRIORITY_REAL,
-                       progress: Optional[Callable[[float, int], None]] = None) -> str:
+                       progress: Optional[Callable[[float, int], None]] = None,
+                       ids: Optional[List[int]] = None) -> str:
         """A real request: prefill until its first token, then decode. Any speculative
         request in flight is killed on admission so the prefill step is not shared.
         Higher `priority` is scheduled first; speculation stays at PRIORITY_SPEC.
-        `progress(first_token_at, out_tokens)` is called on every output."""
+        `progress(first_token_at, out_tokens)` is called on every output. `ids` is
+        the prompt's tokenization when the caller already has it."""
         text = ""
         out_tokens = 0
-        ids = self.tokenize(prompt)
+        ids = ids if ids is not None else self.tokenize(prompt)
         started = time.perf_counter()
         first_token_at = started
         first_token = True
@@ -487,21 +462,38 @@ class Engine:
               + ("" if done else " aborted=1"), flush=True)
         return done
 
-    async def promote(self, toks: List[int], request_id: str, wait: bool = False) -> bool:
+    async def promote(self, toks: List[int], request_id: str, wait: bool = False) -> Optional[bool]:
         """Host→device promotion (and LRU touch) of `toks`' cached prefix with no
         request: a scheduler RPC starts HiCache's own load-back (model.promote).
-        Runs in a thread — the reply waits for the scheduler's next loop turn."""
+        Runs in a thread — the reply waits for the scheduler's next loop turn.
+        None = deferred by the scheduler (real work first); retry later."""
         started = time.perf_counter()
         rpc = functools.partial(self.engine.collective_rpc, "hicache_promote",
                                 token_ids=list(toks), rid=request_id, wait=wait)
         try:
             await asyncio.get_running_loop().run_in_executor(None, rpc)
         except AssertionError as e:
+            if "deferred" in str(e):
+                print(f"[promote-deferred] {request_id} {e}", flush=True)
+                return None
             print(f"[promote] {request_id} failed: {e}", flush=True)
             return False
         self.note_landed(toks)   # the ledger's belief; the next real request calibrates
         print(f"[promote-rpc] {request_id} tokens={len(toks)} "
               f"duration_ms={(time.perf_counter() - started) * 1000:.2f}", flush=True)
+        return True
+
+    async def set_kv_priority(self, demote: List[Tuple[List[int], int]],
+                              protect: List[Tuple[List[int], int]], request_id: str,
+                              retire: List[Tuple[List[int], int]] = ()) -> bool:
+        """Push the eviction map (model.promote.kv_priority) through a scheduler RPC."""
+        rpc = functools.partial(self.engine.collective_rpc, "kv_priority",
+                                demote=demote, protect=protect, rid=request_id, retire=list(retire))
+        try:
+            await asyncio.get_running_loop().run_in_executor(None, rpc)
+        except AssertionError as e:
+            print(f"[priority] {request_id} failed: {e}", flush=True)
+            return False
         return True
 
     async def probe(self, prompt: str, request_id: str) -> Optional[Dict[int, Logprob]]:

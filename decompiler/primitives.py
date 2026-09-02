@@ -52,8 +52,6 @@ class CallMetadata:
     max_tokens: Optional[int] = None
     system_prompt: str = ""                  # Required prefix from the first token.
     response_format: Optional[Dict[str, Any]] = None   # Shared request format.
-    stable_prefix: str = ""                  # Shared prefix of first user messages.
-    prefix_n: int = 0                        # Messages included in stable_prefix.
     hint: str = ""                           # Schema-requirements tail appended to the user message.
     exec_stats: ExecStats = field(default_factory=ExecStats)  # Running timing data.
 
@@ -64,6 +62,12 @@ class CallMetadata:
 
     @property
     def label(self) -> str:
+        raise NotImplementedError
+
+    @property
+    def fixed_head(self) -> str:
+        """Bytes of the user message that are the same in every call of this site,
+        known from the layout (not from comparing observations)."""
         raise NotImplementedError
 
 
@@ -78,6 +82,7 @@ class ByLLMCallsite(CallMetadata):
     sem: str = ""                                             # Function description.
     owner_sem: str = ""                                       # Description of the owning type.
     tool_schema: Optional[List[Dict[str, Any]]] = None        # Tools sent with the request.
+    layout: Optional[List[str]] = None                        # Frozen binding order (Program._freeze_layout).
 
     @property
     def is_react(self) -> bool:
@@ -91,6 +96,10 @@ class ByLLMCallsite(CallMetadata):
     @property
     def label(self) -> str:
         return f"{self.signature}({self.params})->{self.return_type} by {self.model}"
+
+    @property
+    def fixed_head(self) -> str:
+        return self.context_desc   # header line (signature + sem) and schema rows
 
 
 @dataclass
@@ -110,11 +119,16 @@ class VisitByCallsite(CallMetadata):
         intent = self.intent or "(no intent)"
         return "visit: " + (intent[:50] + "..." if len(intent) > 50 else intent)
 
+    @property
+    def fixed_head(self) -> str:
+        return f"Goal: {self.intent}" if self.intent else ""
+
 # ----------------------------------------------------------------------- program model
 
 Callsite = Union[ByLLMCallsite, VisitByCallsite]
 
 START = "^"  # Marker placed before the first call in a session.
+STABILITY = {"const": 0, "copy": 1, "extend": 2}  # flow-rule kind -> how long the bytes stay a valid prefix
 
 
 def _lcp(a: str, b: str) -> str:
@@ -214,10 +228,7 @@ def field_name(key: str) -> str:
 
 
 def parse_fields(text: str) -> Optional[Tuple[str, List[Tuple[str, str]]]]:
-    """Split a repr like Type(a=1, b='x') into its type text and field rows.
-    The type text is free-form (byllm substitutes a type's sem for its name) so
-    the field list is the paren group that closes at the final character; keys
-    keep their `name (sem)` annotations verbatim."""
+    """Split a repr like Type(a=1, b='x') into its type text and field rows."""
     text = text.strip()
     if len(text) < 3 or not text.endswith(")"):
         return None
@@ -359,6 +370,12 @@ def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
     if any(_named_values(e).get(name) == v for e in earlier):
         return "copy"
     for e in reversed(earlier):
+        # the same name's latest value minus its closing delimiter is a prefix: an
+        # accumulating history (list/str/dict repr grown by appending)
+        w = _named_values(e).get(name)
+        if w is not None and len(w) > 2 and len(v) > len(w) and v.startswith(w[:-1]):
+            return "extend"
+    for e in reversed(earlier):
         path = _find_in_result(e.response, v)
         if path is not None:
             return f"resp:{e.key}\x00{json.dumps(path)}"
@@ -470,12 +487,6 @@ class Program:
         if known is None:
             self.sites[site.key] = site
             return site
-        if site.prefix_n:
-            if known.prefix_n:
-                known.stable_prefix = _lcp(known.stable_prefix, site.stable_prefix)
-            else:
-                known.stable_prefix = site.stable_prefix
-            known.prefix_n += site.prefix_n
         return known
 
     def edge(self, a: str, b: str) -> Edge:
@@ -498,10 +509,12 @@ class Program:
             self.nodes[nid] = Node(id=nid, symbol=key)
         return nid
 
-    def update_graph(self, walked: List[str], obs: List[CallObservation]) -> None:
-        """Record calls and timing data from one completed session, and update"""
+    def update_graph(self, walked: List[str], obs: List[CallObservation]) -> List[str]:
+        """Record calls and timing data from one completed session, and update the
+        value-flow rules. Returns the keys of byllm sites whose binding layout got
+        frozen by this session (see _freeze_layout)."""
         if not obs:
-            return
+            return []
         self.seqs[tuple(walked)] += 1
         self.n_sessions += 1
         q, prev = START, None
@@ -522,6 +535,12 @@ class Program:
         self.exit_freq[q] += 1
         self._trie_fold(walked)
         self._observe_offers(walked, obs)
+        frozen = []
+        for k in dict.fromkeys(walked):
+            site = self.sites.get(k)
+            if isinstance(site, ByLLMCallsite) and self._freeze_layout(site):
+                frozen.append(k)
+        return frozen
 
     def _trie_fold(self, keys: List[str]) -> None:
         """Add recent call sequences to the prediction history."""
@@ -601,13 +620,49 @@ class Program:
                         e.seen_freq += 1
                         break
 
-    def _flow_value(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
-        """Apply the dominant flow rule of (key, name) to the live session."""
+    def _dominant(self, key: str, name: str) -> Optional[str]:
+        """The flow rule of (key, name) seen at least twice and more often than all
+        others together; None while the value's origin is still unsettled."""
         rules = self.flow.get((key, name))
         if not rules:
             return None
         rule, n = max(rules.items(), key=lambda kv: kv[1])
-        if n < 2 or 2 * n < sum(rules.values()):
+        return rule if n >= 2 and 2 * n >= sum(rules.values()) else None
+
+    def _stability(self, key: str, name: str) -> int:
+        """How long a binding's bytes stay valid as a cache prefix: 0 across sessions
+        (const), 1 within a session (copy), 2 growing within a session (extend),
+        3 fresh every call (anything else, or unsettled)."""
+        rule = self._dominant(key, name)
+        return STABILITY.get(rule.partition(":")[0], 3) if rule else 3
+
+    def _freeze_layout(self, site: ByLLMCallsite) -> bool:
+        """Decide the site's binding order once: stable-sort the observed order by
+        stability, so the session-constant and accumulating values lead and the fresh
+        ones trail. Waits until every binding has two observations, then never moves
+        again — each reorder breaks the prefix once."""
+        p = self.proto.get(site.key)
+        names = list(p.get("order", ())) if p else []
+        if p is None or site.layout is not None or not names:
+            return False
+        if any(sum(self.flow.get((site.key, n), {}).values()) < 2 for n in names):
+            return False
+        site.layout = sorted(names, key=lambda n: self._stability(site.key, n))
+        p["order"] = list(site.layout)   # the rebuild follows the order requests now use
+        return True
+
+    def _flow_prefix(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
+        """For an accumulating binding, the bytes its next value is known to start
+        with: the latest same-name value minus its closing delimiter."""
+        if self._dominant(key, name) != "extend":
+            return None
+        w = next((v for e in reversed(obs_list) for nm, v in _named_values(e).items() if nm == name), None)
+        return w[:-1] if w is not None and len(w) > 2 else None
+
+    def _flow_value(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
+        """Apply the dominant flow rule of (key, name) to the live session."""
+        rule = self._dominant(key, name)
+        if rule is None or rule == "extend":   # extend: only a prefix is known, see _flow_prefix
             return None
         if rule == "copy":
             return next((v for e in reversed(obs_list)
@@ -651,6 +706,9 @@ class Program:
         for name in p.get("order", ()):
             v = self._flow_value(site.key, name, obs_list)
             if v is None:
+                pre = self._flow_prefix(site.key, name, obs_list)
+                if pre is not None:              # the history so far: known head, open tail
+                    parts.append(f"{name} = {pre}")
                 return "\n".join(parts), False
             parts.append(f"{name} = {v}")
         if p.get("self"):

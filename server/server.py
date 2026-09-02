@@ -1,35 +1,23 @@
-"""Batched controller: Belady-with-repair serving of byllm agents over one SGLang engine.
-
-Requests drain from the pool in batches; each batch is classified against its
-sessions (ReAct continuations fold into the open call, new calls advance the
-walk) and dispatched as concurrent generation tasks — the engine batches them
-internally, continuations outranking fresh calls outranking speculation.
-
-Foresight no longer fires eagerly. Every completed call refreshes a fan-out
-prediction of the session's future (`Program.predict_tree`: callsites with
-probabilities and arrival-time quantiles); each predicted call becomes a KV job
-— probe a fully-rebuilt routing prompt, prefill a fully-rebuilt call whole,
-else the longest reconstructable or static prefix — stamped with a deadline and
-priced by the residency ledger (create vs promote from the host tier). The
-KVPlanner runs them just-in-time, earliest deadline first, in the engine's
-idle/gap windows, and under memory pressure warm-touches the cached prefixes
-worth keeping ahead of their next use. An eviction repaired before its deadline
-is free; the objective is min Σ p(call) × exposed prefill.
-
-    python -m server.server [MODEL] [--no-spec]
 """
+Batched controller: Belady-with-repair serving of byllm agents over one SGLang engine.
+Predicted calls become KV jobs (promote / create / probe) and drive the engine's
+eviction order (model.promote.kv_priority); see server.kv_planner.
+
+python -m server.server [MODEL] [--no-spec] [--manage-only] [--kv N] [--host GB]
+"""
+import argparse
 import asyncio
 import json
 import re
-import sys
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from math import exp
 from typing import Any, Dict, List, Optional, Tuple
 
-from decompiler.parser import _strip_hint, decompose, is_continuation, parse_candidate_line
-from decompiler.primitives import (Callsite, CallObservation, PredictedCall, Program,
+from decompiler.parser import _strip_hint, decompose, is_continuation, parse_candidate_line, relayout_body
+from decompiler.primitives import (ByLLMCallsite, Callsite, CallObservation, PredictedCall, Program,
                                    VisitByCallsite, _lcp, chosen_candidates, node_type)
 from model.device_profiler import profile_device
 from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
@@ -40,7 +28,7 @@ P_MIN = 0.02           # plan only steps predicted at least this likely
 P_ROUTE = 0.3          # act on probed routing choices at least this likely
 T_BASE = 120.0         # idle seconds before a session is finalized
 T_SHORT = 15.0         # idle timeout once the program says the session is over
-END_PROB_SHORT = 0.7   # end_prob above this switches to T_SHORT
+END_PROB_SHORT = 0.5   # end_prob above this switches to T_SHORT
 SWEEP_S = 5.0          # idle sweeper period
 REBUILD_AT = 8         # rebuild when n_sessions reaches this, then every doubling
 MAX_TOKENS = 4096      # decode cap when the request does not set one
@@ -51,7 +39,7 @@ _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
 
 @dataclass
 class LiveSession:
-    id: str                                      # Session ID, from the agent
+    id: str                                       # Session ID, from the agent
     program: Optional[Program] = None            # Bound on the first decomposed call
     walked: List[str] = field(default_factory=list)               # Callsite keys, ReAct turns folded
     pending: List[CallObservation] = field(default_factory=list)  # Closed calls awaiting update_graph
@@ -73,7 +61,9 @@ class Controller:
         self.programs: Dict[str, Program] = {}        # entry callsite key -> Program
         self.server = server
         self.pool = server.pool
-        self._prefix_tok: Dict[str, Tuple[str, List[int]]] = {}  # site key -> (stable_prefix, token ids)
+        self._prefix_tok: Dict[str, Tuple[str, List[int]]] = {}  # site key -> (fixed_head, token ids), no re-tokenization
+        self._plan_tok: "OrderedDict[Tuple[str, bool, str], Optional[List[int]]]" = OrderedDict()
+        self.PLAN_TOK_CACHE = 1024
         self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if speculate else None
 
     # ------------------------------------------------------------------ lifecycle
@@ -123,9 +113,7 @@ class Controller:
 
     # ------------------------------------------------------------------ request path
     async def _step(self, batch: List[PendingRequest]) -> None:
-        """Admit one drained batch: classify every request against its session and
-        dispatch the generations as concurrent tasks — the engine batches them.
-        No engine await happens here, so the drain loop never stalls."""
+        """Admit one drained batch"""
         for req in sorted(batch, key=lambda r: r.t_arrive):
             sess = self.sessions.get(req.session)
             if sess is None:
@@ -133,6 +121,8 @@ class Controller:
             sess.inflight += 1
             sess.last_seen = time.monotonic()
             try:
+                t_cls = time.monotonic()
+                self._relayout(sess, req.body)   # a ReAct turn re-sends the call message: same order
                 cont = (sess.open_obs is not None and sess.last_raw is not None
                         and is_continuation(sess.last_raw, req.body))
                 if cont:
@@ -141,6 +131,8 @@ class Controller:
                     ob.tool_gaps.append(max(0.0, req.t_arrive - ob.t_done))  # type: ignore[union-attr]
                 else:
                     ob = self._advance(sess, req)
+                ob.t_classify = t_cls                                  # type: ignore[union-attr]
+                ob.advance_ms = (time.monotonic() - t_cls) * 1000      # type: ignore[union-attr]
             except Exception as e:
                 sess.inflight -= 1
                 req.fail(e)
@@ -154,14 +146,16 @@ class Controller:
         """One real request through the engine, then a planning refresh: its reply
         opens the gap window — the agent runs its own code now, the engine is free."""
         try:
+            t_pre = time.perf_counter()
             body = req.body
             prompt = self.engine.render(body["messages"], tools=body.get("tools"))
             sp = {"temperature": 0.7 if body.get("temperature") is None else body.get("temperature"),
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
             rid = f"{sess.id}-{sess.epoch}t{ob.n_turns}-{uuid.uuid4().hex[:8]}"
+            ids = self.engine.tokenize(prompt)
             t0 = time.perf_counter()
-            text = await self.engine.generate(prompt, rid, sp,
+            text = await self.engine.generate(prompt, rid, sp, ids=ids,
                                               priority=PRIORITY_CONT if cont else PRIORITY_REAL)
             ob.engine_s += time.perf_counter() - t0
             ob.t_done = time.monotonic()
@@ -176,12 +170,21 @@ class Controller:
             sess.last_seen = time.monotonic()
         if self.planner is None or sess.id not in self.sessions:
             return
+        t_post = time.perf_counter()
+        prog = sess.program
+        site = prog.sites.get(ob.key) if prog is not None else None
+        if site is not None:                 # past the structural head, the prompt is transient
+            self.planner.note_served(sess.id, ids, len(self._prefix_tokens(site)))
         sess.plan_anchor = ob.t_done         # the anchor every gap sample counts from
         self._plan_session(sess)             # replace: the freshest view of the future
-        prog = sess.program
         if prog is not None and sess.walked and isinstance(prog.sites.get(sess.walked[-1]), VisitByCallsite):
             self._route_followup(sess)       # extend: the reply names the branch outright
         self.planner.wake()
+        # controller-side cost of this call: queue wait before classification, classify+plan
+        # at arrival (_advance), render+tokenize, and the post-reply re-plan
+        print(f"[ctl] {rid} queue_ms={(ob.t_classify - req.t_arrive) * 1000:.1f} " #type: ignore[union-attr]
+              f"advance_ms={ob.advance_ms:.1f} pre_ms={(t0 - t_pre) * 1000:.1f} " #type: ignore[union-attr]
+              f"post_ms={(time.perf_counter() - t_post) * 1000:.1f}", flush=True)
 
     def _advance(self, sess: LiveSession, req: PendingRequest) -> CallObservation:
         """A new call: close the open one, identify the callsite, extend walked."""
@@ -190,6 +193,8 @@ class Controller:
         site, extras = decompose(req.body)
         prog = self._bind(sess, site)
         site = prog.add_callsite(site)
+        if isinstance(site, ByLLMCallsite) and site.layout and relayout_body(req.body, site.layout):
+            _, extras = decompose(req.body)   # bindings and user_text as they go on the wire
         hit = "" if sess.predicted is None else f" predicted={'hit' if sess.predicted == site.key else 'miss'}"
         print(f"[call] {sess.id} #{len(sess.walked)} {site.label}{hit}", flush=True)
         sess.walked.append(site.key)
@@ -207,6 +212,18 @@ class Controller:
             self.planner.void_session(sess.id, sess.epoch)
             self._plan_session(sess)  # overlap the successors' work with this call's decode
         return sess.open_obs
+
+    def _relayout(self, sess: LiveSession, body: dict) -> None:
+        """Re-emit the request's call message in the open site's frozen binding order.
+        The learned order puts session-constant and accumulating values before fresh
+        ones, so the r-th call of a site extends the (r-1)-th call's prompt; the
+        rewrite is idempotent, and a different site's message is left alone unless it
+        shares the names, in which case _advance re-applies its own order."""
+        if sess.open_obs is None or sess.program is None:
+            return
+        site = sess.program.sites.get(sess.open_obs.key)
+        if isinstance(site, ByLLMCallsite) and site.layout:
+            relayout_body(body, site.layout)
 
     def _bind(self, sess: LiveSession, site: Callsite) -> Program:
         """Bind the session to its Program by content — the entry callsite identifies
@@ -269,11 +286,10 @@ class Controller:
         planner.submit(sess.id, sess.epoch, jobs)
 
     def _plan_call(self, sess: LiveSession, c: PredictedCall, anchor: float) -> List[Job]:
-        """One predicted call -> its speculative jobs: probe a fully-rebuilt routing
-        prompt (plus, alongside, the rendered prompt as ordinary create/promote work —
-        whichever lands first collapses the other's uncached cost), prefill a
-        fully-rebuilt call whole, else the longest reconstructable — or failing
-        that the static — prefix."""
+        """ For each call we expect to happen, start preparing it early:
+        - for visit by: Rebuild and test the routing prompt. At the same time, process the final rendered prompt normally. Whichever finishes first lets the other reuse its cached work.
+        - Preload the entire reconstructed call if possible. Otherwise, preload the longest prefix we can reconstruct—or, as a last resort, the fixed/static prefix.
+        """
         prog = sess.program
         site = prog.sites.get(c.key) if prog else None
         if prog is None or site is None:
@@ -304,27 +320,23 @@ class Controller:
             # fall through: the rendered prompt also queues as create/promote work,
             # so a blocked probe shrinks toward unc=0 as ordinary chunks land
         if complete:
-            toks = self.engine.tokenize(
-                self.engine.render([sysmsg, {"role": "user", "content": text}], tools=tools))
+            toks = self._planned_tokens(site, text, True, tools)
         else:
-            cut: Optional[List[int]] = None
-            if text:
-                rendered = self.engine.render([sysmsg, {"role": "user", "content": text}], tools=tools)
-                i = rendered.rfind(text)
-                if i >= 0:
-                    cut = self.engine.tokenize(rendered[:i + len(text)])[:-1]
+            cut = self._planned_tokens(site, text, False, tools) if text else None
             static = self._prefix_tokens(site)
             toks = cut if cut is not None and len(cut) > len(static) else static
-        if len(toks) < 16:  # shorter than a cache block: nothing to gain
+        if len(toks) < 16:  # shorter than a cache block: nothing to gain  #type: ignore
             return jobs
-        unc, host = self.engine.cost(toks)
-        if unc + host < self.engine._stride:
-            return jobs     # device-resident; if it gets evicted, a later refresh re-plans it
+        unc, host = self.engine.cost(toks) #type: ignore[union-attr]
         kind = "promote" if unc <= self.engine._stride and host > 0 else "create"
+        # a device-resident prefix has no work, but it still needs its eviction
+        # protection: it enters the plan as an already-done job
+        resident = unc + host < self.engine._stride
         jobs.append(Job(key=f"{sess.id}|{kind}|{c.key}", sid=sess.id, epoch=sess.epoch,
-                        site=c.key, kind=kind, toks=toks, prompt=None, p=c.p,
+                        site=c.key, kind=kind, toks=toks, prompt=None, p=c.p, #type: ignore[union-attr]
                         value=c.p * (unc + 0.8 * host), deadline=deadline, t90=t90,
-                        work=unc, host=host))
+                        work=unc, host=host, done_upto=len(toks) if resident else 0, #type: ignore
+                        state="done" if resident else "queued"))
         return jobs
 
     # ------------------------------------------------------------------ routing foresight
@@ -414,11 +426,35 @@ class Controller:
             self.planner.submit(sess.id, sess.epoch, jobs, extend=True)
             self.planner.wake()
 
+    def _planned_tokens(self, site: Callsite, text: str, complete: bool,
+                        tools: Optional[List[Dict[str, Any]]]) -> Optional[List[int]]:
+        """Token ids of the prompt a predicted call would send: the whole rendered
+        prompt when `text` is the complete user message, else the rendered prefix up
+        to the end of `text` minus a possibly split last token (None if the render
+        does not contain the text verbatim). Memoized; see _plan_tok."""
+        key = (site.key, complete, text)
+        hit = self._plan_tok.get(key, ...)
+        if hit is not ...:
+            self._plan_tok.move_to_end(key)
+            return hit
+        sysmsg = {"role": "system", "content": site.system_prompt}
+        rendered = self.engine.render([sysmsg, {"role": "user", "content": text}], tools=tools)
+        if complete:
+            toks: Optional[List[int]] = self.engine.tokenize(rendered)
+        else:
+            i = rendered.rfind(text)
+            toks = self.engine.tokenize(rendered[:i + len(text)])[:-1] if i >= 0 else None
+        self._plan_tok[key] = toks
+        if len(self._plan_tok) > self.PLAN_TOK_CACHE:
+            self._plan_tok.popitem(last=False)
+        return toks
+
     def _prefix_tokens(self, site: Callsite) -> List[int]:
         """Token ids of the callsite's static prompt head, rendered exactly as a real
-        request would be. Until the LCP has converged (prefix_n >= 2) only the system
-        region is trusted; the final token is dropped because the cut may split one."""
-        stable = site.stable_prefix if site.prefix_n >= 2 else ""
+        request would be. The head is structural (system message + the decompiler's
+        fixed_head: signature, sem, schema rows), so it is exact from the first
+        observation; the final token is dropped because the cut may split one."""
+        stable = site.fixed_head
         cached = self._prefix_tok.get(site.key)
         if cached is not None and cached[0] == stable:
             return cached[1]
@@ -450,7 +486,8 @@ class Controller:
             sess.pending.append(sess.open_obs)
         prog = sess.program
         if prog is not None and sess.walked and not sess.tainted:
-            prog.update_graph(sess.walked, sess.pending)
+            for k in prog.update_graph(sess.walked, sess.pending):
+                print(f"[layout] {prog.sites[k].label} order={prog.sites[k].layout}", flush=True)  # type: ignore[union-attr]
             n = prog.n_sessions
             if n >= REBUILD_AT and n & (n - 1) == 0:
                 prog.rebuild()
@@ -461,12 +498,16 @@ class Controller:
 
 
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True,
-               manage_only: bool = False, kv_tokens: Optional[int] = None) -> None:
+               manage_only: bool = False, kv_tokens: Optional[int] = None,
+               host_gb: Optional[int] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    kwargs: Dict[str, Any] = {"context_length": 16384}
+    kwargs: Dict[str, Any] = {"context_length": 16384,
+                              "radix_eviction_policy": "priority"}  # node.priority honored; see model.promote
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens   # real device pool cap (sglang server arg)
+    if host_gb is not None:
+        kwargs["host_cache_gb"] = host_gb        # host KV tier size (model.model.HOST_KV_GB default)
     ctrl = Controller(model, server, speculate=speculate, **kwargs)
     if ctrl.planner is not None:
         ctrl.planner.manage_only = manage_only
@@ -474,9 +515,12 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool =
 
 
 if __name__ == "__main__":
-    argv = sys.argv[1:]
-    kv = int(argv[argv.index("--kv") + 1]) if "--kv" in argv else None
-    pos = [a for i, a in enumerate(argv) if not a.startswith("--")
-           and (i == 0 or argv[i - 1] != "--kv")]
-    asyncio.run(main(*pos[:1], speculate="--no-spec" not in argv, #type: ignore
-                     manage_only="--manage-only" in argv, kv_tokens=kv))  # type: ignore
+    ap = argparse.ArgumentParser(description="Start the server")
+    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
+    ap.add_argument("--no-spec", action="store_true", help="plain prefix-cache serving (baseline)")
+    ap.add_argument("--manage-only", action="store_true", help="promotion/steering/probe only, no bulk creation")
+    ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
+    ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
+    a = ap.parse_args()
+    asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,
+                     host_gb=a.host))

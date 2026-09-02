@@ -2,26 +2,22 @@
 
 Every predicted future call becomes a Job carrying a deadline (its expected
 arrival) and its work split into creation (uncached tokens) and promotion (host
-tokens). Jobs run just-in-time — earliest deadline first, released at their
-latest start or whenever the engine goes idle — one at a time inside the
-engine's speculative-token budget, in stride-aligned chunks so a real admission
-preempts cleanly and a partially-resolved prompt extends incrementally.
+tokens). Jobs runs earliest deadline first.
 
-Under memory pressure the planner also warm-touches the highest-value cached
-prefixes about to fall off the device LRU (a prefill of a resident prefix costs
-~zero uncached tokens and refreshes the radix cache's LRU position), steering
-the engine's eviction toward blocks that are cheap to repair before their next
-use. An eviction the planner can repair in time is free; the objective is to
-minimize Σ p(call) × exposed prefill at its arrival.
-
-The engine is duck-typed (serving / spec_allowance / prefill / probe / cost /
-ledger / device_profile / promote / _stride); the module imports no engine code.
+The planner also owns the engine's eviction order. Every plan change pushes a
+priority map to the radix cache (engine.set_kv_priority): prefixes a queued job
+needs are protected, ranked by predicted next use (sooner = kept longer), and
+the bytes past a served call's structural head — binding values, copied upstream
+replies, generated tokens — are demoted to evict first; once the session ends they
+are retired, below everything a live session might still reuse. An eviction the planner
+can repair in time is free; the objective is to minimize Σ p(call) × exposed
+prefill at its arrival.
 """
 import asyncio
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -30,7 +26,7 @@ class Job:
     sid: str                    # session id
     epoch: int                  # session epoch at submission; a bump voids the job
     site: str                   # target callsite key
-    kind: str                   # "create" | "promote" | "probe" | "touch"
+    kind: str                   # "create" | "promote" | "probe"
     toks: List[int]             # full target token prefix
     prompt: Optional[str]       # probe jobs carry the rendered text
     p: float                    # probability the call happens
@@ -47,14 +43,12 @@ class Job:
 
 
 class KVPlanner:
-    TICK_S = 0.05               # planner heartbeat between wake events
+    TICK_S = 0.015               # planner heartbeat between wake events
     SAFETY_K = 0.5              # deadline tightening per unit of arrival spread
     CHUNK = 512                 # prefill chunk, rounded to the engine stride
     MAX_ATTEMPTS = 3            # aborted executions before a job is dropped
     STALE_SLACK_S = 5.0         # past t90 by this much: the call never came
-    STEER_AT = 0.85             # device-fill fraction that arms eviction steering
-    STEER_TAIL = 0.25           # LRU tail fraction considered endangered
-    MAX_TOUCH_PER_TICK = 4
+    PRIORITY_HORIZON_S = 120.0  # predict_tree's horizon: uses this far out rank lowest
     BACKOFF_ABORTS = 3          # consecutive kills that mean the engine has no headroom
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
 
@@ -63,8 +57,11 @@ class KVPlanner:
         self.manage_only = manage_only  # only promotion/steering/probe: no bulk creation
         self._jobs: Dict[str, Dict[str, Job]] = {}   # sid -> job key -> job
         self._wake = asyncio.Event()
-        self._last_over = 0   # ledger over-drift watermark: rising = the engine is evicting
         self._aborts_row = 0  # congestion signal: every recent execution was killed
+        self._dirty = False   # the priority map no longer mirrors the plan
+        self._demote: List[Tuple[List[int], int]] = []  # served (ids, fixed_len) awaiting demotion
+        self._served: Dict[str, List[Tuple[List[int], int]]] = {}  # sid -> its served prompts (private tails)
+        self._retire: List[Tuple[List[int], int]] = []  # ended sessions' prompts awaiting retirement
 
     # ------------------------------------------------------------------ intake
     def submit(self, sid: str, epoch: int, jobs: List[Job], extend: bool = False) -> None:
@@ -86,20 +83,27 @@ class KVPlanner:
                 continue
             if prev is not None and prev.state == "running":
                 prev.state = "void"      # stale epoch still executing
-            held[j.key] = j
+            held[j.key] = j              # replaces a done job too: its prefix was evicted
         if not extend:
             keep = {j.key for j in jobs}
             for k, prev in held.items():
                 if k not in keep and prev.state in ("queued", "running"):
                     prev.state = "void"
+        self._dirty = True
+
+    def note_served(self, sid: str, ids: List[int], fixed_len: int) -> None:
+        """A real call landed: everything past its structural head is transient, and
+        remembered as the session's private cache for retirement when it ends."""
+        self._demote.append((ids, fixed_len))
+        self._served.setdefault(sid, []).append((ids, fixed_len))
+        self._dirty = True
 
     def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
         """Ground-truth feedback: a call just arrived. Log how its plan stood —
         deadline error (positive = the call came after our deadline, the healthy
         direction) and prefill progress — so a run audits prediction validity
         end to end. `done` jobs are kept in the table for exactly this readout."""
-        js = [j for j in self._jobs.get(sid, {}).values()
-              if j.site == site and j.kind != "touch"]
+        js = [j for j in self._jobs.get(sid, {}).values() if j.site == site]
         if not js:
             print(f"[timing] {sid} unplanned site={site[:48]}", flush=True)
             return
@@ -116,10 +120,16 @@ class KVPlanner:
         for j in self._jobs.get(sid, {}).values():
             if j.epoch < keep_epoch and j.state in ("queued", "running"):
                 j.state = "void"
+        self._dirty = True
 
     def drop_session(self, sid: str) -> None:
+        """The session ended (quiet past its timeout, or closed): its jobs are void and
+        its private cache is retired — evicted before anything a live session might
+        still reuse (PBKV's lifecycle-aware tier)."""
         for j in self._jobs.pop(sid, {}).values():
             j.state = "void"
+        self._retire.extend(self._served.pop(sid, []))
+        self._dirty = True
 
     def wake(self) -> None:
         self._wake.set()
@@ -136,7 +146,7 @@ class KVPlanner:
             self._wake.clear()
             now = time.monotonic()
             self._gc(now)
-            self.steer(now)
+            await self.push_priorities(now)
             job = self._pick(now)
             if job is not None:
                 await self._execute(job)
@@ -158,8 +168,8 @@ class KVPlanner:
     def _pick(self, now: float) -> Optional[Job]:
         """EDF over the released AND affordable jobs — an unaffordable early deadline
         must not starve promotion work behind it. A job whose cached (device+host)
-        frontier extends past its progress is always affordable: promoting or touching
-        it costs no uncached compute, which is what the budget is denominated in.
+        frontier extends past its progress is always affordable: promoting it costs
+        no uncached compute, which is what the budget is denominated in.
         Uncached compute is additionally timing-gated: a chunk starts only when it can
         finish before any other session's predicted next arrival (the earliest queued
         deadline is that proxy) — a chunk that cannot is guaranteed to be killed by
@@ -172,8 +182,7 @@ class KVPlanner:
         rate = self.engine.device_profile.prefill_tps_loaded
         arrival: Dict[str, float] = {}   # sid -> earliest predicted next call
         for sid, held in self._jobs.items():
-            ds = [j.deadline for j in held.values()
-                  if j.state == "queued" and j.kind != "touch"]
+            ds = [j.deadline for j in held.values() if j.state == "queued"]
             if ds:
                 arrival[sid] = min(ds)
         for sid, held in self._jobs.items():
@@ -182,7 +191,7 @@ class KVPlanner:
                 if j.state != "queued" or not self._released(j, now):
                     continue
                 unc = self.engine.cost(j.toks)[0]
-                slotless = len(j.toks) - unc > j.done_upto   # promotion/touch: an RPC, no request
+                slotless = len(j.toks) - unc > j.done_upto   # promotion: an RPC, no request
                 if congested and j.kind != "probe" and not slotless:
                     continue
                 if best is not None and (j.deadline, -j.value) >= (best.deadline, -best.value):
@@ -243,6 +252,9 @@ class KVPlanner:
             ok = await self.engine.prefill(job.toks[:end], rid)
         if job.state == "void":
             return
+        if ok is None:               # promotion deferred behind real work: not a failure
+            job.state = "queued"
+            return
         if not ok:
             self._retry(job)
             return
@@ -273,41 +285,29 @@ class KVPlanner:
                 del self._jobs[sid]
 
     # ------------------------------------------------------------------ eviction steering
-    def steer(self, now: float) -> None:
-        """D2: under memory pressure, warm-touch the most valuable cached prefixes
-        sitting in the device LRU tail. score = p × resident / time-until-use — the
-        blocks whose eviction would be expensive to repair before their deadline."""
-        ledger = getattr(self.engine, "ledger", None)
-        if ledger is None:
+    async def push_priorities(self, now: float) -> None:
+        """Mirror the plan into the engine's eviction order: every prefix the newest
+        plan of each session needs (queued, running or already resident) is protected
+        with a rank that grows as its predicted use nears; served prompts queued by
+        note_served have their transient tail demoted."""
+        if not self._dirty:
             return
-        # The shadow under-counts device pressure (decode KV shares the real pool), so
-        # arm on either signal: shadow near capacity, or calibration just observed the
-        # engine demoting blocks we believed device-resident.
-        over = ledger.drift["over"]
-        pressured = (ledger.device_used_tokens() >= self.STEER_AT * ledger.device_cap_tokens()
-                     or over > self._last_over)
-        self._last_over = over
-        if not pressured:
-            return
-        endangered = ledger.device_tail(self.STEER_TAIL)
-        if not endangered:
-            return
-        cands = []
+        self._dirty = False
+        soonest: Dict[tuple, float] = {}
         for held in self._jobs.values():
-            for j in held.values():
-                if j.state != "queued" or j.kind == "touch":
-                    continue
-                n = ledger.resident_prefix(j.toks)
-                if n == 0 or not any(h in endangered for h in ledger.hashes(j.toks[:n])):
-                    continue
-                cands.append((j.p * n / max(j.deadline - now, 1.0), j, n))
-        cands.sort(key=lambda c: -c[0])
-        for score, j, n in cands[:self.MAX_TOUCH_PER_TICK]:
-            key = f"{j.sid}|touch|{j.site}"
-            held = self._jobs.setdefault(j.sid, {})
-            if key in held and held[key].state in ("queued", "running"):
+            live = [j for j in held.values() if j.state != "void"]
+            if not live:
                 continue
-            held[key] = Job(key=key, sid=j.sid, epoch=j.epoch, site=j.site, kind="touch",
-                            toks=j.toks[:n], prompt=None, p=j.p, value=score,
-                            deadline=now, t90=now + self.STALE_SLACK_S, work=0, host=0)
-            print(f"[steer] {j.site} resident={n} score={score:.1f}", flush=True)
+            newest = max(j.epoch for j in live)   # older epochs' done jobs are history
+            for j in live:
+                if j.epoch == newest:
+                    key = tuple(j.toks)
+                    soonest[key] = min(soonest.get(key, float("inf")), j.deadline)
+        h = self.PRIORITY_HORIZON_S
+        protect = [(list(k), 1 + int(10 * min(h, max(0.0, h - (d - now)))))
+                   for k, d in soonest.items()]
+        demote, self._demote = self._demote, []
+        retire, self._retire = self._retire, []
+        if protect or demote or retire:
+            await self.engine.set_kv_priority(demote, protect, f"plan-prio-{uuid.uuid4().hex[:8]}",
+                                              retire=retire)
