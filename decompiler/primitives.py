@@ -473,6 +473,7 @@ class Program:
         self.type_succ: Dict[str, Counter] = defaultdict(Counter)  # Node type -> symbol called on it.
         self.proto: Dict[str, Dict[str, Any]] = {}           # Symbol -> user-message layout template.
         self.seqs: Counter = Counter()                       # Completed call sequences.
+        self.history: List[Tuple[Tuple[str, ...], List[Tuple[Optional[float], float, int, List[float]]]]] = []  # per session: keys, per-call (gap before, engine_s, turns, tool gaps); replayed by rebuild
         self.ctx = TrieNode()
         self.n_sessions = 0
 
@@ -517,6 +518,9 @@ class Program:
             return []
         self.seqs[tuple(walked)] += 1
         self.n_sessions += 1
+        self.history.append((tuple(walked), [
+            (ob.t_arrive - obs[i - 1].t_done if i else None, ob.engine_s, ob.n_turns, list(ob.tool_gaps))
+            for i, ob in enumerate(obs)]))
         q, prev = START, None
         for i, (key, ob) in enumerate(zip(walked, obs)):
             nid = self._step(q, key)
@@ -630,8 +634,10 @@ class Program:
         return rule if n >= 2 and 2 * n >= sum(rules.values()) else None
 
     def _stability(self, key: str, name: str) -> int:
-        """How long a binding's bytes stay valid as a cache prefix: 0 across sessions
-        (const), 1 within a session (copy), 2 growing within a session (extend),
+        """How long a binding's bytes stay valid as a cache prefix:
+        0 across sessions (const), 
+        1 within a session (copy), 
+        2 growing within a session (extend),
         3 fresh every call (anything else, or unsettled)."""
         rule = self._dominant(key, name)
         return STABILITY.get(rule.partition(":")[0], 3) if rule else 3
@@ -806,6 +812,18 @@ class Program:
             for s, (c, cnt) in sorted(st.kids.items()):
                 graph[sid].append(Edge(endpoint=ids[id(c)], taken_freq=cnt))
         self.nodes, self.graph, self.exit_freq = nodes, graph, exits
+        # The new states start with empty timing; re-fold every recorded session onto
+        # them so state-specific gaps and durations survive the rebuild.
+        for keys, calls in self.history:
+            q = START
+            for key, (gap, engine_s, turns, tool_gaps) in zip(keys, calls):
+                nq = self._step_ro(q, key)
+                if gap is not None:
+                    self.edge(q, nq).gap_time.append(gap)
+                node = self.nodes.get(nq)
+                if node is not None:
+                    node.stats.observe(engine_s, turns, tool_gaps)
+                q = nq
 
     # Prediction
     def _dist(self, walked: List[str]) -> Tuple[Dict[str, float], float, int]:

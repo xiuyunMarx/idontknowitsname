@@ -16,7 +16,7 @@ import json
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
-from sglang.srt.entrypoints.engine import Engine as SGLangEngine
+from sglang.srt.entrypoints.engine import Engine as SGLangEngine #type: ignore
 
 from model.device_profiler import DeviceProfile
 import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
@@ -490,7 +490,7 @@ class Engine:
 
     async def set_kv_priority(self, demote: List[Tuple[List[int], int]],
                               protect: List[Tuple[List[int], int]], request_id: str,
-                              retire: List[Tuple[List[int], int]] = ()) -> bool:
+                              retire: List[Tuple[List[int], int]] = []) -> bool:
         """Push the eviction map (model.promote.kv_priority) through a scheduler RPC."""
         rpc = functools.partial(self.engine.collective_rpc, "kv_priority",
                                 demote=demote, protect=protect, rid=request_id, retire=list(retire))

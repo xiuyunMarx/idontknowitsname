@@ -21,15 +21,19 @@ chunk stays free afterwards (prefetch_prefix reserve) — locked promotion slots
 sit outside the scheduler's admission budget, so without the reserve concurrent
 promotions can lock the whole pool and the next prefill dies with OOM.
 
-Eviction steering (`kv_priority` RPC), KVFlow's scheme on SGLang's own
-`TreeNode.priority`: four bands, lowest evicted first.
-  RETIRED (-2)     a session's transient bytes once the session ended (PBKV's
+Eviction steering (`kv_priority` RPC) on SGLang's own `TreeNode.priority`:
+four bands on the device tier, lowest evicted first, LRU inside a band.
+  RETIRED (-2)     a session's private bytes once the session ended (PBKV's
                    lifecycle tier): no live session can reuse them
-  TRANSIENT (-1)   bytes past a callsite's structural head once the request is
-                   served: binding values, copied upstream replies, generated tokens
+  TRANSIENT (-1)   the one-off tail of a served prompt, past the head the flow
+                   rules can rebuild: fresh binding values, generated tokens
   0                anything unclassified (request-priority inserts 0..2 collapse here)
-  PLAN_BASE + k    prefixes a planned job needs; k grows as the predicted use nears
-Shared nodes take the max over sessions (KVFlow's min-steps, sign flipped).
+  PLAN_BASE + s    prefixes a planned job needs; s is the planner's reuse score,
+                   p(call) discounted by the predicted time to its arrival, summed
+                   over every session whose plan covers the node (PBKV's
+                   cross-workflow aggregation), so shared heads outrank private history
+The host tier is not steered (HostStrategy): retired first, then plain LRU, so a
+private prefix the device gave up stays reloadable until recency retires it.
 """
 import time
 from typing import Dict, List, Sequence, Tuple
@@ -38,6 +42,7 @@ from sglang.srt.managers.io_struct import RpcReqOutput
 from sglang.srt.managers.scheduler import Scheduler
 from sglang.srt.mem_cache.base_prefix_cache import MatchPrefixParams
 from sglang.srt.mem_cache.evict_policy import EvictionStrategy
+from sglang.srt.mem_cache.hiradix_cache import HiRadixCache
 
 RETIRED = -2
 TRANSIENT = -1
@@ -50,12 +55,20 @@ class Deferred(RuntimeError):
 
 
 class PlanStrategy(EvictionStrategy):
-    """(band, LRU): retired first, transient next, unclassified, then planned (farthest use first)."""
+    """Device tier, (band, LRU): retired, transient, unclassified, then planned by rising score."""
 
     def get_priority(self, node) -> Tuple[int, float]:
         p = node.priority
         band = p if p < 0 else (0 if p < PLAN_BASE else p)
         return (band, node.last_access_time)
+
+
+class HostStrategy(EvictionStrategy):
+    """Host tier, (band, LRU): retired first, everything else by recency. The plan
+    never reorders the host tier: it is the safety net every policy shares."""
+
+    def get_priority(self, node) -> Tuple[int, float]:
+        return (RETIRED if node.priority == RETIRED else 0, node.last_access_time)
 
 
 def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = False) -> None:
@@ -120,17 +133,37 @@ def kv_priority(self: Scheduler, demote: List[Tuple[List[int], int]],
     planned.clear()
     demoted = sum(_band_tail(tc, ids, fixed_len, TRANSIENT) for ids, fixed_len in demote)
     retired = sum(_band_tail(tc, ids, fixed_len, RETIRED) for ids, fixed_len in retire)
+    acc: Dict[int, int] = {}      # node -> summed score of every planned prefix that covers it
     for ids, k in protect:
         m = tc.match_prefix(MatchPrefixParams(key=tc._to_radix_key(ids)))
         node = m.last_host_node      # backed-up-but-evicted nodes count too
         while node is not tc.root_node:
             if id(node) not in planned:
                 planned[id(node)] = (node, node.priority)
-            node.priority = max(node.priority, PLAN_BASE + k)
+            acc[id(node)] = acc.get(id(node), 0) + k
             node = node.parent
+    for nid, k in acc.items():
+        node = planned[nid][0]
+        node.priority = max(node.priority, PLAN_BASE + k)
     print(f"[priority] {rid} demote={len(demote)}/{demoted}n retire={len(retire)}/{retired}n "
           f"protect={len(protect)} nodes={len(planned)} ms={(time.perf_counter() - t0) * 1000:.1f}", flush=True)
 
+
+_HOST = HostStrategy()
+_orig_evict_host = HiRadixCache.evict_host
+
+
+def _evict_host(self, num_tokens: int):
+    """HiRadixCache.evict_host under HostStrategy; the device strategy is restored after."""
+    saved = self.eviction_strategy
+    self.eviction_strategy = _HOST
+    try:
+        return _orig_evict_host(self, num_tokens)
+    finally:
+        self.eviction_strategy = saved
+
+
+HiRadixCache.evict_host = _evict_host   # type: ignore[assignment]
 
 _orig_rpc = Scheduler.handle_rpc_request
 

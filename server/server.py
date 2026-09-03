@@ -172,8 +172,17 @@ class Controller:
         t_post = time.perf_counter()
         prog = sess.program
         site = prog.sites.get(ob.key) if prog is not None else None
-        if site is not None:                 # past the structural head, the prompt is transient
-            self.planner.note_served(sess.id, ids, len(self._prefix_tokens(site)))
+        if site is not None:
+            # Past the head the flow rules can rebuild (header | session constants |
+            # history so far) the prompt is one-off: the fresh bindings and the reply.
+            # Only that tail is demoted; the head stays in the normal band.
+            head = len(self._prefix_tokens(site))
+            if prog is not None:
+                text, _ = prog.resolve_user(ob.key, list(sess.pending))
+                cut = self._planned_tokens(site, text, False, getattr(site, "tool_schema", None)) if text else None
+                if cut is not None and len(cut) > head:
+                    head = len(cut)
+            self.planner.note_served(sess.id, ids, head)
         sess.plan_anchor = ob.t_done         # the anchor every gap sample counts from
         self._plan_session(sess)             # replace: the freshest view of the future
         if prog is not None and sess.walked and isinstance(prog.sites.get(sess.walked[-1]), VisitByCallsite):
@@ -498,9 +507,6 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool =
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    # ours steers eviction through node.priority (see model.promote); the baseline must be
-    # SGLang's plain LRU — under "priority", typed retries (PRIORITY_CONT) would make every
-    # prefix they touch sticky and the baseline would stop being LRU.
     kwargs: Dict[str, Any] = {"context_length": 16384,
                               "radix_eviction_policy": "priority" if speculate else "lru"}
     if kv_tokens:
@@ -522,7 +528,7 @@ if __name__ == "__main__":
     ap.add_argument("--manage-only", action="store_true", help="promotion/steering/probe only, no bulk creation")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
-    ap.add_argument("--hicache-io", choices=["direct", "kernel"], default=None,
+    ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
     a = ap.parse_args()
     asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,

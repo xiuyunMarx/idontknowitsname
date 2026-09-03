@@ -4,16 +4,18 @@ Every predicted future call becomes a Job carrying a deadline (its expected
 arrival) and its work split into creation (uncached tokens) and promotion (host
 tokens). Jobs runs earliest deadline first.
 
-The planner also owns the engine's eviction order. Every plan change pushes a
-priority map to the radix cache (engine.set_kv_priority): prefixes a queued job
-needs are protected, ranked by predicted next use (sooner = kept longer), and
-the bytes past a served call's structural head — binding values, copied upstream
-replies, generated tokens — are demoted to evict first; once the session ends they
-are retired, below everything a live session might still reuse. An eviction the planner
-can repair in time is free; the objective is to minimize Σ p(call) × exposed
-prefill at its arrival.
+The planner also owns the engine's device eviction order. Every plan change
+pushes a priority map to the radix cache (engine.set_kv_priority): each prefix a
+queued job needs carries a reuse score, p(call) discounted by the predicted time
+to its arrival (SCORE_TAU_S), which the engine sums over the sessions covering a
+node; the one-off tail of a served prompt — the bytes past the head the flow
+rules can rebuild: fresh binding values, generated tokens — is demoted to evict
+first; once the session ends its private bytes are retired, below everything a
+live session might still reuse. An eviction the planner can repair in time is
+free; the objective is to minimize Σ p(call) × exposed prefill at its arrival.
 """
 import asyncio
+import math
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -48,7 +50,8 @@ class KVPlanner:
     CHUNK = 512                 # prefill chunk, rounded to the engine stride
     MAX_ATTEMPTS = 3            # aborted executions before a job is dropped
     STALE_SLACK_S = 5.0         # past t90 by this much: the call never came
-    PRIORITY_HORIZON_S = 120.0  # predict_tree's horizon: uses this far out rank lowest
+    SCORE_TAU_S = 60.0          # eviction score decay: a prefix due in tau seconds counts 1/e of one due now
+    SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
     BACKOFF_ABORTS = 3          # consecutive kills that mean the engine has no headroom
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
@@ -93,8 +96,9 @@ class KVPlanner:
         self._dirty = True
 
     def note_served(self, sid: str, ids: List[int], fixed_len: int) -> None:
-        """A real call landed: everything past its structural head is transient, and
-        remembered as the session's private cache for retirement when it ends."""
+        """A real call landed: everything past `fixed_len` (the head the flow rules
+        can rebuild) is transient, and the prompt is remembered as the session's
+        private cache for retirement when it ends."""
         self._demote.append((ids, fixed_len))
         self._served.setdefault(sid, []).append((ids, fixed_len))
         self._dirty = True
@@ -295,14 +299,18 @@ class KVPlanner:
 
     # ------------------------------------------------------------------ eviction steering
     async def push_priorities(self, now: float) -> None:
-        """Mirror the plan into the engine's eviction order: every prefix the newest
-        plan of each session needs (queued, running or already resident) is protected
-        with a rank that grows as its predicted use nears; served prompts queued by
-        note_served have their transient tail demoted."""
+        """Mirror the plan into the engine's eviction order. Every prefix the newest
+        plan of each session needs (queued, running or already resident) carries a
+        reuse score p * exp(-dt / tau): the probability the call happens, discounted by
+        how far away its predicted arrival is. The engine sums the scores of every
+        prefix that covers a node (PBKV's cross-workflow aggregation), so a header
+        shared by many sessions outranks any single session's private history, and
+        among private prefixes the sooner and surer use is kept longest. Served
+        prompts queued by note_served have their one-off tail demoted."""
         if not self._dirty:
             return
         self._dirty = False
-        soonest: Dict[tuple, float] = {}
+        score: Dict[tuple, float] = {}
         for held in self._jobs.values():
             live = [j for j in held.values() if j.state != "void"]
             if not live:
@@ -311,10 +319,9 @@ class KVPlanner:
             for j in live:
                 if j.epoch == newest:
                     key = tuple(j.toks)
-                    soonest[key] = min(soonest.get(key, float("inf")), j.deadline)
-        h = self.PRIORITY_HORIZON_S
-        protect = [(list(k), 1 + int(10 * min(h, max(0.0, h - (d - now)))))
-                   for k, d in soonest.items()]
+                    s = j.p * math.exp(-max(0.0, j.deadline - now) / self.SCORE_TAU_S)
+                    score[key] = max(score.get(key, 0.0), s)   # one prefix, one session: its best job
+        protect = [(list(k), max(1, int(self.SCORE_SCALE * s))) for k, s in score.items()]
         demote, self._demote = self._demote, []
         retire, self._retire = self._retire, []
         if protect or demote or retire:

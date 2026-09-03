@@ -31,6 +31,7 @@ Wikipedia results are cached per query so reruns are offline and deterministic).
 import os;
 import sys;
 import hashlib;
+import time;
 import requests;
 import from jaclang.byllm.llm { InterceptorLLM }
 
@@ -43,6 +44,7 @@ glob MAX_ROUNDS: int = int(os.environ.get("FC_ROUNDS") or "6");
 glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "6");
 glob PASSAGE_CHARS: int = int(os.environ.get("FC_PASSAGE_CHARS") or "4000");
 glob CACHE_DIR: str = os.environ.get("FC_CACHE_DIR") or os.path.join("benchmark", "reproduce", "wiki_cache");
+glob TOOL_DELAY_S: float = float(os.environ.get("FC_TOOL_DELAY_S") or "0");   # simulated search latency per query (cache hits included)
 glob WIKIPEDIA_API: str = "https://en.wikipedia.org/w/api.php";
 
 
@@ -113,12 +115,7 @@ node ClaimAnalyzer {
         visitor.round += 1;
         visitor.expected_evidences = 0;
         visitor.completed_evidences = 0;
-        try {
-            proposed = self.decompose_claim(visitor.claim, visitor.evidences, MAX_SCOUTS);
-        } except Exception as e {
-            visitor.errors.append(f"round {visitor.round} decomposition failed: {e}");
-            proposed = [visitor.claim];
-        }
+        proposed = self.decompose_claim(visitor.claim, visitor.evidences, MAX_SCOUTS);
 
         # A malformed or overlong model result cannot change the graph's bound.
         visitor.questions = [q.strip() for q in proposed if q.strip()][:MAX_SCOUTS];
@@ -156,14 +153,21 @@ node EvidenceScout {
         # and byte-identical; the first run of a query fetches from Wikipedia.
         os.makedirs(CACHE_DIR, exist_ok=True);
         path = os.path.join(CACHE_DIR, hashlib.md5(query.encode()).hexdigest() + ".txt");
+        t0 = time.monotonic();
         if os.path.exists(path) {
             with open(path) as f {
-                return f.read();
+                text = f.read();
+            }
+        } else {
+            text = self.fetch(query);
+            with open(path, "w") as f {
+                f.write(text);
             }
         }
-        text = self.fetch(query);
-        with open(path, "w") as f {
-            f.write(text);
+        # every search costs at least TOOL_DELAY_S of wall time, live or cached
+        remaining = TOOL_DELAY_S - (time.monotonic() - t0);
+        if remaining > 0 {
+            time.sleep(remaining);
         }
         return text;
     }

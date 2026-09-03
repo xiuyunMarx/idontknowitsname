@@ -126,7 +126,7 @@ def row(tag, name, ss):
           f"{100 * (prompt - dev - host) / prompt:6.1f}%")
 
 
-def report(tag, records, serves, counters):
+def report(tag, records, serves, counters, concurrency=1):
     ok = [r for r in records if r["phase"] == "measured" and r["rc"] == 0]
     n_fail = sum(r["phase"] == "measured" and r["rc"] != 0 for r in records)
     print(f"\n[{tag}] ==== {len(ok)} measured sessions, failed={n_fail}")
@@ -137,6 +137,11 @@ def report(tag, records, serves, counters):
               f"rounds mean={statistics.mean(r['rounds'] for r in ok):.2f} "
               f"findings mean={statistics.mean(r['findings'] for r in ok):.1f} "
               f"accuracy={acc}/{len(ok)}")
+        c = concurrency
+        inner = [r["wall"] for r in ok if c <= r["idx"] < len(ok) - c]   # drop the synchronized first wave and the draining last wave
+        if len(inner) >= 4:
+            print(f"[{tag}] JCT steady (sessions {c}..{len(ok) - c - 1}) p50={pct(inner, .5):6.1f}s p95={pct(inner, .95):6.1f}s "
+                  f"mean={statistics.mean(inner):6.1f}s n={len(inner)}")
     if not serves:
         print(f"[{tag}] (no serve lines joined)")
         return
@@ -154,7 +159,8 @@ def report(tag, records, serves, counters):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--sessions", type=int, default=12)
+    ap.add_argument("--sessions", type=int, default=4,
+                    help="measured sessions PER LANE; total = concurrency * sessions, so every lane stays busy for the whole run")
     ap.add_argument("--concurrency", type=int, default=4, help="parallel session lanes")
     ap.add_argument("--warmup", type=int, default=2, help="sequential learning sessions, excluded")
     ap.add_argument("--claims", default=CLAIMS)
@@ -166,10 +172,12 @@ def main():
     args = ap.parse_args()
 
     claims = load_claims(args.claims)
-    assert len(claims) >= args.sessions + args.warmup, "not enough claims"
+    total = args.concurrency * args.sessions
+    assert len(claims) >= total + args.warmup, \
+        f"{total} measured sessions need {total + args.warmup} distinct claims, have {len(claims)} (a repeated claim would share its prefix across sessions)"
     tag = f"{args.tag}/fact_check" + (f"x{args.concurrency}" if args.concurrency > 1 else "")
     logdir = args.logdir or tempfile.mkdtemp(prefix="fact-")
-    print(f"[{tag}] {args.warmup} warmup + {args.sessions} sessions in {args.concurrency} lane(s); "
+    print(f"[{tag}] {args.warmup} warmup + {total} sessions ({args.sessions} per lane) in {args.concurrency} lane(s); "
           f"logs in {logdir}", flush=True)
     records, lock = [], threading.Lock()
     for i in range(args.warmup):
@@ -177,7 +185,7 @@ def main():
         records.append(r)
         print(f"[{tag}] warmup {i} rc={r['rc']} wall={r['wall']}s rounds={r['rounds']} "
               f"verdict={r['verdict']}/{r['label']}", flush=True)
-    todo = list(range(args.sessions))
+    todo = list(range(total))
 
     def lane():
         while True:
@@ -200,7 +208,7 @@ def main():
     if args.server_log and os.path.exists(args.server_log):
         time.sleep(1.0)   # let the server flush the last session's lines
         serves, counters = parse_log(args.server_log, {r["pid"] for r in records if r["phase"] == "measured"})
-    report(tag, records, serves, counters)
+    report(tag, records, serves, counters, args.concurrency)
 
 
 if __name__ == "__main__":
