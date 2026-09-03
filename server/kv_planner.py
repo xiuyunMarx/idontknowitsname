@@ -40,7 +40,7 @@ class Job:
     attempts: int = 0           # aborted executions since the last progress
     state: str = "queued"       # queued | running | done | void
     on_result: Optional[Callable[[Any, "Job"], None]] = None  # probe follow-up hook
-
+    cooldown_cycles: int = 0    # planner cycles to skip after a no-room promotion refusal
 
 class KVPlanner:
     TICK_S = 0.015               # planner heartbeat between wake events
@@ -51,6 +51,7 @@ class KVPlanner:
     PRIORITY_HORIZON_S = 120.0  # predict_tree's horizon: uses this far out rank lowest
     BACKOFF_ABORTS = 3          # consecutive kills that mean the engine has no headroom
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
+    NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
 
     def __init__(self, engine, manage_only: bool = False) -> None:
         self.engine = engine
@@ -163,14 +164,16 @@ class KVPlanner:
                 or now >= self._latest_start(job, now) - self.RELEASE_SLACK_S)
 
     def _pick(self, now: float) -> Optional[Job]:
-        """EDF over the released AND affordable jobs — an unaffordable early deadline
-        must not starve promotion work behind it. A job whose cached (device+host)
-        frontier extends past its progress is always affordable: promoting it costs
-        no uncached compute, which is what the budget is denominated in.
-        Uncached compute is additionally timing-gated: a chunk starts only when it can
-        finish before any other session's predicted next arrival (the earliest queued
-        deadline is that proxy) — a chunk that cannot is guaranteed to be killed by
-        the very request it delays, and the abort lands on that request's TTFT."""
+        """Schedule ready jobs that fit within the compute budget, prioritizing the
+        one with the earliest deadline. Do not let an over-budget job with an early
+        deadline block other useful work.
+
+        A job is always affordable if its next portion has already been computed and
+        cached on the device or host, because advancing it requires no new compute.
+
+        Only start new, uncached computation if it can finish before another session
+        is expected to submit a request. 
+        """
 
         congested = self._aborts_row >= self.BACKOFF_ABORTS and self.engine.serving
         best: Optional[Job] = None
@@ -187,6 +190,9 @@ class KVPlanner:
             for j in held.values():
                 if j.state != "queued" or not self._released(j, now):
                     continue
+                if j.cooldown_cycles > 0:      # refused for space recently; one cycle per pick
+                    j.cooldown_cycles -= 1
+                    continue
                 unc = self.engine.cost(j.toks)[0]
                 slotless = len(j.toks) - unc > j.done_upto   # promotion: an RPC, no request
                 if congested and j.kind != "probe" and not slotless:
@@ -198,9 +204,6 @@ class KVPlanner:
                         continue
                 elif len(j.toks) - unc <= j.done_upto:  # next chunk is uncached compute
                     need = min(self._chunk(), max(1, unc))
-                    # a queued probe on the same site makes this its ammunition:
-                    # small enabling chunks may ride the one-shot lane, shrinking
-                    # the probe's uncached suffix below its own admission cap
                     enabling = any(p.kind == "probe" and p.state == "queued"
                                    and p.site == j.site for p in held.values())
                     if self.manage_only and not enabling:
@@ -251,6 +254,8 @@ class KVPlanner:
             return
         if ok is None:               # promotion deferred behind real work: not a failure
             job.state = "queued"
+            if self.engine.promote_no_room:
+                self._cool_promotions()
             return
         if not ok:
             self._retry(job)
@@ -268,6 +273,13 @@ class KVPlanner:
         self._aborts_row += 1
         job.attempts += 1
         job.state = "void" if job.attempts >= self.MAX_ATTEMPTS else "queued"
+
+    def _cool_promotions(self) -> None:
+        """No room is pool-wide, so pause all promotions for NO_ROOM_COOLDOWN_CYCLES."""
+        for held in self._jobs.values():
+            for j in held.values():
+                if j.state == "queued" and len(j.toks) - self.engine.cost(j.toks)[0] > j.done_upto:
+                    j.cooldown_cycles = self.NO_ROOM_COOLDOWN_CYCLES
 
     def _gc(self, now: float) -> None:
         # done jobs stay until replaced or the session drops: note_arrival reads

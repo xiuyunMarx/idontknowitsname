@@ -112,6 +112,7 @@ def kv_priority(self: Scheduler, demote: List[Tuple[List[int], int]],
     planned: Dict[int, tuple] = getattr(tc, "_planned", None)
     if planned is None:
         tc.eviction_strategy = PlanStrategy()
+        tc.demand_load_partial = True   # demand loads: band-ordered eviction, partial load when quota-limited
         planned = tc._planned = {}
     for node, prev in planned.values():
         if node.priority >= PLAN_BASE:

@@ -151,7 +151,10 @@ class Engine:
         if host_gb > 0:
             engine_kwargs.setdefault("enable_hierarchical_cache", True)
             engine_kwargs.setdefault("hicache_size", host_gb) 
-            engine_kwargs.setdefault("hicache_io_backend", "direct") # DMA copy
+            # "kernel" (sglang default): one copy kernel per layer. "direct" ran torch
+            # gather/scatter per layer per K/V: ~0.75 GB/s host->device at c=4, 370 ms per
+            # 2k-token demand load, and it slowed decode 25% (measured 2026-09-02).
+            engine_kwargs.setdefault("hicache_io_backend", "kernel")
         self.name = model_name
         self.engine = SGLangEngine(model_path=model_name, **engine_kwargs)
 
@@ -163,6 +166,7 @@ class Engine:
         self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
         self.SPEC_TIMEOUT_S = 20.0
         self.tbt_ms: Optional[float] = None  # profiled single-stream decode step time (planner's time unit)
+        self.promote_no_room = False  # last promote() deferral was for device space, not queue depth
         self.prefill_rate_tps: Optional[float] = None  # EMA of idle uncached-prefill throughput
         self._spec_tasks: Dict[asyncio.Task, int] = {}  # speculative consumers in flight -> their uncached-token cost
         if device_kv_tokens is None:
@@ -474,6 +478,7 @@ class Engine:
             await asyncio.get_running_loop().run_in_executor(None, rpc)
         except AssertionError as e:
             if "deferred" in str(e):
+                self.promote_no_room = "no room" in str(e)
                 print(f"[promote-deferred] {request_id} {e}", flush=True)
                 return None
             print(f"[promote] {request_id} failed: {e}", flush=True)

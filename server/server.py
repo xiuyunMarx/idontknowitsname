@@ -97,8 +97,7 @@ class Controller:
                 await self._step(batch)           # classification only; returns immediately
 
     async def _sweep(self) -> None:
-        """Finalize sessions that have gone quiet; the timeout tightens once the
-        program says the session is probably over."""
+        """Finalize sessions that have gone quiet; """
         while True:
             await asyncio.sleep(SWEEP_S)
             now = time.monotonic()
@@ -107,7 +106,7 @@ class Controller:
                     continue
                 t = T_BASE
                 if sess.program is not None and sess.program.end_prob(sess.walked) > END_PROB_SHORT:
-                    t = T_SHORT
+                    t = T_SHORT # shorter timeout once probably done
                 if now - sess.last_seen > t:
                     self._finalize(sid)
 
@@ -496,15 +495,20 @@ class Controller:
 
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True,
                manage_only: bool = False, kv_tokens: Optional[int] = None,
-               host_gb: Optional[int] = None) -> None:
+               host_gb: Optional[int] = None, hicache_io: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
+    # ours steers eviction through node.priority (see model.promote); the baseline must be
+    # SGLang's plain LRU — under "priority", typed retries (PRIORITY_CONT) would make every
+    # prefix they touch sticky and the baseline would stop being LRU.
     kwargs: Dict[str, Any] = {"context_length": 16384,
-                              "radix_eviction_policy": "priority"}  # node.priority honored; see model.promote
+                              "radix_eviction_policy": "priority" if speculate else "lru"}
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens   # real device pool cap (sglang server arg)
     if host_gb is not None:
         kwargs["host_cache_gb"] = host_gb        # host KV tier size (model.model.HOST_KV_GB default)
+    if hicache_io:
+        kwargs["hicache_io_backend"] = hicache_io  # host<->device copy path; model.model defaults to "direct"
     ctrl = Controller(model, server, speculate=speculate, **kwargs)
     if ctrl.planner is not None:
         ctrl.planner.manage_only = manage_only
@@ -518,6 +522,8 @@ if __name__ == "__main__":
     ap.add_argument("--manage-only", action="store_true", help="promotion/steering/probe only, no bulk creation")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
+    ap.add_argument("--hicache-io", choices=["direct", "kernel"], default=None,
+                    help="HiCache host<->device copy backend (default: kernel)")
     a = ap.parse_args()
     asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,
-                     host_gb=a.host))
+                     host_gb=a.host, hicache_io=a.hicache_io))
