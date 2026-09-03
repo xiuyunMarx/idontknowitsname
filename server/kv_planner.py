@@ -1,19 +1,4 @@
-"""Deadline-driven KV planner: Belady with repair.
-
-Every predicted future call becomes a Job carrying a deadline (its expected
-arrival) and its work split into creation (uncached tokens) and promotion (host
-tokens). Jobs runs earliest deadline first.
-
-The planner also owns the engine's device eviction order. Every plan change
-pushes a priority map to the radix cache (engine.set_kv_priority): each prefix a
-queued job needs carries a reuse score, p(call) discounted by the predicted time
-to its arrival (SCORE_TAU_S), which the engine sums over the sessions covering a
-node; the one-off tail of a served prompt — the bytes past the head the flow
-rules can rebuild: fresh binding values, generated tokens — is demoted to evict
-first; once the session ends its private bytes are retired, below everything a
-live session might still reuse. An eviction the planner can repair in time is
-free; the objective is to minimize Σ p(call) × exposed prefill at its arrival.
-"""
+"""Deadline-driven KV planner: Belady with repair."""
 import asyncio
 import math
 import time

@@ -455,10 +455,7 @@ class Controller:
         return toks
 
     def _prefix_tokens(self, site: Callsite) -> List[int]:
-        """Token ids of the callsite's static prompt head, rendered exactly as a real
-        request would be. The head is structural (system message + the decompiler's
-        fixed_head: signature, sem, schema rows), so it is exact from the first
-        observation; the final token is dropped because the cut may split one."""
+        """Token ids of the callsite's static prompt head, rendered exactly as a real request would be. """
         stable = site.fixed_head
         cached = self._prefix_tok.get(site.key)
         if cached is not None and cached[0] == stable:
