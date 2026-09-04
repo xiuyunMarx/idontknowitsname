@@ -910,7 +910,7 @@ class Program:
         return site.exec_stats.duration_q(q) if site is not None else 0.0
 
     def predict(self, walked: List[str], max_steps: int = 8) -> List[Tuple[str, float, float]]:
-        """Predict likely next calls, probabilities, and arrival times."""
+        """Greedy Predict likely next calls, probabilities, and arrival times, Dead code now"""
         ctx = list(walked)
         q = self._trace(ctx)
         out: List[Tuple[str, float, float]] = []
