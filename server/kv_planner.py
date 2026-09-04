@@ -3,8 +3,8 @@ import asyncio
 import math
 import time
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -13,9 +13,8 @@ class Job:
     sid: str                    # session id
     epoch: int                  # session epoch at submission; a bump voids the job
     site: str                   # target callsite key
-    kind: str                   # "create" | "promote" | "probe"
+    kind: str                   # "create" | "promote"
     toks: List[int]             # full target token prefix
-    prompt: Optional[str]       # probe jobs carry the rendered text
     p: float                    # probability the call happens
     value: float                # p × exposed-prefill tokens saved if this job lands
     deadline: float             # monotonic: expected arrival, safety-tightened
@@ -23,10 +22,8 @@ class Job:
     work: int                   # uncached tokens at submission
     host: int                   # promotable host-tier tokens at submission
     done_upto: int = 0          # chunk progress: token index already prefilled
-    chunk_cap: int = 0          # per-pick chunk limit (one-shot lane); 0 = full CHUNK
     attempts: int = 0           # aborted executions since the last progress
     state: str = "queued"       # queued | running | done | void
-    on_result: Optional[Callable[[Any, "Job"], None]] = None  # probe follow-up hook
     cooldown_cycles: int = 0    # planner cycles to skip after a no-room promotion refusal
 
 class KVPlanner:
@@ -43,7 +40,7 @@ class KVPlanner:
 
     def __init__(self, engine, manage_only: bool = False) -> None:
         self.engine = engine
-        self.manage_only = manage_only  # only promotion/steering/probe: no bulk creation
+        self.manage_only = manage_only  # only promotion/steering: no bulk creation
         self._jobs: Dict[str, Dict[str, Job]] = {}   # sid -> job key -> job
         self._wake = asyncio.Event()
         self._aborts_row = 0  # congestion signal: every recent execution was killed
@@ -57,18 +54,17 @@ class KVPlanner:
         """Adopt a session's fresh job set. Replace semantics: a previously queued
         job not re-submitted is void — its branch collapsed. A re-submitted key with
         longer toks keeps its chunk progress (progressive prefill) and refreshed
-        timing; `extend` merges instead of replacing (probe follow-ups add jobs)."""
+        timing; `extend` merges instead of replacing (routing follow-ups add jobs)."""
         held = self._jobs.setdefault(sid, {})
         for j in jobs:
             prev = held.get(j.key)
             if prev is not None and prev.state in ("queued", "running") and prev.epoch == j.epoch:
                 if len(j.toks) > len(prev.toks):
-                    prev.toks, prev.prompt = j.toks, j.prompt
+                    prev.toks = j.toks
                     prev.attempts = 0
                 prev.p, prev.value = j.p, j.value
                 prev.deadline, prev.t90 = j.deadline, j.t90
                 prev.work, prev.host = j.work, j.host
-                prev.on_result = j.on_result or prev.on_result
                 continue
             if prev is not None and prev.state == "running":
                 prev.state = "void"      # stale epoch still executing
@@ -167,7 +163,6 @@ class KVPlanner:
         congested = self._aborts_row >= self.BACKOFF_ABORTS and self.engine.serving
         best: Optional[Job] = None
         allowance = self.engine.spec_allowance()
-        oneshot = getattr(self.engine, "oneshot_allowance", self.engine.spec_allowance)
         rate = self.engine.device_profile.prefill_tps_loaded
         arrival: Dict[str, float] = {}   # sid -> earliest predicted next call
         for sid, held in self._jobs.items():
@@ -184,27 +179,13 @@ class KVPlanner:
                     continue
                 unc = self.engine.cost(j.toks)[0]
                 slotless = len(j.toks) - unc > j.done_upto   # promotion: an RPC, no request
-                if congested and j.kind != "probe" and not slotless:
+                if congested and not slotless:
                     continue
                 if best is not None and (j.deadline, -j.value) >= (best.deadline, -best.value):
                     continue
-                if j.kind == "probe":
-                    if unc > 0 and (oneshot() < unc or now + unc / rate > horizon):
-                        continue
-                elif len(j.toks) - unc <= j.done_upto:  # next chunk is uncached compute
+                if len(j.toks) - unc <= j.done_upto:  # next chunk is uncached compute
                     need = min(self._chunk(), max(1, unc))
-                    enabling = any(p.kind == "probe" and p.state == "queued"
-                                   and p.site == j.site for p in held.values())
-                    if self.manage_only and not enabling:
-                        continue
-                    j.chunk_cap = 0
-                    if allowance < need:
-                        stride = getattr(self.engine, "_stride", 1)
-                        cap = (oneshot() if enabling else 0) // stride * stride
-                        if cap <= 0 or now + cap / rate > horizon:
-                            continue
-                        j.chunk_cap = cap
-                    elif now + need / rate > horizon:
+                    if self.manage_only or allowance < need or now + need / rate > horizon:
                         continue
                 best = j
         return best
@@ -218,26 +199,13 @@ class KVPlanner:
             return
         job.state = "running"
         rid = f"plan-{job.kind}-{uuid.uuid4().hex[:8]}"
-        if job.kind == "probe":
-            res = await self.engine.probe(job.prompt, rid)
-            if job.state == "void":  # epoch bumped mid-flight: landed KV is harmless
-                return
-            if res is None:
-                print(f"[probe-miss] {job.site[:48]} attempt={job.attempts + 1}", flush=True)
-                self._retry(job)
-                return
-            self._aborts_row = 0
-            job.state = "done"
-            if job.on_result is not None:
-                job.on_result(res, job)
-            return
         unc = self.engine.cost(job.toks)[0]
         cached_end = len(job.toks) - unc
         if cached_end > job.done_upto:
             end = cached_end   # the whole cached frontier at once: no request, no slot
             ok = await self.engine.promote(job.toks[:end], rid)
         else:
-            end = min(len(job.toks), job.done_upto + (job.chunk_cap or self._chunk()))
+            end = min(len(job.toks), job.done_upto + self._chunk())
             ok = await self.engine.prefill(job.toks[:end], rid)
         if job.state == "void":
             return

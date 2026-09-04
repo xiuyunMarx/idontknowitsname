@@ -59,7 +59,7 @@ host reloads being cheaper than recomputation. Jobs run earliest deadline first.
 
 **Promotion.** The main job kind reloads a predicted call's host-resident prefix onto the device before the call arrives. A promotion may use free device slots and the cache of sessions that have ended, never active cache, and it must leave one full prefill chunk free. When there is no room the job is deferred and all promotions sit out a cooldown, rather than displacing cache that a live session may need.
 
-**Creation.** Speculative prefill of an entire predicted prompt is disabled in the managed configuration used for the experiments. The path remains for routing probes: when a `visit` site's prompt is fully reconstructible, the routing decision is issued ahead of the agent, and whichever of the probe and the real request finishes first lets the other reuse its cache.
+**Creation.** Speculative prefill of an entire predicted prompt is disabled in the managed configuration used for the experiments; promotion and eviction steering carry the managed arm.
 
 **Eviction steering.** The plan is mirrored into the engine's eviction order. Every node of the device radix tree is placed in a band, lower bands evicted first and LRU inside a band:
 

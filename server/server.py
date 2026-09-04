@@ -1,6 +1,6 @@
 """
 Batched controller: Belady-with-repair serving of byllm agents over one SGLang engine.
-Predicted calls become KV jobs (promote / create / probe) and drive the engine's
+Predicted calls become KV jobs (promote / create) and drive the engine's
 eviction order (model.promote.kv_priority); see server.kv_planner.
 
 python -m server.server [MODEL] [--no-spec] [--manage-only] [--kv N] [--host GB]
@@ -13,10 +13,9 @@ import time
 import uuid
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from math import exp
 from typing import Any, Dict, List, Optional, Tuple
 
-from decompiler.parser import _strip_hint, decompose, is_continuation, parse_candidate_line, relayout_body
+from decompiler.parser import decompose, is_continuation, relayout_body
 from decompiler.primitives import (ByLLMCallsite, Callsite, CallObservation, PredictedCall, Program,
                                    VisitByCallsite, _lcp, chosen_candidates, node_type)
 from model.device_profiler import profile_device
@@ -25,7 +24,6 @@ from server.http_server import HttpServer, PendingRequest
 from server.kv_planner import Job, KVPlanner
 
 P_MIN = 0.02           # plan only steps predicted at least this likely
-P_ROUTE = 0.3          # act on probed routing choices at least this likely
 T_BASE = 120.0         # idle seconds before a session is finalized
 T_SHORT = 15.0         # idle timeout once the program says the session is over
 END_PROB_SHORT = 0.5   # end_prob above this switches to T_SHORT
@@ -72,7 +70,6 @@ class Controller:
         profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
         if not self.engine.load_profile(profile):
             await self.engine._profile()
-            await self.engine._profile_oneshot()
             await profile_device(self.engine)
             self.engine.save_profile(profile)
         asyncio.create_task(self._sweep())
@@ -292,7 +289,6 @@ class Controller:
 
     def _plan_call(self, sess: LiveSession, c: PredictedCall, anchor: float) -> List[Job]:
         """ For each call we expect to happen, start preparing it early:
-        - for visit by: Rebuild and test the routing prompt. At the same time, process the final rendered prompt normally. Whichever finishes first lets the other reuse its cached work.
         - Preload the entire reconstructed call if possible. Otherwise, preload the longest prefix we can reconstruct—or, as a last resort, the fixed/static prefix.
         """
         prog = sess.program
@@ -305,25 +301,10 @@ class Controller:
         text, resolved = prog.resolve_user(c.key, obs)
         proto = prog.proto.get(c.key, {})
         complete = resolved and proto.get("ok", 0) >= 1
-        if isinstance(site, VisitByCallsite) and not (complete and site.resp_n >= 2):
-            # which probe gate is failing, and how far the rebuild got
-            print(f"[plan] visit gate: resolved={resolved} ok={proto.get('ok', 0)}/{proto.get('n', 0)} "
-                  f"resp_n={site.resp_n} rebuilt={len(text)}B", flush=True)
         now = time.monotonic()
         deadline = max(now, anchor + c.t50 - KVPlanner.SAFETY_K * (c.t90 - c.t50))
         t90 = max(deadline, anchor + c.t90)
         jobs: List[Job] = []
-        if complete and isinstance(site, VisitByCallsite) and site.resp_n >= 2:
-            prompt = self._probe_prompt(site, text)
-            ptoks = self.engine.tokenize(prompt)
-            unc, host = self.engine.cost(ptoks)
-            jobs.append(Job(key=f"{sess.id}|probe|{c.key}", sid=sess.id, epoch=sess.epoch,
-                            site=c.key, kind="probe", toks=ptoks, prompt=prompt, p=c.p,
-                            value=c.p * (unc + 0.8 * host), deadline=deadline, t90=t90,
-                            work=unc, host=host,
-                            on_result=self._probe_handler(sess, site, c, text)))
-            # fall through: the rendered prompt also queues as create/promote work,
-            # so a blocked probe shrinks toward unc=0 as ordinary chunks land
         if complete:
             toks = self._planned_tokens(site, text, True, tools)
         else:
@@ -338,63 +319,13 @@ class Controller:
         # protection: it enters the plan as an already-done job
         resident = unc + host < self.engine._stride
         jobs.append(Job(key=f"{sess.id}|{kind}|{c.key}", sid=sess.id, epoch=sess.epoch,
-                        site=c.key, kind=kind, toks=toks, prompt=None, p=c.p, #type: ignore[union-attr]
+                        site=c.key, kind=kind, toks=toks, p=c.p, #type: ignore[union-attr]
                         value=c.p * (unc + 0.8 * host), deadline=deadline, t90=t90,
                         work=unc, host=host, done_upto=len(toks) if resident else 0, #type: ignore
                         state="done" if resident else "queued"))
         return jobs
 
     # ------------------------------------------------------------------ routing foresight
-    def _probe_prompt(self, site: VisitByCallsite, user_text: str) -> str:
-        """The rebuilt routing prompt plus the shared reply head, cut just before the
-        first candidate handle so the probed token is the choice itself."""
-        head = site.resp_head
-        for i in sorted(head.find(c["handle"]) for c in self._candidates(user_text)):
-            if i >= 0:
-                head = head[:i]
-                break
-        return self.engine.render([{"role": "system", "content": site.system_prompt},
-                                   {"role": "user", "content": user_text}]) + head
-
-    @staticmethod
-    def _candidates(user_text: str) -> List[Dict[str, str]]:
-        parts = _strip_hint(user_text).split("Candidates (choose by handle):\n", 1)
-        lines = parts[1].split("\n") if len(parts) > 1 else []
-        return [c for c in (parse_candidate_line(l) for l in lines) if c]
-
-    def _probe_handler(self, sess: LiveSession, site: VisitByCallsite, c: PredictedCall,
-                       user_text: str):
-        """Bind the probe follow-up to the epoch it was planned in."""
-        epoch = sess.epoch
-
-        def on_result(res: Dict[int, Any], job: Job) -> None:
-            if sess.epoch == epoch and sess.id in self.sessions:
-                self._on_probe(sess, site, c, user_text, job, res)
-        return on_result
-
-    def _on_probe(self, sess: LiveSession, site: VisitByCallsite, c: PredictedCall,
-                  user_text: str, job: Job, res: Dict[int, Any]) -> None:
-        """The probed distribution over candidate handles tells which branch the
-        routing call will take: plan the successors of the likely ones."""
-        base, prompt = job.toks, job.prompt or ""
-        mass: Dict[str, Tuple[float, str]] = {}
-        for cand in self._candidates(user_text):
-            seq = self.engine.tokenize(prompt + cand["handle"])
-            if len(seq) > len(base) and seq[:len(base)] == base and seq[len(base)] in res:
-                mass[cand["handle"]] = (exp(res[seq[len(base)]].logprob), cand["node"])
-        total = sum(v for v, _ in mass.values())
-        if not total:
-            return
-        dist = sorted(((v / total, h, node) for h, (v, node) in mass.items()), reverse=True)
-        print("[probe] " + site.label + " -> " + " ".join(f"{h}={p:.2f}" for p, h, _ in dist),
-              flush=True)
-        jobs = []
-        for p, _, node in dist[:3]:
-            if p < P_ROUTE:
-                break
-            jobs.extend(self._succ_job(sess, site.key, node, c.p * p, c.t50, c.t90))
-        self._submit_extra(sess, jobs)
-
     def _route_followup(self, sess: LiveSession) -> None:
         """A routing reply that actually landed names the nodes the walker visits
         next: plan their calls with near-immediate deadlines instead of hedging on
@@ -522,7 +453,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Start the server")
     ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
     ap.add_argument("--no-spec", action="store_true", help="plain prefix-cache serving (baseline)")
-    ap.add_argument("--manage-only", action="store_true", help="promotion/steering/probe only, no bulk creation")
+    ap.add_argument("--manage-only", action="store_true", help="promotion/steering only, no bulk creation")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",

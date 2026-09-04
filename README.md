@@ -30,7 +30,7 @@ Contents
 |---|---|---|
 | Proxy and controller | `server/http_server.py`, `server/server.py` | Accepts OpenAI-style chat requests, attributes each to a live session, decompiles it into a call site, forwards it to the engine, and feeds the observation back into the workflow model. Sessions end on `/v1/sessions/close` or an idle timeout. |
 | Decompiler | `decompiler/parser.py`, `decompiler/primitives.py` | Turns a request body back into the byllm call site that produced it (function signature, `sem` strings, schema rows), and keeps one `Program` per agent: call graph, value-flow rules, timing statistics, and the next-call predictor. |
-| Planner | `server/kv_planner.py` | Converts predicted calls into KV jobs with deadlines (promotion of host-resident prefixes, speculative creation, routing probes) and pushes the eviction priority map to the engine on every plan change. |
+| Planner | `server/kv_planner.py` | Converts predicted calls into KV jobs with deadlines (promotion of host-resident prefixes, speculative creation) and pushes the eviction priority map to the engine on every plan change. |
 | Engine wrapper | `model/model.py`, `model/promote.py`, `model/device_profiler.py` | Wraps the SGLang `Engine`; adds a KV ledger, speculative-request budgets, the profiled prefill and host-load rates, and two scheduler-side RPCs (`hicache_promote`, `kv_priority`) that steer HiCache. |
 | SGLang fork | `sglang/` (branch `kvflow-prefetch`) | `HiRadixCache.prefetch_prefix`: non-blocking speculative host-to-device loads on a low-priority stream; band-ordered eviction with `TreeNode.priority`; per-layer waits when a batch admits a prefix whose copy is still landing. |
 | Benchmark | `benchmark/fact_check/` | The HoVer-style fact-check workload, the closed-loop driver, and the CSV consolidation. |
@@ -93,8 +93,7 @@ Jobs run earliest deadline first within a profiled budget:
   displaces active cache, keeps one prefill chunk free, and is deferred with a
   cooldown when there is no room (the conservative rule from PBKV, see below).
 * **Creation** (speculative prefill of a predicted prompt) is disabled in the managed
-  arm used for the experiments (`--manage-only`); the code path stays for routing
-  probes of `visit` call sites.
+  arm used for the experiments (`--manage-only`).
 
 ### 2.4 Eviction steering
 

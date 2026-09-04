@@ -1,5 +1,5 @@
-"""SGLang Engine wrapped for serving: real generate/decode plus speculative prefill and
-probes that stay within a profiled per-step token budget.
+"""SGLang Engine wrapped for serving: real generate/decode plus speculative prefill that
+stays within a profiled per-step token budget.
 
     engine = Engine("Qwen/Qwen3-8B")
     text = await engine.generate(prompt, request_id)
@@ -14,7 +14,7 @@ import time
 import uuid
 import json
 from collections import OrderedDict
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from sglang.srt.entrypoints.engine import Engine as SGLangEngine #type: ignore
 
@@ -32,11 +32,6 @@ LANDED_STRIDE = 8   # bookkeeping granularity for prefixes we have already compu
 PRIORITY_CONT = 2
 PRIORITY_REAL = 1
 PRIORITY_SPEC = 0
-
-
-class Logprob(NamedTuple):
-    """One entry of a probe's top-k distribution."""
-    logprob: float
 
 
 class KVLedger:
@@ -161,7 +156,6 @@ class Engine:
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
         self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
-        self._oneshot_tokens_per_step:Dict[int, int] = {} # single isolated injection (probe lane), same keying
         self.device_profile: Optional[DeviceProfile] = None  # measured rates; see model.device_profiler
         self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
         self.SPEC_TIMEOUT_S = 20.0
@@ -240,24 +234,6 @@ class Engine:
             budget = self.DEFAULT_SPEC_TOKENS_PER_STEP if not self._spec_tokens_per_step else 0
         return budget - sum(self._spec_tasks.values())
 
-    def oneshot_allowance(self) -> int:
-        """Budget for one isolated ride-along request (the probe pattern). The
-        sustained-injection profile answers "can we do this every step"; a probe
-        happens once per routing decision, and its cost is a one-off stall of a
-        couple of decode steps — profiled separately in `_oneshot_tokens_per_step`.
-        Same hard rules as the sustained lane: never beside a real prefill,
-        unlimited when nothing decodes, one ride-along at a time."""
-        if self._inflight_prefill > 0:
-            return 0
-        if self._inflight_decode == 0:
-            return 1 << 30
-        if self._spec_tasks or not self._oneshot_tokens_per_step:
-            return 0
-        keys = sorted(self._oneshot_tokens_per_step)
-        b = self._inflight_decode
-        key = next((k for k in keys if k >= b), keys[-1])
-        return self._oneshot_tokens_per_step[key]
-
     @property
     def _stride(self) -> int:
         """Bookkeeping step, rounded up to a whole number of radix-cache pages so that
@@ -287,7 +263,6 @@ class Engine:
         with open(path, "w") as f:
             json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
                        "spec_tokens_per_step": self._spec_tokens_per_step,
-                       "oneshot_tokens_per_step": self._oneshot_tokens_per_step,
                        "device": self.device_profile.as_dict() if self.device_profile else None},
                       f, indent=1)
 
@@ -299,15 +274,13 @@ class Engine:
             return False
         if data.get("model") != self.name or data.get("unit") != "tokens_per_step":
             return False
-        if "oneshot_tokens_per_step" not in data or not data.get("device"):
+        if not data.get("device"):
             return False  # older profile: re-measure everything
         try:
             self.device_profile = DeviceProfile.from_dict(data["device"])
         except (KeyError, TypeError, ValueError):
             return False  # measured under an older definition: re-measure
         self._spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
-        self._oneshot_tokens_per_step = {int(k): int(v)
-                                         for k, v in data["oneshot_tokens_per_step"].items()}
         self.tbt_ms = data.get("tbt_ms") or self.tbt_ms
         return True
 
@@ -501,24 +474,6 @@ class Engine:
             return False
         return True
 
-    async def probe(self, prompt: str, request_id: str) -> Optional[Dict[int, Logprob]]:
-        """Greedy one-token probe: top-20 logprobs at the first position. None when the
-        budget cannot take it or a real admission killed the probe; retry later."""
-        ids = self.tokenize(prompt)
-        cost = self.uncached_cost(ids)
-        if self.oneshot_allowance() < cost:  # probe rides the one-shot lane, not the sustained one
-            return None
-        sp = {"max_new_tokens": 1, "temperature": 0.0}
-        output = await self._speculative(None, ids, sp, request_id, cost,
-                                         return_logprob=True, top_logprobs_num=20)
-        if output is None:
-            return None
-        self.note_landed(ids)
-        # meta_info["output_top_logprobs"] is one list per generated position, each entry
-        # a list of (logprob, token_id, token_text|None).
-        top = ((output.get("meta_info") or {}).get("output_top_logprobs") or [None])[0]
-        return {tid: Logprob(lp) for lp, tid, *_ in top} if top else {}
-
     # ---- warmup --------------------------------------------------
 
     async def warmup(self) -> None:
@@ -535,10 +490,6 @@ class Engine:
         await self._speculative(None, self._random_ids(64),
                                 {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True},
                                 f"warmup-spec-{uuid.uuid4().hex}")
-        await self._speculative(None, self._random_ids(64),
-                                {"max_new_tokens": 1, "temperature": 0.0},
-                                f"warmup-probe-{uuid.uuid4().hex}",
-                                return_logprob=True, top_logprobs_num=20)
         print(f"[warmup] engine ready in {(time.perf_counter() - started) * 1000:.0f} ms", flush=True)
 
     # ------------------ Internal helpers ---------------------------------------------------
@@ -641,92 +592,3 @@ class Engine:
                 break
         return self._spec_tokens_per_step
 
-    async def _measure_oneshot(self, num_decode: int, num_prefill: int,
-                               sampling_params: Dict[str, Any], shots: int = 3) -> dict:
-        """Stall cost of a SINGLE isolated n-token PRIORITY_SPEC injection on running
-        decode streams — the probe pattern, as opposed to `_measure_tbt`'s sustained
-        back-to-back injection. Fires `shots` well-separated injections into one run;
-        the quiet gaps of the same run are the baseline. Returns quiet p50/p95 and the
-        worst gap that overlaps an injection window (all ms)."""
-        stop = asyncio.Event()
-        decode_started = asyncio.Event()
-        started = 0
-        windows: List[Tuple[float, float]] = []
-
-        async def decode_worker(index: int) -> List[Tuple[float, float]]:
-            nonlocal started
-            ts: List[float] = []
-            async for _ in await self.engine.async_generate(  #type: ignore
-                    input_ids=self._random_ids(24), sampling_params=sampling_params,
-                    rid=f"oneshot-decode-{index}-{uuid.uuid4().hex}",
-                    priority=PRIORITY_REAL, stream=True):
-                ts.append(time.perf_counter())
-                if len(ts) == 1:
-                    started += 1
-                    if started == num_decode:
-                        decode_started.set()
-            return [(ts[i], ts[i] - ts[i - 1]) for i in range(9, len(ts))]
-
-        async def shooter() -> None:
-            await decode_started.wait()
-            sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
-            for _ in range(shots):
-                await asyncio.sleep(0.35)   # let the streams run quiet between shots
-                if stop.is_set():
-                    return
-                t0 = time.perf_counter()
-                async for _ in await self.engine.async_generate(  #type: ignore
-                        input_ids=self._random_ids(num_prefill), sampling_params=sp,
-                        rid=f"oneshot-prefill-{uuid.uuid4().hex}",
-                        priority=PRIORITY_SPEC, stream=True):
-                    pass
-                windows.append((t0, time.perf_counter()))
-
-        decoders = [asyncio.create_task(decode_worker(i)) for i in range(num_decode)]
-        shoot = asyncio.create_task(shooter())
-        try:
-            gaps_by_stream = await asyncio.gather(*decoders)
-        finally:
-            stop.set()
-            decode_started.set()
-            await asyncio.gather(shoot, return_exceptions=True)
-        if not windows:
-            raise RuntimeError("oneshot: no injection landed; raise max_new_tokens")
-        pad = 0.05  # settle margin after an injection returns
-        quiet: List[float] = []
-        stall: List[float] = []
-        for t, g in (x for stream in gaps_by_stream for x in stream):
-            hit = any(t >= w0 and t - g <= w1 + pad for w0, w1 in windows)
-            (stall if hit else quiet).append(g)
-        quiet.sort()
-        return {
-            "quiet_p50_ms": quiet[len(quiet) // 2] * 1000 if quiet else 0.0,
-            "quiet_p95_ms": quiet[min(len(quiet) - 1, int(0.95 * (len(quiet) - 1)))] * 1000 if quiet else 0.0,
-            "stall_max_ms": max(stall) * 1000 if stall else 0.0,
-            "shots": len(windows),
-        }
-
-    async def _profile_oneshot(self, bs: Tuple[int, ...] = (1, 2, 4, 8),
-                               sizes: Tuple[int, ...] = (32, 64, 128, 256, 384, 512),
-                               decode_tokens: int = 192) -> Dict[int, int]:
-        """Per decode concurrency, the largest single-injection size whose worst-hit
-        token is delayed by no more than ~two extra decode steps. Fills the probe
-        admission lane `_oneshot_tokens_per_step`."""
-        sp = {"max_new_tokens": decode_tokens, "temperature": 0.0, "ignore_eos": True}
-        self._oneshot_tokens_per_step.clear()
-        for b in bs:
-            safe = 0
-            for n in sizes:
-                m = await self._measure_oneshot(b, n, sp)
-                limit = max(3 * m["quiet_p50_ms"], m["quiet_p95_ms"] + m["quiet_p50_ms"])
-                print(f"[profile-oneshot] b={b} n={n} stall_max={m['stall_max_ms']:.1f}ms "
-                      f"quiet_p50={m['quiet_p50_ms']:.1f} p95={m['quiet_p95_ms']:.1f} "
-                      f"shots={m['shots']}", flush=True)
-                if m["stall_max_ms"] > limit:
-                    break
-                safe = n
-            self._oneshot_tokens_per_step[b] = safe
-            print(f"[profile-oneshot] decode={b} oneshot_tokens={safe}", flush=True)
-            if safe == 0:
-                break
-        return self._oneshot_tokens_per_step

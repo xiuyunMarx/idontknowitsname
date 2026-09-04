@@ -107,8 +107,6 @@ class VisitByCallsite(CallMetadata):
     """Describe an LLM call that selects from a list."""
     intent: str = ""
     select: str = ""                                          # "exactly one" / "exactly 3" / "between 1 and 3" / "all"
-    resp_head: str = ""                                       # Shared prefix of observed replies (probe scaffold).
-    resp_n: int = 0                                           # Replies folded into resp_head.
 
     @property
     def key(self) -> str:
@@ -572,8 +570,6 @@ class Program:
             self.flow[(key, name)][_provenance(earlier, name, v)] += 1
         site = self.sites.get(key)
         if isinstance(site, VisitByCallsite) and ob.response:
-            site.resp_head = _lcp(site.resp_head, ob.response) if site.resp_n else ob.response
-            site.resp_n += 1
             # The reply names the nodes the walker visits next, in order: link each
             # chosen node's type to the symbol that then ran on it.
             for j, (_, node) in enumerate(chosen_candidates(ob)):
