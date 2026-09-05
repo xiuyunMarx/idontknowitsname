@@ -641,13 +641,14 @@ class Program:
     def _freeze_layout(self, site: ByLLMCallsite) -> bool:
         """Decide the site's binding order once: stable-sort the observed order by
         stability, so the session-constant and accumulating values lead and the fresh
-        ones trail. Waits until every binding has two observations, then never moves
+        ones trail. Waits until every binding has eight observations (a degenerate first session
+        would otherwise freeze a wrong order), then never moves
         again — each reorder breaks the prefix once."""
         p = self.proto.get(site.key)
         names = list(p.get("order", ())) if p else []
         if p is None or site.layout is not None or not names:
             return False
-        if any(sum(self.flow.get((site.key, n), {}).values()) < 2 for n in names):
+        if any(sum(self.flow.get((site.key, n), {}).values()) < 8 for n in names):
             return False
         site.layout = sorted(names, key=lambda n: self._stability(site.key, n))
         p["order"] = list(site.layout)   # the rebuild follows the order requests now use
@@ -656,7 +657,7 @@ class Program:
     def _flow_prefix(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
         """For an accumulating binding, the bytes its next value is known to start
         with: the latest same-name value minus its closing delimiter."""
-        if self._dominant(key, name) != "extend":
+        if self._dominant(key, name) != "extend":      
             return None
         w = next((v for e in reversed(obs_list) for nm, v in _named_values(e).items() if nm == name), None)
         return w[:-1] if w is not None and len(w) > 2 else None

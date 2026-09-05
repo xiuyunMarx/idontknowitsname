@@ -56,13 +56,13 @@ def load_claims(path):
 
 
 def run_session(args, idx, phase, logdir, label, claim):
-    env = dict(os.environ, PYTHONUNBUFFERED="1", FC_CLAIM=claim,
-               JAC_DATA_PATH=os.path.join(logdir, f"state-{phase}-{idx:03d}"))
+    env = dict(os.environ, PYTHONUNBUFFERED="1", JAC_DATA_PATH=os.path.join(logdir, f"state-{phase}-{idx:03d}"))
+    env[args.claim_env] = claim
     os.makedirs(env["JAC_DATA_PATH"], exist_ok=True)
     out_path = os.path.join(logdir, f"{phase}-{idx:03d}.log")
     t0 = time.monotonic()
     with open(out_path, "w") as out:
-        proc = subprocess.Popen([args.jac, "run", PROGRAM], env=env, cwd=REPO,
+        proc = subprocess.Popen([args.jac, "run", args.program], env=env, cwd=REPO,
                                 stdout=out, stderr=subprocess.STDOUT)
         rc = proc.wait(timeout=args.timeout)
     wall = time.monotonic() - t0
@@ -71,7 +71,7 @@ def run_session(args, idx, phase, logdir, label, claim):
         for ln in f:
             if ln.startswith("Verdict: "):
                 verdict = ln.split(": ", 1)[1].strip()
-            m = re.match(r"Rounds: (\d+), findings: (\d+)", ln)
+            m = re.match(r"Rounds: (\d+), (?:findings|notes|attempts): (\d+)", ln)
             if m:
                 rounds, findings = int(m.group(1)), int(m.group(2))
     return {"pid": str(proc.pid), "phase": phase, "idx": idx, "rc": rc, "wall": round(wall, 3),
@@ -163,7 +163,9 @@ def main():
                     help="measured sessions PER LANE; total = concurrency * sessions, so every lane stays busy for the whole run")
     ap.add_argument("--concurrency", type=int, default=4, help="parallel session lanes")
     ap.add_argument("--warmup", type=int, default=2, help="sequential learning sessions, excluded")
-    ap.add_argument("--claims", default=CLAIMS)
+    ap.add_argument("--claims", default=CLAIMS, help="one claim/topic per line, last TAB column")
+    ap.add_argument("--program", default=PROGRAM, help="jac program to run per session")
+    ap.add_argument("--claim-env", default="FC_CLAIM", help="env var that carries the claim/topic to the program")
     ap.add_argument("--jac", default=os.path.join(os.path.dirname(sys.executable), "jac"))
     ap.add_argument("--timeout", type=float, default=1200.0)
     ap.add_argument("--tag", default="fact")
@@ -175,7 +177,7 @@ def main():
     total = args.concurrency * args.sessions
     assert len(claims) >= total + args.warmup, \
         f"{total} measured sessions need {total + args.warmup} distinct claims, have {len(claims)} (a repeated claim would share its prefix across sessions)"
-    tag = f"{args.tag}/fact_check" + (f"x{args.concurrency}" if args.concurrency > 1 else "")
+    tag = f"{args.tag}/{os.path.splitext(os.path.basename(args.program))[0]}" + (f"x{args.concurrency}" if args.concurrency > 1 else "")
     logdir = args.logdir or tempfile.mkdtemp(prefix="fact-")
     print(f"[{tag}] {args.warmup} warmup + {total} sessions ({args.sessions} per lane) in {args.concurrency} lane(s); "
           f"logs in {logdir}", flush=True)
