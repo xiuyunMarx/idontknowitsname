@@ -38,11 +38,10 @@ private prefix the device gave up stays reloadable until recency retires it.
 import time
 from typing import Dict, List, Sequence, Tuple
 
-from sglang.srt.managers.io_struct import RpcReqOutput
-from sglang.srt.managers.scheduler import Scheduler
-from sglang.srt.mem_cache.base_prefix_cache import MatchPrefixParams
-from sglang.srt.mem_cache.evict_policy import EvictionStrategy
-from sglang.srt.mem_cache.hiradix_cache import HiRadixCache
+from sglang.srt.managers.io_struct import RpcReqOutput #type: ignore
+from sglang.srt.managers.scheduler import Scheduler #type: ignore
+from sglang.srt.mem_cache.evict_policy import EvictionStrategy #type: ignore
+from sglang.srt.mem_cache.hiradix_cache import HiRadixCache #type: ignore
 
 RETIRED = -2
 TRANSIENT = -1
@@ -97,11 +96,42 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
         event.finish_event.synchronize()
 
 
+def _descend(tc, ids: List[int]):
+    """Walk `ids` down the radix tree like match_prefix does, host-only nodes
+    included, splitting the node the path ends in so the covered prefix is whole
+    nodes — but without touching last_access_time: the planner's bookkeeping runs
+    every second over every plan and must not read as an access to the LRU inside
+    a band or on the host tier. Returns (deepest covered node, covered length)."""
+    key = tc._to_radix_key(list(ids))
+    node, end = tc.root_node, 0
+    while len(key) > 0:
+        child = node.children.get(tc.get_child_key_fn(key))
+        if child is None:
+            break
+        n = tc.key_match_fn(child.key, key)
+        if n == 0:
+            break
+        if n < len(child.key):
+            t = child.last_access_time
+            child = tc._split_node(child.key, child, n)
+            child.last_access_time = t
+        node, end, key = child, end + n, key[n:]
+    return node, end
+
+
 def _band_tail(tc, ids: List[int], fixed_len: int, band: int) -> int:
-    """Set `band` on the device nodes of `ids` lying wholly past `fixed_len`; a node
-    straddling or preceding the head is left alone. Returns how many changed."""
-    m = tc.match_prefix(MatchPrefixParams(key=tc._to_radix_key(ids)))
-    node, end, n = m.last_device_node, len(m.device_indices), 0
+    """Set `band` on the nodes of `ids` lying wholly past `fixed_len` and on the
+    generated tokens hanging below the prompt; a node straddling or preceding the
+    head is left alone. Returns how many changed."""
+    node, end = _descend(tc, ids)
+    n = 0
+    if end == len(ids):   # the reply's tokens continue the prompt: one-off too
+        stack = list(node.children.values())
+        while stack:
+            c = stack.pop()
+            c.priority = band
+            n += 1
+            stack.extend(c.children.values())
     while node is not tc.root_node:
         start = end - len(node.key)
         if start < fixed_len:
@@ -122,7 +152,7 @@ def kv_priority(self: Scheduler, demote: List[Tuple[List[int], int]],
     undone first (restored to what it was), so the map always mirrors the plan."""
     t0 = time.perf_counter()
     tc = getattr(self.tree_cache, "inner", self.tree_cache)
-    planned: Dict[int, tuple] = getattr(tc, "_planned", None)
+    planned: Dict[int, tuple] = getattr(tc, "_planned", None) #type: ignore
     if planned is None:
         tc.eviction_strategy = PlanStrategy()
         tc.demand_load_partial = True   # demand loads: band-ordered eviction, partial load when quota-limited
@@ -131,12 +161,20 @@ def kv_priority(self: Scheduler, demote: List[Tuple[List[int], int]],
         if node.priority >= PLAN_BASE:
             node.priority = prev
     planned.clear()
+    # A request's insert splits a protected node and the new upper half inherits
+    # the protection outside this map; sweep the tree so no protection outlives
+    # its plan (the leak that let stale scores outrank live ones).
+    stack = [tc.root_node]
+    while stack:
+        n = stack.pop()
+        if n.priority >= PLAN_BASE:
+            n.priority = 0
+        stack.extend(n.children.values())
     demoted = sum(_band_tail(tc, ids, fixed_len, TRANSIENT) for ids, fixed_len in demote)
     retired = sum(_band_tail(tc, ids, fixed_len, RETIRED) for ids, fixed_len in retire)
     acc: Dict[int, int] = {}      # node -> summed score of every planned prefix that covers it
     for ids, k in protect:
-        m = tc.match_prefix(MatchPrefixParams(key=tc._to_radix_key(ids)))
-        node = m.last_host_node      # backed-up-but-evicted nodes count too
+        node, _ = _descend(tc, ids)   # backed-up-but-evicted nodes count too
         while node is not tc.root_node:
             if id(node) not in planned:
                 planned[id(node)] = (node, node.priority)

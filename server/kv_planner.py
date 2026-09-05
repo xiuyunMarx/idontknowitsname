@@ -252,14 +252,7 @@ class KVPlanner:
 
     # ------------------------------------------------------------------ eviction steering
     async def push_priorities(self, now: float) -> None:
-        """Mirror the plan into the engine's eviction order. Every prefix the newest
-        plan of each session needs (queued, running or already resident) carries a
-        reuse score p * exp(-dt / tau): the probability the call happens, discounted by
-        how far away its predicted arrival is. The engine sums the scores of every
-        prefix that covers a node (PBKV's cross-workflow aggregation), so a header
-        shared by many sessions outranks any single session's private history, and
-        among private prefixes the sooner and surer use is kept longest. Served
-        prompts queued by note_served have their one-off tail demoted."""
+        """Mirror the plan into the engine's eviction order."""
         if not self._dirty:
             return
         self._dirty = False

@@ -187,6 +187,7 @@ node Tester {
         with open(os.path.join(d, "solution.py"), "w") as f {
             f.write(visitor.module + "\n\n" + attempt.code);
         }
+
         # one test file per function: HumanEval's `check` functions share a name
         for t in visitor.tasks[:visitor.idx + 1] {
             if t.entry_point in visitor.accepted or t.entry_point == attempt.function {

@@ -52,7 +52,7 @@ class LiveSession:
 
 
 class Controller:
-    def __init__(self, model: str, server: HttpServer, speculate: bool = True, **engine_kwargs):
+    def __init__(self, model: str, server: HttpServer, speculate: bool = True, enable_relayout: bool = True ,**engine_kwargs):
         self.speculate = speculate     # off: plain serving over the prefix cache (the baseline)
         self.engine: Engine = Engine(model, **engine_kwargs)
         self.sessions: Dict[str, LiveSession] = {}    # session id -> live state
@@ -61,6 +61,7 @@ class Controller:
         self.pool = server.pool
         self._prefix_tok: Dict[str, Tuple[str, List[int]]] = {}  # site key -> (fixed_head, token ids), no re-tokenization
         self._plan_tok: "OrderedDict[Tuple[str, bool, str], Optional[List[int]]]" = OrderedDict()
+        self._enable_relayout:bool = enable_relayout # Enable prompt re-layout for better KV reuse. 
         self.PLAN_TOK_CACHE = 1024
         self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if speculate else None
 
