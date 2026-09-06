@@ -20,11 +20,8 @@ data-dependent: the automaton has to learn that a Tester is followed by a
 Planner, a Committer, or an Analyzer-Coder-Tester loop.
 
 KV-cache shape. `attempts` (every attempt with its code, verdict and pytest
-output) only grows within a session and is the first parameter of every LLM
-call, so the k-th call of a site extends the (k-1)-th call's prompt; `spec`,
-`plan` and `advice` are the fresh tail and are small. The accepted module is not
-passed separately: two growing values in one prompt would shift each other, and
-the model can read the accepted functions off the attempts marked passed.
+output) only grows within a session; `spec`, `plan` and `advice` change every
+call and are small. 
 
 Env: CA_TASKS (comma-separated HumanEval ids, or argv[1]; default HumanEval/0..4),
 CA_DATA (HumanEval.jsonl.gz next to this file), CA_MAX_ATTEMPTS (3 per function),
@@ -130,13 +127,13 @@ def strip_fences(text: str) -> str {
 
 
 node Planner {
-    def plan(attempts: list[Attempt], spec: str) -> Plan by llm(temperature=0.0, max_tokens=4096);
+    def plan(spec: str, attempts: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=4096);
 
     can start with CodeTask entry {
         visitor.spec = visitor.tasks[visitor.idx].spec;
         visitor.advice = "";
         try {
-            visitor.plan = self.plan(visitor.attempts, visitor.spec);
+            visitor.plan = self.plan(visitor.spec, visitor.attempts);
         } except Exception as e {
             visitor.errors.append(f"planning {visitor.tasks[visitor.idx].entry_point} failed: {e}");
             visitor.plan = Plan(approach="Implement the function as specified.");
@@ -152,13 +149,13 @@ sem Planner.plan.spec = "The signature and docstring of the function to implemen
 
 
 node Coder {
-    def implement(attempts: list[Attempt], spec: str, plan: Plan, advice: str) -> str by llm(temperature=0.0, max_tokens=4096);
+    def implement(spec: str, plan: Plan, advice: str, attempts: list[Attempt]) -> str by llm(temperature=0.0, max_tokens=4096);
 
     can write with CodeTask entry {
         task = visitor.tasks[visitor.idx];
         plan = visitor.plan or Plan();
         try {
-            code = strip_fences(self.implement(visitor.attempts, visitor.spec, plan, visitor.advice));
+            code = strip_fences(self.implement(visitor.spec, plan, visitor.advice, visitor.attempts));
         } except Exception as e {
             visitor.errors.append(f"generating {task.entry_point} failed: {e}");
             code = visitor.spec + "    pass\n";
@@ -240,11 +237,11 @@ sem Tester = "Runs pytest over the module plus the latest attempt.";
 
 
 node Analyzer {
-    def diagnose(attempts: list[Attempt], spec: str) -> Diagnosis by llm(temperature=0.0, max_tokens=4096);
+    def diagnose(spec: str, attempts: list[Attempt]) -> Diagnosis by llm(temperature=0.0, max_tokens=4096);
 
     can analyze with CodeTask entry {
         try {
-            diag = self.diagnose(visitor.attempts, visitor.spec);
+            diag = self.diagnose(visitor.spec, visitor.attempts);
             visitor.advice = diag.fix;
         } except Exception as e {
             visitor.errors.append(f"analysis after attempt {len(visitor.attempts)} failed: {e}");

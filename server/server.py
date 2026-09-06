@@ -198,8 +198,8 @@ class Controller:
             sess.pending.append(sess.open_obs)
         site, extras = decompose(req.body)
         prog = self._bind(sess, site)
-        site = prog.add_callsite(site)
-        if isinstance(site, ByLLMCallsite) and site.layout and relayout_body(req.body, site.layout):
+        site = prog.add_callsite(site, extras.bindings)
+        if self._enable_relayout and isinstance(site, ByLLMCallsite) and site.layout and relayout_body(req.body, site.layout, site.header_last):
             _, extras = decompose(req.body)   # bindings and user_text as they go on the wire
         hit = "" if sess.predicted is None else f" predicted={'hit' if sess.predicted == site.key else 'miss'}"
         print(f"[call] {sess.id} #{len(sess.walked)} {site.label}{hit}", flush=True)
@@ -225,11 +225,11 @@ class Controller:
         ones, so the r-th call of a site extends the (r-1)-th call's prompt; the
         rewrite is idempotent, and a different site's message is left alone unless it
         shares the names, in which case _advance re-applies its own order."""
-        if sess.open_obs is None or sess.program is None:
+        if not self._enable_relayout or sess.open_obs is None or sess.program is None:
             return
         site = sess.program.sites.get(sess.open_obs.key)
         if isinstance(site, ByLLMCallsite) and site.layout:
-            relayout_body(body, site.layout)
+            relayout_body(body, site.layout, site.header_last)
 
     def _bind(self, sess: LiveSession, site: Callsite) -> Program:
         """Bind the session to its Program by content, entry callsite identifies the program"""
@@ -421,7 +421,7 @@ class Controller:
         prog = sess.program
         if prog is not None and sess.walked and not sess.tainted:
             for k in prog.update_graph(sess.walked, sess.pending):
-                print(f"[layout] {prog.sites[k].label} order={prog.sites[k].layout}", flush=True)  # type: ignore[union-attr]
+                print(f"[layout] {prog.sites[k].label} order={prog.sites[k].layout} header_last={prog.sites[k].header_last}", flush=True)  # type: ignore[union-attr]
             n = prog.n_sessions
             if n >= REBUILD_AT and n & (n - 1) == 0:
                 prog.rebuild()
@@ -433,7 +433,8 @@ class Controller:
 
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True,
                manage_only: bool = False, kv_tokens: Optional[int] = None,
-               host_gb: Optional[int] = None, hicache_io: Optional[str] = None) -> None:
+               host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
+               enable_relayout: bool = True) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384,
@@ -444,7 +445,7 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool =
         kwargs["host_cache_gb"] = host_gb        # host KV tier size (model.model.HOST_KV_GB default)
     if hicache_io:
         kwargs["hicache_io_backend"] = hicache_io  # host<->device copy path; model.model defaults to "direct"
-    ctrl = Controller(model, server, speculate=speculate, **kwargs)
+    ctrl = Controller(model, server, speculate=speculate, enable_relayout=enable_relayout, **kwargs)
     if ctrl.planner is not None:
         ctrl.planner.manage_only = manage_only
     await ctrl.start_serving()
@@ -457,8 +458,10 @@ if __name__ == "__main__":
     ap.add_argument("--manage-only", action="store_true", help="promotion/steering only, no bulk creation")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
+    ap.add_argument("--no-relayout", action="store_true",
+                    help="Disable prompt re-layout for better KV reuse (default: enabled)")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
     a = ap.parse_args()
     asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,
-                     host_gb=a.host, hicache_io=a.hicache_io))
+                     host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout))

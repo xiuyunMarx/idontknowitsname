@@ -83,6 +83,8 @@ class ByLLMCallsite(CallMetadata):
     owner_sem: str = ""                                       # Description of the owning type.
     tool_schema: Optional[List[Dict[str, Any]]] = None        # Tools sent with the request.
     layout: Optional[List[str]] = None                        # Frozen binding order (Program._freeze_layout).
+    header_last: bool = False                                 # Header behind the values: only worth it when the leading binding is shared across callsites.
+    ctx_by_shape: Dict[Tuple[str, ...], str] = field(default_factory=dict)  # Header+schema text per set of empty-container bindings (byllm expands a list's schema once it has elements).
 
     @property
     def is_react(self) -> bool:
@@ -99,6 +101,8 @@ class ByLLMCallsite(CallMetadata):
 
     @property
     def fixed_head(self) -> str:
+        if self.layout is not None and self.header_last:
+            return ""              # header moved behind the values: only the system prompt is static
         return self.context_desc   # header line (signature + sem) and schema rows
 
 
@@ -126,7 +130,9 @@ class VisitByCallsite(CallMetadata):
 Callsite = Union[ByLLMCallsite, VisitByCallsite]
 
 START = "^"  # Marker placed before the first call in a session.
+HEADER_LAST = True  # allow the values-first layout (header and schema rows last) for sites whose leading binding is shared with another callsite
 STABILITY = {"const": 0, "copy": 1, "extend": 2}  # flow-rule kind -> how long the bytes stay a valid prefix
+CONTINUITY = {"same": 1, "extend": 2, "fresh": 3}  # same-site step kind -> prefix stability (const across sessions is 0)
 
 
 def _lcp(a: str, b: str) -> str:
@@ -371,7 +377,7 @@ def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
         # the same name's latest value minus its closing delimiter is a prefix: an
         # accumulating history (list/str/dict repr grown by appending)
         w = _named_values(e).get(name)
-        if w is not None and len(w) > 2 and len(v) > len(w) and v.startswith(w[:-1]):
+        if w is not None and len(w) >= 2 and len(v) > len(w) and v.startswith(w[:-1]):
             return "extend"
     for e in reversed(earlier):
         path = _find_in_result(e.response, v)
@@ -391,6 +397,12 @@ def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
                     if w == v:
                         return f"cand:{e.key}\x00{field_name(f)}"
     return f"const:{v}"
+
+
+def _shape(values: Dict[str, str]) -> Tuple[str, ...]:
+    """The bindings whose value is an empty container: the part of a call's value
+    shape that changes how byllm renders its schema rows."""
+    return tuple(sorted(n for n, v in values.items() if v in ("[]", "{}")))
 
 
 def node_type(node_repr: str) -> str:
@@ -468,6 +480,8 @@ class Program:
         self.exit_freq: Dict[str, int] = defaultdict(int)    # Sessions ending at each state.
         self.gap: Dict[Tuple[str, str], List[float]] = defaultdict(list)  # Delays between call pairs.
         self.flow: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> provenance rule -> count.
+        self.cont: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> same-site step kind -> count.
+        self.shared: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> 'cross' if an OTHER site carried this value (or its prefix) earlier in the session, else 'own'.
         self.type_succ: Dict[str, Counter] = defaultdict(Counter)  # Node type -> symbol called on it.
         self.proto: Dict[str, Dict[str, Any]] = {}           # Symbol -> user-message layout template.
         self.seqs: Counter = Counter()                       # Completed call sequences.
@@ -480,12 +494,16 @@ class Program:
         """Return whether `site` is the first call."""
         return bool(self.entry) and site.key == self.entry
 
-    def add_callsite(self, site: Callsite) -> Callsite:
-        """Add a call definition or update the stored one."""
+    def add_callsite(self, site: Callsite, bindings: Optional[Dict[str, str]] = None) -> Callsite:
+        """Add a call definition or update the stored one. With `bindings`, remember
+        this call's header+schema text under its value shape: byllm renders a list
+        parameter's schema rows differently once the list has elements."""
         known = self.sites.get(site.key)
         if known is None:
             self.sites[site.key] = site
-            return site
+            known = site
+        if bindings is not None and isinstance(site, ByLLMCallsite) and isinstance(known, ByLLMCallsite):
+            known.ctx_by_shape[_shape(bindings)] = site.context_desc
         return known
 
     def edge(self, a: str, b: str) -> Edge:
@@ -566,8 +584,29 @@ class Program:
     def _observe_values(self, key: str, ob: CallObservation, earlier: List[CallObservation],
                         rest: List[str]) -> None:
         """Fold one call's values into the flow rules, routing linkage and template."""
+        prev = next((e for e in reversed(earlier) if e.key == key), None)
+        prev_vals = _named_values(prev) if prev is not None else {}
         for name, v in _named_values(ob).items():
             self.flow[(key, name)][_provenance(earlier, name, v)] += 1
+            # Prefix stability is a same-site question: does this call's value repeat
+            # or extend the value THIS site sent last time? Cross-site provenance is
+            # not enough — a value copied from the previous call (a spec handed from
+            # Planner to Coder) is a "copy" that still changes on every Coder call.
+            w = prev_vals.get(name)
+            if w is not None:
+                if v == w:
+                    kind = "same"
+                elif len(w) >= 2 and len(v) > len(w) and v.startswith(w[:-1]):
+                    kind = "extend"
+                else:
+                    kind = "fresh"
+                self.cont[(key, name)][kind] += 1
+            # Cross-site sharing decides whether moving the header behind the values
+            # can pay: it only can when another callsite's prompt starts with the
+            # same bytes, i.e. carried this value (or the list it extends) before.
+            cross = any(e.key != key and (u == v or (len(u) >= 2 and len(v) > len(u) and v.startswith(u[:-1])))
+                        for e in earlier for nm, u in _named_values(e).items() if nm == name)
+            self.shared[(key, name)]["cross" if cross else "own"] += 1
         site = self.sites.get(key)
         if isinstance(site, VisitByCallsite) and ob.response:
             # The reply names the nodes the walker visits next, in order: link each
@@ -591,6 +630,12 @@ class Program:
             site = self.sites.get(key)
             hint = site.hint if site is not None else ""
             stripped = ob.user_text[:-len(hint)] if hint and ob.user_text.endswith(hint) else ob.user_text
+            # header behind the values: the member rows end at the signature line
+            # (the schema rows below it vary with the values' shape, the line does not)
+            head_line = site.context_desc.split("\n", 1)[0] if site is not None and site.context_desc else ""
+            k = stripped.find("\n" + head_line) if head_line else -1
+            if k > 0:
+                stripped = stripped[:k]
             i = stripped.find("\nself = ")
             j = stripped.find("\n", i + 1) if i >= 0 else -1
             p["self_rows"] = stripped[j:] if j >= 0 else ""
@@ -629,14 +674,23 @@ class Program:
         rule, n = max(rules.items(), key=lambda kv: kv[1])
         return rule if n >= 2 and 2 * n >= sum(rules.values()) else None
 
-    def _stability(self, key: str, name: str) -> int:
-        """How long a binding's bytes stay valid as a cache prefix:
-        0 across sessions (const), 
-        1 within a session (copy), 
-        2 growing within a session (extend),
-        3 fresh every call (anything else, or unsettled)."""
+    def _stability(self, key: str, name: str) -> Tuple[float, int]:
+        """Sort key for a binding's place in the layout: how often its bytes break
+        the prefix between this site's consecutive calls (fraction of fresh steps,
+        from self.cont), then the kind of the stable steps (1 unchanged, 2 growing,
+        3 fresh). A value that repeats across sessions (const) sorts first; a site
+        seen once per session has no step evidence and falls back to its
+        provenance rule, which is all there is to go on."""
         rule = self._dominant(key, name)
-        return STABILITY.get(rule.partition(":")[0], 3) if rule else 3
+        if rule and rule.startswith("const"):
+            return (-1.0, 0)
+        steps = self.cont.get((key, name))
+        if steps:
+            total = sum(steps.values())
+            stable = {k: c for k, c in steps.items() if k != "fresh"}
+            kind = max(stable.items(), key=lambda kv: kv[1])[0] if stable else "fresh"
+            return (steps.get("fresh", 0) / total, CONTINUITY[kind])
+        return (1.0, STABILITY.get(rule.partition(":")[0], 3) if rule else 3)
 
     def _freeze_layout(self, site: ByLLMCallsite) -> bool:
         """Decide the site's binding order once: stable-sort the observed order by
@@ -650,9 +704,26 @@ class Program:
             return False
         if any(sum(self.flow.get((site.key, n), {}).values()) < 8 for n in names):
             return False
-        site.layout = sorted(names, key=lambda n: self._stability(site.key, n))
+        # Bindings another callsite also carries (and that hold between this site's
+        # calls) lead, so the shared bytes are the prefix; then everything else by
+        # stability. The header goes behind the values only when such a shared
+        # binding leads; otherwise the static header stays in front, where it is
+        # itself a reusable prefix.
+        site.layout = sorted(names, key=lambda n: (0 if self._cross_stable(site.key, n) else 1,
+                                                   *self._stability(site.key, n)))
         p["order"] = list(site.layout)   # the rebuild follows the order requests now use
+        site.header_last = HEADER_LAST and self._cross_stable(site.key, site.layout[0])
         return True
+
+    def _cross_stable(self, key: str, name: str) -> bool:
+        """Whether the binding's value is carried by another callsite in the same
+        session (mostly) and holds or grows between this site's own calls."""
+        sh = self.shared.get((key, name), {})
+        cross = sh.get("cross", 0)
+        if not (cross > 0 and 2 * cross >= sum(sh.values())):
+            return False
+        # a site called once per session has no own-step evidence: sharing is all there is
+        return not self.cont.get((key, name)) or self._stability(key, name)[0] <= 0.5
 
     def _flow_prefix(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
         """For an accumulating binding, the bytes its next value is known to start
@@ -660,7 +731,7 @@ class Program:
         if self._dominant(key, name) != "extend":      
             return None
         w = next((v for e in reversed(obs_list) for nm, v in _named_values(e).items() if nm == name), None)
-        return w[:-1] if w is not None and len(w) > 2 else None
+        return w[:-1] if w is not None and len(w) >= 2 else None
 
     def _flow_value(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
         """Apply the dominant flow rule of (key, name) to the live session."""
@@ -705,24 +776,37 @@ class Program:
 
     def _resolve_byllm(self, site: ByLLMCallsite, p: Dict[str, Any],
                        obs_list: List[CallObservation]) -> Tuple[str, bool]:
-        parts = [site.context_desc]
+        header_last = site.layout is not None and site.header_last
+        parts: List[str] = []
+        vals: Dict[str, str] = {}
+        complete = True
         for name in p.get("order", ()):
             v = self._flow_value(site.key, name, obs_list)
             if v is None:
                 pre = self._flow_prefix(site.key, name, obs_list)
                 if pre is not None:              # the history so far: known head, open tail
                     parts.append(f"{name} = {pre}")
-                return "\n".join(parts), False
+                complete = False
+                break
+            vals[name] = v
             parts.append(f"{name} = {v}")
-        if p.get("self"):
+        if complete and p.get("self"):
             v = self._resolve_repr(site.key, "self", p.get("self_fields"), obs_list)
             if v is None:
-                return "\n".join(parts), False
-            if p.get("self_gap"):
-                parts.append("")
-            line = f"self = {v} ---- {site.owner_sem}" if site.owner_sem else f"self = {v}"
-            parts.append(line + p.get("self_rows", ""))
-        return "\n".join(parts) + site.hint, True
+                complete = False
+            else:
+                if p.get("self_gap"):
+                    parts.append("")
+                line = f"self = {v} ---- {site.owner_sem}" if site.owner_sem else f"self = {v}"
+                parts.append(line + p.get("self_rows", ""))
+        # the header+schema text as byllm renders it for these values' shape
+        ctx = site.ctx_by_shape.get(_shape(vals), site.context_desc)
+        if header_last:
+            if complete:
+                parts.append(ctx)
+        else:
+            parts.insert(0, ctx)
+        return "\n".join(parts) + (site.hint if complete else ""), complete
 
     def _resolve_repr(self, key: str, tag: str, spec: Optional[Tuple[str, List[Tuple[str, str]]]],
                       obs_list: List[CallObservation]) -> Optional[str]:

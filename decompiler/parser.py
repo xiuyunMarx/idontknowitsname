@@ -108,13 +108,25 @@ def split_byllm_user(user: str) -> Tuple[str, List[str], Dict[str, str], Optiona
     lines that are not a known binding are glued to the previous value."""
     user = _strip_hint(user)
     lines = user.split("\n")
-    names = _sig_names(lines[0])
-    ctx = lines[:_schema_end(lines)]
-    spans, self_view, self_sem = _scan_bindings(lines, names)
+    h, end = _locate_header(lines)
+    names = _sig_names(lines[h])
+    ctx = lines[h:end]
+    lo, hi = (0, h) if h > 0 else (end, len(lines))   # the value region: before a trailing header, else after it
+    spans, self_view, self_sem = _scan_bindings(lines, names, lo, hi)
     bindings: Dict[str, str] = {}
-    for name, start, end in spans:
-        bindings[name] = "\n".join(lines[start:end])[len(name) + 3:]   # past "name = "
+    for name, start, stop in spans:
+        bindings[name] = "\n".join(lines[start:stop])[len(name) + 3:]   # past "name = "
     return "\n".join(ctx), names, bindings, self_view, self_sem
+
+
+def _locate_header(lines: List[str]) -> Tuple[int, int]:
+    """(index of the header line, index past its schema rows). byllm puts the header
+    first; the server's cache-aware layout moves header and schema rows to the END
+    of the message so the values in front are a prefix shared across callsites."""
+    for h in range(len(lines) - 1, 0, -1):
+        if _HEADER.match(lines[h]) and all(l.startswith(SCHEMA_INDENT) for l in lines[h + 1:]):
+            return h, len(lines)
+    return 0, _schema_end(lines)
 
 
 def _sig_names(header: str) -> List[str]:
@@ -133,8 +145,8 @@ def _schema_end(lines: List[str]) -> int:
     return i
 
 
-def _scan_bindings(lines: List[str], names: List[str]) -> Tuple[List[Tuple[str, int, int]], Optional[str], Optional[str]]:
-    """Binding blocks after the schema rows as (name, first line, line past the last),
+def _scan_bindings(lines: List[str], names: List[str], lo: int, hi: int) -> Tuple[List[Tuple[str, int, int]], Optional[str], Optional[str]]:
+    """Binding blocks in lines[lo:hi] as (name, first line, line past the last),
     plus the self view and sem. A line that is not a known binding continues the
     previous binding's value (multi-line __repr__)."""
     spans: List[List[Any]] = []
@@ -142,7 +154,7 @@ def _scan_bindings(lines: List[str], names: List[str]) -> Tuple[List[Tuple[str, 
     self_sem: Optional[str] = None
     last: Optional[str] = None
     in_self = False
-    for i in range(_schema_end(lines), len(lines)):
+    for i in range(lo, hi):
         line = lines[i]
         sm = _SELF.match(line)
         if sm and not in_self:
@@ -162,32 +174,52 @@ def _scan_bindings(lines: List[str], names: List[str]) -> Tuple[List[Tuple[str, 
     return [(n, s, e) for n, s, e in spans], self_view, self_sem
 
 
-def relayout_user(user: str, layout: List[str]) -> str:
+def relayout_user(user: str, layout: List[str], header_last: bool = False) -> str:
     """The same byllm user message with its binding blocks in `layout` order (names
-    absent from `layout` keep their relative order after the listed ones). Header,
-    schema rows, self block and hint tail are untouched byte for byte; idempotent.
-    Returns the input unchanged when the blocks are not contiguous."""
+    absent from `layout` keep their relative order after the listed ones) and, with
+    `header_last`, the header and schema rows moved behind the values so the
+    accumulating values in front are a prefix every callsite of the session
+    shares. Blocks and hint tail are untouched byte for byte; idempotent. Returns
+    the input unchanged when the blocks are not contiguous."""
     body = _strip_hint(user)
     lines = body.split("\n")
-    spans, _, _ = _scan_bindings(lines, _sig_names(lines[0]))
-    if len(spans) < 2 or sum(e - s for _, s, e in spans) != spans[-1][2] - spans[0][1]:
+    h, end = _locate_header(lines)
+    lo, hi = (0, h) if h > 0 else (end, len(lines))
+    spans, _, _ = _scan_bindings(lines, _sig_names(lines[h]), lo, hi)
+    if len(spans) < 1 or sum(e - s for _, s, e in spans) != spans[-1][2] - spans[0][1]:
         return user
     rank = {n: i for i, n in enumerate(layout)}
     order = sorted(spans, key=lambda sp: rank.get(sp[0], len(layout)))   # stable
-    if order == spans:
+    if order == spans and (h > 0) == header_last:
         return user
-    lo, hi = spans[0][1], spans[-1][2]
-    out = lines[:lo] + [l for _, s, e in order for l in lines[s:e]] + lines[hi:]
+    a, b = spans[0][1], spans[-1][2]
+    values = lines[lo:a] + [l for _, s, e in order for l in lines[s:e]] + lines[b:hi]
+    ctx = lines[h:end]
+    out = values + ctx if header_last else ctx + values
     return "\n".join(out) + user[len(body):]
 
 
-def relayout_body(body: Dict[str, Any], layout: List[str]) -> bool:
+def relayout_body(body: Dict[str, Any], layout: List[str], header_last: bool = False) -> bool:
     """Apply relayout_user to the request's call message in place (string content
     only). True when the message changed."""
     for m in body.get("messages") or []:
+        if m.get("role") != "user":
+            continue
         c = m.get("content")
-        if m.get("role") == "user" and isinstance(c, str) and not c.startswith(TOOL_RESPONSE_TAG):
-            new = relayout_user(c, layout)
+        if isinstance(c, list):   # byllm sends the message as text parts: rewrite them as one
+            parts = [p for p in c if isinstance(p, dict) and p.get("type") == "text"]
+            if not parts or len(parts) != len(c):
+                return False
+            text = _content(m)
+            if text.startswith(TOOL_RESPONSE_TAG):
+                return False
+            new = relayout_user(text, layout, header_last)
+            if new != text:
+                m["content"] = [{"type": "text", "text": new}]
+                return True
+            return False
+        if isinstance(c, str) and not c.startswith(TOOL_RESPONSE_TAG):
+            new = relayout_user(c, layout, header_last)
             if new != c:
                 m["content"] = new
                 return True

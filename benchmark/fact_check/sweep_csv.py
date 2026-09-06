@@ -1,7 +1,7 @@
 """Consolidate fact_bench sweep arms into one CSV.
 
 usage: python -m benchmark.fact_check.sweep_csv OUT.csv LABEL:MODEL:DIR [LABEL:MODEL:DIR ...]
-One row per (label, concurrency, arm) from DIR/{lru,ours}_c{N}.out and the matching .log
+One row per (label, concurrency, arm) from DIR/{lruraw,lru,ours}_c{N}.out and the matching .log
 (TTFT mean and decode figures come from the server log's [serve]/[decode] lines)."""
 import csv, glob, os, re, sys
 
@@ -14,7 +14,7 @@ FIELDS = ["run", "model", "concurrency", "arm", "device_tokens", "host_tokens", 
 def row_for(label, model, path):
     tag = os.path.basename(path)[:-4]
     arm, _, c = tag.rpartition("_c")
-    if not c.isdigit() or arm not in ("lru", "ours"):
+    if not c.isdigit() or arm not in ("lruraw", "lru", "ours"):
         return None
     txt = open(path).read()
     m = re.search(r"JCT p50=\s*([\d.]+)s p95=\s*([\d.]+)s mean=\s*([\d.]+)s", txt)
