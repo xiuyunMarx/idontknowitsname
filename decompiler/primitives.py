@@ -630,9 +630,8 @@ class Program:
             site = self.sites.get(key)
             hint = site.hint if site is not None else ""
             stripped = ob.user_text[:-len(hint)] if hint and ob.user_text.endswith(hint) else ob.user_text
-            # header behind the values: the member rows end at the signature line
-            # (the schema rows below it vary with the values' shape, the line does not)
-            head_line = site.context_desc.split("\n", 1)[0] if site is not None and site.context_desc else ""
+            # header behind the values
+            head_line = site.context_desc.split("\n", 1)[0] if site is not None and site.context_desc else "" #type: ignore
             k = stripped.find("\n" + head_line) if head_line else -1
             if k > 0:
                 stripped = stripped[:k]
@@ -647,7 +646,7 @@ class Program:
             built, complete = self.resolve_user(key, list(earlier))
             if complete and built == ob.user_text:
                 p["ok"] += 1
-
+    
     def _observe_offers(self, walked: List[str], obs: List[CallObservation]) -> None:
         """Count each offered candidate against its learned successor edge, so
         seen_freq/taken_freq gives P(branch taken | branch offered)."""

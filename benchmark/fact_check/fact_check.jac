@@ -5,27 +5,6 @@ Graph topology (a cycle, like PBKV's HoVer + LangChain workload):
     root -> ClaimAnalyzer -> EvidenceScout[0..N) -> EvidenceAnalyzer
               ^                                         |
               +------------- NEED_MORE / min rounds ----+
-
-Round r: the ClaimAnalyzer turns the claim plus every finding so far into up to
-N independent questions (follow-up questions may build on answers already found:
-multi-hop), each EvidenceScout searches and assesses one question, and the
-EvidenceAnalyzer decides SUPPORTED / NOT_SUPPORTED / NEED_MORE over all evidence.
-NEED_MORE (or an unmet FC_MIN_ROUNDS) loops back for another round, up to
-FC_ROUNDS. Defaults are few scouts and many rounds (2 x 6) so each round adds a
-small increment to a long history: the reuse shape of a LangChain / ReAct
-scratchpad, which is what PBKV's HoVer workload has.
-
-KV-cache shape. `evidences` only grows within a session and is the second
-parameter of every LLM call, right after the session-constant `claim`, so the
-r-th invocation of each callsite extends the (r-1)-th one's prompt:
-header | claim | evidences[:k] is the shared prefix, question / search_results /
-the new findings are the transient tail. Each Evidence keeps the retrieved
-passage (FC_PASSAGE_CHARS), so the history is ~1k tokens per finding and a
-cache miss on a late round re-prefills the whole session's evidence.
-
-Env: FC_CLAIM (or argv[1]), FC_ROUNDS (max rounds, 6), FC_MIN_ROUNDS (6),
-FC_SCOUTS (2), FC_PASSAGE_CHARS (4000), FC_CACHE_DIR (benchmark/reproduce/wiki_cache;
-Wikipedia results are cached per query so reruns are offline and deterministic).
 """
 
 import os;
@@ -41,7 +20,7 @@ import from jaclang.byllm.llm { InterceptorLLM }
 glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
 glob MAX_SCOUTS: int = int(os.environ.get("FC_SCOUTS") or "2");
 glob MAX_ROUNDS: int = int(os.environ.get("FC_ROUNDS") or "6");
-glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "6");
+glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "2");
 glob PASSAGE_CHARS: int = int(os.environ.get("FC_PASSAGE_CHARS") or "4000");
 glob CACHE_DIR: str = os.environ.get("FC_CACHE_DIR") or os.path.join("benchmark", "reproduce", "wiki_cache");
 glob TOOL_DELAY_S: float = float(os.environ.get("FC_TOOL_DELAY_S") or "0");   # simulated search latency per query (cache hits included)
@@ -285,13 +264,6 @@ node EvidenceAnalyzer {
         }
         visitor.verdict = verdict;
         label = str(verdict.label).split(".")[-1];
-
-        more = verdict.label == VerdictLabel.NEED_MORE or visitor.round < MIN_ROUNDS;
-        if more and visitor.round < MAX_ROUNDS {
-            print(f"Round {visitor.round}: {label} (provisional), {len(visitor.evidences)} findings; another round");
-            visit [self-->][?:ClaimAnalyzer];
-            return;
-        }
 
         print(f"Verdict: {label}");
         print(f"Rationale: {verdict.rationale}");

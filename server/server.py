@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from decompiler.parser import decompose, is_continuation, relayout_body
+import decompiler.primitives as primitives
 from decompiler.primitives import (ByLLMCallsite, Callsite, CallObservation, PredictedCall, Program,
                                    VisitByCallsite, _lcp, chosen_candidates, node_type)
 from model.device_profiler import profile_device
@@ -458,10 +459,14 @@ if __name__ == "__main__":
     ap.add_argument("--manage-only", action="store_true", help="promotion/steering only, no bulk creation")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
+    ap.add_argument("--no-header-last", action="store_true",
+                    help="re-layout reorders bindings only; never move the callsite header behind the values")
     ap.add_argument("--no-relayout", action="store_true",
                     help="Disable prompt re-layout for better KV reuse (default: enabled)")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
     a = ap.parse_args()
+    if a.no_header_last:
+        primitives.HEADER_LAST = False
     asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout))
