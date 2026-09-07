@@ -6,7 +6,7 @@
 Arrival model (CacheScout-style): session starts are a Poisson process at
 `--rate` sessions/s for `--duration` seconds; each start picks an app by
 `--mix` weights and a payload from that app's dataset pool — all drawn from
-`--seed`, so a spec run and a --no-spec run on fresh servers replay the
+`--seed`, so a spec run and a --lru run on fresh servers replay the
 identical trace. Before the measured window, `--warmup` sessions per app run
 in four parallel per-app lanes (sequential within a lane) so the server can
 learn each program online; warmup cycles the dataset labels (kb/web/calc,

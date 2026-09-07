@@ -1,15 +1,14 @@
-"""SGLang Engine wrapped for serving: real generate/decode plus speculative prefill that
-stays within a profiled per-step token budget.
+"""SGLang Engine wrapped for serving: real generate/decode, a shadow KV ledger, and the
+two scheduler RPCs the planner steers HiCache with (promote, kv_priority).
 
     engine = Engine("Qwen/Qwen3-8B")
     text = await engine.generate(prompt, request_id)
-    await engine.prefill(prompt, request_id)   # KV lands in the radix cache
+    await engine.promote(token_ids, request_id)   # host-tier prefix back onto the device
 """
 
 import asyncio
 import functools
 import random
-import statistics
 import time
 import uuid
 import json
@@ -28,10 +27,9 @@ HOST_KV_GB = 8
 LANDED_STRIDE = 8   # bookkeeping granularity for prefixes we have already computed
 
 # SGLang schedules the HIGHEST priority value first — the opposite of vLLM. A tool-loop
-# turn of a call already in flight outranks a fresh call, which outranks speculation.
+# turn of a call already in flight outranks a fresh call.
 PRIORITY_CONT = 2
 PRIORITY_REAL = 1
-PRIORITY_SPEC = 0
 
 
 class KVLedger:
@@ -155,14 +153,8 @@ class Engine:
 
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
-        self._spec_tokens_per_step:Dict[int, int] = {} # uncached spec prefill tokens one step may carry, keyed by decode concurrency
         self.device_profile: Optional[DeviceProfile] = None  # measured rates; see model.device_profiler
-        self.DEFAULT_SPEC_TOKENS_PER_STEP = 32
-        self.SPEC_TIMEOUT_S = 20.0
-        self.tbt_ms: Optional[float] = None  # profiled single-stream decode step time (planner's time unit)
         self.promote_no_room = False  # last promote() deferral was for device space, not queue depth
-        self.prefill_rate_tps: Optional[float] = None  # EMA of idle uncached-prefill throughput
-        self._spec_tasks: Dict[asyncio.Task, int] = {}  # speculative consumers in flight -> their uncached-token cost
         if device_kv_tokens is None:
             init = getattr(self.engine, "_scheduler_init_result", None)
             infos = getattr(init, "scheduler_infos", None) or [{}]
@@ -190,12 +182,8 @@ class Engine:
 
 
     @property
-    def busy(self) -> bool:
-        return self._inflight_prefill + self._inflight_decode + len(self._spec_tasks) > 0
-
-    @property
     def serving(self) -> bool:
-        """Real requests in flight (speculation alone does not pin an engine)."""
+        """Real requests in flight."""
         return self._inflight_prefill + self._inflight_decode > 0
 
     def shutdown(self) -> None:
@@ -221,18 +209,7 @@ class Engine:
         return self._tokenizer.apply_chat_template( #type: ignore
             msgs, tools=tools, tokenize=False, add_generation_prompt=True, enable_thinking=False) #type: ignore
 
-    # ---- speculative budget --------------------------------------------------
-
-    def spec_allowance(self) -> int:
-        """How many more speculative tokens can we accept right now without interfering with normal model work"""
-        if self._inflight_prefill > 0:
-            return 0  # a real prefill owns the step
-        if self._inflight_decode == 0:
-            return 1 << 30  # no real decode to protect
-        budget = self._spec_tokens_per_step.get(self._inflight_decode)
-        if budget is None:  # unprofiled concurrency: a conservative default instead of no speculation at all
-            budget = self.DEFAULT_SPEC_TOKENS_PER_STEP if not self._spec_tokens_per_step else 0
-        return budget - sum(self._spec_tasks.values())
+    # ---- KV ledger -----------------------------------------------------------
 
     @property
     def _stride(self) -> int:
@@ -246,23 +223,14 @@ class Engine:
         prefix is not charged again for it."""
         self.ledger.land(toks, time.monotonic())
 
-    def uncached_cost(self, toks: List[int]) -> int:
-        """Tokens the engine would actually have to compute for `toks`: everything past
-        the longest prefix the ledger believes is still cached. The speculation budget
-        is denominated in *uncached* tokens, so charging the full length rejects work
-        that is nearly free — exactly the promotion-shaped work worth doing when the
-        GPU is busy."""
-        return self.ledger.cost(toks)[0]
-
     def cost(self, toks: List[int]) -> Tuple[int, int]:
         """(uncached, host) token counts: what must be computed vs what a host→device
-        promotion covers. The planner prices creation and promotion differently."""
+        promotion covers."""
         return self.ledger.cost(toks)
 
     def save_profile(self, path: str) -> None:
         with open(path, "w") as f:
-            json.dump({"model": self.name, "unit": "tokens_per_step", "tbt_ms": self.tbt_ms,
-                       "spec_tokens_per_step": self._spec_tokens_per_step,
+            json.dump({"model": self.name,
                        "device": self.device_profile.as_dict() if self.device_profile else None},
                       f, indent=1)
 
@@ -272,16 +240,12 @@ class Engine:
                 data = json.load(f)
         except (OSError, json.JSONDecodeError):
             return False
-        if data.get("model") != self.name or data.get("unit") != "tokens_per_step":
+        if data.get("model") != self.name or not data.get("device"):
             return False
-        if not data.get("device"):
-            return False  # older profile: re-measure everything
         try:
             self.device_profile = DeviceProfile.from_dict(data["device"])
         except (KeyError, TypeError, ValueError):
             return False  # measured under an older definition: re-measure
-        self._spec_tokens_per_step = {int(k): int(v) for k, v in data["spec_tokens_per_step"].items()}
-        self.tbt_ms = data.get("tbt_ms") or self.tbt_ms
         return True
 
     # ---- real requests -------------------------------------------------------
@@ -291,11 +255,9 @@ class Engine:
                        priority: int = PRIORITY_REAL,
                        progress: Optional[Callable[[float, int], None]] = None,
                        ids: Optional[List[int]] = None) -> str:
-        """A real request: prefill until its first token, then decode. Any speculative
-        request in flight is killed on admission so the prefill step is not shared.
-        Higher `priority` is scheduled first; speculation stays at PRIORITY_SPEC.
-        `progress(first_token_at, out_tokens)` is called on every output. `ids` is
-        the prompt's tokenization when the caller already has it."""
+        """A real request: prefill until its first token, then decode. Higher `priority`
+        is scheduled first. `progress(first_token_at, out_tokens)` is called on every
+        output. `ids` is the prompt's tokenization when the caller already has it."""
         text = ""
         out_tokens = 0
         ids = ids if ids is not None else self.tokenize(prompt)
@@ -303,7 +265,6 @@ class Engine:
         first_token_at = started
         first_token = True
         self._inflight_prefill += 1
-        self.kill_speculation()
         try:
             async for out in await self.engine.async_generate(  #type: ignore
                     prompt=prompt, sampling_params=sampling_params or self.sp,
@@ -360,84 +321,7 @@ class Engine:
                 "cached_device": detail.get("device") or 0,
                 "cached_host": detail.get("host") or 0}
 
-    # ---- speculative requests ------------------------------------------------
-
-    def kill_speculation(self) -> int:
-        """Abort every speculative request in flight; returns how many."""
-        live = [t for t in self._spec_tasks if not t.done()]
-        for t in live:
-            t.cancel()
-        return len(live)
-
-    async def _speculative(self, prompt: Optional[str], input_ids: Optional[List[int]],
-                           sampling_params: Dict[str, Any], request_id: str, cost: int = 0,
-                           **kwargs) -> Any:
-        """Run one PRIORITY_SPEC request to completion; return its last output, or None
-        if kill_speculation() aborted it. Consumed in its own task so a real admission
-        can cancel exactly this request. `cost` is held against the speculation budget
-        until the request ends."""
-        async def consume():
-            last = None
-            async for out in await self.engine.async_generate( #type: ignore
-                    prompt=prompt, input_ids=input_ids, sampling_params=sampling_params,
-                    rid=request_id, priority=PRIORITY_SPEC, stream=True, **kwargs):
-                last = out
-            return last
-
-        async def bounded():
-            try:
-                return await asyncio.wait_for(consume(), self.SPEC_TIMEOUT_S)
-            except asyncio.TimeoutError:
-                print(f"[spec] {request_id} timed out after {self.SPEC_TIMEOUT_S}s; aborted", flush=True)
-                self._abort(request_id)
-                return None
-
-        task = asyncio.create_task(bounded())
-        self._spec_tasks[task] = cost
-        try:
-            return await task
-        except asyncio.CancelledError:
-            me = asyncio.current_task()
-            if not task.cancelled() or (me is not None and me.cancelling()):
-                raise  # the caller itself is being cancelled (shutdown), not the request
-            self._abort(request_id)
-            return None
-        finally:
-            self._spec_tasks.pop(task, None)
-
-    def _abort(self, request_id: str) -> None:
-        """Cancelling the consumer does not reach the scheduler; tell it explicitly."""
-        try:
-            self.engine.tokenizer_manager.abort_request(rid=request_id) #type: ignore
-        except Exception:
-            pass
-
-
-    async def prefill(self, prompt: str | List[int], request_id: str, cost: Optional[int] = None) -> bool:
-        """Speculative prefill: one PRIORITY_SPEC request that leaves the prompt's KV in
-        the radix cache. `cost` defaults to the tokens not already cached."""
-        started = time.perf_counter()
-        ids = list(prompt) if isinstance(prompt, list) else self.tokenize(prompt)
-        if cost is None:
-            cost = self.uncached_cost(ids)
-        was_idle = not self.serving
-        sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
-        out = await self._speculative(None, ids, sp, request_id, cost)
-        done = out is not None
-        duration = time.perf_counter() - started
-        if done:
-            meta = out.get("meta_info") or {}
-            if meta.get("prompt_tokens"):
-                self._calibrate(ids, self._cache_stats(meta))  # free ground truth
-            self.note_landed(ids)
-            if was_idle and cost > 64 and duration > 0:  # a clean sample of idle prefill throughput
-                rate = cost / duration
-                self.prefill_rate_tps = rate if self.prefill_rate_tps is None else \
-                    0.7 * self.prefill_rate_tps + 0.3 * rate
-        print(f"[prefill] {request_id} tokens={len(ids)} cost_tokens={cost} "
-              f"duration_ms={duration * 1000:.2f}"
-              + ("" if done else " aborted=1"), flush=True)
-        return done
+    # ---- scheduler RPCs ------------------------------------------------------
 
     async def promote(self, toks: List[int], request_id: str, wait: bool = False) -> Optional[bool]:
         """Host→device promotion (and LRU touch) of `toks`' cached prefix with no
@@ -487,9 +371,6 @@ class Engine:
                 rid=f"warmup-real-{n}-{uuid.uuid4().hex}", priority=PRIORITY_REAL, stream=True
             ):
                 pass
-        await self._speculative(None, self._random_ids(64),
-                                {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True},
-                                f"warmup-spec-{uuid.uuid4().hex}")
         print(f"[warmup] engine ready in {(time.perf_counter() - started) * 1000:.0f} ms", flush=True)
 
     # ------------------ Internal helpers ---------------------------------------------------
@@ -497,98 +378,3 @@ class Engine:
         """`num_tokens` ids no earlier request has seen: an uncached prompt of exact length."""
         vocab = len(self._tokenizer)  #type: ignore
         return [random.randrange(1000, vocab - 1000) for _ in range(num_tokens)]
-
-    async def _measure_tbt(self, num_decode: int, num_prefill: int, sampling_params: Dict[str, Any],
-                           injectors: int = 1) -> dict:
-        """TBT of `num_decode` decode streams (each `sampling_params["max_new_tokens"]` long)
-        while PRIORITY_SPEC prefill requests of `num_prefill` uncached tokens are
-        injected back-to-back, one at a time. `num_prefill == 0` measures the baseline.
-        Returns tbt_mean_ms, tbt_p95_ms and duty (injections completed per decode step)."""
-        if num_decode < 1 or num_prefill < 0:
-            raise ValueError("num_decode must be >= 1 and num_prefill >= 0")
-        decode_tokens = sampling_params.get("max_new_tokens") or 0
-        warmup_tokens = min(8, max(0, decode_tokens - 4))
-        if decode_tokens < warmup_tokens + 3:
-            raise ValueError("sampling_params['max_new_tokens'] too small to measure TBT")
-
-        stop = asyncio.Event()
-        decode_started = asyncio.Event()
-        started = 0
-        injected = 0
-
-        async def decode_worker(index: int) -> List[float]:
-            nonlocal started
-            ts: List[float] = []
-            async for _ in await self.engine.async_generate(  #type: ignore
-                input_ids=self._random_ids(24), sampling_params=sampling_params,
-                rid=f"profile-decode-{index}-{uuid.uuid4().hex}", priority=PRIORITY_REAL, stream=True,
-            ):
-                ts.append(time.perf_counter())
-                if len(ts) == 1:
-                    started += 1
-                    if started == num_decode:
-                        decode_started.set()
-            return [ts[i] - ts[i - 1] for i in range(warmup_tokens + 1, len(ts))]
-
-        async def injector() -> None:
-            nonlocal injected
-            await decode_started.wait()
-            sp = {"max_new_tokens": 1, "temperature": 0.0, "ignore_eos": True}
-            while not stop.is_set():
-                async for _ in await self.engine.async_generate(  #type: ignore
-                    input_ids=self._random_ids(num_prefill), sampling_params=sp,
-                    rid=f"profile-prefill-{uuid.uuid4().hex}", priority=PRIORITY_SPEC, stream=True,
-                ):
-                    pass
-                injected += 1
-
-        decoders = [asyncio.create_task(decode_worker(i)) for i in range(num_decode)]
-        injs = [asyncio.create_task(injector()) for _ in range(injectors)] if num_prefill > 0 else []
-        try:
-            gaps_by_stream = await asyncio.gather(*decoders)
-        finally:
-            stop.set()
-            decode_started.set()  # release the injectors if a decoder died at startup
-            await asyncio.gather(*injs, return_exceptions=True)
-
-        gaps = sorted(g for stream in gaps_by_stream for g in stream)
-        if len(gaps) < num_decode * 4:
-            raise RuntimeError("not enough tokens to measure TBT; raise max_new_tokens")
-        steps = decode_tokens - warmup_tokens - 1
-        return {
-            "tbt_mean_ms": statistics.mean(gaps) * 1000,
-            "tbt_p95_ms": gaps[min(len(gaps) - 1, int(0.95 * len(gaps)))] * 1000,
-            "duty": injected / steps,
-        }
-
-    async def _profile(self, tbt_slack: float = 0.15, max_decode: int = 16,
-                       prefill_sizes: Tuple[int, ...] = (16, 32, 48, 64, 96, 128, 192, 256),
-                       decode_tokens: int = 128) -> Dict[int, int]:
-        """Per decode concurrency b, the largest uncached prefill size one PRIORITY_SPEC
-        request may carry while mean TBT stays within `tbt_slack` of the b-stream
-        baseline. Fills and returns `_spec_tokens_per_step`."""
-        sp = {"max_new_tokens": decode_tokens, "temperature": 0.0, "ignore_eos": True}
-        self._spec_tokens_per_step.clear()
-        # Pay first-request CUDA/kernel init outside the baseline.
-        await self._measure_tbt(1, 0, {"max_new_tokens": 16, "temperature": 0.0, "ignore_eos": True})
-
-        for b in range(1, max_decode + 1):
-            base = await self._measure_tbt(b, 0, sp)
-            if b == 1:
-                self.tbt_ms = base["tbt_mean_ms"]
-            limit = base["tbt_mean_ms"] * (1.0 + tbt_slack)
-            safe = 0
-            for n in prefill_sizes:
-                m = await self._measure_tbt(b, n, sp)
-                print(f"[profile] b={b} n={n} tbt_mean={m['tbt_mean_ms']:.2f}ms "
-                      f"(+{m['tbt_mean_ms'] / base['tbt_mean_ms'] - 1:.1%}) "
-                      f"p95={m['tbt_p95_ms']:.2f}ms duty={m['duty']:.2f}", flush=True)
-                if m["tbt_mean_ms"] > limit:
-                    break
-                safe = n
-            self._spec_tokens_per_step[b] = safe
-            print(f"[profile] decode={b} baseline_tbt={base['tbt_mean_ms']:.2f}ms spec_tokens_per_step={safe}", flush=True)
-            if safe == 0:
-                break
-        return self._spec_tokens_per_step
-

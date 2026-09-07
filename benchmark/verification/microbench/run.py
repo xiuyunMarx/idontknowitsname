@@ -17,7 +17,7 @@ probe get a stage.
 
 Client wall times print per (session, call); the interesting server metrics
 (ttft_ms, cached_device/cached_host, [prefill]/[probe]/[steer], drift) are in
-the server log. Compare a run against `--no-spec` on a fresh server each time —
+the server log. Compare a run against `--lru` on a fresh server each time —
 programs are learned online and in memory only.
 """
 import argparse

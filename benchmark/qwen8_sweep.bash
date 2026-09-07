@@ -38,8 +38,8 @@ run_arm() {  # $1 tag, $2 server flags, $3 concurrency
 for c in $LEVELS; do            # level-major: both arms of one level back to back
   for arm in $ARMS; do
     case $arm in
-      lru)  run_arm "lru_c$c"  "--no-spec" "$c";;
-      ours) run_arm "ours_c$c" "--manage-only $OURS_FLAGS" "$c";;
+      lru)  run_arm "lru_c$c"  "--lru" "$c";;
+      ours) run_arm "ours_c$c" "$OURS_FLAGS" "$c";;
     esac
   done
 done

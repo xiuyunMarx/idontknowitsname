@@ -1,9 +1,9 @@
 """
-Batched controller: Belady-with-repair serving of byllm agents over one SGLang engine.
-Predicted calls become KV jobs (promote / create) and drive the engine's
-eviction order (model.promote.kv_priority); see server.kv_planner.
+Batched controller: workflow-aware serving of byllm agents over one SGLang engine.
+Predicted calls become promotion jobs and drive the engine's eviction order
+(model.promote.kv_priority); see server.kv_planner.
 
-python -m server.server [MODEL] [--no-spec] [--manage-only] [--kv N] [--host GB]
+python -m server.server [MODEL] [--lru] [--kv N] [--host GB] [--sched fcfs|lpm]
 """
 import argparse
 import asyncio
@@ -51,10 +51,9 @@ class LiveSession:
     tainted: bool = False                        # Joined mid-program: serve it, keep stats clean
     plan_anchor: float = 0.0                     # monotonic t the gap predictions count from
 
-
 class Controller:
-    def __init__(self, model: str, server: HttpServer, speculate: bool = True, enable_relayout: bool = True ,**engine_kwargs):
-        self.speculate = speculate     # off: plain serving over the prefix cache (the baseline)
+    def __init__(self, model: str, server: HttpServer, plan: bool = True, enable_relayout: bool = True ,**engine_kwargs):
+        self.plan = plan               # off: plain serving over the prefix cache (the LRU baseline)
         self.engine: Engine = Engine(model, **engine_kwargs)
         self.sessions: Dict[str, LiveSession] = {}    # session id -> live state
         self.programs: Dict[str, Program] = {}        # entry callsite key -> Program
@@ -64,14 +63,13 @@ class Controller:
         self._plan_tok: "OrderedDict[Tuple[str, bool, str], Optional[List[int]]]" = OrderedDict()
         self._enable_relayout:bool = enable_relayout # Enable prompt re-layout for better KV reuse. 
         self.PLAN_TOK_CACHE = 1024
-        self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if speculate else None
+        self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if plan else None
 
     # ------------------------------------------------------------------ lifecycle
     async def start_serving(self) -> None:
         await self.engine.warmup()
         profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
         if not self.engine.load_profile(profile):
-            await self.engine._profile()
             await profile_device(self.engine)
             self.engine.save_profile(profile)
         asyncio.create_task(self._sweep())
@@ -202,6 +200,8 @@ class Controller:
         site = prog.add_callsite(site, extras.bindings)
         if self._enable_relayout and isinstance(site, ByLLMCallsite) and site.layout and relayout_body(req.body, site.layout, site.header_last):
             _, extras = decompose(req.body)   # bindings and user_text as they go on the wire
+            
+        
         hit = "" if sess.predicted is None else f" predicted={'hit' if sess.predicted == site.key else 'miss'}"
         print(f"[call] {sess.id} #{len(sess.walked)} {site.label}{hit}", flush=True)
         sess.walked.append(site.key)
@@ -221,11 +221,7 @@ class Controller:
         return sess.open_obs
 
     def _relayout(self, sess: LiveSession, body: dict) -> None:
-        """Re-emit the request's call message in the open site's frozen binding order.
-        The learned order puts session-constant and accumulating values before fresh
-        ones, so the r-th call of a site extends the (r-1)-th call's prompt; the
-        rewrite is idempotent, and a different site's message is left alone unless it
-        shares the names, in which case _advance re-applies its own order."""
+        """Re-emit the request's call message in the open site's frozen binding order."""
         if not self._enable_relayout or sess.open_obs is None or sess.program is None:
             return
         site = sess.program.sites.get(sess.open_obs.key)
@@ -316,14 +312,15 @@ class Controller:
         if len(toks) < 16:  # shorter than a cache block: nothing to gain  #type: ignore
             return jobs
         unc, host = self.engine.cost(toks) #type: ignore[union-attr]
-        kind = "promote" if unc <= self.engine._stride and host > 0 else "create"
-        # a device-resident prefix has no work, but it still needs its eviction
-        # protection: it enters the plan as an already-done job
+        # promote: the cached frontier reaches into the host tier, load it back ahead
+        # of the call; hold: nothing to load (resident, or the rest must be computed
+        # by the call itself), the job only carries eviction protection
+        kind = "promote" if host > 0 else "hold"
         resident = unc + host < self.engine._stride
         jobs.append(Job(key=f"{sess.id}|{kind}|{c.key}", sid=sess.id, epoch=sess.epoch,
                         site=c.key, kind=kind, toks=toks, p=c.p, #type: ignore[union-attr]
                         value=c.p * (unc + 0.8 * host), deadline=deadline, t90=t90,
-                        work=unc, host=host, done_upto=len(toks) if resident else 0, #type: ignore
+                        host=host, done_upto=len(toks) if resident else 0, #type: ignore
                         state="done" if resident else "queued"))
         return jobs
 
@@ -432,31 +429,32 @@ class Controller:
         return True
 
 
-async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, speculate: bool = True,
-               manage_only: bool = False, kv_tokens: Optional[int] = None,
+async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True,
+               kv_tokens: Optional[int] = None,
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
-               enable_relayout: bool = True) -> None:
+               enable_relayout: bool = True, sched: str = "fcfs") -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384,
-                              "radix_eviction_policy": "priority" if speculate else "lru"}
+                              "radix_eviction_policy": "priority" if plan else "lru"}
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens   # real device pool cap (sglang server arg)
     if host_gb is not None:
         kwargs["host_cache_gb"] = host_gb        # host KV tier size (model.model.HOST_KV_GB default)
     if hicache_io:
         kwargs["hicache_io_backend"] = hicache_io  # host<->device copy path; model.model defaults to "direct"
-    ctrl = Controller(model, server, speculate=speculate, enable_relayout=enable_relayout, **kwargs)
-    if ctrl.planner is not None:
-        ctrl.planner.manage_only = manage_only
+    if sched == "lpm":   # engine re-sorts the waiting queue by matched prefix length every step;
+        kwargs["schedule_policy"] = "lpm"          # sglang allows request priorities only with fcfs/lof,
+        kwargs["enable_priority_scheduling"] = False   # so PRIORITY_CONT becomes a no-op
+    ctrl = Controller(model, server, plan=plan, enable_relayout=enable_relayout, **kwargs)
     await ctrl.start_serving()
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Start the server")
     ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
-    ap.add_argument("--no-spec", action="store_true", help="plain prefix-cache serving (baseline)")
-    ap.add_argument("--manage-only", action="store_true", help="promotion/steering only, no bulk creation")
+    ap.add_argument("--lru", action="store_true",
+                    help="baseline: no planner, sglang's own LRU eviction (decompiler and re-layout stay on)")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
     ap.add_argument("--no-header-last", action="store_true",
@@ -465,8 +463,11 @@ if __name__ == "__main__":
                     help="Disable prompt re-layout for better KV reuse (default: enabled)")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
+    ap.add_argument("--sched", choices=["fcfs", "lpm"], default="fcfs",
+                    help="engine waiting-queue order: fcfs + request priorities, or longest-prefix-match")
     a = ap.parse_args()
     if a.no_header_last:
         primitives.HEADER_LAST = False
-    asyncio.run(main(a.model, speculate=not a.no_spec, manage_only=a.manage_only, kv_tokens=a.kv,
-                     host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout))
+    asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
+                     host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
+                     sched=a.sched))

@@ -1,4 +1,5 @@
-"""Deadline-driven KV planner: Belady with repair."""
+"""Deadline-driven KV planner: predicted calls become promotion jobs (host -> device)
+and eviction protection; nothing is ever prefilled speculatively."""
 import asyncio
 import math
 import time
@@ -13,37 +14,30 @@ class Job:
     sid: str                    # session id
     epoch: int                  # session epoch at submission; a bump voids the job
     site: str                   # target callsite key
-    kind: str                   # "create" | "promote"
+    kind: str                   # "promote" (host tokens to load) | "hold" (protect only: nothing to load)
     toks: List[int]             # full target token prefix
     p: float                    # probability the call happens
     value: float                # p × exposed-prefill tokens saved if this job lands
     deadline: float             # monotonic: expected arrival, safety-tightened
     t90: float                  # monotonic: pessimistic arrival, for staleness GC
-    work: int                   # uncached tokens at submission
     host: int                   # promotable host-tier tokens at submission
-    done_upto: int = 0          # chunk progress: token index already prefilled
-    attempts: int = 0           # aborted executions since the last progress
+    done_upto: int = 0          # token index known to be on the device
     state: str = "queued"       # queued | running | done | void
     cooldown_cycles: int = 0    # planner cycles to skip after a no-room promotion refusal
 
 class KVPlanner:
     TICK_S = 0.015               # planner heartbeat between wake events
     SAFETY_K = 0.5              # deadline tightening per unit of arrival spread
-    CHUNK = 512                 # prefill chunk, rounded to the engine stride
-    MAX_ATTEMPTS = 3            # aborted executions before a job is dropped
     STALE_SLACK_S = 5.0         # past t90 by this much: the call never came
     SCORE_TAU_S = 60.0          # eviction score decay: a prefix due in tau seconds counts 1/e of one due now
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
-    BACKOFF_ABORTS = 3          # consecutive kills that mean the engine has no headroom
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
 
-    def __init__(self, engine, manage_only: bool = False) -> None:
+    def __init__(self, engine) -> None:
         self.engine = engine
-        self.manage_only = manage_only  # only promotion/steering: no bulk creation
         self._jobs: Dict[str, Dict[str, Job]] = {}   # sid -> job key -> job
         self._wake = asyncio.Event()
-        self._aborts_row = 0  # congestion signal: every recent execution was killed
         self._dirty = False   # the priority map no longer mirrors the plan
         self._demote: List[Tuple[List[int], int]] = []  # served (ids, fixed_len) awaiting demotion
         self._served: Dict[str, List[Tuple[List[int], int]]] = {}  # sid -> its served prompts (private tails)
@@ -53,18 +47,17 @@ class KVPlanner:
     def submit(self, sid: str, epoch: int, jobs: List[Job], extend: bool = False) -> None:
         """Adopt a session's fresh job set. Replace semantics: a previously queued
         job not re-submitted is void — its branch collapsed. A re-submitted key with
-        longer toks keeps its chunk progress (progressive prefill) and refreshed
-        timing; `extend` merges instead of replacing (routing follow-ups add jobs)."""
+        longer toks keeps its progress and gets refreshed timing; `extend` merges
+        instead of replacing (routing follow-ups add jobs)."""
         held = self._jobs.setdefault(sid, {})
         for j in jobs:
             prev = held.get(j.key)
             if prev is not None and prev.state in ("queued", "running") and prev.epoch == j.epoch:
                 if len(j.toks) > len(prev.toks):
                     prev.toks = j.toks
-                    prev.attempts = 0
                 prev.p, prev.value = j.p, j.value
                 prev.deadline, prev.t90 = j.deadline, j.t90
-                prev.work, prev.host = j.work, j.host
+                prev.host = j.host
                 continue
             if prev is not None and prev.state == "running":
                 prev.state = "void"      # stale epoch still executing
@@ -119,8 +112,7 @@ class KVPlanner:
 
     # ------------------------------------------------------------------ the loop
     async def run(self) -> None:
-        """Single-flight executor: the only admission path into the speculative
-        budget, so budget accounting cannot race."""
+        """Single-flight executor: one promotion RPC in flight at a time."""
         while True:
             try:
                 await asyncio.wait_for(self._wake.wait(), timeout=self.TICK_S)
@@ -135,13 +127,9 @@ class KVPlanner:
                 await self._execute(job)
 
     def _latest_start(self, job: Job, now: float) -> float:
-        """Deadline minus the remaining work, each tier at its own profiled rate:
-        creation at the loaded prefill rate (the job runs beside real decodes, so
-        the idle rate would release it too late), promotion at the host-load rate,
-        device residency free."""
-        prof = self.engine.device_profile
-        unc, host = self.engine.cost(job.toks)
-        return job.deadline - unc / prof.prefill_tps_loaded - host / prof.promote_tps
+        """Deadline minus the host tokens still to load at the profiled promotion rate."""
+        host = self.engine.cost(job.toks)[1]
+        return job.deadline - host / self.engine.device_profile.promote_tps
 
     def _released(self, job: Job, now: float) -> bool:
         """Release in idle window or before the deadline"""
@@ -149,87 +137,43 @@ class KVPlanner:
                 or now >= self._latest_start(job, now) - self.RELEASE_SLACK_S)
 
     def _pick(self, now: float) -> Optional[Job]:
-        """Schedule ready jobs that fit within the compute budget, prioritizing the
-        one with the earliest deadline. Do not let an over-budget job with an early
-        deadline block other useful work.
-
-        A job is always affordable if its next portion has already been computed and
-        cached on the device or host, because advancing it requires no new compute.
-
-        Only start new, uncached computation if it can finish before another session
-        is expected to submit a request. 
-        """
-
-        congested = self._aborts_row >= self.BACKOFF_ABORTS and self.engine.serving
+        """The released job with the earliest deadline (value breaks ties) whose cached
+        frontier reaches past what is on the device: a promotion is an RPC, no request
+        slot, no compute. A "hold" job has nothing to load and is never picked; it
+        only carries eviction protection until its call arrives or it goes stale."""
         best: Optional[Job] = None
-        allowance = self.engine.spec_allowance()
-        rate = self.engine.device_profile.prefill_tps_loaded
-        arrival: Dict[str, float] = {}   # sid -> earliest predicted next call
-        for sid, held in self._jobs.items():
-            ds = [j.deadline for j in held.values() if j.state == "queued"]
-            if ds:
-                arrival[sid] = min(ds)
-        for sid, held in self._jobs.items():
-            horizon = min((d for s, d in arrival.items() if s != sid), default=float("inf"))
+        for held in self._jobs.values():
             for j in held.values():
                 if j.state != "queued" or not self._released(j, now):
                     continue
                 if j.cooldown_cycles > 0:      # refused for space recently; one cycle per pick
                     j.cooldown_cycles -= 1
                     continue
-                unc = self.engine.cost(j.toks)[0]
-                slotless = len(j.toks) - unc > j.done_upto   # promotion: an RPC, no request
-                if congested and not slotless:
-                    continue
-                if best is not None and (j.deadline, -j.value) >= (best.deadline, -best.value):
-                    continue
-                if len(j.toks) - unc <= j.done_upto:  # next chunk is uncached compute
-                    need = min(self._chunk(), max(1, unc))
-                    if self.manage_only or allowance < need or now + need / rate > horizon:
-                        continue
-                best = j
+                if len(j.toks) - self.engine.cost(j.toks)[0] <= j.done_upto:
+                    continue                   # nothing cached beyond the device frontier
+                if best is None or (j.deadline, -j.value) < (best.deadline, -best.value):
+                    best = j
         return best
-
-    def _chunk(self) -> int:
-        stride = getattr(self.engine, "_stride", 1)
-        return max(stride, self.CHUNK // stride * stride)
 
     async def _execute(self, job: Job) -> None:
         if job.state != "queued":    # voided between pick and start
             return
         job.state = "running"
         rid = f"plan-{job.kind}-{uuid.uuid4().hex[:8]}"
-        unc = self.engine.cost(job.toks)[0]
-        cached_end = len(job.toks) - unc
-        if cached_end > job.done_upto:
-            end = cached_end   # the whole cached frontier at once: no request, no slot
-            ok = await self.engine.promote(job.toks[:end], rid)
-        else:
-            end = min(len(job.toks), job.done_upto + self._chunk())
-            ok = await self.engine.prefill(job.toks[:end], rid)
+        end = len(job.toks) - self.engine.cost(job.toks)[0]   # the whole cached frontier at once
+        ok = await self.engine.promote(job.toks[:end], rid)
         if job.state == "void":
             return
-        if ok is None:               # promotion deferred behind real work: not a failure
+        if ok is None:               # deferred behind real work: not a failure
             job.state = "queued"
             if self.engine.promote_no_room:
                 self._cool_promotions()
             return
-        if not ok:
-            self._retry(job)
+        if not ok:                   # the RPC itself failed: give up on this prefix
+            job.state = "void"
             return
-        self._aborts_row = 0
         job.done_upto = end
-        job.attempts = 0
-        if end >= len(job.toks):
-            job.state = "done"
-        else:
-            job.state = "queued"
-            self.wake()              # next chunk without waiting a tick
-
-    def _retry(self, job: Job) -> None:
-        self._aborts_row += 1
-        job.attempts += 1
-        job.state = "void" if job.attempts >= self.MAX_ATTEMPTS else "queued"
+        job.state = "done" if end >= len(job.toks) else "queued"
 
     def _cool_promotions(self) -> None:
         """No room is pool-wide, so pause all promotions for NO_ROOM_COOLDOWN_CYCLES."""

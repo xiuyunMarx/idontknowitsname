@@ -265,6 +265,11 @@ node EvidenceAnalyzer {
         visitor.verdict = verdict;
         label = str(verdict.label).split(".")[-1];
 
+        if (verdict.label == VerdictLabel.NEED_MORE and visitor.round < MAX_ROUNDS) or visitor.round < MIN_ROUNDS {
+            print(f"Round {visitor.round}: {label} (provisional), {len(visitor.evidences)} findings; another round");
+            visit [self-->][?:ClaimAnalyzer];
+            return;
+        }
         print(f"Verdict: {label}");
         print(f"Rationale: {verdict.rationale}");
         print(f"Rounds: {visitor.round}, findings: {len(visitor.evidences)}");

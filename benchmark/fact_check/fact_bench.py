@@ -1,8 +1,8 @@
 """PBKV-style benchmark driver for benchmark/reproduce/fact_check.jac.
 
-    python -m server.server --no-spec     --kv 24000 --host 4 > lru.log     # arm 1: LRU
+    python -m server.server --lru         --kv 24000 --host 4 > lru.log     # arm 1: LRU
     python -m benchmark.reproduce.fact_bench --sessions 12 --concurrency 4 --tag lru --server-log lru.log
-    python -m server.server --manage-only --kv 24000 --host 4 > ours.log    # arm 2: ours
+    python -m server.server --kv 24000 --host 4 > ours.log    # arm 2: ours
     python -m benchmark.reproduce.fact_bench --sessions 12 --concurrency 4 --tag ours --server-log ours.log
 
 `--host` equal to the device pool mirrors PBKV's HICACHE_RATIO=1: once both tiers

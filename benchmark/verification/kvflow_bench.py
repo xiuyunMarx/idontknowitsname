@@ -3,9 +3,9 @@
 Protocol (fresh server per arm; programs are learned online and in memory only):
 
     python benchmark/datasets/gen_kvflow.py                 # once
-    python -m server.server --no-spec --kv 24000 > nospec.log      # arm 1
+    python -m server.server --lru --kv 24000 > nospec.log      # arm 1
     python -m benchmark.kvflow_bench pipeline --tag nospec --server-log nospec.log
-    python -m server.server --manage-only --kv 24000 > manage.log  # arm 2
+    python -m server.server --kv 24000 > manage.log  # arm 2
     python -m benchmark.kvflow_bench pipeline --tag manage --server-log manage.log
     ... same for fanout (add --fanout 3 for the branching variant) and fanin
     python -m benchmark.kvflow_bench pipeline,fanout,fanin --concurrency 6 --sessions 12 ...
