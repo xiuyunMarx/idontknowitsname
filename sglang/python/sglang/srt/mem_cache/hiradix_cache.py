@@ -1296,7 +1296,7 @@ class HiRadixCache(RadixCache):
             page_aligned_len = len(key) // self.page_size * self.page_size
             key = key[:page_aligned_len]
 
-        value, last_node = self._match_prefix_helper(self.root_node, key)
+        value, last_node = self._match_prefix_helper(self.root_node, key, touch=params.touch)
         if value:
             value = torch.cat(value)
         else:
@@ -1402,14 +1402,16 @@ class HiRadixCache(RadixCache):
 
         return matched_length
 
-    def _match_prefix_helper(self, node: TreeNode, key: RadixKey):
-        node.last_access_time = time.monotonic()
+    def _match_prefix_helper(self, node: TreeNode, key: RadixKey, touch: bool = True):
+        if touch:
+            node.last_access_time = time.monotonic()
         child_key = self.get_child_key_fn(key)
         value = []
 
         while len(key) > 0 and child_key in node.children.keys():
             child = node.children[child_key]
-            child.last_access_time = time.monotonic()
+            if touch:
+                child.last_access_time = time.monotonic()
             prefix_len = self.key_match_fn(child.key, key)
             if prefix_len < len(child.key):
                 new_node = self._split_node(child.key, child, prefix_len)
@@ -1431,6 +1433,7 @@ class HiRadixCache(RadixCache):
     def _split_node(self, key: RadixKey, child: TreeNode, split_len: int):
         # child node split into new_node -> child
         new_node = TreeNode(priority=child.priority)
+        new_node.last_access_time = child.last_access_time  # a split is not an access
         new_node.children = {self.get_child_key_fn(key[split_len:]): child}
         new_node.parent = child.parent
         new_node.lock_ref = child.lock_ref

@@ -260,6 +260,9 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     if sched == "lpm":   # engine orders by matched prefix; request priorities (the TTL tier) are off
         kwargs["schedule_policy"] = "lpm"
         kwargs["enable_priority_scheduling"] = False
+    elif sched == "risk":   # fork's cache-risk order (see server.server); the TTL priority tier is off
+        kwargs["schedule_policy"] = "cache-risk"
+        kwargs["enable_priority_scheduling"] = False
     ctrl = ContinuumController(model, server, ttl_default, ttl_sched, **kwargs)
     await ctrl.start_serving()
 
@@ -298,7 +301,7 @@ if __name__ == "__main__":
                     help="TTL until K gap records exist (Continuum's T_default)")
     ap.add_argument("--no-ttl-sched", action="store_true",
                     help="pin only; do not prioritise requests that return within TTL")
-    ap.add_argument("--sched", choices=["fcfs", "lpm"], default="fcfs",
+    ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine waiting-queue order: fcfs + TTL priority tier, or longest-prefix-match")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()

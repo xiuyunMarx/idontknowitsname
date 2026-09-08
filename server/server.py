@@ -312,10 +312,11 @@ class Controller:
         if len(toks) < 16:  # shorter than a cache block: nothing to gain  #type: ignore
             return jobs
         unc, host = self.engine.cost(toks) #type: ignore[union-attr]
-        # promote: the cached frontier reaches into the host tier, load it back ahead
-        # of the call; hold: nothing to load (resident, or the rest must be computed
-        # by the call itself), the job only carries eviction protection
-        kind = "promote" if host > 0 else "hold"
+        # promote: a host-resident prefix to load back ahead of the call; hold: the
+        # rest must be computed by the call itself (or is already resident), the job
+        # only carries eviction protection. Same predicate as before: the kind is part
+        # of the job key, so it decides when a re-plan replaces a queued job.
+        kind = "promote" if unc <= self.engine._stride and host > 0 else "hold"
         resident = unc + host < self.engine._stride
         jobs.append(Job(key=f"{sess.id}|{kind}|{c.key}", sid=sess.id, epoch=sess.epoch,
                         site=c.key, kind=kind, toks=toks, p=c.p, #type: ignore[union-attr]
@@ -432,7 +433,7 @@ class Controller:
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True,
                kv_tokens: Optional[int] = None,
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
-               enable_relayout: bool = True, sched: str = "fcfs") -> None:
+               enable_relayout: bool = True, sched: str = "fcfs", risk_aging_s: float = 10.0) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384,
@@ -446,6 +447,10 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True
     if sched == "lpm":   # engine re-sorts the waiting queue by matched prefix length every step;
         kwargs["schedule_policy"] = "lpm"          # sglang allows request priorities only with fcfs/lof,
         kwargs["enable_priority_scheduling"] = False   # so PRIORITY_CONT becomes a no-op
+    elif sched == "risk":   # fork policy: cached-tokens-at-risk first, FCFS otherwise, aging bounds the reorder
+        kwargs["schedule_policy"] = "cache-risk"
+        kwargs["enable_priority_scheduling"] = False
+        kwargs["cache_risk_aging_s"] = risk_aging_s
     ctrl = Controller(model, server, plan=plan, enable_relayout=enable_relayout, **kwargs)
     await ctrl.start_serving()
 
@@ -463,11 +468,14 @@ if __name__ == "__main__":
                     help="Disable prompt re-layout for better KV reuse (default: enabled)")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
-    ap.add_argument("--sched", choices=["fcfs", "lpm"], default="fcfs",
-                    help="engine waiting-queue order: fcfs + request priorities, or longest-prefix-match")
+    ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
+                    help="engine waiting-queue order: fcfs + request priorities, longest-prefix-match, "
+                         "or cache-risk (cached tokens at risk first, FCFS otherwise)")
+    ap.add_argument("--risk-aging-s", type=float, default=10.0, metavar="S",
+                    help="--sched risk: an uncached request overtakes a fully cached one after waiting S s longer (0 = FCFS, negative = never age)")
     a = ap.parse_args()
     if a.no_header_last:
         primitives.HEADER_LAST = False
     asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
-                     sched=a.sched))
+                     sched=a.sched, risk_aging_s=a.risk_aging_s))

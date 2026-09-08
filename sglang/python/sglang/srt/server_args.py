@@ -356,6 +356,7 @@ class ServerArgs:
     schedule_low_priority_values_first: bool = False
     priority_scheduling_preemption_threshold: int = 10
     schedule_conservativeness: float = 1.0
+    cache_risk_aging_s: float = 10.0  # schedule_policy=cache-risk: max extra wait of an uncached request
     page_size: Optional[int] = None
     swa_full_tokens_ratio: float = 0.8
     disable_hybrid_swa_memory: bool = False
@@ -3969,6 +3970,7 @@ class ServerArgs:
             default=ServerArgs.schedule_policy,
             choices=[
                 "lpm",
+                "cache-risk",
                 "random",
                 "fcfs",
                 "dfs-weight",
@@ -4013,6 +4015,12 @@ class ServerArgs:
             type=int,
             default=ServerArgs.priority_scheduling_preemption_threshold,
             help="Minimum difference in priorities for an incoming request to have to preempt running request(s).",
+        )
+        parser.add_argument(
+            "--cache-risk-aging-s",
+            type=float,
+            default=ServerArgs.cache_risk_aging_s,
+            help="For --schedule-policy cache-risk: seconds after which a request with nothing cached overtakes a fully cached one (0 = plain FCFS, negative = never age / pure cache-first).",
         )
         parser.add_argument(
             "--schedule-conservativeness",

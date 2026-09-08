@@ -42,6 +42,11 @@ class MatchPrefixParams:
     cow_mamba: bool = False
     req: Optional[Req] = None
 
+    # False: a lookup only (e.g. queue ordering under lpm) — do not refresh
+    # last_access_time on the matched path, so waiting requests leave the
+    # eviction recency of the tree untouched until they are admitted.
+    touch: bool = True
+
 
 @dataclasses.dataclass
 class InsertParams:

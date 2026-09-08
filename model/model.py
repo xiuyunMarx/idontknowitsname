@@ -26,7 +26,7 @@ import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see modul
 HOST_KV_GB = 8
 LANDED_STRIDE = 8   # bookkeeping granularity for prefixes we have already computed
 
-# SGLang schedules the HIGHEST priority value first — the opposite of vLLM. A tool-loop
+# SGLang schedules the HIGHEST priority value first. A tool-loop
 # turn of a call already in flight outranks a fresh call.
 PRIORITY_CONT = 2
 PRIORITY_REAL = 1

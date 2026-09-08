@@ -435,7 +435,7 @@ class RadixCache(BasePrefixCache):
         if len(key) == 0:
             return empty_match_result()
 
-        value, last_node = self._match_prefix_helper(self.root_node, key)
+        value, last_node = self._match_prefix_helper(self.root_node, key, touch=params.touch)
         if value:
             value = torch.cat(value)
         else:
@@ -667,16 +667,18 @@ class RadixCache(BasePrefixCache):
 
     ##### Internal Helper Functions #####
 
-    def _match_prefix_helper(self, node: TreeNode, key: RadixKey):
+    def _match_prefix_helper(self, node: TreeNode, key: RadixKey, touch: bool = True):
         access_time = time.monotonic()
-        node.last_access_time = access_time
+        if touch:
+            node.last_access_time = access_time
 
         child_key = self.get_child_key_fn(key)
 
         value = []
         while len(key) > 0 and child_key in node.children.keys():
             child = node.children[child_key]
-            child.last_access_time = access_time
+            if touch:
+                child.last_access_time = access_time
             prefix_len = self.key_match_fn(child.key, key)
             if prefix_len < len(child.key):
                 new_node = self._split_node(child.key, child, prefix_len)
@@ -697,6 +699,7 @@ class RadixCache(BasePrefixCache):
         # new_node -> child
         # New node inherits child's priority (represents shared prefix)
         new_node = TreeNode(priority=child.priority)
+        new_node.last_access_time = child.last_access_time  # a split is not an access
         new_node.loading_event = child.loading_event
         new_node.hit_count = child.hit_count
         new_node.children = {self.get_child_key_fn(key[split_len:]): child}

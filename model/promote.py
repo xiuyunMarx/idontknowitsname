@@ -40,6 +40,7 @@ from typing import Dict, List, Sequence, Tuple
 
 from sglang.srt.managers.io_struct import RpcReqOutput #type: ignore
 from sglang.srt.managers.scheduler import Scheduler #type: ignore
+from sglang.srt.mem_cache.base_prefix_cache import MatchPrefixParams #type: ignore
 from sglang.srt.mem_cache.evict_policy import EvictionStrategy #type: ignore
 from sglang.srt.mem_cache.hiradix_cache import HiRadixCache #type: ignore
 
@@ -78,9 +79,6 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
     tc = getattr(self.tree_cache, "inner", self.tree_cache)   # SessionAwareCache wraps
     if len(tc.ongoing_promote) >= MAX_INFLIGHT_PROMOTIONS:
         raise Deferred(f"deferred: {len(tc.ongoing_promote)} promotions in flight")
-    # PBKV's conservative rule: a speculative load takes free space plus retired
-    # cache only, and leaves one real prefill chunk free so the scheduler can never
-    # find the pool fully locked (that was the c=2 OOM with 8 promotions in flight)
     reserve = self.chunked_prefill_size or self.max_prefill_tokens
     device, host, started, event = tc.prefetch_prefix(
         list(token_ids), reserve=reserve, evict_max_priority=RETIRED)
@@ -95,28 +93,11 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
     if wait and event is not None:
         event.finish_event.synchronize()
 
-
 def _descend(tc, ids: List[int]):
-    """Walk `ids` down the radix tree like match_prefix does, host-only nodes
-    included, splitting the node the path ends in so the covered prefix is whole
-    nodes — but without touching last_access_time: the planner's bookkeeping runs
-    every second over every plan and must not read as an access to the LRU inside
-    a band or on the host tier. Returns (deepest covered node, covered length)."""
-    key = tc._to_radix_key(list(ids))
-    node, end = tc.root_node, 0
-    while len(key) > 0:
-        child = node.children.get(tc.get_child_key_fn(key))
-        if child is None:
-            break
-        n = tc.key_match_fn(child.key, key)
-        if n == 0:
-            break
-        if n < len(child.key):
-            t = child.last_access_time
-            child = tc._split_node(child.key, child, n)
-            child.last_access_time = t
-        node, end, key = child, end + n, key[n:]
-    return node, end
+    """(deepest node covering `ids`, covered length), host-only nodes included"""
+    r = tc.match_prefix(MatchPrefixParams(key=tc._to_radix_key(list(ids)), touch=False))
+    node = r.last_device_node if r.host_hit_length == 0 else r.last_host_node
+    return node, len(r.device_indices) + r.host_hit_length
 
 
 def _band_tail(tc, ids: List[int], fixed_len: int, band: int) -> int:

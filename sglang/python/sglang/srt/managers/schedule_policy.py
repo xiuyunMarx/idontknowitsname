@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 """Request scheduler policy"""
 
 import os
+import time
 import random
 from collections import Counter, defaultdict
 from contextlib import contextmanager
@@ -82,6 +83,7 @@ class CacheAwarePolicy(Enum):
 
     LPM = "lpm"  # longest prefix match
     DFS_WEIGHT = "dfs-weight"  # depth-first search weighting
+    CACHE_RISK = "cache-risk"  # cached tokens at risk first, FCFS otherwise (bounded aging)
 
 
 class CacheAgnosticPolicy(Enum):
@@ -103,8 +105,10 @@ class SchedulePolicy:
         enable_hierarchical_cache: bool,
         enable_priority_scheduling: bool,
         schedule_low_priority_values_first: bool,
+        cache_risk_aging_s: float = 10.0,
     ):
         self.policy = self._validate_and_adjust_policy(policy, tree_cache)
+        self.cache_risk_aging_s = cache_risk_aging_s
         self.tree_cache = tree_cache
         self.enable_hierarchical_cache = enable_hierarchical_cache
         self.enable_priority_scheduling = enable_priority_scheduling
@@ -136,6 +140,10 @@ class SchedulePolicy:
                 SchedulePolicy._sort_by_longest_prefix(
                     waiting_queue, temporary_deprioritized
                 )
+            elif policy == CacheAwarePolicy.CACHE_RISK:
+                SchedulePolicy._sort_by_cache_at_risk(
+                    waiting_queue, temporary_deprioritized, self.cache_risk_aging_s
+                )
             elif policy == CacheAwarePolicy.DFS_WEIGHT:
                 SchedulePolicy._sort_by_dfs_weight(waiting_queue, self.tree_cache)
             else:
@@ -159,7 +167,10 @@ class SchedulePolicy:
         return prefix_computed
 
     def _determine_active_policy(self, waiting_queue: List[Req]) -> Policy:
-        if self.policy == CacheAwarePolicy.LPM and len(waiting_queue) > 128:
+        if (
+            self.policy in (CacheAwarePolicy.LPM, CacheAwarePolicy.CACHE_RISK)
+            and len(waiting_queue) > 128
+        ):
             # Turn off the expensive prefix matching and sorting when the #queue is large.
             return CacheAgnosticPolicy.FCFS
         return self.policy
@@ -196,9 +207,13 @@ class SchedulePolicy:
             prefix_ids = r.origin_input_ids + r.output_ids
             extra_key = r.extra_key
             # NOTE: the prefix_indices must always be aligned with last_node
+            # touch=False: this match only orders the queue; the request is matched
+            # again (with a touch) when it is admitted, so waiting must not refresh
+            # the eviction recency of prefixes nobody is computing on yet.
             match_result = self.tree_cache.match_prefix(
                 MatchPrefixParams(
-                    key=RadixKey(token_ids=prefix_ids, extra_key=extra_key)
+                    key=RadixKey(token_ids=prefix_ids, extra_key=extra_key),
+                    touch=False,
                 )
             )
             (
@@ -254,6 +269,37 @@ class SchedulePolicy:
                 else float("inf")
             )
         )
+
+    @staticmethod
+    def _sort_by_cache_at_risk(
+        waiting_queue: List[Req], temporary_deprioritized: Set[int], aging_s: float
+    ) -> None:
+        """FCFS with a bounded cache-preserving reorder. A request's score is the
+        number of prompt tokens it can still serve from cache right now (device
+        match + host match, re-matched every step so tokens evicted while it waited
+        drop out) plus an aging credit of mean_prompt_len / aging_s tokens per second
+        waited. Higher score first, ties by arrival. Nothing cached anywhere means
+        plain FCFS; a request with no cache overtakes a fully cached one after
+        waiting aging_s seconds longer, which bounds the departure from FCFS.
+        aging_s == 0 is plain FCFS (a cold request overtakes at once); aging_s < 0
+        never ages (pure cache-first, the lpm-like extreme)."""
+        if not waiting_queue:
+            return
+        if aging_s == 0:
+            waiting_queue.sort(key=lambda r: r.time_stats.wait_queue_entry_time)
+            return
+        now = time.perf_counter()
+        mean_len = sum(len(r.origin_input_ids) for r in waiting_queue) / len(waiting_queue)
+        aging_tps = mean_len / aging_s if aging_s > 0 else 0.0
+
+        def score(r: Req) -> float:
+            if r.rid in temporary_deprioritized:
+                return float("-inf")
+            alive = len(r.prefix_indices) + r.host_hit_length
+            waited = max(0.0, now - r.time_stats.wait_queue_entry_time)
+            return alive + aging_tps * waited
+
+        waiting_queue.sort(key=lambda r: (-score(r), r.time_stats.wait_queue_entry_time))
 
     @staticmethod
     def _sort_by_dfs_weight(

@@ -1,5 +1,5 @@
 """Deadline-driven KV planner: predicted calls become promotion jobs (host -> device)
-and eviction protection; nothing is ever prefilled speculatively."""
+and eviction protection."""
 import asyncio
 import math
 import time
@@ -22,12 +22,14 @@ class Job:
     t90: float                  # monotonic: pessimistic arrival, for staleness GC
     host: int                   # promotable host-tier tokens at submission
     done_upto: int = 0          # token index known to be on the device
+    attempts: int = 0           # failed promotion RPCs since the last progress
     state: str = "queued"       # queued | running | done | void
     cooldown_cycles: int = 0    # planner cycles to skip after a no-room promotion refusal
 
 class KVPlanner:
     TICK_S = 0.015               # planner heartbeat between wake events
     SAFETY_K = 0.5              # deadline tightening per unit of arrival spread
+    MAX_ATTEMPTS = 3            # failed promotion RPCs before a job is dropped
     STALE_SLACK_S = 5.0         # past t90 by this much: the call never came
     SCORE_TAU_S = 60.0          # eviction score decay: a prefix due in tau seconds counts 1/e of one due now
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
@@ -55,6 +57,7 @@ class KVPlanner:
             if prev is not None and prev.state in ("queued", "running") and prev.epoch == j.epoch:
                 if len(j.toks) > len(prev.toks):
                     prev.toks = j.toks
+                    prev.attempts = 0
                 prev.p, prev.value = j.p, j.value
                 prev.deadline, prev.t90 = j.deadline, j.t90
                 prev.host = j.host
@@ -127,9 +130,10 @@ class KVPlanner:
                 await self._execute(job)
 
     def _latest_start(self, job: Job, now: float) -> float:
-        """Deadline minus the host tokens still to load at the profiled promotion rate."""
-        host = self.engine.cost(job.toks)[1]
-        return job.deadline - host / self.engine.device_profile.promote_tps
+        """Deadline minus the remaining work"""
+        prof = self.engine.device_profile
+        unc, host = self.engine.cost(job.toks)
+        return job.deadline - unc / prof.prefill_tps_loaded - host / prof.promote_tps
 
     def _released(self, job: Job, now: float) -> bool:
         """Release in idle window or before the deadline"""
@@ -138,9 +142,12 @@ class KVPlanner:
 
     def _pick(self, now: float) -> Optional[Job]:
         """The released job with the earliest deadline (value breaks ties) whose cached
-        frontier reaches past what is on the device: a promotion is an RPC, no request
-        slot, no compute. A "hold" job has nothing to load and is never picked; it
-        only carries eviction protection until its call arrives or it goes stale."""
+        frontier, as the ledger sees it now, reaches past `done_upto`: a promotion is
+        an RPC, no request slot, no compute. `kind` is not consulted: it is the
+        ledger's view at plan time, and a job planned as "hold" is picked as soon as
+        the ledger learns more of its prefix is cached (another session computed the
+        shared head, or a calibration). Until then it only carries eviction
+        protection."""
         best: Optional[Job] = None
         for held in self._jobs.values():
             for j in held.values():
@@ -169,10 +176,12 @@ class KVPlanner:
             if self.engine.promote_no_room:
                 self._cool_promotions()
             return
-        if not ok:                   # the RPC itself failed: give up on this prefix
-            job.state = "void"
+        if not ok:                   # the RPC itself failed
+            job.attempts += 1
+            job.state = "void" if job.attempts >= self.MAX_ATTEMPTS else "queued"
             return
         job.done_upto = end
+        job.attempts = 0
         job.state = "done" if end >= len(job.toks) else "queued"
 
     def _cool_promotions(self) -> None:
