@@ -2,7 +2,8 @@
 # Concurrency sweep for the coding agent (benchmark/coding/coding_agent.jac), three arms per level:
 #   lruraw  --lru --no-relayout   raw SGLang HiCache LRU, prompts as the program lays them out
 #   lru     --lru                 LRU + the server's IR-driven prompt re-layout
-#   ours                re-layout + planner (promotion, steering, retirement)
+#   kvonly  --no-relayout         planner only (promotion, steering, retirement), no re-layout
+#   ours                          re-layout + planner
 #   cachescout                        server.cacheScout_server: opaque requests, online Markov agent model
 #   ARMS="cachescout" LEVELS="12 16" ./benchmark/coding_sweep.bash   (run from the repo root)
 # One 5-function HumanEval bundle per session (benchmark/coding/tasks.txt), pytest floor CA_TOOL_DELAY_S.
@@ -40,6 +41,7 @@ for c in $LEVELS; do
     case $arm in
       lruraw) run_arm lruraw "--lru --no-relayout" "$c";;
       lru)    run_arm lru "--lru" "$c";;
+      kvonly) run_arm kvonly "--no-relayout" "$c";;
       ours)   run_arm ours "" "$c";;
       cachescout) run_arm cachescout "" "$c";;
     esac

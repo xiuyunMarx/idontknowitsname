@@ -6,18 +6,25 @@ jaclang/byllm/tool_protocol.jac).
 
     site, extras = decompose(body)        # body: parsed request JSON
     is_continuation(prev_body, body)      # next ReAct turn / typed retry of the same call
+    relayout_body(body, layout)           # re-emit the call message in a frozen binding order
+    parse_fields(repr_text)               # `Type(a=1, b='x')` -> type text and field rows
+    chosen_candidates(observation)        # the handles a visit reply selected, in reply order
 """
+from __future__ import annotations
+
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from .primitives import ByLLMCallsite, Callsite, VisitByCallsite
+from . import primitives as _prim   # callsite dataclasses; module import: primitives imports this module too
 
 ROUTE_SYSTEM = ("You are routing a graph walker. Choose which candidate node(s) the walker should "
                 "visit next, by handle. Return only valid handles.")
 HINT_HEADER = "Schema requirements:"
 TOOL_RESPONSE_TAG = "<tool_response>"
 SCHEMA_INDENT = "      "  # 6 spaces before every schema row
+TOOL_BLOCK_HEADER = "\n# Calling tools\n"  # Header for tools included in the system prompt.
 
 # "Owner.func(a: T, b: U) -> R --- sem"; the sem may itself contain " -> " so ret is lazy
 _HEADER = re.compile(r"^(?P<qual>[\w.]+)\((?P<sig>.*?)\)(?: -> (?P<ret>.*?))?(?: --- (?P<sem>.*))?$")
@@ -227,7 +234,7 @@ def relayout_body(body: Dict[str, Any], layout: List[str], header_last: bool = F
     return False
 
 
-def _parse_byllm(body: Dict[str, Any]) -> Tuple[ByLLMCallsite, CallExtras]:
+def _parse_byllm(body: Dict[str, Any]) -> Tuple[_prim.ByLLMCallsite, CallExtras]:
     system = _system(body)
     ctx, names, bindings, self_view, self_sem = split_byllm_user(_call_user(body))
     header = ctx.split("\n", 1)[0]
@@ -247,7 +254,7 @@ def _parse_byllm(body: Dict[str, Any]) -> Tuple[ByLLMCallsite, CallExtras]:
             views[rm["name"]] = rm["type"]
             if rm["sem"] is not None:
                 sems[rm["name"]] = rm["sem"]
-    site = ByLLMCallsite(
+    site = _prim.ByLLMCallsite(
         model=body.get("model", ""), temperature=body.get("temperature"),
         max_tokens=body.get("max_tokens"), system_prompt=system,
         response_format=body.get("response_format"), context_desc=ctx, signature=qual,
@@ -311,10 +318,10 @@ def _select_text(system: str) -> str:
     return tail[len("Choose "):].rstrip(".") if tail.startswith("Choose ") else "all"
 
 
-def _parse_visit(body: Dict[str, Any]) -> Tuple[VisitByCallsite, CallExtras]:
+def _parse_visit(body: Dict[str, Any]) -> Tuple[_prim.VisitByCallsite, CallExtras]:
     system = _system(body)
     zones = split_visit_user(_call_user(body))
-    site = VisitByCallsite(model=body.get("model", ""), temperature=body.get("temperature"),
+    site = _prim.VisitByCallsite(model=body.get("model", ""), temperature=body.get("temperature"),
                            max_tokens=body.get("max_tokens"), system_prompt=system,
                            response_format=body.get("response_format"),
                            intent=zones["intent"], select=_select_text(system))
@@ -324,7 +331,7 @@ def _parse_visit(body: Dict[str, Any]) -> Tuple[VisitByCallsite, CallExtras]:
 
 
 # --------------------------------------------------------------------------- one request
-def decompose(body: Dict[str, Any]) -> Tuple[Callsite, CallExtras]:
+def decompose(body: Dict[str, Any]) -> Tuple[_prim.Callsite, CallExtras]:
     """One request body -> (its callsite, the per-call leftovers)."""
     if _system(body).startswith(ROUTE_SYSTEM):
         site, extras = _parse_visit(body)
@@ -335,6 +342,179 @@ def decompose(body: Dict[str, Any]) -> Tuple[Callsite, CallExtras]:
         site.hint = user[len(_strip_hint(user)):]  # per-site stable schema tail
         extras.user_text = user
     return site, extras
+
+
+# --------------------------------------------------------------------------- byllm repr text
+# Static text helpers over what byllm renders: object reprs `Type(a=1, b='x')`, the
+# JSON of a reply, and the candidate handles a visit reply names. Pure string parsing;
+# the value-flow rules that consume them live in primitives.
+
+def _lcp(a: str, b: str) -> str:
+    i, n = 0, min(len(a), len(b))
+    while i < n and a[i] == b[i]:
+        i += 1
+    return a[:i]
+
+
+def _split_top(body: str) -> Optional[List[str]]:
+    """Split on commas at nesting depth zero, honouring quotes and escapes."""
+    parts, depth, quote, esc, start = [], 0, None, False, 0
+    for j, ch in enumerate(body):
+        if quote:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == quote:
+                quote = None
+            continue
+        if ch in "'\"":
+            quote = ch
+        elif ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+            if depth < 0:
+                return None
+        elif ch == "," and depth == 0:
+            parts.append(body[start:j])
+            start = j + 1
+    if quote or depth:
+        return None
+    parts.append(body[start:])
+    return parts
+
+
+def _valid_key(k: str) -> bool:
+    """A field key is `name` or `name (its sem text)` — byllm renders both."""
+    if k.isidentifier():
+        return True
+    head, sep, _ = k.partition(" (")
+    return bool(sep) and head.isidentifier() and k.endswith(")")
+
+
+def field_name(key: str) -> str:
+    return key.partition(" (")[0]
+
+
+def parse_fields(text: str) -> Optional[Tuple[str, List[Tuple[str, str]]]]:
+    """Split a repr like Type(a=1, b='x') into its type text and field rows."""
+    text = text.strip()
+    if len(text) < 3 or not text.endswith(")"):
+        return None
+    stack: List[int] = []
+    quote: Optional[str] = None
+    esc = False
+    opener = None
+    for j, ch in enumerate(text):
+        if quote:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == quote:
+                quote = None
+            continue
+        if ch in "'\"":
+            quote = ch
+        elif ch == "(":
+            stack.append(j)
+        elif ch == ")":
+            if not stack:
+                return None
+            k = stack.pop()
+            if j == len(text) - 1:
+                opener = k
+    if quote or stack or not opener:
+        return None
+    parts = _split_top(text[opener + 1:-1])
+    if parts is None:
+        return None
+    fields: List[Tuple[str, str]] = []
+    for part in parts:
+        if not part.strip():
+            continue
+        k, eq, v = part.partition("=")
+        if not eq or not _valid_key(k.strip()):
+            return None
+        fields.append((k.strip(), v.strip()))
+    return text[:opener], fields
+
+
+def build_fields(name: str, fields: List[Tuple[str, str]]) -> str:
+    return f"{name}({', '.join(f'{k}={v}' for k, v in fields)})"
+
+
+def _find_in_result(result: Any, v: str) -> Optional[list]:
+    """Where repr-text `v` sits inside a call's result: [] when it is the raw text,
+    ["j", *path] when it is the JSON value at `path` (the whole parse included),
+    None when absent."""
+    if not isinstance(result, str):
+        return None
+    if repr(result) == v:
+        return []
+    try:
+        parsed = json.loads(result)
+    except Exception:
+        return None
+    stack: List[Tuple[Any, list]] = [(parsed, ["j"])]
+    while stack:
+        x, path = stack.pop()
+        if repr(x) == v:
+            return path
+        if isinstance(x, dict):
+            stack.extend((val, path + [k]) for k, val in x.items())
+        elif isinstance(x, list):
+            stack.extend((val, path + [i]) for i, val in enumerate(x))
+    return None
+
+
+def _value_at(result: Any, path: list) -> Optional[str]:
+    """The repr text at `path` of a result (inverse of _find_in_result)."""
+    if not isinstance(result, str):
+        return None
+    if not path:
+        return repr(result)
+    if path[0] != "j":
+        return None
+    try:
+        x: Any = json.loads(result)
+        for p in path[1:]:
+            x = x[p]
+    except Exception:
+        return None
+    return repr(x)
+
+
+def _find_word(text: str, w: str) -> int:
+    """First occurrence of `w` in `text` not embedded in a larger identifier."""
+    i = 0
+    while True:
+        i = text.find(w, i)
+        if i < 0:
+            return -1
+        before = text[i - 1] if i else ""
+        after = text[i + len(w):i + len(w) + 1]
+        if not (before.isalnum() or before == "_") and not (after.isalnum() or after == "_"):
+            return i
+        i += 1
+
+
+def chosen_candidates(ob: _prim.CallObservation) -> List[Tuple[str, str]]:
+    """The (handle, node repr) candidates a visit reply selected, in reply order."""
+    picks = []
+    for h, node in ob.candidates:
+        i = ob.response.find(f'"{h}"')
+        if i < 0:
+            i = _find_word(ob.response, h)
+        if i >= 0:
+            picks.append((i, h, node))
+    picks.sort()
+    return [(h, node) for _, h, node in picks]
+
+
+def node_type(node_repr: str) -> str:
+    return node_repr.split("(", 1)[0].strip()
 
 
 # --------------------------------------------------------------------------- continuation

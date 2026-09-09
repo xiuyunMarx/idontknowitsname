@@ -15,10 +15,10 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-from decompiler.parser import decompose, is_continuation, relayout_body
+from decompiler.parser import _lcp, chosen_candidates, decompose, is_continuation, node_type, relayout_body
 import decompiler.primitives as primitives
 from decompiler.primitives import (ByLLMCallsite, Callsite, CallObservation, PredictedCall, Program,
-                                   VisitByCallsite, _lcp, chosen_candidates, node_type)
+                                   VisitByCallsite)
 from model.device_profiler import profile_device
 from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest

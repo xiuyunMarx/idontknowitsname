@@ -2,7 +2,8 @@
 # fact_check concurrency sweep, three arms per level, fresh server per (arm, level), level-major:
 #   lruraw  --lru --no-relayout   raw SGLang HiCache LRU
 #   lru     --lru                 LRU + IR-driven prompt re-layout (per-site header-last)
-#   ours                re-layout + planner (promotion, steering, retirement)
+#   kvonly  --no-relayout         planner only (promotion, steering, retirement), no re-layout
+#   ours                          re-layout + planner
 #   cachescout                        server.cacheScout_server: opaque requests, online Markov agent model (no EXTRA flags)
 # Same protocol as the Sep 3 qwen8 sweep: 120 HoVer claims, FC_TOOL_DELAY_S=2, rounds per fact_check.jac,
 # --sessions per lane (6 above c=2); host 8 GB (54k tokens) to match coding_sweep.bash. Results in results/fact_sweep/{arm}_c{N}.{log,out}, fact_sweep.csv.
@@ -45,6 +46,7 @@ for c in $LEVELS; do
     case $arm in
       lruraw) run_arm lruraw "--lru --no-relayout" "$c";;
       lru)    run_arm lru "--lru" "$c";;
+      kvonly) run_arm kvonly "--no-relayout" "$c";;
       ours)   run_arm ours "" "$c";;
       cachescout) run_arm cachescout "" "$c";;
     esac

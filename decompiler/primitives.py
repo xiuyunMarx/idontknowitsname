@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 from statistics import median
 from collections import defaultdict, Counter
 from math import log, sqrt
-TOOL_BLOCK_HEADER = "\n# Calling tools\n"  # Header for tools included in the system prompt.
+
+from . import parser as _parser   # byllm text helpers (repr fields, reply candidates); module import: parser imports this module too
 
 
 def _quantile(xs: List[float], q: float) -> float:
@@ -88,7 +89,7 @@ class ByLLMCallsite(CallMetadata):
 
     @property
     def is_react(self) -> bool:
-        return bool(self.tool_schema) or TOOL_BLOCK_HEADER in self.system_prompt
+        return bool(self.tool_schema) or _parser.TOOL_BLOCK_HEADER in self.system_prompt
 
     @property
     def key(self) -> str:
@@ -133,13 +134,6 @@ START = "^"  # Marker placed before the first call in a session.
 HEADER_LAST = True  # allow the values-first layout (header and schema rows last) for sites whose leading binding is shared with another callsite
 STABILITY = {"const": 0, "copy": 1, "extend": 2}  # flow-rule kind -> how long the bytes stay a valid prefix
 CONTINUITY = {"same": 1, "extend": 2, "fresh": 3}  # same-site step kind -> prefix stability (const across sessions is 0)
-
-
-def _lcp(a: str, b: str) -> str:
-    i, n = 0, min(len(a), len(b))
-    while i < n and a[i] == b[i]:
-        i += 1
-    return a[:i]
 
 
 @dataclass
@@ -190,163 +184,6 @@ class CallObservation:
 
 # ------------------------------------------------------------------------- value flow
 
-def _split_top(body: str) -> Optional[List[str]]:
-    """Split on commas at nesting depth zero, honouring quotes and escapes."""
-    parts, depth, quote, esc, start = [], 0, None, False, 0
-    for j, ch in enumerate(body):
-        if quote:
-            if esc:
-                esc = False
-            elif ch == "\\":
-                esc = True
-            elif ch == quote:
-                quote = None
-            continue
-        if ch in "'\"":
-            quote = ch
-        elif ch in "([{":
-            depth += 1
-        elif ch in ")]}":
-            depth -= 1
-            if depth < 0:
-                return None
-        elif ch == "," and depth == 0:
-            parts.append(body[start:j])
-            start = j + 1
-    if quote or depth:
-        return None
-    parts.append(body[start:])
-    return parts
-
-
-def _valid_key(k: str) -> bool:
-    """A field key is `name` or `name (its sem text)` — byllm renders both."""
-    if k.isidentifier():
-        return True
-    head, sep, _ = k.partition(" (")
-    return bool(sep) and head.isidentifier() and k.endswith(")")
-
-
-def field_name(key: str) -> str:
-    return key.partition(" (")[0]
-
-
-def parse_fields(text: str) -> Optional[Tuple[str, List[Tuple[str, str]]]]:
-    """Split a repr like Type(a=1, b='x') into its type text and field rows."""
-    text = text.strip()
-    if len(text) < 3 or not text.endswith(")"):
-        return None
-    stack: List[int] = []
-    quote: Optional[str] = None
-    esc = False
-    opener = None
-    for j, ch in enumerate(text):
-        if quote:
-            if esc:
-                esc = False
-            elif ch == "\\":
-                esc = True
-            elif ch == quote:
-                quote = None
-            continue
-        if ch in "'\"":
-            quote = ch
-        elif ch == "(":
-            stack.append(j)
-        elif ch == ")":
-            if not stack:
-                return None
-            k = stack.pop()
-            if j == len(text) - 1:
-                opener = k
-    if quote or stack or not opener:
-        return None
-    parts = _split_top(text[opener + 1:-1])
-    if parts is None:
-        return None
-    fields: List[Tuple[str, str]] = []
-    for part in parts:
-        if not part.strip():
-            continue
-        k, eq, v = part.partition("=")
-        if not eq or not _valid_key(k.strip()):
-            return None
-        fields.append((k.strip(), v.strip()))
-    return text[:opener], fields
-
-
-def build_fields(name: str, fields: List[Tuple[str, str]]) -> str:
-    return f"{name}({', '.join(f'{k}={v}' for k, v in fields)})"
-
-
-def _find_in_result(result: Any, v: str) -> Optional[list]:
-    """Where repr-text `v` sits inside a call's result: [] when it is the raw text,
-    ["j", *path] when it is the JSON value at `path` (the whole parse included),
-    None when absent."""
-    if not isinstance(result, str):
-        return None
-    if repr(result) == v:
-        return []
-    try:
-        parsed = json.loads(result)
-    except Exception:
-        return None
-    stack: List[Tuple[Any, list]] = [(parsed, ["j"])]
-    while stack:
-        x, path = stack.pop()
-        if repr(x) == v:
-            return path
-        if isinstance(x, dict):
-            stack.extend((val, path + [k]) for k, val in x.items())
-        elif isinstance(x, list):
-            stack.extend((val, path + [i]) for i, val in enumerate(x))
-    return None
-
-
-def _value_at(result: Any, path: list) -> Optional[str]:
-    """The repr text at `path` of a result (inverse of _find_in_result)."""
-    if not isinstance(result, str):
-        return None
-    if not path:
-        return repr(result)
-    if path[0] != "j":
-        return None
-    try:
-        x: Any = json.loads(result)
-        for p in path[1:]:
-            x = x[p]
-    except Exception:
-        return None
-    return repr(x)
-
-
-def _find_word(text: str, w: str) -> int:
-    """First occurrence of `w` in `text` not embedded in a larger identifier."""
-    i = 0
-    while True:
-        i = text.find(w, i)
-        if i < 0:
-            return -1
-        before = text[i - 1] if i else ""
-        after = text[i + len(w):i + len(w) + 1]
-        if not (before.isalnum() or before == "_") and not (after.isalnum() or after == "_"):
-            return i
-        i += 1
-
-
-def chosen_candidates(ob: CallObservation) -> List[Tuple[str, str]]:
-    """The (handle, node repr) candidates a visit reply selected, in reply order."""
-    picks = []
-    for h, node in ob.candidates:
-        i = ob.response.find(f'"{h}"')
-        if i < 0:
-            i = _find_word(ob.response, h)
-        if i >= 0:
-            picks.append((i, h, node))
-    picks.sort()
-    return [(h, node) for _, h, node in picks]
-
-
 def _named_values(ob: CallObservation) -> Dict[str, str]:
     """Every value of one call a later call could draw from — and, symmetrically,
     every dynamic part of this call that needs explaining. Structured reprs
@@ -356,10 +193,10 @@ def _named_values(ob: CallObservation) -> Dict[str, str]:
         if text is None:
             continue
         out[tag] = text
-        parsed = parse_fields(text)
+        parsed = _parser.parse_fields(text)
         if parsed is not None:
             for f, v in parsed[1]:
-                out[f"{tag}.{field_name(f)}"] = v
+                out[f"{tag}.{_parser.field_name(f)}"] = v
     if ob.cand_block:
         out["cands"] = ob.cand_block
     return out
@@ -380,7 +217,7 @@ def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
         if w is not None and len(w) >= 2 and len(v) > len(w) and v.startswith(w[:-1]):
             return "extend"
     for e in reversed(earlier):
-        path = _find_in_result(e.response, v)
+        path = _parser._find_in_result(e.response, v)
         if path is not None:
             return f"resp:{e.key}\x00{json.dumps(path)}"
     for e in reversed(earlier):
@@ -388,14 +225,14 @@ def _provenance(earlier: List[CallObservation], name: str, v: str) -> str:
             if w == v and n2 != name:
                 return f"take:{e.key}\x00{n2}"
     for e in reversed(earlier):
-        for _, node in chosen_candidates(e):
+        for _, node in _parser.chosen_candidates(e):
             if node == v:
                 return f"cand:{e.key}\x00"
-            parsed = parse_fields(node)
+            parsed = _parser.parse_fields(node)
             if parsed is not None:
                 for f, w in parsed[1]:
                     if w == v:
-                        return f"cand:{e.key}\x00{field_name(f)}"
+                        return f"cand:{e.key}\x00{_parser.field_name(f)}"
     return f"const:{v}"
 
 
@@ -403,10 +240,6 @@ def _shape(values: Dict[str, str]) -> Tuple[str, ...]:
     """The bindings whose value is an empty container: the part of a call's value
     shape that changes how byllm renders its schema rows."""
     return tuple(sorted(n for n, v in values.items() if v in ("[]", "{}")))
-
-
-def node_type(node_repr: str) -> str:
-    return node_repr.split("(", 1)[0].strip()
 
 
 @dataclass
@@ -588,10 +421,6 @@ class Program:
         prev_vals = _named_values(prev) if prev is not None else {}
         for name, v in _named_values(ob).items():
             self.flow[(key, name)][_provenance(earlier, name, v)] += 1
-            # Prefix stability is a same-site question: does this call's value repeat
-            # or extend the value THIS site sent last time? Cross-site provenance is
-            # not enough — a value copied from the previous call (a spec handed from
-            # Planner to Coder) is a "copy" that still changes on every Coder call.
             w = prev_vals.get(name)
             if w is not None:
                 if v == w:
@@ -611,9 +440,9 @@ class Program:
         if isinstance(site, VisitByCallsite) and ob.response:
             # The reply names the nodes the walker visits next, in order: link each
             # chosen node's type to the symbol that then ran on it.
-            for j, (_, node) in enumerate(chosen_candidates(ob)):
+            for j, (_, node) in enumerate(_parser.chosen_candidates(ob)):
                 if j < len(rest):
-                    self.type_succ[node_type(node)][rest[j]] += 1
+                    self.type_succ[_parser.node_type(node)][rest[j]] += 1
         self._observe_proto(key, ob, earlier)
 
     def _observe_proto(self, key: str, ob: CallObservation, earlier: List[CallObservation]) -> None:
@@ -623,7 +452,7 @@ class Program:
         p["order"] = list(ob.bindings)
         p["self"] = ob.self_view is not None
         p["self_gap"] = "\n\nself = " in ob.user_text
-        p["self_fields"] = parse_fields(ob.self_view) if ob.self_view is not None else None
+        p["self_fields"] = _parser.parse_fields(ob.self_view) if ob.self_view is not None else None
         if ob.self_view is not None and ob.user_text:
             # The type-member rows after the self line are part of the message and
             # byte-stable for the site.
@@ -640,7 +469,7 @@ class Program:
             p["self_rows"] = stripped[j:] if j >= 0 else ""
         for tag, text in (("walker", ob.walker), ("here", ob.here)):
             if text is not None:
-                p[tag] = parse_fields(text)
+                p[tag] = _parser.parse_fields(text)
         if ob.user_text:
             p["n"] += 1
             built, complete = self.resolve_user(key, list(earlier))
@@ -654,7 +483,7 @@ class Program:
         for key, ob in zip(walked, obs):
             q = self._step_ro(q, key)
             for _, node in ob.candidates:
-                succ = self.type_succ.get(node_type(node))
+                succ = self.type_succ.get(_parser.node_type(node))
                 if not succ:
                     continue
                 s = succ.most_common(1)[0][0]
@@ -703,11 +532,6 @@ class Program:
             return False
         if any(sum(self.flow.get((site.key, n), {}).values()) < 8 for n in names):
             return False
-        # Bindings another callsite also carries (and that hold between this site's
-        # calls) lead, so the shared bytes are the prefix; then everything else by
-        # stability. The header goes behind the values only when such a shared
-        # binding leads; otherwise the static header stays in front, where it is
-        # itself a reusable prefix.
         site.layout = sorted(names, key=lambda n: (0 if self._cross_stable(site.key, n) else 1,
                                                    *self._stability(site.key, n)))
         p["order"] = list(site.layout)   # the rebuild follows the order requests now use
@@ -748,18 +572,18 @@ class Program:
             if e.key != src:
                 continue
             if kind == "resp":
-                return _value_at(e.response, json.loads(arg))
+                return _parser._value_at(e.response, json.loads(arg))
             if kind == "take":
                 return _named_values(e).get(arg)
             if kind == "cand":
-                picks = chosen_candidates(e)
+                picks = _parser.chosen_candidates(e)
                 if not picks:
                     return None
                 node = picks[0][1]
                 if not arg:
                     return node
-                parsed = parse_fields(node)
-                return next((w for f, w in (parsed[1] if parsed else ()) if field_name(f) == arg), None)
+                parsed = _parser.parse_fields(node)
+                return next((w for f, w in (parsed[1] if parsed else ()) if _parser.field_name(f) == arg), None)
         return None
 
     def resolve_user(self, key: str, obs_list: List[CallObservation]) -> Tuple[str, bool]:
@@ -815,12 +639,12 @@ class Program:
             tname, rows = spec
             vals = []
             for f, _ in rows:
-                v = self._flow_value(key, f"{tag}.{field_name(f)}", obs_list)
+                v = self._flow_value(key, f"{tag}.{_parser.field_name(f)}", obs_list)
                 if v is None:
                     break
                 vals.append((f, v))
             else:
-                return build_fields(tname, vals)
+                return _parser.build_fields(tname, vals)
         return self._flow_value(key, tag, obs_list)
 
     def _resolve_visit(self, site: VisitByCallsite, p: Dict[str, Any],
@@ -907,11 +731,7 @@ class Program:
 
     # Prediction
     def _dist(self, walked: List[str]) -> Tuple[Dict[str, float], float, int]:
-        """Next-symbol distribution under Witten-Bell backoff: every observed
-        suffix of the history is blended shallow-to-deep, each with the say
-        w = n/(n+T) its sample size n earns (T = distinct outcomes seen there).
-        A deep context seen once shades — not overrides — the well-supported
-        shorter ones. Returns (probs, end probability, deepest support n)."""
+        """Next-symbol distribution under Witten-Bell backoff"""
         ctx = ([START] + list(walked))[-self.k:]
         probs: Dict[str, float] = {}
         end = 0.0
@@ -1014,12 +834,7 @@ class Program:
 
     def predict_tree(self, walked: List[str], p_min: float = 0.02, horizon_s: float = 120.0,
                      max_nodes: int = 64, top_k: int = 3, max_depth: int = 8) -> List["PredictedCall"]:
-        """Fan-out prediction: expand the top_k continuations at every step (not just
-        the argmax chain) and report, per future callsite, the total probability mass
-        of the paths that reach it and its earliest-arrival time quantiles. Times are
-        seconds after the last call's completion — the anchor the gap samples share.
-        Arrival spread compounds hop-wise as the root of the summed squared
-        quantile gaps (independent-hop approximation)."""
+        """Fan-out prediction: expand the top_k continuations at every step"""
         out: Dict[str, PredictedCall] = {}
         # frontier rows: (path probability, ctx, graph state, t50 so far, spread² so far, depth)
         frontier: List[Tuple[float, List[str], str, float, float, int]] = [

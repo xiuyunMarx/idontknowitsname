@@ -14,7 +14,7 @@ FIELDS = ["run", "model", "concurrency", "arm", "device_tokens", "host_tokens", 
 def row_for(label, model, path):
     tag = os.path.basename(path)[:-4]
     arm, _, c = tag.rpartition("_c")
-    if not c.isdigit() or arm not in ("lruraw", "lru", "ours", "cachescout"):
+    if not c.isdigit() or arm not in ("lruraw", "lru", "kvonly", "ours", "cachescout"):
         return None
     txt = open(path).read()
     m = re.search(r"JCT p50=\s*([\d.]+)s p95=\s*([\d.]+)s mean=\s*([\d.]+)s", txt)
