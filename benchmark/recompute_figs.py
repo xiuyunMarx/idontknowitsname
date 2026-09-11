@@ -61,7 +61,7 @@ def measured_pids(log):
 def load(wl):
     """{(c, arm): [serve dict, ...]} with recompute tokens added, in log order."""
     runs = {}
-    for log in sorted(glob.glob(os.path.join(WORKLOADS[wl]["dir"], "*_c*.log"))):
+    for log in sorted(glob.glob(os.path.join(WORKLOADS[wl]["dir"], "*_c*.log"))): #type: ignore
         tag = os.path.basename(log)[:-4]
         arm, _, c = tag.rpartition("_c")
         if arm not in ARM_LABEL or not c.isdigit():

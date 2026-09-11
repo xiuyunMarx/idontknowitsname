@@ -7,21 +7,7 @@ the functions of one module):
                         ^          |   \\--pass, last function--> Committer
                         +-- Analyzer <-- fail (up to CA_MAX_ATTEMPTS per function)
 
-One session implements one module of K HumanEval functions (a bundle, comma
-separated in CA_TASKS). For each function the Planner turns the spec into an
-approach and edge cases; the Coder writes the function; the Tester (no LLM)
-writes the module so far plus the candidate to a scratch directory with one test
-file per function, and runs pytest in a subprocess, so every run also regresses
-the functions already accepted; a failure goes to the Analyzer, whose diagnosis
-feeds the next Coder attempt; a pass appends the function to the module and moves
-on. The Committer writes the commit message at the end. The branch after Tester
-is decided by the program from the test result, so the workflow is
-data-dependent: the automaton has to learn that a Tester is followed by a
-Planner, a Committer, or an Analyzer-Coder-Tester loop.
-
-KV-cache shape. `attempts` (every attempt with its code, verdict and pytest
-output) only grows within a session; `spec`, `plan` and `advice` change every
-call and are small. 
+One session implements one module of K HumanEval functions 
 
 Env: CA_TASKS (comma-separated HumanEval ids, or argv[1]; default HumanEval/0..4),
 CA_DATA (HumanEval.jsonl.gz next to this file), CA_MAX_ATTEMPTS (3 per function),
