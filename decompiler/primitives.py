@@ -132,8 +132,8 @@ Callsite = Union[ByLLMCallsite, VisitByCallsite]
 
 START = "^"  # Marker placed before the first call in a session.
 HEADER_LAST = True  # allow the values-first layout (header and schema rows last) for sites whose leading binding is shared with another callsite
-STABILITY = {"const": 0, "copy": 1, "extend": 2}  # flow-rule kind -> how long the bytes stay a valid prefix
-CONTINUITY = {"same": 1, "extend": 2, "fresh": 3}  # same-site step kind -> prefix stability (const across sessions is 0)
+STABILITY = {"const": 0, "copy": 1, "extend": 2}  # Provenance of a callsite's binding value
+EVOLUTION = {"same": 1, "extend": 2, "fresh": 3}  # evolution of a binding between the site's consecutive calls
 
 
 @dataclass
@@ -313,7 +313,7 @@ class Program:
         self.exit_freq: Dict[str, int] = defaultdict(int)    # Sessions ending at each state.
         self.gap: Dict[Tuple[str, str], List[float]] = defaultdict(list)  # Delays between call pairs.
         self.flow: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> provenance rule -> count.
-        self.cont: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> same-site step kind -> count.
+        self.evo: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> same-site evolution kind -> count; evolution kind cnt of a bindings
         self.shared: Dict[Tuple[str, str], Dict[str, int]] = defaultdict(lambda: defaultdict(int))  # (symbol, name) -> 'cross' if an OTHER site carried this value (or its prefix) earlier in the session, else 'own'.
         self.type_succ: Dict[str, Counter] = defaultdict(Counter)  # Node type -> symbol called on it.
         self.proto: Dict[str, Dict[str, Any]] = {}           # Symbol -> user-message layout template.
@@ -429,7 +429,7 @@ class Program:
                     kind = "extend"
                 else:
                     kind = "fresh"
-                self.cont[(key, name)][kind] += 1
+                self.evo[(key, name)][kind] += 1
             # Cross-site sharing decides whether moving the header behind the values
             # can pay: it only can when another callsite's prompt starts with the
             # same bytes, i.e. carried this value (or the list it extends) before.
@@ -503,21 +503,20 @@ class Program:
         return rule if n >= 2 and 2 * n >= sum(rules.values()) else None
 
     def _stability(self, key: str, name: str) -> Tuple[float, int]:
-        """Sort key for a binding's place in the layout: how often its bytes break
-        the prefix between this site's consecutive calls (fraction of fresh steps,
-        from self.cont), then the kind of the stable steps (1 unchanged, 2 growing,
-        3 fresh). A value that repeats across sessions (const) sorts first; a site
-        seen once per session has no step evidence and falls back to its
-        provenance rule, which is all there is to go on."""
+        """返回该绑定的稳定性排序分数，分数越小越靠前。
+
+        跨会话不变的常量优先，返回 (-1.0, 0)。
+        同一个 callsite 相邻两次调用之间，这个 binding 的值换成全新值的比例 + 众数演化规则的等级.
+        """
         rule = self._dominant(key, name)
         if rule and rule.startswith("const"):
             return (-1.0, 0)
-        steps = self.cont.get((key, name))
-        if steps:
-            total = sum(steps.values())
-            stable = {k: c for k, c in steps.items() if k != "fresh"}
+        evolutions = self.evo.get((key, name))
+        if evolutions:
+            tot = sum(evolutions.values())
+            stable = {k:cnt for k, cnt in evolutions.items() if k != "fresh"}
             kind = max(stable.items(), key=lambda kv: kv[1])[0] if stable else "fresh"
-            return (steps.get("fresh", 0) / total, CONTINUITY[kind])
+            return (evolutions.get("fresh", 0) / tot, EVOLUTION[kind])
         return (1.0, STABILITY.get(rule.partition(":")[0], 3) if rule else 3)
 
     def _freeze_layout(self, site: ByLLMCallsite) -> bool:
@@ -546,7 +545,7 @@ class Program:
         if not (cross > 0 and 2 * cross >= sum(sh.values())):
             return False
         # a site called once per session has no own-step evidence: sharing is all there is
-        return not self.cont.get((key, name)) or self._stability(key, name)[0] <= 0.5
+        return not self.evo.get((key, name)) or self._stability(key, name)[0] <= 0.5
 
     def _flow_prefix(self, key: str, name: str, obs_list: List[CallObservation]) -> Optional[str]:
         """For an accumulating binding, the bytes its next value is known to start

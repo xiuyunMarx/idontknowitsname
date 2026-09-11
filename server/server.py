@@ -206,14 +206,13 @@ class Controller:
         print(f"[call] {sess.id} #{len(sess.walked)} {site.label}{hit}", flush=True)
         sess.walked.append(site.key)
         sess.epoch += 1
-        # Anchoring at arrival is early by this call's own duration — deliberately
-        # conservative; the completion re-plan tightens the deadlines.
+        # 到达时先用一个偏早的锚点抢跑规划，完成后再用真实完成时间重新规划把 deadline 校准回来
         sess.plan_anchor = req.t_arrive
         sess.open_obs = CallObservation(key=site.key, t_arrive=req.t_arrive, t_done=req.t_arrive,
                                         candidates=extras.candidates, bindings=extras.bindings,
                                         self_view=extras.self_view, walker=extras.walker,
                                         here=extras.here, cand_block=extras.cand_block,
-                                        user_text=extras.user_text)
+                                        user_text=extras.user_text) 
         if self.planner is not None:
             self.planner.note_arrival(sess.id, site.key, req.t_arrive)
             self.planner.void_session(sess.id, sess.epoch)

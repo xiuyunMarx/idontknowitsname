@@ -1,0 +1,94 @@
+% Pseudocode for the decompiler and the heterogeneity analysis.
+% Requires: \usepackage{algorithm} \usepackage{algpseudocode} \usepackage{amsmath}
+% Source of truth: decompiler/parser.py (Algorithm 1),
+%                  decompiler/primitives.py (_provenance, _observe_values,
+%                  _dominant, _stability, _cross_stable) (Algorithm 2).
+
+\begin{algorithm}[t]
+\caption{Decompiling a request into a callsite and its bindings}
+\label{alg:decompile}
+\begin{algorithmic}[1]
+\Require request body $q$ (system prompt $S$, user message $U$, model, sampling params)
+\Ensure callsite $x$, ordered bindings $B = [(n_1, v_1), \dots, (n_m, v_m)]$
+\State $U \gets \textsc{StripHint}(U)$ \Comment{drop the fixed output-format tail}
+\State $L \gets$ lines of $U$
+\State $(h, e) \gets \textsc{LocateHeader}(L)$ \Comment{signature line and its schema rows; may sit first or last}
+\State $\mathit{names} \gets \textsc{ParamNames}(L[h])$ \Comment{parameter names in declaration order}
+\State $\mathit{ctx} \gets L[h:e]$ \Comment{static header: signature + schema rows}
+\State $R \gets$ \textbf{if} $h > 0$ \textbf{then} $L[0:h]$ \textbf{else} $L[e:]$ \Comment{the value region}
+\State $B \gets [\,]$
+\ForAll{line $\ell \in R$}
+    \If{$\ell$ matches \texttt{name = repr} \textbf{and} name $\in \mathit{names}$}
+        \State append $(\text{name}, \text{repr})$ to $B$ \Comment{a new binding block}
+    \ElsIf{$\ell$ matches \texttt{self = repr}}
+        \State record $\ell$ as the owner view; skip its member rows
+    \ElsIf{$B \neq [\,]$ \textbf{and} $\ell \neq \varepsilon$}
+        \State append $\ell$ to the value of the last binding \Comment{multi-line \texttt{repr}}
+    \EndIf
+\EndFor
+\State $x \gets \textsc{Callsite}(S, \mathit{ctx}, \mathit{names}, \text{model}, \text{sampling params})$ \Comment{identity is the static part only}
+\State \Return $(x, B)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[t]
+\caption{Identifying binding heterogeneity from session traces}
+\label{alg:heterogeneity}
+\begin{algorithmic}[1]
+\Require a completed session: calls $(x_1, B_1), \dots, (x_n, B_n)$ in order
+\Require accumulated counters $\mathit{flow}$, $\mathit{evo}$, $\mathit{shared}$ over all past sessions
+\Statex
+\Procedure{Observe}{session}
+\For{$i = 1 \dots n$}
+    \State $E \gets \{(x_j, B_j) : j < i\}$ \Comment{earlier calls of this session}
+    \State $P \gets$ bindings of the latest $j < i$ with $x_j = x_i$, or $\emptyset$
+    \ForAll{$(n, v) \in B_i$}
+        \State $\mathit{flow}[x_i, n][\textsc{Provenance}(E, n, v)] \mathrel{+}= 1$
+        \If{$n \in P$}
+            \State $\mathit{evo}[x_i, n][\textsc{Transition}(P[n], v)] \mathrel{+}= 1$
+        \EndIf
+        \State $c \gets \exists (x', B') \in E,\ x' \neq x_i,\ n \in B' :\ B'[n] = v \ \lor\ v \text{ extends } B'[n]$
+        \State $\mathit{shared}[x_i, n][c\ ?\ \mathrm{cross} : \mathrm{own}] \mathrel{+}= 1$
+    \EndFor
+\EndFor
+\EndProcedure
+\Statex
+\Function{Provenance}{$E, n, v$}
+    \If{$\exists (x', B') \in E : B'[n] = v$} \Return \textsc{copy}
+    \ElsIf{$\exists (x', B') \in E : v \text{ extends } B'[n]$} \Return \textsc{extend}
+    \ElsIf{$v$ appears in an earlier reply or another binding of $E$} \Return \textsc{derived}
+    \Else\ \Return \textsc{const}$(v)$ \Comment{support accumulates only if $v$ recurs across sessions}
+    \EndIf
+\EndFunction
+\Statex
+\Function{Transition}{$w, v$}
+    \State \Return $v = w\ ?\ \mathrm{same} : (v \text{ extends } w\ ?\ \mathrm{extend} : \mathrm{fresh})$
+\EndFunction
+\Statex
+\Function{Classify}{$x, n$}
+    \State $r \gets \textsc{Dominant}(\mathit{flow}[x, n])$ \Comment{top rule with $\ge 2$ hits and $\ge$ half of all}
+    \If{$r = \textsc{const}(\cdot)$} \Return \textsc{Constant} \EndIf
+    \If{$\mathit{evo}[x, n] \neq \emptyset$}
+        \State $\rho \gets \mathit{evo}[x,n][\mathrm{fresh}] / \sum \mathit{evo}[x, n]$
+        \State $k \gets \arg\max_{k \neq \mathrm{fresh}} \mathit{evo}[x, n][k]$, or fresh if none
+        \State \Return $\rho > \tfrac12\ ?\ \textsc{Volatile} : (k = \mathrm{same}\ ?\ \textsc{Copied} : \textsc{Extended})$
+    \EndIf
+    \State \Return $r = \textsc{copy}\ ?\ \textsc{Copied} : (r = \textsc{extend}\ ?\ \textsc{Extended} : \textsc{Volatile})$ \Comment{no step evidence}
+\EndFunction
+\Statex
+\Function{CrossStable}{$x, n$}
+    \State $c \gets \mathit{shared}[x,n][\mathrm{cross}]$;\ $t \gets \sum \mathit{shared}[x,n]$
+    \State \Return $c > 0 \ \land\ 2c \ge t \ \land\ (\mathit{evo}[x,n] = \emptyset \ \lor\ \rho \le \tfrac12)$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+% Notes
+% - "v extends w": |w| >= 2, |v| > |w|, and v starts with w minus its last character
+%   (the closing delimiter of a list/dict repr).
+% - DERIVED merges the code's resp / take / cand rules; they matter for prompt
+%   reconstruction (promotion) but rank as Volatile in layout.
+% - The rho > 1/2 cut in Classify makes the four classes exclusive; the code's
+%   _stability sorts by the key (rho, rank(k)) without a hard cut.
+% - Observe runs once per completed session; Classify and CrossStable are
+%   evaluated when a callsite's layout is frozen (every binding has >= 8 observations).
