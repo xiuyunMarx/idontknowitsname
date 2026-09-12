@@ -503,9 +503,9 @@ class Program:
         return rule if n >= 2 and 2 * n >= sum(rules.values()) else None
 
     def _stability(self, key: str, name: str) -> Tuple[float, int]:
-        """返回该绑定的稳定性排序分数，分数越小越靠前。
+        """Return the binding's stability as a pair of floats
 
-        跨会话不变的常量优先，返回 (-1.0, 0)。
+        跨会话不变的常量优先，返回 (-1, 0)。
         同一个 callsite 相邻两次调用之间，这个 binding 的值换成全新值的比例 + 众数演化规则的等级.
         """
         rule = self._dominant(key, name)

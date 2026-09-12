@@ -286,7 +286,9 @@ class Controller:
 
     def _plan_call(self, sess: LiveSession, c: PredictedCall, anchor: float) -> List[Job]:
         """ For each call we expect to happen, start preparing it early:
-        - Preload the entire reconstructed call if possible. Otherwise, preload the longest prefix we can reconstruct—or, as a last resort, the fixed/static prefix.
+        - Preload the entire reconstructed call if possible.
+        - Otherwise, preload the longest prefix we can reconstruct
+        - as a last resort, the fixed/static prefix.
         """
         prog = sess.program
         site = prog.sites.get(c.key) if prog else None
