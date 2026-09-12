@@ -236,6 +236,26 @@ def fig_cache(wl, rows, cs, out_dir, name):
         save(fig, out_dir, name)
 
 
+def print_speedups(wl, rows, cs):
+    """Speed-up = SGLang / arm on mean JCT and mean TTFT, per concurrency and summarised
+    across concurrencies (geometric mean, min, max). Also Ours over Reorder-only, i.e.
+    what the planner adds on top of the re-layout."""
+    def line(label, sp):
+        sp = sp[np.isfinite(sp)]
+        gm = float(np.exp(np.mean(np.log(sp))))
+        cells = " ".join(f"{v:5.2f}" for v in sp)
+        print(f"  {label:<26} {cells} | geomean {gm:.2f}  min {sp.min():.2f}  max {sp.max():.2f}")
+    print(f"speed-up on {wl} (c = {' '.join(f'{c:>5}' for c in cs)})")
+    for field, metric in (("jct_mean_s", "mean JCT"), ("ttft_mean_ms", "mean TTFT")):
+        base = series(rows, BASELINE, field, cs)
+        for a in ARMS:
+            if a == BASELINE:
+                continue
+            line(f"{metric}: {a} vs SGLang", base / series(rows, a, field, cs))
+        line(f"{metric}: Ours vs Reorder-only", series(rows, "Reorder-only", field, cs) / series(rows, "Ours", field, cs))
+    print()
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default="benchmark/records/figs")
@@ -255,6 +275,7 @@ def main():
 
         arms_present = [a for a in ARMS if any((c, a) in rows for c in cs)]
         print(f"{wl}: c={cs}, arms={arms_present} -> {args.out}")
+        print_speedups(wl, rows, cs)
 
 
 if __name__ == "__main__":
