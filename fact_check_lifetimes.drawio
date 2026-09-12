@@ -1,0 +1,191 @@
+<mxfile host="app.diagrams.net" agent="claude" version="24.7.8">
+  <diagram id="fact-check-lifetimes" name="Page-1">
+    <mxGraphModel dx="1600" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===================== agent graph (left) ===================== -->
+        <mxCell id="claim_analyzer" value="Claim Analyzer" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Times New Roman;fontSize=20;fontStyle=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="240" y="90" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scout0" value="Scout 0" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Times New Roman;fontSize=20;fontStyle=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="140" y="240" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="scout1" value="Scout 1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Times New Roman;fontSize=20;fontStyle=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;strokeWidth=1.5;fontColor=#1A2F55;" vertex="1" parent="1">
+          <mxGeometry x="340" y="240" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="evidence_analyzer" value="Evidence Analyzer" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Times New Roman;fontSize=20;fontStyle=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
+          <mxGeometry x="240" y="390" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_dot" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="322" y="530" width="16" height="16" as="geometry" />
+        </mxCell>
+
+        <!-- fan-out: Claim Analyzer -> Scouts -->
+        <mxCell id="e_ca_s0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="claim_analyzer" target="scout0">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="195" />
+              <mxPoint x="215" y="195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ca_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="claim_analyzer" target="scout1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="195" />
+              <mxPoint x="415" y="195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_questions" value="Questions" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontFamily=Times New Roman;fontSize=16;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="338" y="158" width="90" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- fan-in: Scouts -> Evidence Analyzer -->
+        <mxCell id="e_s0_ea" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scout0" target="evidence_analyzer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="215" y="345" />
+              <mxPoint x="330" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_s1_ea" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scout1" target="evidence_analyzer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="415" y="345" />
+              <mxPoint x="330" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_findings" value="Findings" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontFamily=Times New Roman;fontSize=16;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="338" y="355" width="90" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- loop: Evidence Analyzer -> Claim Analyzer (left side) -->
+        <mxCell id="e_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="evidence_analyzer" target="claim_analyzer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="90" y="420" />
+              <mxPoint x="90" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lbl_need_more" value="Need more" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Times New Roman;fontSize=16;strokeColor=none;fillColor=none;rotation=270;" vertex="1" parent="1">
+          <mxGeometry x="25" y="258" width="100" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- final verdict -->
+        <mxCell id="e_verdict" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#000000;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="evidence_analyzer" target="end_dot">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_verdict" value="Verdict" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontFamily=Times New Roman;fontSize=16;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="338" y="475" width="90" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- call-site pointer -->
+        <mxCell id="e_callsite" style="html=1;endArrow=classic;endFill=1;dashed=1;dashPattern=6 4;strokeColor=#FF3333;strokeWidth=1.5;curved=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="scout1" target="callsite">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="560" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ===================== call site + table (right) ===================== -->
+        <mxCell id="callsite" value="scout.assess_evidence(search_results, question, claim, evidences)" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Times New Roman;fontSize=19;fillColor=#EEF3FB;strokeColor=#D6DFEA;fontColor=#2F4562;" vertex="1" parent="1">
+          <mxGeometry x="620" y="100" width="820" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- rules -->
+        <mxCell id="rule_top" style="endArrow=none;html=1;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="205" as="sourcePoint" />
+            <mxPoint x="1440" y="205" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rule_head" style="endArrow=none;html=1;strokeColor=#000000;strokeWidth=1.5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="262" as="sourcePoint" />
+            <mxPoint x="1440" y="262" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rule_bottom" style="endArrow=none;html=1;strokeColor=#000000;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="600" as="sourcePoint" />
+            <mxPoint x="1440" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- header row -->
+        <mxCell id="h_component" value="Component" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=19;fontStyle=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="212" width="190" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h_lifetime" value="Lifetime" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=19;fontStyle=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="212" width="170" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="h_evolution" value="Evolution pattern" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=19;fontStyle=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="212" width="360" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- row 1: Header -->
+        <mxCell id="r1_c" value="Header" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="272" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r1_l" value="Program" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="272" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r1_e" value="Constant." style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="272" width="370" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- row 2: search_results -->
+        <mxCell id="r2_c" value="search_results" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="336" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r2_l" value="Invocation" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="336" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r2_e" value="Fresh tool output on every search; never reused." style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="336" width="370" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- row 3: question -->
+        <mxCell id="r3_c" value="question" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="400" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r3_l" value="Per-round" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="400" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r3_e" value="Refreshed by the decomposition each round; one per scout." style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="400" width="370" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- row 4: claim -->
+        <mxCell id="r4_c" value="claim" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="464" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r4_l" value="Session" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="464" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r4_e" value="Fixed at spawn; identical across rounds and scouts." style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="464" width="370" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- row 5: evidences -->
+        <mxCell id="r5_c" value="evidences" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="632" y="528" width="200" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r5_l" value="Session" style="text;html=1;align=left;verticalAlign=middle;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="850" y="528" width="190" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="r5_e" value="Appends one finding per scout; existing entries remain unchanged." style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Times New Roman;fontSize=18;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="528" width="370" height="56" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
