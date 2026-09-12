@@ -1,6 +1,6 @@
 """Per-concurrency CDFs of the recomputed fraction of each LLM call (recomputed / input tokens).
 
-One figure per concurrency, five arms, all measured calls (warmup sessions excluded, first turn per call).
+One figure per concurrency, six arms, all measured calls (warmup sessions excluded, first turn per call).
   coding  -> benchmark/records/codeAgent/recompute_cdf_c<N>.{pdf,png}
   fact    -> benchmark/records/FactCheck/recompute_cdf_c<N>.{pdf,png}
 The per-call rows behind every curve go to <dir>/recompute_cdf_calls.csv (one row per LLM call).
@@ -12,7 +12,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from recompute_figs import load  # noqa: E402
+from recompute_figs import OPAQUE, load  # noqa: E402
 
 OUT = {"coding": "benchmark/records/codeAgent", "fact": "benchmark/records/FactCheck"}
 CALL_FIELDS = ["concurrency", "arm", "session_pid", "call_index", "site", "site_invocation",
@@ -21,7 +21,8 @@ ARMS = [("lruraw", "SGLang (LRU)", "#6E6E6E", (0, (1, 1))),
         ("cachescout", "CacheScout", "#B5589A", (0, (4, 1.5))),
         ("kvonly", "Planner only", "#009E73", (0, (3, 1, 1, 1))),
         ("lru", "Re-layout only", "#0072B2", (0, (6, 2))),
-        ("ours", "Ours", "#D55E00", "-")]
+        ("ours", "Ours", "#D55E00", "-"),
+        ("continuum", "Continuum", "#E69F00", (0, (2, 1)))]
 
 plt.rcParams.update({
     "font.family": "serif", "font.serif": ["Times New Roman", "Nimbus Roman", "DejaVu Serif"],
@@ -40,7 +41,7 @@ def main():
             w = csv.DictWriter(f, fieldnames=CALL_FIELDS); w.writeheader()
             for (c, arm), ss in sorted(runs.items()):
                 for s in ss:
-                    site = s["site"] if arm != "cachescout" else ""   # CacheScout logs carry no call-site names
+                    site = s["site"] if arm not in OPAQUE else ""   # opaque servers log no call-site names
                     w.writerow(dict(concurrency=c, arm=arm, session_pid=s["pid"], call_index=s["call"], site=site,
                                     site_invocation=s["inv"] if site else "", prompt_tokens=int(s["prompt_tokens"]),
                                     cached_device=int(s["cached_device"]), cached_host=int(s["cached_host"]),

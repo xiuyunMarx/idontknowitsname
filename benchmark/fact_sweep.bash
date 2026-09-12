@@ -5,6 +5,7 @@
 #   kvonly  --no-relayout         planner only (promotion, steering, retirement), no re-layout
 #   ours                          re-layout + planner
 #   cachescout                        server.cacheScout_server: opaque requests, online Markov agent model (no EXTRA flags)
+#   continuum                         server.continuum_server: opaque requests, TTL pins, plain FCFS (no EXTRA flags)
 # Same protocol as the Sep 3 qwen8 sweep: 120 HoVer claims, FC_TOOL_DELAY_S=2, rounds per fact_check.jac,
 # --sessions per lane (6 above c=2); host 8 GB (54k tokens) to match coding_sweep.bash. Results in results/fact_sweep/{arm}_c{N}.{log,out}, fact_sweep.csv.
 #   LEVELS="8 12 16" ARMS="lru ours" ./fact_sweep.bash
@@ -22,14 +23,15 @@ SCHED=${SCHED:-fcfs}   # engine queue order for every arm: fcfs (request priorit
 RISK_AGING=${RISK_AGING:-}   # --sched risk: aging seconds (server.server arms only)
 export FC_CACHE_DIR=$PWD/benchmark/fact_check/wiki_cache
 export FC_TOOL_DELAY_S=${FC_TOOL_DELAY_S:-2}
+export FC_MIN_ROUNDS=${FC_MIN_ROUNDS:-2}    
 
 per_lane() { [ -n "${PER_LANE:-}" ] && { echo "$PER_LANE"; return; }; case $1 in 1) echo 24;; 2) echo 12;; *) echo 6;; esac; }   # 118 usable claims cap c*N
 log() { echo "$(date +%T) $*" | tee -a "$OUT/progress.log"; }
-kill_srv() { pkill -9 -f "[s]glang::|[s]erver\.server|[c]acheScout_server|[f]act_bench|[j]ac run " 2>/dev/null; sleep 5; }
+kill_srv() { pkill -9 -f "[s]glang::|[s]erver\.server|[c]acheScout_server|[c]ontinuum_server|[f]act_bench|[j]ac run " 2>/dev/null; sleep 5; }
 
 run_arm() {  # $1 arm, $2 server flags, $3 concurrency
   kill_srv
-  local mod=server.server extra="$EXTRA ${RISK_AGING:+--risk-aging-s $RISK_AGING}"; [ "$1" = cachescout ] && { mod=server.cacheScout_server; extra=; }
+  local mod=server.server extra="$EXTRA ${RISK_AGING:+--risk-aging-s $RISK_AGING}"; [ "$1" = cachescout ] && { mod=server.cacheScout_server; extra=; }; [ "${1%%_nopin*}" = continuum ] && { mod=server.continuum_server; extra=; }
   nohup $P -m $mod "$MODEL" $2 $extra --sched "$SCHED" --host "$HOST" ${KV:+--kv $KV} > "$OUT/$1_c$3.log" 2>&1 &
   local sp=$!
   until grep -q "\[warmup\] engine ready" "$OUT/$1_c$3.log" 2>/dev/null; do
@@ -49,6 +51,9 @@ for c in $LEVELS; do
       kvonly) run_arm kvonly "--no-relayout" "$c";;
       ours)   run_arm ours "" "$c";;
       cachescout) run_arm cachescout "" "$c";;
+      continuum) run_arm continuum "" "$c";;
+      continuum_nopin) run_arm continuum_nopin "--no-pin" "$c";;   # control: same server, pins never pushed
+      continuum_nopin_lru) run_arm continuum_nopin_lru "--no-pin --eviction lru" "$c";;   # control: vanilla engine path through the continuum server
     esac
   done
 done

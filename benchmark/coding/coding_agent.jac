@@ -196,7 +196,6 @@ node Tester {
             time.sleep(remaining);
         }
     }
-
     can test with CodeTask entry {
         attempt = visitor.attempts[-1];
         self.run(visitor, attempt);

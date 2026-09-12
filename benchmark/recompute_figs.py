@@ -36,10 +36,12 @@ ARMS = [("lruraw", "Vanilla SGLang", "#6E6E6E", "-"),
         ("cachescout", "CacheScout", "#B5589A", "-"),
         ("kvonly", "Planner only", "#009E73", "-"),
         ("lru", "Relayout only", "#0072B2", "-"),
-        ("ours", "Ours", "#D55E00", "-")]
+        ("ours", "Ours", "#D55E00", "-"),
+        ("continuum", "Continuum", "#E69F00", "-")]
 ARM_LABEL = {a: l for a, l, _, _ in ARMS}
 ARM_COLOR = {a: c for a, _, c, _ in ARMS}
-MARKERS = {"lruraw": "o", "cachescout": "v", "kvonly": "^", "lru": "s", "ours": "D"}
+MARKERS = {"lruraw": "o", "cachescout": "v", "kvonly": "^", "lru": "s", "ours": "D", "continuum": "P"}
+OPAQUE = {"cachescout", "continuum"}   # servers that see only chat messages: no call-site names in their logs
 
 plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
                      "axes.grid": True, "grid.alpha": 0.25, "grid.linewidth": 0.5,
@@ -75,6 +77,8 @@ def load(wl):
                     key = ln.split()[1].rsplit("-", 1)[0]
                     order.setdefault(key, i)
         for s in serves:
+            if arm in OPAQUE:
+                s["site"] = ""   # the [call] line carries the server's own note, not a call site
             s["recompute"] = s["prompt_tokens"] - s["cached_device"] - s["cached_host"]
             s["order"] = order.get(f"{s['pid']}-{s['call']}t{s['turn']}", 0)
         runs[(int(c), arm)] = sorted(serves, key=lambda s: s["order"])
@@ -139,7 +143,7 @@ def fig_by_invocation(wl, runs, out, min_n=10):
     top = max(l.get_ydata().max() for ax in axes for l in ax.get_lines() if len(l.get_ydata()))
     axes[0].set_ylim(0, 1.05 * top)
     axes[0].set_ylabel("tokens per call")
-    fig_legend(fig, axes[-1], ncol=6)
+    fig_legend(fig, axes[-1], ncol=7)
     fig.suptitle(f"{WORKLOADS[wl]['title']}: recomputed tokens vs prompt growth, site {site}", fontsize=9, y=1.03)
     save(fig, out, f"recompute_by_invocation_{wl}")
 

@@ -45,7 +45,7 @@ def main():
     for wl in WORKLOADS:
         for (c, arm), ss in load(wl).items():
             for s in ss:
-                if s["site"] != "?":
+                if s["site"] not in ("?", ""):
                     by_site[(wl, c, s["site"], s["inv"], arm)].append(s)
                     by_site[(wl, c, s["site"], "all", arm)].append(s)
                 by_call[(wl, c, s["call"], arm)].append(s)

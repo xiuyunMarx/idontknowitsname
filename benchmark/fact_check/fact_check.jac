@@ -1,10 +1,39 @@
 """HoVer-style multi-hop fact checking as an OSP fan-out / fan-in loop.
 
+INPUT-FIRST VARIANT of fact_check.jac: identical program, prompts and task, except
+that decompose_claim and assess_evidence list the per-call inputs (maximum_questions;
+search_results, question) BEFORE the session-constant claim and the accumulating
+evidences, the way a developer writes "new input first, context after". Under the
+raw layout every call's reusable prefix ends at the first fresh binding (the header
+only); the decompiler's re-layout restores header | claim | evidences as the shared
+prefix. verify_claim is unchanged. Use with fact_bench --program.
+
 Graph topology (a cycle, like PBKV's HoVer + LangChain workload):
 
     root -> ClaimAnalyzer -> EvidenceScout[0..N) -> EvidenceAnalyzer
               ^                                         |
               +------------- NEED_MORE / min rounds ----+
+
+Round r: the ClaimAnalyzer turns the claim plus every finding so far into up to
+N independent questions (follow-up questions may build on answers already found:
+multi-hop), each EvidenceScout searches and assesses one question, and the
+EvidenceAnalyzer decides SUPPORTED / NOT_SUPPORTED / NEED_MORE over all evidence.
+NEED_MORE (or an unmet FC_MIN_ROUNDS) loops back for another round, up to
+FC_ROUNDS. Defaults are few scouts and many rounds (2 x 6) so each round adds a
+small increment to a long history: the reuse shape of a LangChain / ReAct
+scratchpad, which is what PBKV's HoVer workload has.
+
+KV-cache shape. `evidences` only grows within a session and is the second
+parameter of every LLM call, right after the session-constant `claim`, so the
+r-th invocation of each callsite extends the (r-1)-th one's prompt:
+header | claim | evidences[:k] is the shared prefix, question / search_results /
+the new findings are the transient tail. Each Evidence keeps the retrieved
+passage (FC_PASSAGE_CHARS), so the history is ~1k tokens per finding and a
+cache miss on a late round re-prefills the whole session's evidence.
+
+Env: FC_CLAIM (or argv[1]), FC_ROUNDS (max rounds, 6), FC_MIN_ROUNDS (6),
+FC_SCOUTS (2), FC_PASSAGE_CHARS (4000), FC_CACHE_DIR (benchmark/reproduce/wiki_cache;
+Wikipedia results are cached per query so reruns are offline and deterministic).
 """
 
 import os;
@@ -20,7 +49,7 @@ import from jaclang.byllm.llm { InterceptorLLM }
 glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
 glob MAX_SCOUTS: int = int(os.environ.get("FC_SCOUTS") or "2");
 glob MAX_ROUNDS: int = int(os.environ.get("FC_ROUNDS") or "6");
-glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "2");
+glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "6");
 glob PASSAGE_CHARS: int = int(os.environ.get("FC_PASSAGE_CHARS") or "4000");
 glob CACHE_DIR: str = os.environ.get("FC_CACHE_DIR") or os.path.join("benchmark", "reproduce", "wiki_cache");
 glob TOOL_DELAY_S: float = float(os.environ.get("FC_TOOL_DELAY_S") or "0");   # simulated search latency per query (cache hits included)
@@ -88,13 +117,13 @@ walker FactCheck {
 
 
 node ClaimAnalyzer {
-    def decompose_claim(claim: str, evidences: list[Evidence], maximum_questions: int) -> list[str] by llm(temperature=0.0, max_tokens=4096);
+    def decompose_claim(maximum_questions: int, claim: str, evidences: list[Evidence]) -> list[str] by llm(temperature=0.0, max_tokens=4096);
 
     can decompose with FactCheck entry {
         visitor.round += 1;
         visitor.expected_evidences = 0;
         visitor.completed_evidences = 0;
-        proposed = self.decompose_claim(visitor.claim, visitor.evidences, MAX_SCOUTS);
+        proposed = self.decompose_claim(MAX_SCOUTS, visitor.claim, visitor.evidences);
 
         # A malformed or overlong model result cannot change the graph's bound.
         visitor.questions = [q.strip() for q in proposed if q.strip()][:MAX_SCOUTS];
@@ -197,10 +226,10 @@ node EvidenceScout {
     }
 
     def assess_evidence(
-        claim: str,
-        evidences: list[Evidence],
+        search_results: str,
         question: str,
-        search_results: str
+        claim: str,
+        evidences: list[Evidence]
     ) -> Finding by llm(temperature=0.0, max_tokens=4096);
 
     can investigate with FactCheck entry {
@@ -208,10 +237,10 @@ node EvidenceScout {
         search_results = self.websearch(question);
         try {
             finding = self.assess_evidence(
-                visitor.claim,
-                visitor.evidences,
+                search_results,
                 question,
-                search_results
+                visitor.claim,
+                visitor.evidences
             );
         } except Exception as e {
             visitor.errors.append(f"round {visitor.round} scout {self.slot} failed: {e}");
@@ -265,11 +294,13 @@ node EvidenceAnalyzer {
         visitor.verdict = verdict;
         label = str(verdict.label).split(".")[-1];
 
-        if (verdict.label == VerdictLabel.NEED_MORE and visitor.round < MAX_ROUNDS) or visitor.round < MIN_ROUNDS {
+        more = verdict.label == VerdictLabel.NEED_MORE or visitor.round < MIN_ROUNDS;
+        if more and visitor.round < MAX_ROUNDS {
             print(f"Round {visitor.round}: {label} (provisional), {len(visitor.evidences)} findings; another round");
             visit [self-->][?:ClaimAnalyzer];
             return;
         }
+
         print(f"Verdict: {label}");
         print(f"Rationale: {verdict.rationale}");
         print(f"Rounds: {visitor.round}, findings: {len(visitor.evidences)}");

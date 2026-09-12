@@ -5,6 +5,7 @@
 #   kvonly  --no-relayout         planner only (promotion, steering, retirement), no re-layout
 #   ours                          re-layout + planner
 #   cachescout                        server.cacheScout_server: opaque requests, online Markov agent model
+#   continuum                         server.continuum_server: opaque requests, TTL pins, plain FCFS
 #   ARMS="cachescout" LEVELS="12 16" ./benchmark/coding_sweep.bash   (run from the repo root)
 # One 5-function HumanEval bundle per session (benchmark/coding/tasks.txt), pytest floor CA_TOOL_DELAY_S.
 # Results in results/coding_sweep/{arm}_c{N}.{out,log}; consolidate with
@@ -17,13 +18,14 @@ LEVELS=${LEVELS:-"16 20 24 28"}
 ARMS=${ARMS:-"lruraw lru ours"}
 OUT=${OUT:-results/coding_sweep}; mkdir -p "$OUT"
 export CA_TOOL_DELAY_S=${CA_TOOL_DELAY_S:-2}
+
 per_lane() { case $1 in 12) echo 2;; *) echo 1;; esac; }   # 32 bundles cap warmup + c*N
 log() { echo "$(date +%T) $*" | tee -a "$OUT/progress.log"; }
-kill_srv() { pkill -9 -f "[s]glang::|[s]erver\.server|[c]acheScout_server|[f]act_bench|[j]ac run " 2>/dev/null; sleep 5; }
+kill_srv() { pkill -9 -f "[s]glang::|[s]erver\.server|[c]acheScout_server|[c]ontinuum_server|[f]act_bench|[j]ac run " 2>/dev/null; sleep 5; }
 
 run_arm() {  # $1 arm, $2 server flags, $3 concurrency
   kill_srv
-  local mod=server.server; [ "$1" = cachescout ] && mod=server.cacheScout_server
+  local mod=server.server; [ "$1" = cachescout ] && mod=server.cacheScout_server; [ "$1" = continuum ] && mod=server.continuum_server
   nohup $P -m $mod "$MODEL" $2 --host "$HOST" > "$OUT/$1_c$3.log" 2>&1 &
   local sp=$!
   until grep -q "\[warmup\] engine ready" "$OUT/$1_c$3.log" 2>/dev/null; do
@@ -44,6 +46,7 @@ for c in $LEVELS; do
       kvonly) run_arm kvonly "--no-relayout" "$c";;
       ours)   run_arm ours "" "$c";;
       cachescout) run_arm cachescout "" "$c";;
+      continuum) run_arm continuum "" "$c";;
     esac
   done
 done

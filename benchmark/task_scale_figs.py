@@ -20,7 +20,7 @@ WORKLOADS = {"coding": ("results/coding_sweep", "benchmark/records/codeAgent", "
              "fact": ("results/fact_sweep_h16_inputfirst", "benchmark/records/FactCheck", "Fact check")}
 ARMS = [("lruraw", "SGLang (LRU)", "#6E6E6E", "o"), ("cachescout", "CacheScout", "#B5589A", "v"),
         ("kvonly", "Planner only", "#009E73", "^"), ("lru", "Re-layout only", "#0072B2", "s"),
-        ("ours", "Ours", "#D55E00", "D")]
+        ("ours", "Ours", "#D55E00", "D"), ("continuum", "Continuum", "#E69F00", "P")]
 
 plt.rcParams.update({
     "font.family": "serif", "font.serif": ["Times New Roman", "Nimbus Roman", "DejaVu Serif"],
