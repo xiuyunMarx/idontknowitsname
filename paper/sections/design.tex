@@ -1,16 +1,16 @@
 \section{Design}
 We designed \sysname, a serving layer that exploits the heterogeneity of programmatically generated LLM requests to schedule the KV cache more efficiently, closing the gap between the runtime that generates prompts and the engine that serves them.
 
-\sysname employs 2 planes to comprehensively discover and exploit such heterogeneity. The discovery plane first lifts each incoming prompt back to its call-site signature and bindings, then combines this metadata with request history to learn how each binding evolves and the structure of agentic application. The scheduling plane consumes this knowledge at two levels: it reorders out prompts to enlarge prefix reuse, and it places KV segments across device and host with heterogeneity aware eviction policy to ensure reusable kvcache segments reside in correct tier.
+\sysname employs two planes to comprehensively discover and exploit such heterogeneity. The discovery plane first lifts each incoming prompt back to its call-site signature and bindings, then combines this metadata with request history to learn how each binding evolves and the structure of the agentic application. The scheduling plane consumes this knowledge at two levels: it reorders prompts to enlarge prefix reuse, and it places KV segments across device and host with a heterogeneity-aware eviction policy to ensure that reusable KV-cache segments reside in the correct tier.
 
 \subsection{Discovering Heterogeneity}
 \label{subsec:Discovering Heterogeneity}
 \sysname first lifts each received prompt back to its call-site metadata. It then analyzes how each binding evolves across the request history along two dimensions, intra-call-site evolution and cross-call-site sharing, and assigns every binding a lifetime and sharing class. Separately, \sysname learns the application's call structure as a time-annotated probabilistic finite-state machine (TPFM). The result is a per-request record that annotates each binding with its class and future reuse estimator; the scheduling plane then consumes this knowledge.
 
 \subsubsection{Lifting prompt back into metadata}
-The lowering process is lost when prompts crossing the boundary of runtime and serving engine. However, because prompts are lowered by runtime with deterministic processes, these generated requests still retain recoverable structure. Runtime emits a fixed skeleton from the declaration, the header with its signature, schema rows and output-format tail, and drops each bound argument into a slot of that skeleton, labelled by the parameter name and placed in declaration order. Then the skleton stays statics and only binding values would change. 
+The lowering process is lost when prompts cross the boundary between the runtime and the serving engine. However, because prompts are lowered by the runtime through a deterministic process, these generated requests still retain recoverable structure. The runtime emits a fixed skeleton from the declaration, consisting of the header with its signature, schema rows, and output-format tail, and drops each bound argument into a slot of that skeleton, labelled by the parameter name and placed in declaration order. The skeleton then stays static and only the binding values change.
 
-Lifting is therefore template application that run backwards. We represent a call site $x$ by a prompt template $T_x=\langle S_x,(g_1,\ldots,g_m),\tau_x\rangle$, where $S_x$ is the static system prompt, $\tau_x$ is a request-only tail, and each segment is either a static byte string or a named slot:
+Lifting is therefore template application run backwards. We represent a call site $x$ by a prompt template $T_x=\langle S_x,(g_1,\ldots,g_m),\tau_x\rangle$, where $S_x$ is the static system prompt, $\tau_x$ is a request-only tail, and each segment is either a static byte string or a named slot:
 \[
 g_i ::= \textsc{Static}(b) \mid \textsc{Slot}(n,\ell),
 \]
@@ -20,7 +20,7 @@ where $n$ is the parameter name and $\ell$ is its literal label. Rendering repla
 \]
 for every observed request $u$ of the site.
 
-The compiler may provide $T_x$ directly; otherwise, the serving engine deduces it from call history. Requests are first grouped by a call-site fingerprint consisting of the model, system prompt, and call-message header. Given at least two distinct messages from one site, the engine computes their longest common subsequence of lines. Common lines form the static skeleton and the regions between them are candidate slots. Within each region, repeated labels identify parameter names and split the region into named slots. If no reliable label pattern exists, the complete region remains one conservative slot. A suffix found only in the live request is recorded separately as the request-only tail. The metadata for a programmatically generated prompt typically includes binding's name and values, system prompt and invariant headers, as shown in \ref{fig:heterogeneity-sample}. Such metadata is obtained by applying template on received prompt.
+The compiler may provide $T_x$ directly; otherwise, the serving engine deduces it from call history. Requests are first grouped by a call-site fingerprint consisting of the model, system prompt, and call-message header. Given at least two distinct messages from one site, the engine computes their longest common subsequence of lines. Common lines form the static skeleton and the regions between them are candidate slots. Within each region, repeated labels identify parameter names and split the region into named slots. If no reliable label pattern exists, the complete region remains one conservative slot. A suffix found only in the live request is recorded separately as the request-only tail. The metadata for a programmatically generated prompt typically includes binding names and values, the system prompt, and invariant headers, as shown in Figure~\ref{fig:heterogeneity-sample}. Such metadata is obtained by applying the template to the received prompt.
 
 \begin{algorithm}[t]
 \caption{Deducing a prompt template}
@@ -28,7 +28,7 @@ The compiler may provide $T_x$ directly; otherwise, the serving engine deduces i
 \begin{algorithmic}[1]
 \Require call history $H_x$
 \Ensure $T_x$ or $\bot$
-\State $(U,\tau)\gets\textsc{Normalize}(H_x)$ \Comment{Extract calls and Strip request-only tail for distinct messages}
+\State $(U,\tau)\gets\textsc{Normalize}(H_x)$ \Comment{extract calls and strip request-only tail for distinct messages}
 \State $K\gets\textsc{LCS}(\{\textsc{Lines}(u):u\in U\})$ \Comment{find recurring lines}
 \State $R\gets\textsc{Gaps}(\textsc{Align}(K,U))$ \Comment{collect changing regions}
 \State $G\gets\textsc{Segment}(K,R)$ \Comment{form static segments and slots}
@@ -40,14 +40,14 @@ The compiler may provide $T_x$ directly; otherwise, the serving engine deduces i
 \end{algorithmic}
 \end{algorithm}
 
-\subsubsection{Identifying heterogeneous evolution pattern}
-The heterogeneity identification involves Intra-callsite evolution pattern and Cross-callsites sharing. Some components may remain static across invocations, some are shared across call sites, some are accumulating as execution progresses, and some can just be transient. The identification comes from history analysis. 
+\subsubsection{Identifying heterogeneous evolution patterns}
+Heterogeneity identification involves intra-callsite evolution patterns and cross-callsite sharing. Some components may remain static across invocations, some are shared across call sites, some accumulate as execution progresses, and some are simply transient. The identification is derived from history analysis.
 
 \paragraph{Intra-callsite evolution}
-For each binding, we compare its value across consecutive calls of the same callsite within a session. We  and count same, extend, and fresh transitions. We record the transitions as \emph{same}, \emph{extend}, and \emph{fresh}. Concretely, \emph{same} means binding values remains identical, \emph{extend} means the new value extends the old value by appending content to its end, and \emph{fresh} stands for distinct values.
+For each binding, we compare its value across consecutive calls of the same callsite within a session. We count and record the transitions as \emph{same}, \emph{extend}, and \emph{fresh}. Concretely, \emph{same} means the binding value remains identical, \emph{extend} means the new value extends the old value by appending content to its end, and \emph{fresh} denotes a distinct value.
 
 \paragraph{Cross-callsite sharing}
-Cross-callsite sharing means a binding's value is used by multiple callsites. We check whether another callsite in the same session already carried the same value, or a prefix that the current value extends. Sharing expose an extra opportunity of making a prefix reusable across callsites.
+Cross-callsite sharing means a binding's value is used by multiple callsites. We check whether another callsite in the same session already carried the same value, or a prefix that the current value extends. Sharing exposes an extra opportunity to make a prefix reusable across callsites.
 
 We characterize each binding by one of four evolution behaviors:
 \begin{itemize}
@@ -101,7 +101,7 @@ Bindings are ordered lexicographically by $\sigma$, so cross-stable bindings pre
 
 
 \subsubsection{Deriving application-level agent TPFM}
-\sysname treats agents as time-annotated probabilistic finite-state machine(TPFM). We formulate TPFM for agent applications as follows:
+\sysname treats agents as time-annotated probabilistic finite-state machines (TPFMs). We formulate the TPFM for agent applications as follows:
 \[
 \mathcal{A} = (Q, P, q_0, F, \mathcal{T}),
 \]
@@ -121,16 +121,15 @@ where:
     $D^{\mathrm{gap}}_{q,q'}$ is the inter-call gap distribution between the completion of callsite $q$ and the invocation of its successor $q'$.
 \end{enumerate}
 
-During one session, the server observes only a sequence of LLM calls. \sysname aggregates the completed sequences into a prefix-tree acceptor whose nodes and edges retain their observed frequencies. For each application, the automaton is rebuilt whenever the number of completed sessions reaches $8\cdot 2^k$, for $k=0,1,2,\ldots$. During rebuilding, \sysname applies an Alergia-style red--blue state-merging procedure to the prefix tree.
-  
+During one session, the server observes only a sequence of LLM calls. \sysname aggregates the completed sequences into a prefix-tree acceptor whose nodes and edges retain their observed frequencies. For each application, the automaton is rebuilt whenever the number of completed sessions reaches $8\cdot 2^k$, for $k=0,1,2,\ldots$. During rebuilding, \sysname applies an Alergia-style red--blue state-merging procedure to the prefix tree, merging two states when their outcome frequencies satisfy
 \[
 \left|\frac{c_1}{n_1}-\frac{c_2}{n_2}\right|<\sqrt{\frac{1}{2}\ln\frac{2}{\alpha}}\left(\frac{1}{\sqrt{n_1}}+\frac{1}{\sqrt{n_2}}\right),\qquad \alpha=0.05.
 \]
 
-Here, $n_i$ is the number of observed visits to state $i$, and and $c_i$ is the number of those visits that produce the particular outcome. Once two states are merged, their visit, termination, transition, and timing observations are combined to construct the resulting TPFM.
+Here, $n_i$ is the number of observed visits to state $i$, and $c_i$ is the number of those visits that produce the particular outcome. Once two states are merged, their visit, termination, transition, and timing observations are combined to construct the resulting TPFM.
 
 \subsection{Heterogeneity-aware KV Cache scheduling}
-The discovery plane identifies where reuse exists: the ordering-stability tuple characterizes the lifetime and sharing scope of each binding, the value-flow rules identify which future binding values can be reconstructed, and the TPFM supplies call-transition and timing observations. The scheduling plane turns this information into cache actions by exposing reusable content as a prefix and effective KV cache placement. \sysname combines prompt re-layout, future KV-demand estimation, deadline-driven promotion, and prediction-aware eviction to achieve the goal. 
+The discovery plane identifies where reuse exists: the ordering-stability tuple characterizes the lifetime and sharing scope of each binding, the value-flow rules identify which future binding values can be reconstructed, and the TPFM supplies call-transition and timing observations. The scheduling plane turns this information into cache actions by exposing reusable content as a prefix and placing KV cache effectively. \sysname combines prompt re-layout, future KV-demand estimation, deadline-driven promotion, and prediction-aware eviction to achieve this goal.
 
 \begin{algorithm}[t]
 \caption{Heterogeneity-aware prompt re-layout}
@@ -159,7 +158,7 @@ The discovery plane identifies where reuse exists: the ordering-stability tuple 
 \end{algorithm}
 
 \subsubsection{Exposing reuse through prompt re-layout}
-KV-cache reuse requires requests to share an identical token prefix. However, developer-defined declaration order may not account for this requirement, resulting in reduced prefix reuse. \sysname therefore revise the binding order of each callsite according to the heterogeneity learned by the discovery plane.
+KV-cache reuse requires requests to share an identical token prefix. However, developer-defined declaration order may not account for this requirement, resulting in reduced prefix reuse. \sysname therefore revises the binding order of each callsite according to the heterogeneity learned by the discovery plane.
 
 For every binding $n$ of callsite $x$, \sysname uses the ordering-stability tuple $\sigma(x,n)=(c(x,n),\rho(x,n),r(x,n))$ defined above. Once every binding at the callsite has accumulated enough observations, the bindings are stably sorted in lexicographic order of $\sigma$ and the resulting layout is frozen. Consequently, cross-stable bindings lead the request, constants precede session-varying values, bindings with a smaller fresh-transition ratio precede more volatile bindings, and same-valued bindings precede append-only bindings when their preceding components tie. Bindings with identical ordering-stability tuples retain their original relative order.
 
@@ -201,10 +200,10 @@ Starting from the empty context, \sysname applies Witten--Bell-style interpolati
 \widehat{P}(\bot\mid u)=\lambda_u\frac{C_u(\bot)}{n_u}+(1-\lambda_u)\widehat{P}(\bot\mid\operatorname{suffix}(u)).
 \]
 
-A well-supported long context can dominate the prediction, whereas a sparsely observed context is interpolated with its better-supported shorter suffixes rather than being used as a deterministic prediction. The termination outcome only consumes probability mass but won't create a successor in the prediction tree.
+A well-supported long context can dominate the prediction, whereas a sparsely observed context is interpolated with its better-supported shorter suffixes rather than being used as a deterministic prediction. The termination outcome only consumes probability mass and does not create a successor in the prediction tree.
 
 \paragraph{Cumulative reachability and arrival time.}
-A single next-call prediction is insufficient for preparing calls several steps ahead. \sysname therefore performs a bounded best-first expansion of possible future executions. We define frontier element as:
+A single next-call prediction is insufficient for preparing calls several steps ahead. \sysname therefore performs a bounded best-first expansion of possible future executions. We define a frontier element as
 \[
 (\pi,h,q,u_{50},s^2,d),
 \]
@@ -233,38 +232,38 @@ p_x=\min\left(1,\sum_{\varrho:\varrho\leadsto x}P(\varrho)\right),
 while the earliest predicted arrival pair is retained for scheduling that callsite.
 
 \subsubsection{Prediction-guided KV Management}
-\sysname performs proactive KV cache scheduling guided by heterogeneity and prediction. Deadline-driven KV promotion and Prediction-aware eviction are involved in the KV cache management. 
+\sysname performs proactive KV cache scheduling guided by heterogeneity and prediction. KV cache management involves deadline-driven KV promotion and prediction-aware eviction.
 
 \paragraph{Deadline-driven KV promotion}
-Deadline-driven KV promotion means anticipating the incoming prompt before it arrives, and value flow rules obtained via \ref{subsec:Discovering Heterogeneity} helps. Constants are inserted directly; copied values and values taken from earlier bindings and responses are resolved from the current session; and an extended value contributes the known prefix of its accumulated representation. Such reconstruction process proceeds by bindings, and it stops at the first unresolved binding. For every predicted call, \sysname chooses the longest cache target and uses statically known callsite prefix as a conservative fallback. 
+Deadline-driven KV promotion anticipates the incoming prompt before it arrives, using the value-flow rules obtained in Section~\ref{subsec:Discovering Heterogeneity}. Constants are inserted directly; copied values and values taken from earlier bindings and responses are resolved from the current session; and an extended value contributes the known prefix of its accumulated representation. This reconstruction proceeds binding by binding and stops at the first unresolved binding. For every predicted call, \sysname chooses the longest cache target and uses the statically known callsite prefix as a conservative fallback.
 
-After selecting the scheduled KV cache, \sysname placed the promotion target with estimated deadline. For a predicted call $c=(x,p_x,t_{50,x},t_{90,x})$ and timing anchor $a$, \sysname assigns the deadline
+After selecting the promotion target, \sysname assigns it an estimated deadline. For a predicted call $c=(x,p_x,t_{50,x},t_{90,x})$ and timing anchor $a$, \sysname assigns the deadline
 \[
 d_c=\max\left(t_{\mathrm{now}},a+t_{50,x}-\kappa(t_{90,x}-t_{50,x})\right),\qquad\kappa=0.5.
 \]
-The term $\kappa(t_{90}-t_{50})$ is to moves uncertain jobs earlier and let scheduler to prepare the prefix more conservatively.
+The term $\kappa(t_{90}-t_{50})$ moves uncertain jobs earlier and lets the scheduler prepare the prefix more conservatively.
 
-Also, the absolute pessimistic arrival time $\bar t_c= \max(d_c,a+t_{90})$ is for garbage collection. If the predicted call has not arrived after $\bar t_c$, its cache-plan entry is considered stale and discarded.
+The absolute pessimistic arrival time $\bar t_c= \max(d_c,a+t_{90})$ is used for garbage collection. If the predicted call has not arrived after $\bar t_c$, its cache-plan entry is considered stale and discarded.
 
 Let $U_c$ be the number of target-prefix tokens absent from both cache tiers, let $H_c$ be the number resident in host memory but absent from device memory, and let $R_{\mathrm{prefill}}$ and $R_{\mathrm{promote}}$ be the profiled prefill-under-load and host-to-device transfer rates. The latest safe preparation time is estimated as
 \[
 r_c=d_c-\frac{U_c}{R_{\mathrm{prefill}}}-\frac{H_c}{R_{\mathrm{promote}}}.
 \]
-A promotion job becomes eligible whenever the engine is idle or the current time approaches to $r_c$. Among eligible jobs, the scheduler selects the earliest deadline. During promotion, active kvcache and ongoing tasks will be protected to ensure that speculative preparation won't interfere serving requests.
+A promotion job becomes eligible whenever the engine is idle or the current time approaches $r_c$. Among eligible jobs, the scheduler selects the earliest deadline. During promotion, active KV cache and ongoing tasks are protected to ensure that speculative preparation does not interfere with serving requests.
 
 \paragraph{Prediction-aware eviction}
-\sysname exploits both predicted usage and prompt heterogeneity in KV eviction scheduling. Device-resident radix nodes are divided into four lifecycle-aware priority bands, listed by the order of eviction priority sequence:
+\sysname exploits both predicted usage and prompt heterogeneity in KV eviction scheduling. Device-resident radix nodes are divided into four lifecycle-aware priority bands, listed in order of eviction priority:
 \begin{enumerate}
 \item \emph{retired}: private tail nodes belonging to completed sessions;
 \item \emph{transient}: non-reconstructible prompt tails and generated descendants that are unlikely to be reused;
 \item \emph{unclassified}: ordinary cache not covered by the current plan;
 \item \emph{planned}: nodes required by one or more active predictions.
 \end{enumerate}
-The scheduler uses LRU order within the \emph{retired}, \emph{transient}, and \emph{unclassified} bands. For KV cache nodes associated with \emph{Planned} band, they are sorted by aggregated protection score and then by recency. 
+The scheduler uses LRU order within the \emph{retired}, \emph{transient}, and \emph{unclassified} bands. Nodes in the \emph{planned} band are sorted by aggregated protection score and then by recency.
 
 Band transitions occur at three events. After a request completes, nodes beyond its longest pre-arrival reconstructible prefix are marked \emph{transient}. When the session terminates, its \emph{transient} tails become \emph{retired}. At every plan refresh, \sysname removes the previous planned protections before applying the new scores, preventing stale predictions from retaining priority. 
 
-The host tier then serves as a recover layer. It evicts retired entries first and otherwise follows LRU. A prediction error will be less likely to turn into a full recomputation.
+The host tier then serves as a recovery layer. It evicts retired entries first and otherwise follows LRU. A prediction error is therefore less likely to turn into a full recomputation.
 
 \begin{algorithm}[h]
 \caption{Prediction-aware eviction}
@@ -318,7 +317,7 @@ Additionally, \sysname converts every live prediction into an eviction-protectio
 \[
 S_c(t)=p_x\exp\left(-\frac{\max(0,d_c-t)}{\tau}\right),\qquad\tau=60\text{ s}.
 \]
-This score is added to the eviction priority of every radix-tree node on the prefix's path. Nodes with \emph{Planned} band are evicted in increasing order of accumulated score, then LRU.
+This score is added to the eviction priority of every radix-tree node on the prefix's path. Nodes in the \emph{planned} band are evicted in increasing order of accumulated score, then by LRU.
 
 
 
