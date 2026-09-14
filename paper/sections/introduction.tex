@@ -1,0 +1,30 @@
+\section{Introduction}
+Agent frameworks increasingly expose LLM calls as programming abstractions rather than manual prompt construction. ByLLM~\cite{dantanarayana2025mtp} introduces a language-level abstraction that delegates function execution to an LLM, with the runtime using semantic information from the code like function signatures and parameter names to construct model requests. NVIDIA Object-Oriented Agents (NOOA)~\cite{furgale2026nooa} similarly embeds LLM-driven behavior into native Python objects and translates program-level declarations into prompts and model interactions. DSPy~\cite{khattab2024dspy} represents LM invocations through declarative signatures and modules, while the framework automatically generates a concrete prompt. Across these systems, developers specify LLM behavior using structured programming constructs, while framework runtime translate those constructs into concrete prompts and model requests. 
+
+This trend extends beyond hand-written agent code. SIGIL~\cite{dantanarayana2026sigil} compiles natural-language skill documents into programs with explicit control flow and typed LLM calls, which the runtime lowers into prompts. Increasingly, requests arriving at inference engines encode structure inherited from the programs that generate them. Existing serving systems, however,  make limited use of this structure. Engines such as SGLang~\cite{zheng2024sglang} exploit exact token-prefix matches for KV-cache reuse without recognizing the program components within a prompt. Recent agent-serving systems, including PBKV~\cite{zheng2026pbkv}, CacheScout~\cite{zhang2026cachescout}, KVFlow~\cite{pan2025kvflow}, and Pythia~\cite{yu2026pythia}, exploit workflow information to anticipate future invocations and guide cache management, but largely overlook the information encoded in the prompt itself. As a result, these systems fail to fully leverage the structure and semantics of programmatically generated prompts, leading to suboptimal cache management and performance.
+
+We argue that these programmatically generated LLM requests are inherently heterogeneous. Components within a generated prompt can have different sharing scopes and lifetimes. For example, some components may remain fixed across invocations, some are shared across call sites, and some can grow or be replaced as execution progresses. As the instance in figure ~\ref{fig:heterogeneity-sample} shows, the four bindings of \texttt{assess\_evidence} have distinct lifetimes and evolution patterns. A developer may naturally place \texttt{search\_results} and \texttt{question} before \texttt{evidences} in the function signature, and the runtime preserves this ordering when lowering the invocation into a prompt. However, existing serving frameworks treat the requests as opaque text. Once requests reach the serving system, the original program structure is no longer visible, creating a gap between the application level runtime and the serving layer. Serving engine blindly consumes the prompt in such order means any changes to either binding prevent prefix-cache reuse of unchanged entries in \texttt{evidences}. Additionally, because the serving layer holds no knowledge about the binding heterogeneity, it fails to identify which kvcache is evictable, which leads to a suboptimal management. 
+
+
+To close this gap, we propose \sysname, a serving layer that exploits prompt heterogeneity to achieve more efficient kvcache management. \sysname recovers each request's call site and binding boundaries by lifting the prompt text against the framework's templates, learns heterogeneous binding evolution pattern and application-level structure from traces, and then conducts progressive kvcache management. \sysname exploits such heterogeneity at two levels: within a request, it reorders bindings by lifetime so that stable content forms a shareable prefix; across requests, a lifecycle-aware planner uses the learned control flow to prefetch prefixes before they are needed and evicts those that won't be reused. We implemented \sysname based on SGLang ~\cite{zheng2024sglang}. Our evaluations shows that \sysname achieved up to 1.4$\times-1.7\times$ lower mean JCT and $1.7\times-1.75\times$ lower mean TTFT than vanilla SGLang. \sysname also outperforms multiple established serving systems.
+
+In summary, we made the following contributions.
+\begin{itemize}
+    \item We identified the inherent heterogeneity in programmatically generated prompt and its implications for serving.
+    \item We designed and built \sysname, a serving layer that exploit prompt heterogeneity to guide more efficient kvcache scheduling.
+    \item We conducted comprehensive evaluations on our \sysname against multiple established serving systems, demonstrating that \sysname achieves up to $1.4\times$--$1.7\times$ lower mean JCT and $1.7\times$--$1.75\times$ lower mean TTFT than vanilla SGLang.
+\end{itemize}
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\linewidth]{figures/Sample_heterogeneity.pdf}
+    \vspace{4pt}
+    \begin{minipage}{\columnwidth}
+    \ttfamily\footnotesize\raggedright
+    def assess\_evidence(search\_results: str, question: str,\\   
+    \hspace{12pt}claim: str, evidences: list[Evidence]) -> Finding by llm() \\
+    \end{minipage}
+    \caption{Heterogeneity within a HoVer-style \cite{jiang2020hover} Fact Check Agent's generated prompt for the summary making function.  \texttt{assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against accumulated evidences and search results, then gives answer to it.}
+    \label{fig:heterogeneity-sample}
+\end{figure}

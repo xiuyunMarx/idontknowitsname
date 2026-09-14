@@ -85,6 +85,7 @@ class ByLLMCallsite(CallMetadata):
     tool_schema: Optional[List[Dict[str, Any]]] = None        # Tools sent with the request.
     layout: Optional[List[str]] = None                        # Frozen binding order (Program._freeze_layout).
     header_last: bool = False                                 # Header behind the values: only worth it when the leading binding is shared across callsites.
+    no_header_last: bool = False                              # The program declared (request field no_header_last) that this site's header must stay in front of the values.
     ctx_by_shape: Dict[Tuple[str, ...], str] = field(default_factory=dict)  # Header+schema text per set of empty-container bindings (byllm expands a list's schema once it has elements).
 
     @property
@@ -534,7 +535,7 @@ class Program:
         site.layout = sorted(names, key=lambda n: (0 if self._cross_stable(site.key, n) else 1,
                                                    *self._stability(site.key, n)))
         p["order"] = list(site.layout)   # the rebuild follows the order requests now use
-        site.header_last = HEADER_LAST and self._cross_stable(site.key, site.layout[0])
+        site.header_last = HEADER_LAST and not site.no_header_last and self._cross_stable(site.key, site.layout[0])
         return True
 
     def _cross_stable(self, key: str, name: str) -> bool:

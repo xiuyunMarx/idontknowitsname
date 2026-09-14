@@ -198,6 +198,9 @@ class Controller:
         site, extras = decompose(req.body)
         prog = self._bind(sess, site)
         site = prog.add_callsite(site, extras.bindings)
+        if req.body.pop("no_header_last", None) and isinstance(site, ByLLMCallsite) and not site.no_header_last:
+            site.no_header_last, site.header_last = True, False   # declared by the program: sticky for the site
+            print(f"[layout] {site.label} no_header_last declared by the program", flush=True)
         if self._enable_relayout and isinstance(site, ByLLMCallsite) and site.layout and relayout_body(req.body, site.layout, site.header_last):
             _, extras = decompose(req.body)   # bindings and user_text as they go on the wire
             
