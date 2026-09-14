@@ -16,87 +16,147 @@
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
 \citation{jiang2020hover}
 \citation{jiang2020hover}
+\citation{dantanarayana2025mtp}
+\citation{khattab2024dspy}
+\citation{dspy2026chatadapter}
+\citation{kwon2023pagedattention}
+\citation{zheng2024sglang}
+\citation{gao2024cachedattention}
+\citation{qin2025mooncake}
+\citation{agrawal2024sarathi}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Heterogeneity within a HoVer-style \citep  {jiang2020hover} Fact Check Agent's generated prompt for the summary making function. \texttt  {assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against accumulated evidences and search results, then gives answer to it.}}{2}{figure.caption.3}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:heterogeneity-sample}{{1}{2}{Heterogeneity within a HoVer-style \cite {jiang2020hover} Fact Check Agent's generated prompt for the summary making function. \texttt {assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against accumulated evidences and search results, then gives answer to it}{figure.caption.3}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.2}\protected@file@percent }
 \newlabel{sec:background}{{2}{2}{Background}{section.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Design}{2}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Discovering Heterogeneity}{2}{subsection.3.1}\protected@file@percent }
-\newlabel{subsec:Discovering Heterogeneity}{{3.1}{2}{Discovering Heterogeneity}{subsection.3.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Lifting prompt back into metadata}{2}{subsubsection.3.1.1}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Deducing a prompt template}}{3}{algorithm.1}\protected@file@percent }
-\newlabel{alg:deduce-prompt-template}{{1}{3}{Deducing a prompt template}{algorithm.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}Identifying heterogeneous evolution pattern}{3}{subsubsection.3.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Intra-callsite evolution}{3}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Cross-callsite sharing}{3}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.3}Deriving application-level agent TPFM}{3}{subsubsection.3.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Heterogeneity-aware KV Cache scheduling}{4}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.2.1}Exposing reuse through prompt re-layout}{4}{subsubsection.3.2.1}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Heterogeneity-aware prompt re-layout}}{4}{algorithm.2}\protected@file@percent }
-\newlabel{alg:relayout}{{2}{4}{Heterogeneity-aware prompt re-layout}{algorithm.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Prediction-guided KV Management}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Single-step next-call probability estimation}{5}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Cumulative reachability and arrival time.}{5}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}Prediction-guided KV Management}{5}{subsubsection.3.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Deadline-driven KV promotion}{5}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}From program constructs to prompts}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Schematic rendering of the same coding inputs using named bindings and delimited fields. System instructions, schemas, and output instructions are omitted. The field values have different lifetimes despite occupying the same message.}}{2}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:lowering}{{2}{2}{Schematic rendering of the same coding inputs using named bindings and delimited fields. System instructions, schemas, and output instructions are omitted. The field values have different lifetimes despite occupying the same message}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Prefix reuse and cache placement}{2}{subsection.2.2}\protected@file@percent }
+\citation{li2025continuum,zhang2026cachescout}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Motivation}{3}{section.3}\protected@file@percent }
+\newlabel{sec:motivation}{{3}{3}{Motivation}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}One prompt contains several lifetimes}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Declaration order hides reusable content}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Reuse opportunities need timely residency}{3}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Design}{3}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Discovering Heterogeneity}{4}{subsection.4.1}\protected@file@percent }
+\newlabel{subsec:Discovering Heterogeneity}{{4.1}{4}{Discovering Heterogeneity}{subsection.4.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Lifting prompt back into metadata}{4}{subsubsection.4.1.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Deducing a prompt template}}{4}{algorithm.1}\protected@file@percent }
+\newlabel{alg:deduce-prompt-template}{{1}{4}{Deducing a prompt template}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Identifying heterogeneous evolution pattern}{4}{subsubsection.4.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Intra-callsite evolution}{4}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cross-callsite sharing}{4}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.3}Deriving application-level agent TPFM}{5}{subsubsection.4.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Heterogeneity-aware KV Cache scheduling}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Exposing reuse through prompt re-layout}{5}{subsubsection.4.2.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Heterogeneity-aware prompt re-layout}}{6}{algorithm.2}\protected@file@percent }
+\newlabel{alg:relayout}{{2}{6}{Heterogeneity-aware prompt re-layout}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Prediction-guided KV Management}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Single-step next-call probability estimation}{6}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Cumulative reachability and arrival time.}{6}{section*.8}\protected@file@percent }
 \citation{agrawal2024sarathi}
 \citation{zhang2026cachescout,li2025continuum}
 \citation{jiang2020hover}
 \citation{chen2021evaluating}
-\@writefile{toc}{\contentsline {paragraph}{Prediction-aware eviction}{6}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Evaluation}{6}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Enviromental Setup}{6}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Configurations}{6}{section*.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Workloads.}{6}{section*.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Workloads.}{6}{section*.12}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Prediction-aware eviction}}{6}{algorithm.3}\protected@file@percent }
-\newlabel{alg:eviction}{{3}{6}{Prediction-aware eviction}{algorithm.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Task quality and execution scale}{6}{subsection.4.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Application-level task quality under varying concurrency for the HoVer fact-checking agent (left) and the HumanEval coding agent (right).}}{7}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:task-quality}{{2}{7}{Application-level task quality under varying concurrency for the HoVer fact-checking agent (left) and the HumanEval coding agent (right)}{figure.caption.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Application-level task quality across serving configurations.}}{7}{table.caption.14}\protected@file@percent }
-\newlabel{tab:ablation}{{1}{7}{Application-level task quality across serving configurations}{table.caption.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Evaluation Analysis}{7}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}RQ1: How \textsc  {idontknowitsname}\xspace  improve end-to-end performance}{7}{subsubsection.4.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{JCT}{7}{section*.15}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{TTFT}{8}{section*.16}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}RQ2: How much two scheduling mechanisms of \textsc  {idontknowitsname}\xspace  contribute to the improvement}{8}{figure.caption.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Speed-up introduced by heterogeneity-aware prompt re-layout}{8}{section*.20}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Effects of Prediction-guided KV Management}{8}{section*.21}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.3}RQ3: How two mechanisms in \textsc  {idontknowitsname}\xspace  's KV scheduling interact and reinforce each other}{8}{figure.caption.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Prediction-guided KV Management}{7}{subsubsection.4.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Deadline-driven KV promotion}{7}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Prediction-aware eviction}{7}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Evaluation}{7}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Enviromental Setup}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Configurations}{7}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Workloads.}{7}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Workloads.}{7}{section*.13}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Prediction-aware eviction}}{8}{algorithm.3}\protected@file@percent }
+\newlabel{alg:eviction}{{3}{8}{Prediction-aware eviction}{algorithm.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Task quality and execution scale}{8}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Application-level task quality across serving configurations.}}{8}{table.caption.15}\protected@file@percent }
+\newlabel{tab:ablation}{{1}{8}{Application-level task quality across serving configurations}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Evaluation Analysis}{8}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.1}RQ1: How \textsc  {idontknowitsname}\xspace  improve end-to-end performance}{8}{subsubsection.5.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{JCT}{8}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{TTFT}{8}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.2}RQ2: How much two scheduling mechanisms of \textsc  {idontknowitsname}\xspace  contribute to the improvement}{8}{figure.caption.20}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Application-level task quality under varying concurrency for the HoVer fact-checking agent (left) and the HumanEval coding agent (right).}}{9}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:task-quality}{{3}{9}{Application-level task quality under varying concurrency for the HoVer fact-checking agent (left) and the HumanEval coding agent (right)}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {paragraph}{Speed-up introduced by heterogeneity-aware prompt re-layout}{9}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Effects of Prediction-guided KV Management}{9}{section*.22}\protected@file@percent }
+\newlabel{fig:speedup-fact}{{4a}{10}{Fact Check Agent}{figure.caption.18}{}}
+\newlabel{sub@fig:speedup-fact}{{a}{10}{Fact Check Agent}{figure.caption.18}{}}
+\newlabel{fig:speedup-coding}{{4b}{10}{Coding Agent}{figure.caption.18}{}}
+\newlabel{sub@fig:speedup-coding}{{b}{10}{Coding Agent}{figure.caption.18}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Speed-up over SGLang in mean JCT and mean TTFT across concurrency levels.}}{10}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:serving-speedup}{{4}{10}{Speed-up over SGLang in mean JCT and mean TTFT across concurrency levels}{figure.caption.18}{}}
+\newlabel{fig:jct-coding}{{5a}{10}{JCT: Coding}{figure.caption.19}{}}
+\newlabel{sub@fig:jct-coding}{{a}{10}{JCT: Coding}{figure.caption.19}{}}
+\newlabel{fig:jct-fact}{{5b}{10}{JCT: Fact Check}{figure.caption.19}{}}
+\newlabel{sub@fig:jct-fact}{{b}{10}{JCT: Fact Check}{figure.caption.19}{}}
+\newlabel{fig:ttft-coding}{{5c}{10}{TTFT: Coding}{figure.caption.19}{}}
+\newlabel{sub@fig:ttft-coding}{{c}{10}{TTFT: Coding}{figure.caption.19}{}}
+\newlabel{fig:ttft-fact}{{5d}{10}{TTFT: Fact Check}{figure.caption.19}{}}
+\newlabel{sub@fig:ttft-fact}{{d}{10}{TTFT: Fact Check}{figure.caption.19}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Mean JCT and TTFT across concurrency levels for the Coding Agent and Fact Check Agent.}}{10}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:serving-performance}{{5}{10}{Mean JCT and TTFT across concurrency levels for the Coding Agent and Fact Check Agent}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.3.3}RQ3: How two mechanisms in \textsc  {idontknowitsname}\xspace  's KV scheduling interact and reinforce each other}{10}{figure.caption.23}\protected@file@percent }
+\citation{dantanarayana2025mtp}
+\citation{khattab2024dspy}
+\citation{furgale2026nooa}
+\citation{dantanarayana2026sigil}
+\newlabel{fig:cache-coding}{{6a}{11}{Coding Agent}{figure.caption.20}{}}
+\newlabel{sub@fig:cache-coding}{{a}{11}{Coding Agent}{figure.caption.20}{}}
+\newlabel{fig:cache-fact}{{6b}{11}{Fact Check Agent}{figure.caption.20}{}}
+\newlabel{sub@fig:cache-fact}{{b}{11}{Fact Check Agent}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces End-to-end KV-cache status (device hit, host hit, miss) under different concurrency levels.}}{11}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:cache-status}{{6}{11}{End-to-end KV-cache status (device hit, host hit, miss) under different concurrency levels}{figure.caption.20}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Related Work}{11}{section.6}\protected@file@percent }
+\newlabel{sec:related-work}{{6}{11}{Related Work}{section.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{LLM programming abstractions.}{11}{section*.24}\protected@file@percent }
+\citation{kwon2023pagedattention}
+\citation{zheng2024sglang}
+\citation{agrawal2024sarathi}
+\citation{gao2024cachedattention}
+\citation{qin2025mooncake}
+\citation{gim2024promptcache}
+\citation{yao2025cacheblend}
+\citation{pan2025kvflow}
+\citation{zheng2026pbkv}
+\citation{zhang2026cachescout}
+\citation{li2025continuum}
+\citation{yu2026pythia}
+\newlabel{fig:cdf-coding}{{7a}{12}{Coding Agent}{figure.caption.23}{}}
+\newlabel{sub@fig:cdf-coding}{{a}{12}{Coding Agent}{figure.caption.23}{}}
+\newlabel{fig:cdf-fact}{{7b}{12}{Fact Check Agent}{figure.caption.23}{}}
+\newlabel{sub@fig:cdf-fact}{{b}{12}{Fact Check Agent}{figure.caption.23}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces CDF of the recomputed-token fraction per LLM call at representative concurrency levels.}}{12}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:recompute-cdf}{{7}{12}{CDF of the recomputed-token fraction per LLM call at representative concurrency levels}{figure.caption.23}{}}
+\@writefile{toc}{\contentsline {paragraph}{Memory-efficient inference and hierarchical caching.}{12}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Modular and non-prefix attention reuse.}{12}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Workflow-aware agent serving.}{12}{section*.27}\protected@file@percent }
 \bibstyle{ACM-Reference-Format}
 \bibdata{references}
 \bibcite{agrawal2024sarathi}{{1}{2024}{{Agrawal et~al\mbox  {.}}}{{}}}
 \bibcite{chen2021evaluating}{{2}{2021}{{Chen et~al\mbox  {.}}}{{}}}
-\newlabel{fig:speedup-fact}{{3a}{9}{Fact Check Agent}{figure.caption.17}{}}
-\newlabel{sub@fig:speedup-fact}{{a}{9}{Fact Check Agent}{figure.caption.17}{}}
-\newlabel{fig:speedup-coding}{{3b}{9}{Coding Agent}{figure.caption.17}{}}
-\newlabel{sub@fig:speedup-coding}{{b}{9}{Coding Agent}{figure.caption.17}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Speed-up over SGLang in mean JCT and mean TTFT across concurrency levels.}}{9}{figure.caption.17}\protected@file@percent }
-\newlabel{fig:serving-speedup}{{3}{9}{Speed-up over SGLang in mean JCT and mean TTFT across concurrency levels}{figure.caption.17}{}}
-\newlabel{fig:jct-coding}{{4a}{9}{JCT: Coding}{figure.caption.18}{}}
-\newlabel{sub@fig:jct-coding}{{a}{9}{JCT: Coding}{figure.caption.18}{}}
-\newlabel{fig:jct-fact}{{4b}{9}{JCT: Fact Check}{figure.caption.18}{}}
-\newlabel{sub@fig:jct-fact}{{b}{9}{JCT: Fact Check}{figure.caption.18}{}}
-\newlabel{fig:ttft-coding}{{4c}{9}{TTFT: Coding}{figure.caption.18}{}}
-\newlabel{sub@fig:ttft-coding}{{c}{9}{TTFT: Coding}{figure.caption.18}{}}
-\newlabel{fig:ttft-fact}{{4d}{9}{TTFT: Fact Check}{figure.caption.18}{}}
-\newlabel{sub@fig:ttft-fact}{{d}{9}{TTFT: Fact Check}{figure.caption.18}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Mean JCT and TTFT across concurrency levels for the Coding Agent and Fact Check Agent.}}{9}{figure.caption.18}\protected@file@percent }
-\newlabel{fig:serving-performance}{{4}{9}{Mean JCT and TTFT across concurrency levels for the Coding Agent and Fact Check Agent}{figure.caption.18}{}}
-\@writefile{toc}{\contentsline {section}{References}{9}{section*.24}\protected@file@percent }
 \bibcite{dantanarayana2025mtp}{{3}{2025}{{Dantanarayana et~al\mbox  {.}}}{{}}}
 \bibcite{dantanarayana2026sigil}{{4}{2026}{{Dantanarayana et~al\mbox  {.}}}{{}}}
-\bibcite{furgale2026nooa}{{5}{2026}{{Furgale et~al\mbox  {.}}}{{}}}
-\bibcite{jiang2020hover}{{6}{2020}{{Jiang et~al\mbox  {.}}}{{}}}
-\bibcite{khattab2024dspy}{{7}{2024}{{Khattab et~al\mbox  {.}}}{{}}}
-\bibcite{li2025continuum}{{8}{2025}{{Li et~al\mbox  {.}}}{{}}}
-\bibcite{pan2025kvflow}{{9}{2025}{{Pan et~al\mbox  {.}}}{{}}}
-\bibcite{yu2026pythia}{{10}{2026}{{Yu et~al\mbox  {.}}}{{}}}
-\bibcite{zhang2026cachescout}{{11}{2026}{{Zhang et~al\mbox  {.}}}{{}}}
-\bibcite{zheng2026pbkv}{{12}{2026}{{Zheng et~al\mbox  {.}}}{{}}}
-\bibcite{zheng2024sglang}{{13}{2024}{{Zheng et~al\mbox  {.}}}{{}}}
+\bibcite{dspy2026chatadapter}{{5}{2026}{{DSPy Contributors}}{{}}}
+\bibcite{furgale2026nooa}{{6}{2026}{{Furgale et~al\mbox  {.}}}{{}}}
+\bibcite{gao2024cachedattention}{{7}{2024}{{Gao et~al\mbox  {.}}}{{}}}
+\bibcite{gim2024promptcache}{{8}{2024}{{Gim et~al\mbox  {.}}}{{}}}
+\bibcite{jiang2020hover}{{9}{2020}{{Jiang et~al\mbox  {.}}}{{}}}
+\bibcite{khattab2024dspy}{{10}{2024}{{Khattab et~al\mbox  {.}}}{{}}}
+\bibcite{kwon2023pagedattention}{{11}{2023}{{Kwon et~al\mbox  {.}}}{{}}}
+\bibcite{li2025continuum}{{12}{2025}{{Li et~al\mbox  {.}}}{{}}}
+\bibcite{pan2025kvflow}{{13}{2025}{{Pan et~al\mbox  {.}}}{{}}}
+\bibcite{qin2025mooncake}{{14}{2025}{{Qin et~al\mbox  {.}}}{{}}}
+\bibcite{yao2025cacheblend}{{15}{2025}{{Yao et~al\mbox  {.}}}{{}}}
+\bibcite{yu2026pythia}{{16}{2026}{{Yu et~al\mbox  {.}}}{{}}}
+\bibcite{zhang2026cachescout}{{17}{2026}{{Zhang et~al\mbox  {.}}}{{}}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{13}{section.7}\protected@file@percent }
+\newlabel{sec:conclusion}{{7}{13}{Conclusion}{section.7}{}}
+\@writefile{toc}{\contentsline {section}{References}{13}{section*.29}\protected@file@percent }
+\bibcite{zheng2026pbkv}{{18}{2026}{{Zheng et~al\mbox  {.}}}{{}}}
+\bibcite{zheng2024sglang}{{19}{2024}{{Zheng et~al\mbox  {.}}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.65pt}
@@ -104,17 +164,5 @@
 \newlabel{tocindent3}{18.34998pt}
 \newlabel{tocindent4}{0pt}
 \newlabel{tocindent5}{0pt}
-\newlabel{fig:cache-coding}{{5a}{10}{Coding Agent}{figure.caption.19}{}}
-\newlabel{sub@fig:cache-coding}{{a}{10}{Coding Agent}{figure.caption.19}{}}
-\newlabel{fig:cache-fact}{{5b}{10}{Fact Check Agent}{figure.caption.19}{}}
-\newlabel{sub@fig:cache-fact}{{b}{10}{Fact Check Agent}{figure.caption.19}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces End-to-end KV-cache status (device hit, host hit, miss) under different concurrency levels.}}{10}{figure.caption.19}\protected@file@percent }
-\newlabel{fig:cache-status}{{5}{10}{End-to-end KV-cache status (device hit, host hit, miss) under different concurrency levels}{figure.caption.19}{}}
-\newlabel{fig:cdf-coding}{{6a}{11}{Coding Agent}{figure.caption.22}{}}
-\newlabel{sub@fig:cdf-coding}{{a}{11}{Coding Agent}{figure.caption.22}{}}
-\newlabel{fig:cdf-fact}{{6b}{11}{Fact Check Agent}{figure.caption.22}{}}
-\newlabel{sub@fig:cdf-fact}{{b}{11}{Fact Check Agent}{figure.caption.22}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces CDF of the recomputed-token fraction per LLM call at representative concurrency levels.}}{11}{figure.caption.22}\protected@file@percent }
-\newlabel{fig:recompute-cdf}{{6}{11}{CDF of the recomputed-token fraction per LLM call at representative concurrency levels}{figure.caption.22}{}}
-\newlabel{TotPages}{{11}{11}{}{page.11}{}}
-\gdef \@abspage@last{11}
+\newlabel{TotPages}{{14}{14}{}{page.14}{}}
+\gdef \@abspage@last{14}

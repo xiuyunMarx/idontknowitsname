@@ -1,4 +1,39 @@
 \section{Background}
 \label{sec:background}
-Agent frameworks expose LLM calls through programming abstractions
-and translate them into prompts at runtime, but existing agent serving frameworks ignore the optimization opportunity carried by that. A LLM call declared in that way  
+
+\subsection{From program constructs to prompts}
+Agent frameworks separate the declaration of an LLM operation from the construction of its input. In ByLLM, a developer supplies a function signature, types, and semantic descriptions, and the runtime constructs the prompt and parses the response~\cite{dantanarayana2025mtp}. DSPy expresses operations through signatures with named input and output fields, which adapters translate into model messages~\cite{khattab2024dspy}. We use \emph{call site} to denote an identifiable LLM operation in an application, and \emph{binding} to denote a named input together with its value in a particular invocation. A \emph{session} is one execution of a user-level task, potentially involving repeated calls to several sites and intervening tool executions.
+
+For the template-based requests considered here, lowering combines framework instructions, call-site metadata, serialized bindings, and output-format instructions. The metadata can include a qualified function name, parameter types, and field descriptions. ByLLM-style rendering labels argument values by name; DSPy's ChatAdapter uses explicit field delimiters~\cite{dspy2026chatadapter}. Figure~\ref{fig:lowering} illustrates these two forms. Their concrete message layouts differ, but both retain boundaries between named values and surrounding instructions. With the declaration, adapter configuration, and rendering rules fixed, repeated invocations can retain a common skeleton while their binding values change. 
+
+\begin{figure}[t]
+\centering
+\begin{minipage}{\columnwidth}
+\begin{lstlisting}[style=prompt,breaklines=true]
+ByLLM-style binding layout (abridged)
+  Coder.implement(spec, plan, advice, attempts)
+  spec = <function specification>
+  plan = <implementation plan>
+  advice = <feedback for this attempt>
+  attempts = <accumulated attempt records>
+
+DSPy ChatAdapter field layout (abridged)
+  [[ ## spec ## ]] <function specification>
+  [[ ## plan ## ]] <implementation plan>
+  [[ ## advice ## ]] <feedback for this attempt>
+  [[ ## attempts ## ]] <accumulated records>
+\end{lstlisting}
+\end{minipage}
+\caption{Schematic rendering of the same coding inputs using named bindings and delimited fields. System instructions, schemas, and output instructions are omitted. The field values have different lifetimes despite occupying the same message.}
+\Description{Two abbreviated prompt layouts containing specification, plan, advice, and attempts in the same order, using ByLLM-style names and DSPy field delimiters.}
+\label{fig:lowering}
+\end{figure}
+
+\subsection{Prefix reuse and cache placement}
+An autoregressive transformer processes input tokens during \emph{prefill}, producing per-layer key and value tensors, and then generates output tokens during \emph{decode}. Keeping these tensors avoids recomputing earlier tokens during generation. PagedAttention, introduced in vLLM, manages KV memory in blocks to reduce fragmentation and support sharing~\cite{kwon2023pagedattention}. SGLang's RadixAttention indexes cached token sequences in a radix tree to reuse common prefixes across requests~\cite{zheng2024sglang}.
+
+Under ordinary causal attention, a token's cached state depends on its preceding context. Consequently, exact prefix caching requires matching tokens and compatible model and positional settings: identical text after a changed prefix cannot generally reuse its old KV state. A cache lookup can reuse the resident portion of the longest common token prefix; the remaining input requires prefill. This is a constraint on the serialized token sequence, independent of whether two later fields carry the same application-level value.
+
+Cache availability imposes a second constraint. Hierarchical caching retains KV outside GPU memory and transfers it back when needed. CachedAttention combines hierarchical storage with overlapped loading and saving for multi-turn conversations~\cite{gao2024cachedattention}; Mooncake organizes distributed KV storage around disaggregated prefill and decode resources~\cite{qin2025mooncake}. In the device--host setting used by \sysname, a device hit avoids both transfer and recomputation, a host hit requires promotion, and a miss in both tiers requires recomputing the missing prefix. Chunked prefill can interleave this computation with decoding, as in Sarathi-Serve~\cite{agrawal2024sarathi}, but does not eliminate the work.
+
+These costs affect both per-call time to first token (TTFT) and session job completion time (JCT). A session can revisit a call site after search, testing, or another LLM operation, during which competing requests may displace its cache. Efficient reuse therefore depends on both the prefix exposed by prompt construction and the availability of that prefix when execution returns.
