@@ -3,7 +3,6 @@
 \paragraph{Configurations} We evaluated \sysname on a single RTX-3090 with Qwen-8B(bf16). \sysname is implemented on SGLang with HiCache with chunked-prefill~\cite{agrawal2024sarathi} enabled. For Baseline comparison, we selected vanilla SGLang and two opeaqe requests serving systems CacheScout and Continuum \cite{zhang2026cachescout, li2025continuum}.
 
 \paragraph{Workloads.}
-\paragraph{Workloads.}
 We evaluate \sysname using two representative agent applications: a fact-checking agent and a coding agent. Using these applications, we execute two benchmarks: HoVer~\cite{jiang2020hover}, a multi-hop fact verification benchmark requiring evidence collection and reasoning across multiple Wikipedia articles, and HumanEval~\cite{chen2021evaluating}, a code-generation benchmark that evaluates the functional correctness of generated programs using unit tests.
 \subsection{Task quality and execution scale}
 Because \sysname introduces prompt re-lay out, which would change the ordering inside prompt. Such transformation should keep comparable task quality and scale. As shown in Figure~\ref{fig:task-quality} and Table~\ref{tab:ablation}. As shown in the table, all configurations achieve comparable task accuracy. At the same time, output tokens per session remains essentially same. The observed serving improvements do not come at the cost of output quality and reduction of task scale.
@@ -51,6 +50,38 @@ As shown in Figures~\ref{fig:jct-coding}, \ref{fig:jct-fact}, \ref{fig:speedup-c
 
 \paragraph{TTFT}
 \sysname also lowers mean TTFT across all workload configurations (Figures~\ref{fig:ttft-coding} and~\ref{fig:ttft-fact}). On the fact-check agent, the reduction is substantial at every concurrency level, while Continuum and CacheScout offer little or no improvement over SGLang. On the coding agent, \sysname matches or beats all baselines up to a concurrency of 40; at the highest concurrency, KV-only achieves a slightly lower TTFT.
+
+\paragraph{Multi-Program serving of \sysname}
+To understand how \sysname performs when serving multiple programs, we evaluate \sysname with a mixed workload of the fact-checking and coding agents sharing one server. We set concurrency at 16: 4 lanes consecutively launch fact-checking sessions and 12 lanes consecutively launch coding sessions, and all 16 lanes run in parallel. We select this 1:3 ratio based on the KV-cache footprint of the two agents. Every system first observes two sessions of each program, which are excluded from the numbers. We report throughput and mean TTFT for this evaluation. Throughput is calculated as the number of sessions completed per minute while all 16 lanes are busy.
+
+Table~\ref{tab:multi-program} shows the results. The throughput of \sysname has a $1.51\times$ speedup over SGLang, with a mean TTFT speedup of $2.37\times$. Meanwhile, CacheScout and Continuum just improve barely little throughput over SGLang with a $1.02\times$ speedup; their mean TTFT have up to $1.33\times$ speedup over SGLang. The ablation arms show the same relay as in the single-program experiments. Re-layout alone accounts for most of the miss-rate reduction (58.3\%) and a $1.36\times$ throughput gain. The planner alone, which stays inert on a single coding workload, now delivers a $1.23\times$ gain with 5.5 points fewer misses. In a mixed pool, the eviction decision is between programs with different reuse patterns, which is exactly the decision the learned per-program model informs. 
+
+The mix also tests whether the structure \sysname learns is per program. Under interleaving, \sysname's next-call prediction is correct for 89\% of the fact-checking calls and 80\% of the coding calls.
+
+\begin{table*}[t]
+    \centering
+    \caption{Performance of \sysname and baselines on a mixed workload of fact-checking and coding agents. \sysname improves throughput by $1.51\times$ and reduces mean TTFT by 58\% over SGLang, with the KV-cache miss rate falling from 87.0\% to 56.7\%.}
+    \label{tab:multi-program}
+    \small
+    \begin{tabular}{lcccccc}
+        \toprule
+        \textbf{Method}
+        & \textbf{Throughput}
+        & \textbf{Speedup}
+        & \textbf{Mean TTFT}
+        & \multicolumn{3}{c}{\textbf{KV-cache status}} \\
+        & (sess/min) & & (ms) & device & host & miss \\
+        \midrule
+        SGLang (LRU)   & 3.64 & $1.00\times$ & 6266 & 10.5\% &  2.5\% & 87.0\% \\
+        CacheScout     & 3.70 & $1.02\times$ & 4712 & 14.1\% &  2.3\% & 83.6\% \\
+        Continuum      & 3.72 & $1.02\times$ & 4964 & 10.1\% &  4.5\% & 85.4\% \\
+        Planner only   & 4.47 & $1.23\times$ & 4254 & 13.9\% &  4.6\% & 81.5\% \\
+        Re-layout only & 4.95 & $1.36\times$ & 4164 & 19.2\% & 22.6\% & 58.3\% \\
+        \textbf{Ours}  & \textbf{5.51} & $\mathbf{1.51\times}$ & \textbf{2642} & \textbf{31.3\%} & 12.0\% & \textbf{56.7\%} \\
+        \bottomrule
+    \end{tabular}
+\end{table*}
+
 
 \begin{figure*}[h]
     \centering
@@ -157,4 +188,3 @@ This behavior also emerges when testing on the fact check agent. As we mentioned
 
 We selected some representative workload pressure and investigate how many tokens are recomputed. We choose $c=12, 28, 40$ for code agent and $c=8,14,18$ for fact check agent. As shown in \ref{fig:cdf-coding}, prompt re-layout maintains exactly the same recomputed tokens as full \sysname, but for c=40, things are different, re-layout only is left behind, adding kv scheduling reduces tokens recomputed furthermore. In the regime of 
 fact agent, all kv scheduling mechanisms reduce the recomputed tokens. CacheScout, Continuum and \sysname all enhance cache efficiency. Similarly, when workload is high, \sysname's prediction-guided KV management could add optimization upon the heterogeneity aware prompt re-layout, but kv scheduling itself cannot take effect.
-

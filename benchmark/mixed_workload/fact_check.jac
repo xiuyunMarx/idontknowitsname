@@ -11,14 +11,6 @@ import time;
 import requests;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-# Sampling params go on each `by llm(...)` below: `by llm()` evaluates `llm()`,
-# and BaseLLM.__call__ replaces call_params with its kwargs, so values given to
-# the constructor never reach the request.
-# Header-last re-layout (values first, callsite header and schema last) changes what
-# Qwen3-8B answers on this program: the verify_claim decision rule moves behind the
-# evidences and the model stops returning NEED_MORE. The program therefore declares
-# to the serving layer that its sites keep the header in front; binding re-layout
-# (claim | evidences before the per-call inputs) is unaffected.
 glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", extra_body={"no_header_last": True});
 glob MAX_SCOUTS: int = int(os.environ.get("FC_SCOUTS") or "2");
 glob MAX_ROUNDS: int = int(os.environ.get("FC_ROUNDS") or "6");
@@ -87,7 +79,6 @@ walker FactCheck {
     has verdict: Verdict | None = None;
     has errors: list[str] = [];
 }
-
 
 node ClaimAnalyzer {
     def decompose_claim(maximum_questions: int, claim: str, evidences: list[Evidence]) -> list[str] by llm(temperature=0.0, max_tokens=4096);
