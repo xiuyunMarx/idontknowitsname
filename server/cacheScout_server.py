@@ -41,7 +41,7 @@ import uuid
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from decompiler.parser import is_continuation   # transcript-prefix test only: no decompiling
+from server.wire import is_continuation   # transcript-prefix test only: requests stay opaque
 from model.model import PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 

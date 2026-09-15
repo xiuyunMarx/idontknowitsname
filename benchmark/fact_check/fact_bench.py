@@ -171,6 +171,10 @@ def main():
     ap.add_argument("--tag", default="fact")
     ap.add_argument("--server-log", default=None)
     ap.add_argument("--logdir", default=None)
+    ap.add_argument("--server", default="localhost:8964", metavar="HOST:PORT",
+                    help="where to register the program's static analysis before the sessions")
+    ap.add_argument("--no-register", action="store_true",
+                    help="skip the registration (opaque baselines have no /v1/programs/register)")
     args = ap.parse_args()
 
     claims = load_claims(args.claims)
@@ -181,6 +185,17 @@ def main():
     logdir = args.logdir or tempfile.mkdtemp(prefix="fact-")
     print(f"[{tag}] {args.warmup} warmup + {total} sessions ({args.sessions} per lane) in {args.concurrency} lane(s); "
           f"logs in {logdir}", flush=True)
+    if not args.no_register:
+        # The sessions are plain `jac run`s: register the program's static analysis
+        # once, up front (the launcher does the same per run). An opaque baseline
+        # answers 404 here; that is its design, not a failure of the sweep.
+        from static_analysis.agent_launcher import analyze_program, register
+        payload = analyze_program(os.path.abspath(args.program))
+        try:
+            reply = register(args.server, payload)
+            print(f"[{tag}] registered {len(payload['program']['sites'])} call sites with {args.server}: {reply}", flush=True)
+        except RuntimeError as e:
+            print(f"[{tag}] registration skipped: {e}", flush=True)
     records, lock = [], threading.Lock()
     for i in range(args.warmup):
         r = run_session(args, i, "warmup", logdir, *claims[-(i + 1)])

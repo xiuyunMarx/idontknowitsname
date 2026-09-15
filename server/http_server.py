@@ -19,6 +19,9 @@ kind == "completion": body is a /v1/chat/completions JSON; reply with the
 kind == "close": explicit session end (/v1/sessions/close, body {"user": id} —
     the path InterceptorLLM's atexit hook posts to);
     reply with a bool (was the session known).
+kind == "register": a program registration (/v1/programs/register, body
+    {"file": path, "program": wire form}, posted by the agent launcher before
+    the agent starts); reply with a dict that is returned as JSON.
 GET /health is answered here directly and never enters the pool.
 """
 
@@ -88,6 +91,7 @@ class HttpServer:
         app = web.Application(client_max_size=MAX_BODY_BYTES)
         app.router.add_post("/v1/chat/completions", self._completions)
         app.router.add_post("/v1/sessions/close", self._close)
+        app.router.add_post("/v1/programs/register", self._register)
         app.router.add_get("/health", self._health)
         self._runner = web.AppRunner(app)
         await self._runner.setup()
@@ -102,7 +106,7 @@ class HttpServer:
     # ------------------------------------------------------------------ handlers
     async def _submit(self, kind: str, body: Dict[str, Any], peer: str) -> Any:
         """Park the request in the pool and wait for the controller's reply."""
-        sid = str(body.get("user") or f"anon:{peer}")
+        sid = str(body.get("user") or body.get("file") or f"anon:{peer}")
         req = PendingRequest(kind=kind, body=body, peer=peer, session=sid,
                              t_arrive=time.monotonic())
         await self.pool.put(req)
@@ -140,6 +144,21 @@ class HttpServer:
         except Exception as e:
             return _error(500, f"{type(e).__name__}: {e}")
         return web.json_response({"closed": bool(closed), "session": str(body["user"])})
+
+    async def _register(self, request: web.Request) -> web.Response:
+        try:
+            body = await request.json()
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return _error(400, "request body is not valid JSON")
+        if not isinstance(body, dict) or not isinstance(body.get("program"), dict) or not body.get("file"):
+            return _error(400, "body must carry `file` and the `program` wire form")
+        try:
+            result = await self._submit("register", body, request.remote or "")
+        except asyncio.TimeoutError:
+            return _error(504, f"no reply within {self.reply_timeout_s:.0f}s")
+        except Exception as e:
+            return _error(500, f"{type(e).__name__}: {e}")
+        return web.json_response(result if isinstance(result, dict) else {"ok": bool(result)})
 
     async def _health(self, request: web.Request) -> web.Response:
         return web.json_response({"ok": True, "pooled": self.pool.qsize()})
