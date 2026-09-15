@@ -132,7 +132,7 @@ def report(tag, records, serves, counters, concurrency=1):
     print(f"\n[{tag}] ==== {len(ok)} measured sessions, failed={n_fail}")
     if ok:
         walls = [r["wall"] for r in ok]
-        acc = sum(r["verdict"] == r["label"] for r in ok if r["verdict"] in ("SUPPORTED", "NOT_SUPPORTED"))
+        acc = sum(r["verdict"] == r["label"] for r in ok if r["verdict"])   # fact_check labels or the coding agent's PASSED
         print(f"[{tag}] JCT p50={pct(walls, .5):6.1f}s p95={pct(walls, .95):6.1f}s mean={statistics.mean(walls):6.1f}s "
               f"rounds mean={statistics.mean(r['rounds'] for r in ok):.2f} "
               f"findings mean={statistics.mean(r['findings'] for r in ok):.1f} "

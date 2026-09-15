@@ -342,11 +342,11 @@ class Program:
                     continue
                 carriers.setdefault(b.field, set()).add(t.key)
                 scoped[b.field] = scoped.get(b.field, False) or b.scope != ""
-                r = LAYOUT_RANK[b.heterogeneity]
-                # the field's own kind: append-only if any site sees it extend, a copy
-                # otherwise; a producer's VOLATILE view does not describe the field
-                k = 3 if b.heterogeneity is Heterogeneity.EXTEND else (0 if b.heterogeneity is Heterogeneity.CONST else 1)
-                kind[b.field] = max(kind.get(b.field, 0), k) if k == 3 or b.field not in kind else min(kind[b.field], k) if kind[b.field] != 3 else 3
+                # the field's own kind: append-only if any site sees it extend, else
+                # a copy; a producer's VOLATILE or a reset's CONST view does not
+                # describe the field
+                k = 3 if b.heterogeneity is Heterogeneity.EXTEND else 1
+                kind[b.field] = max(kind.get(b.field, 1), k)
         for t in self.sites.values():
             def key(n: str, t: PromptTemplate = t) -> Tuple[int, int, int]:
                 b = t.binding(n)

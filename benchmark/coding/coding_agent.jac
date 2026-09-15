@@ -89,6 +89,7 @@ walker CodeTask {
     has plan: Plan | None = None;
     has advice: str = "";
     has attempts: list[Attempt] = [];
+    has tries: list[Attempt] = [];
     has accepted: list[str] = [];
     has commit: CommitMessage | None = None;
     has errors: list[str] = [];
@@ -96,7 +97,8 @@ walker CodeTask {
 
 sem CodeTask = "One session implementing a module of several functions.";
 sem CodeTask.module = "The accepted code of the module so far.";
-sem CodeTask.attempts = "Every attempt so far, oldest first.";
+sem CodeTask.attempts = "Every attempt in this module, oldest first.";
+sem CodeTask.tries = "Attempts at the current function, oldest first; empty on its first try.";
 
 
 def strip_fences(text: str) -> str {
@@ -113,13 +115,14 @@ def strip_fences(text: str) -> str {
 
 
 node Planner {
-    def plan(spec: str, attempts: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=4096);
+    def plan(spec: str, module: str, tries: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=4096);
 
     can start with CodeTask entry {
         visitor.spec = visitor.tasks[visitor.idx].spec;
         visitor.advice = "";
+        visitor.tries = [];
         try {
-            visitor.plan = self.plan(visitor.spec, visitor.attempts);
+            visitor.plan = self.plan(visitor.spec, visitor.module, visitor.tries);
         } except Exception as e {
             visitor.errors.append(f"planning {visitor.tasks[visitor.idx].entry_point} failed: {e}");
             visitor.plan = Plan(approach="Implement the function as specified.");
@@ -129,19 +132,20 @@ node Planner {
 }
 
 sem Planner = "Reads the next function's spec and decides how to implement it.";
-sem Planner.plan = "Describe the algorithm for the function in `spec` and list the edge cases its tests are likely to probe. Do not write code.";
-sem Planner.plan.attempts = "Every attempt so far in this module, oldest first.";
+sem Planner.plan = "Describe the algorithm for the function in `spec` and list the edge cases its tests are likely to probe. The functions in `module` are accepted and may be reused. Do not write code.";
+sem Planner.plan.module = "The accepted code of the module so far.";
+sem Planner.plan.tries = "Earlier attempts at this function with their pytest output, oldest first; empty on the first try.";
 sem Planner.plan.spec = "The signature and docstring of the function to implement next.";
 
 
 node Coder {
-    def implement(spec: str, plan: Plan, advice: str, attempts: list[Attempt]) -> str by llm(temperature=0.0, max_tokens=4096);
+    def implement(spec: str, module: str, plan: Plan, advice: str, tries: list[Attempt]) -> str by llm(temperature=0.0, max_tokens=4096);
 
     can write with CodeTask entry {
         task = visitor.tasks[visitor.idx];
         plan = visitor.plan or Plan();
         try {
-            code = strip_fences(self.implement(visitor.spec, plan, visitor.advice, visitor.attempts));
+            code = strip_fences(self.implement(visitor.spec, visitor.module, plan, visitor.advice, visitor.tries));
         } except Exception as e {
             visitor.errors.append(f"generating {task.entry_point} failed: {e}");
             code = visitor.spec + "    pass\n";
@@ -151,14 +155,17 @@ node Coder {
         if imports and not any(ln in code for ln in imports) {
             code = "\n".join(imports) + "\n\n" + code;
         }
-        visitor.attempts.append(Attempt(function=task.entry_point, code=code));
+        attempt = Attempt(function=task.entry_point, code=code);
+        visitor.attempts.append(attempt);
+        visitor.tries.append(attempt);
         visit [self-->][?:Tester];
     }
 }
 
 sem Coder = "Writes one function of the module.";
-sem Coder.implement = "Return the complete function from `spec` as one string: its imports, the full signature with the docstring kept, and the body. Nothing else: no explanation, no tests, no markdown fences, and do not repeat functions from earlier attempts. The attempts marked passed are already in the module and the new function may call them. Follow the plan; if there is advice from a failed attempt, apply it.";
-sem Coder.implement.attempts = "Every attempt so far in this module with its pytest output, oldest first.";
+sem Coder.implement = "Return the complete function from `spec` as one string: its imports, the full signature with the docstring kept, and the body. Nothing else: no explanation, no tests, no markdown fences, and do not repeat the functions in `module`; they are accepted and the new function may call them. Follow the plan; if there is advice from a failed attempt, apply it.";
+sem Coder.implement.module = "The accepted code of the module so far.";
+sem Coder.implement.tries = "Earlier attempts at this function with their pytest output, oldest first; empty on the first try.";
 sem Coder.implement.spec = "The signature and docstring of the function to implement.";
 sem Coder.implement.plan = "The approach and edge cases decided by the planner.";
 sem Coder.implement.advice = "Instructions from the analyzer after a failed attempt, or an empty string on the first attempt.";
@@ -199,7 +206,7 @@ node Tester {
     can test with CodeTask entry {
         attempt = visitor.attempts[-1];
         self.run(visitor, attempt);
-        tries = len([a for a in visitor.attempts if a.function == attempt.function]);
+        tries = len(visitor.tries);
         if attempt.passed {
             visitor.module = (visitor.module + "\n\n" + attempt.code).strip("\n") + "\n";
             visitor.accepted.append(attempt.function);
@@ -222,14 +229,14 @@ sem Tester = "Runs pytest over the module plus the latest attempt.";
 
 
 node Analyzer {
-    def diagnose(spec: str, attempts: list[Attempt]) -> Diagnosis by llm(temperature=0.0, max_tokens=4096);
+    def diagnose(spec: str, module: str, tries: list[Attempt]) -> Diagnosis by llm(temperature=0.0, max_tokens=4096);
 
     can analyze with CodeTask entry {
         try {
-            diag = self.diagnose(visitor.spec, visitor.attempts);
+            diag = self.diagnose(visitor.spec, visitor.module, visitor.tries);
             visitor.advice = diag.fix;
         } except Exception as e {
-            visitor.errors.append(f"analysis after attempt {len(visitor.attempts)} failed: {e}");
+            visitor.errors.append(f"analysis after attempt {len(visitor.tries)} failed: {e}");
             visitor.advice = "Read the pytest output and fix the failing assertion.";
         }
         visit [self-->][?:Coder];
@@ -238,17 +245,18 @@ node Analyzer {
 
 sem Analyzer = "Explains a failed attempt from its pytest output.";
 sem Analyzer.diagnose = "Explain why the latest attempt fails, citing the failing assertion or exception in its pytest output, and give concrete instructions for the next attempt. Do not write the full solution.";
-sem Analyzer.diagnose.attempts = "Every attempt so far with its pytest output, oldest first; the last one failed.";
+sem Analyzer.diagnose.module = "The accepted code of the module so far; the tests run against it plus the attempt.";
+sem Analyzer.diagnose.tries = "Attempts at this function with their pytest output, oldest first; the last one failed.";
 sem Analyzer.diagnose.spec = "The signature and docstring of the function being implemented.";
 
 
 node Committer {
-    def commit(attempts: list[Attempt]) -> CommitMessage by llm(temperature=0.0, max_tokens=4096);
+    def commit(module: str, attempts: list[Attempt]) -> CommitMessage by llm(temperature=0.0, max_tokens=4096);
 
     can finish with CodeTask entry {
         msg: CommitMessage;
         try {
-            msg = self.commit(visitor.attempts);
+            msg = self.commit(visitor.module, visitor.attempts);
         } except Exception as e {
             visitor.errors.append(f"commit message failed: {e}");
             msg = CommitMessage(title="Implement " + ", ".join(visitor.accepted));
@@ -270,6 +278,7 @@ node Committer {
 
 sem Committer = "Writes the commit message once every function is accepted or given up on.";
 sem Committer.commit = "Write a commit message for the module. If some function still fails its tests, say so in the body.";
+sem Committer.commit.module = "The accepted code of the module.";
 sem Committer.commit.attempts = "Every attempt with its pytest output, oldest first; the ones marked passed form the module.";
 
 

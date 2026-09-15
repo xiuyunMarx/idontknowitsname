@@ -97,7 +97,18 @@ def literal_value(e: object) -> object {
     if isinstance(e, (uni.String, uni.MultiString, uni.Int, uni.Float, uni.Bool)) {
         return pyast.literal_eval(e.unparse());
     }
+    if isinstance(e, uni.ListVal) and not e.values {
+        return [];
+    }
+    if isinstance(e, uni.DictVal) and not e.kv_pairs {
+        return {};
+    }
     raise ValueError("not a literal");
+}
+
+"""Whether an expression resets a container: `[]`, `{}`, `""`, `set()`."""
+def is_empty_literal(e: object) -> bool {
+    return text(e) in ("[]", "{}", '""', "''", "set()");
 }
 
 """Placeholder argument of a type: only its shape matters, the rendered bytes
@@ -416,7 +427,7 @@ obj Analysis {
                         self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, None, in_exc));
                     } else {
                         self_ref = any([walker_field(x) == f for x in a.value.get_all_sub_nodes(uni.AtomTrailer)]) if a.value is not None else False;
-                        kind = "extend" if (growable and self_ref) else "assign";
+                        kind = "extend" if (growable and self_ref) else ("reset" if (growable and a.value is not None and is_empty_literal(a.value)) else "assign");
                         self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, a.value, in_exc));
                     }
                 }
@@ -598,6 +609,10 @@ obj Analysis {
     }
 
     """Definitions outside `except` handlers win over the fallbacks inside them."""
+    static def _def_line(d: Def) -> int {
+        return d.lineno;
+    }
+
     static def _prefer_main(ds: list) -> list {
         main = [d for d in ds if not d.in_except];
         return main if main else ds;
@@ -765,7 +780,19 @@ obj Analysis {
             up = self.upstream_carrier(s, f);
             return (Heterogeneity.EXTEND, (up.key, self.carries(up, f)) if up is not None else None, None, "");
         }
-        scope = "|".join(sorted({d.ability for d in ds if d.kind == "assign"}));
+        scope = "|".join(sorted({d.ability for d in ds if d.kind != "extend"}));
+        local = [d for d in ds if d.ability == s.ability and d.lineno < s.call.loc.first_line];
+        if local {
+            last = max(local, key=self._def_line);
+            if last.kind == "reset" {   # emptied just before the call: the empty literal itself
+                return (Heterogeneity.CONST, None, repr(literal_value(last.rhs)), scope);
+            }
+        }
+        if all([d.kind in ("extend", "reset") for d in ds]) {
+            # append-only between resets: a history that restarts each scope
+            up = self.upstream_carrier(s, f);
+            return (Heterogeneity.EXTEND, (up.key, self.carries(up, f)) if up is not None else None, None, scope);
+        }
         results: list = [];
         for d in self.reaching(f, s.ability, s.call.loc.first_line) {
             if d.kind == "extend" {

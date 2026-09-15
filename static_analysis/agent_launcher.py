@@ -32,15 +32,44 @@ DEFAULT_SERVER = "localhost:8964"
 REGISTER_PATH = "/v1/programs/register"
 
 
-def analyze_program(agent: str) -> Dict[str, Any]:
-    """Run analyzer.jac in-process and return the registration payload."""
-    from jaclang import JacRuntime as Jac #type: ignore[import-not-found]
+CACHE_DIR = os.path.join(HERE, ".cache")
+
+
+def _cache_key(agent: str) -> str:
+    """The analysis is a pure function of the agent's source and the analyzer's
+    own code: hash both, so an edit to either invalidates the cached result."""
+    import hashlib
+    h = hashlib.sha256()
+    for path in (agent, os.path.join(HERE, "analyzer.jac"), os.path.join(HERE, "primitives.py")):
+        with open(path, "rb") as f:
+            h.update(f.read())
+        h.update(b"\0")
+    h.update(os.path.abspath(agent).encode())
+    return h.hexdigest()[:16]
+
+
+def analyze_program(agent: str, use_cache: bool = True) -> Dict[str, Any]:
+    """The registration payload of an agent: from the content-hash cache when the
+    source and the analyzer are unchanged, else by running analyzer.jac in-process
+    (a few seconds once jaclang's own modules are compiled, ~20 s the first time)."""
+    agent = os.path.abspath(agent)
+    cache = os.path.join(CACHE_DIR, f"{os.path.splitext(os.path.basename(agent))[0]}-{_cache_key(agent)}.json")
+    if use_cache and os.path.isfile(cache):
+        with open(cache) as f:
+            payload = json.load(f)
+        print(f"[launcher] analysis from cache {cache}", file=sys.stderr)
+        return payload
+    from jaclang import JacRuntime as Jac  # type: ignore[import-not-found]
     (mod,) = Jac.jac_import("analyzer", base_path=HERE)
     sys.path.insert(0, HERE)
     from primitives import program_to_dict  # type: ignore[import-not-found]
     program = mod.analyze(agent)
     print(mod.describe(program), file=sys.stderr)
-    return {"file": os.path.abspath(agent), "program": program_to_dict(program)}
+    payload = {"file": agent, "program": program_to_dict(program)}
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    with open(cache, "w") as f:
+        json.dump(payload, f)
+    return payload
 
 
 def register(server: str, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -72,6 +101,7 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--out", default="", metavar="FILE", help="also write the registration payload here")
     ap.add_argument("--no-register", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="analyze and register, do not start the agent")
+    ap.add_argument("--no-cache", action="store_true", help="re-run the analysis even when a cached result matches")
     ap.add_argument("agent")
     ap.add_argument("agent_args", nargs=argparse.REMAINDER)
     a = ap.parse_args(argv)
@@ -80,7 +110,7 @@ def main(argv: List[str]) -> int:
         print(f"no such file: {agent}", file=sys.stderr)
         return 2
 
-    payload = analyze_program(agent)
+    payload = analyze_program(agent, use_cache=not a.no_cache)
     n = len(payload["program"]["sites"])
     if a.out:
         with open(a.out, "w") as f:
