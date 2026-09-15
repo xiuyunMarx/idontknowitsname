@@ -175,6 +175,8 @@ def main():
                     help="where to register the program's static analysis before the sessions")
     ap.add_argument("--no-register", action="store_true",
                     help="skip the registration (opaque baselines have no /v1/programs/register)")
+    ap.add_argument("--no-header-last", action="store_true",
+                    help="register the program with its headers kept in front of the values (per program, not a server flag)")
     args = ap.parse_args()
 
     claims = load_claims(args.claims)
@@ -192,7 +194,7 @@ def main():
         from static_analysis.agent_launcher import analyze_program, register
         payload = analyze_program(os.path.abspath(args.program))
         try:
-            reply = register(args.server, payload)
+            reply = register(args.server, payload, no_header_last=args.no_header_last)
             print(f"[{tag}] registered {len(payload['program']['sites'])} call sites with {args.server}: {reply}", flush=True)
         except RuntimeError as e:
             print(f"[{tag}] registration skipped: {e}", flush=True)

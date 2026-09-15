@@ -33,8 +33,9 @@ from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 from server.kv_planner import Job, KVPlanner
 from server.wire import content, first_user, is_continuation, set_content
-from static_analysis.primitives import (Binding, BindingKind, CallInstance, CallSiteID, Heterogeneity,
-                                        PredictedCall, Program, PromptTemplate, program_from_dict)
+from static_analysis.primitives import (Binding, BindingKind, CallInstance, CallSiteID, Edge, Heterogeneity,
+                                        PredictedCall, Program, PromptTemplate, field_spec, program_from_dict,
+                                        render_repr)
 
 P_MIN = 0.02           # plan only steps predicted at least this likely
 T_BASE = 120.0         # idle seconds before a session is finalized
@@ -83,6 +84,7 @@ class Controller:
         self._prefix_tok: Dict[CallSiteID, Tuple[str, List[int]]] = {}   # site -> (fixed head, token ids)
         self._plan_tok: "OrderedDict[Tuple[CallSiteID, bool, str], Optional[List[int]]]" = OrderedDict()
         self._relayout_seen: set = set()          # sites whose served layout was logged once
+        self._resets: Dict[str, Dict[str, frozenset]] = {}   # agent file -> ability -> fields it resets
         self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if plan else None
 
     # ------------------------------------------------------------------ lifecycle
@@ -135,16 +137,19 @@ class Controller:
 
     # ------------------------------------------------------------------ registration
     def register(self, body: dict) -> dict:
-        """Adopt a program's static analysis. Re-registration of the same file
-        replaces the templates but keeps nothing learned: there is nothing learned."""
+        """Adopt a program's static analysis."""
         program = program_from_dict(body["program"])
         file = os.path.abspath(str(body["file"]))
+        if body.get("no_header_last"):          # the registrant's choice for this program (fact_check keeps its headers in front)
+            for t in program.sites.values():
+                t.no_header_last = True
         if self.enable_relayout:
             program.decide_layouts(header_last=HEADER_LAST)
         for t in program.sites.values():
             print(f"[layout] {t.key!r} order={t.order} header_last={t.header_last} "
                   f"bindings={[(b.name, b.heterogeneity.name) for b in t.bindings]}", flush=True)
         self.programs[file] = program
+        self._resets[file] = program.resets()
         for k, t in program.sites.items():
             self._by_site[(k.signature, k.lineno, os.path.basename(k.file or file))] = (program, t)
         edges = sorted(f"{a!r}->{b!r}" for (a, b) in program.edges)
@@ -211,6 +216,8 @@ class Controller:
                                               priority=PRIORITY_CONT if cont else PRIORITY_REAL)
             dt = time.perf_counter() - t0
             if inst is not None:
+                if not inst.engine_time:
+                    inst.served_ids = ids       # the call message as served (first turn)
                 inst.engine_time.append(dt)
                 inst.t_done = time.monotonic()
                 inst.response = text
@@ -226,14 +233,20 @@ class Controller:
             return
         t_post = time.perf_counter()
         tpl = inst.template
-        # Past the head the session can rebuild (header | shared values | history so
-        # far) the prompt is one-off: the fresh bindings and the reply. Only that
-        # tail is demoted; the head stays in the normal band.
+        # Past the head some later prompt can still share, this prompt is one-off:
+        # its fresh bindings and the reply. Only that tail is demoted; the head
+        # stays in the normal band. The head is the longer of what the session could
+        # rebuild before the call (bytes earlier prompts already hold) and what a
+        # successor's prompt will carry unchanged (the static edges say which
+        # fields the program rewrites on the way).
         head = len(self._prefix_tokens(tpl))
-        text_head, _ = self._resolve(sess, tpl)
-        cut = self._planned_tokens(tpl, text_head, False) if text_head else None
-        if cut is not None and len(cut) > head:
-            head = len(cut)
+        prev = sess.calls[-1] if sess.calls else None
+        via = sess.program.edges.get((prev.key, tpl.key)) if (prev is not None and sess.program is not None) else None
+        text_head, _ = self._resolve(sess, tpl, via, upto=inst)
+        for text in (text_head, self._forward_head(sess, inst)):
+            cut = self._planned_tokens(tpl, text, False) if text else None
+            if cut is not None and len(cut) > head:
+                head = len(cut)
         self.planner.note_served(sess.id, ids, head)
         sess.plan_anchor = inst.t_done          # the anchor every gap sample counts from
         self._plan_session(sess)                # replace: the freshest view of the future
@@ -271,6 +284,7 @@ class Controller:
             e = prog.add_edge(prev.key, tpl.key)      # the transition is known at arrival
             e.count += 1
             e.gap.append(max(0.0, req.t_arrive - prev.t_done))
+        self._invalidate(sess, tpl)
         sess.open = inst
         sess.epoch += 1
         sess.plan_anchor = req.t_arrive     # an early anchor to start planning; the reply re-anchors
@@ -369,7 +383,9 @@ class Controller:
         tpl = prog.sites.get(c.key) if prog else None
         if prog is None or tpl is None:
             return []
-        text, complete = self._resolve(sess, tpl)
+        cur = sess.open or (sess.calls[-1] if sess.calls else None)
+        via = prog.edges.get((cur.key, c.key)) if cur is not None else None
+        text, complete = self._resolve(sess, tpl, via)
         now = time.monotonic()
         deadline = max(now, anchor + c.t50 - KVPlanner.SAFETY_K * (c.t90 - c.t50))
         t90 = max(deadline, anchor + c.t90)
@@ -394,20 +410,23 @@ class Controller:
                     state="done" if resident else "queued")]
 
     # ------------------------------------------------------------------ speculation
-    def _resolve(self, sess: LiveSession, tpl: PromptTemplate) -> Tuple[str, bool]:
-        """The head of `tpl`'s next user message the session can already write, in
-        the served layout, and whether it is the whole message. Walks the served
+    def _resolve(self, sess: LiveSession, tpl: PromptTemplate, via: Optional[Edge] = None,
+                 upto: Optional[CallInstance] = None) -> Tuple[str, bool]:
+        """The head of `tpl`'s next user message that the session can already write,
+        in the served layout, and whether it is the whole message. Walks the served
         order: a CONST is its literal, a COPY/TAKE the bytes an earlier call
         carried, an EXTEND the earlier bytes minus the closing delimiter (a known
-        head, open tail), a RESP the field of an earlier reply; the first value
-        with no such origin ends the head."""
+        head, open tail) unless the edge `via` (the transition being predicted)
+        writes nothing to its field, a RESP the field of an earlier reply rendered
+        as the program's object; the first value with no such origin ends the head.
+        `upto`: resolve as of the moment before that call (its own values excluded)."""
         lines: List[str] = []
         complete = True
         if tpl.header and not tpl.header_last:
             lines.append(tpl.header)
         for name in tpl.served_order():
             b = tpl.binding(name)
-            v, prefix = self._value_of(sess, tpl, b)
+            v, prefix = self._value_of(sess, tpl, b, via, upto)
             if v is None:
                 if prefix is not None:
                     lines.append(f"{b.label}{prefix}")
@@ -417,7 +436,7 @@ class Controller:
         if complete:
             for b in tpl.bindings:
                 if b.kind is BindingKind.SELF:
-                    v, _ = self._value_of(sess, tpl, b)
+                    v, _ = self._value_of(sess, tpl, b, via, upto)
                     if v is None:
                         complete = False
                         break
@@ -428,37 +447,146 @@ class Controller:
         text = "\n".join(lines)
         return (tpl.hint_join(text) if complete else text), complete
 
-    def _value_of(self, sess: LiveSession, tpl: PromptTemplate, b: Binding) -> Tuple[Optional[str], Optional[str]]:
-        """(value, known prefix) of a binding for the site's next call."""
+    def _value_of(self, sess: LiveSession, tpl: PromptTemplate, b: Binding, via: Optional[Edge] = None,
+                  upto: Optional[CallInstance] = None) -> Tuple[Optional[str], Optional[str]]:
+        """(value, known prefix) of a binding for the site's next call, from the
+        part of the session's history the binding's scope still allows: a value
+        reset by an ability is looked up only in calls from that ability's latest
+        run onward (the call inside it carries the post-reset bytes)."""
         H = Heterogeneity
+        if via is not None and b.name in via.overrides:
+            ov = via.overrides[b.name]      # how this binding resolves along the predicted edge
+            b = Binding(name=b.name, heterogeneity=ov.heterogeneity, kind=b.kind, source=ov.source,
+                        literal=ov.literal, field=b.field, scope=b.scope, label=b.label, tail=b.tail)
         if b.heterogeneity is H.CONST:
             return b.literal, None
-        hist = sess.history
+        hist = self._in_scope(sess, b, upto)
         if b.kind is BindingKind.SELF:      # the node revisited: the same object
-            v = self._latest(hist, tpl.key, b.name)
-            return v, None
+            return self._latest(hist, tpl.key, b.name), None
         if b.heterogeneity in (H.COPY, H.TAKE, H.EXTEND):
             v = None
-            if b.source is not None:
+            if b.field:                     # the walker field's latest bytes, whichever call carried them
+                v = self._latest_field(hist, b.field)
+            if v is None and b.source is not None:
                 v = self._latest(hist, b.source[0], b.source[1])
             if v is None:
-                v = self._latest(hist, None, b.name)   # own history, or any site carrying the name
+                v = self._latest(hist, None, b.name)
             if v is None:
                 return None, None
-            if b.heterogeneity is H.EXTEND:
+            untouched = via is not None and bool(b.field) and b.field not in via.writes
+            if b.heterogeneity is H.EXTEND and not untouched:
                 return None, (v[:-1] if len(v) >= 2 else None)
+            if b.heterogeneity in (H.COPY, H.TAKE) and via is not None and b.field and b.field in via.writes:
+                return None, None           # rewritten on this edge: the earlier bytes are stale
             return v, None
         if b.heterogeneity is H.RESP and b.source is not None:
             site, path = b.source
+            if path.endswith("[]"):
+                return None, None           # one element of a reply list: which one is the next call's is not known
+            src_tpl = sess.program.sites.get(site) if sess.program else None
             for inst in reversed(hist):
                 if inst.key == site and inst.response:
-                    if not path:
-                        return None, None      # the whole reply: its repr is the program's, not JSON
                     try:
-                        return repr(json.loads(inst.response)[path]), None
+                        obj = json.loads(inst.response)
                     except Exception:
                         return None, None
+                    spec = src_tpl.resp_spec if src_tpl is not None else None
+                    if not path:
+                        return render_repr(obj, spec), None          # the whole reply, as the program's object repr
+                    if isinstance(obj, dict) and path in obj:
+                        return render_repr(obj[path], field_spec(spec, path) or {"k": "prim", "t": "any"}), None
+                    return None, None
         return None, None
+
+    @staticmethod
+    def _in_scope(sess: LiveSession, b: Binding, upto: Optional[CallInstance] = None) -> List[CallInstance]:
+        """The session's calls from the latest run of a scope-resetting ability on
+        (before `upto` when given)."""
+        hist = sess.history
+        if upto is not None and upto in hist:
+            hist = hist[:hist.index(upto)]
+        if not b.scope:
+            return hist
+        resets = set(b.scope.split("|"))
+        for i in range(len(hist) - 1, -1, -1):
+            if hist[i].template.ability in resets:
+                return hist[i:]
+        return hist
+
+    def _forward_head(self, sess: LiveSession, inst: CallInstance) -> str:
+        """The longest leading part of a served call message that some successor's
+        prompt repeats byte for byte: the bindings, in served order, whose walker
+        field the successor carries in the same position and the program does not
+        write on the edge to it (a CONST counts when the successor has the same
+        literal there)."""
+        prog, t = sess.program, inst.template
+        if prog is None or not inst.values:
+            return ""
+        best: List[str] = []
+        mine = [t.binding(n) for n in t.served_order()]
+        for e in prog.successors(inst.key):
+            nxt = prog.sites.get(e.dst)
+            if nxt is None:
+                continue
+            theirs = [nxt.binding(n) for n in nxt.served_order()]
+            lines: List[str] = []
+            if t.header and not t.header_last:
+                if not (nxt.header == t.header and not nxt.header_last):
+                    continue
+                lines.append(t.header)
+            for a, b in zip(mine, theirs):
+                same_field = bool(a.field) and a.field == b.field and a.field not in e.writes
+                same_const = (a.heterogeneity is Heterogeneity.CONST and b.heterogeneity is Heterogeneity.CONST
+                              and a.literal == b.literal)
+                if not (same_field or same_const) or a.name not in inst.values:
+                    break
+                lines.append(f"{a.label}{inst.values[a.name]}")
+            if len(lines) > len(best):
+                best = lines
+        return "\n".join(best)
+
+    def _invalidate(self, sess: LiveSession, tpl: PromptTemplate) -> None:
+        """Runtime value invalidation: the arriving call's ability resets some walker
+        fields, so every earlier served prompt of the session is dead from the first
+        binding that carried one of them. That tail is demoted in the KV cache (the
+        surviving head, e.g. the module, stays in the normal band)."""
+        prog = sess.program
+        if prog is None or self.planner is None:
+            return
+        file = next((f for f, p in self.programs.items() if p is prog), "")
+        dead = self._resets.get(file, {}).get(tpl.ability)
+        if not dead:
+            return
+        for inst in sess.calls:
+            if not inst.served_ids or not inst.values:
+                continue
+            t = inst.template
+            lines: List[str] = []
+            if t.header and not t.header_last:
+                lines.append(t.header)
+            cut_here = False
+            for name in t.served_order():
+                b = t.binding(name)
+                base = b.field[:-2] if b.field.endswith("[]") else b.field
+                if base and base in dead:
+                    cut_here = True
+                    break
+                if name in inst.values:
+                    lines.append(f"{b.label}{inst.values[name]}")
+            if not cut_here:
+                continue                    # nothing this call carried dies here
+            text = "\n".join(lines)
+            keep = len(self._planned_tokens(t, text, False) or []) if text else len(self._prefix_tokens(t))
+            self.planner.invalidate(sess.id, inst.served_ids, keep)
+        print(f"[invalidate] {sess.id} {tpl.ability} resets {sorted(dead)}", flush=True)
+
+    @staticmethod
+    def _latest_field(hist: List[CallInstance], field: str) -> Optional[str]:
+        for inst in reversed(hist):
+            for bb in inst.template.params:
+                if bb.field == field and bb.name in inst.values:
+                    return inst.values[bb.name]
+        return None
 
     @staticmethod
     def _latest(hist: List[CallInstance], site: Optional[CallSiteID], name: str) -> Optional[str]:

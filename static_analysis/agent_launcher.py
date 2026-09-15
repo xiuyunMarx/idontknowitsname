@@ -72,11 +72,13 @@ def analyze_program(agent: str, use_cache: bool = True) -> Dict[str, Any]:
     return payload
 
 
-def register(server: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+def register(server: str, payload: Dict[str, Any], no_header_last: bool = False) -> Dict[str, Any]:
     """POST the program to the server. Raises on any failure: an unregistered
-    program would make the server serve the agent as opaque text."""
+    program would make the server serve the agent as opaque text. `no_header_last`
+    asks the server to keep this program's headers in front of the values
+    (fact_check: header-last changes its output with the current model)."""
     url = f"http://{server}{REGISTER_PATH}"
-    data = json.dumps(payload).encode("utf-8")
+    data = json.dumps(dict(payload, no_header_last=bool(no_header_last))).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST",
                                  headers={"Content-Type": "application/json"})
     try:
@@ -102,6 +104,7 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--no-register", action="store_true")
     ap.add_argument("--dry-run", action="store_true", help="analyze and register, do not start the agent")
     ap.add_argument("--no-cache", action="store_true", help="re-run the analysis even when a cached result matches")
+    ap.add_argument("--no-header-last", action="store_true", help="register the program with its headers kept in front of the values")
     ap.add_argument("agent")
     ap.add_argument("agent_args", nargs=argparse.REMAINDER)
     a = ap.parse_args(argv)
@@ -120,7 +123,7 @@ def main(argv: List[str]) -> int:
     if a.no_register:
         print("[launcher] registration skipped (--no-register)", file=sys.stderr)
     else:
-        reply = register(a.server, payload)
+        reply = register(a.server, payload, no_header_last=a.no_header_last)
         print(f"[launcher] registered {n} call sites with {a.server}: {reply}", file=sys.stderr)
 
     if a.dry_run:

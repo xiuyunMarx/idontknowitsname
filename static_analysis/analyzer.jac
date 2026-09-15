@@ -38,7 +38,7 @@ import from jaclang.jac0core.mtp { fetch_mtir }
 import from jaclang.byllm.mtir { MTIR }
 import from jaclang.byllm.schema { schema_to_hint_text }
 import from primitives {
-    CallSiteID, Binding, BindingKind, Heterogeneity, PromptTemplate, Program, program_to_dict
+    CallSiteID, Binding, BindingKind, Heterogeneity, PromptTemplate, Program, program_to_dict, type_spec
 }
 
 glob ENTRY_GUARD = "__static_analysis__";
@@ -214,6 +214,40 @@ def is_empty_guard(a: uni.Assignment, f: str) -> bool {
     return cond in (f"notvisitor.{f}", f"visitor.{f}==[]", f"len(visitor.{f})==0");
 }
 
+"""Whether `node` is one of `stmts` or sits inside one of them."""
+def contains(stmts: list, target: object) -> bool {
+    for st in stmts {
+        if st is target {
+            return True;
+        }
+        for x in st.get_all_sub_nodes(type(target)) {
+            if x is target {
+                return True;
+            }
+        }
+    }
+    return False;
+}
+
+"""Whether a `return` follows `vs` in the same statement list."""
+def returns_after(vs: uni.VisitStmt) -> bool {
+    parent = getattr(vs, "parent", None);
+    if parent is None {
+        return False;
+    }
+    for r in parent.get_all_sub_nodes(uni.ReturnStmt) {
+        if getattr(r, "parent", None) is parent and r.loc.first_line > vs.loc.first_line {
+            return True;
+        }
+    }
+    return False;
+}
+
+"""A Binding carrying only an origin, for an edge override."""
+def dst_binding_stub(name: str, f: str, het: Heterogeneity, source: object, lit: object) -> Binding {
+    return Binding(name=name, heterogeneity=het, source=source, literal=lit, field=f);
+}
+
 """`Owner.name` of a method, `name` of a free function."""
 def qualname(ab: uni.Ability) -> str {
     own = ab.method_owner;
@@ -262,9 +296,10 @@ obj Def {
     """One write to a walker field."""
     has ability: str,        # qualified ability, e.g. "Planner.start"
         lineno: int,
-        kind: str,           # "extend" (append / += / x = x + ...) or "assign"
+        kind: str,           # "extend" (append / += / x = x + ...), "reset" (emptied) or "assign"
         rhs: object,         # the assigned expression for "assign", else None
-        in_except: bool;
+        in_except: bool,
+        ast_node: object = None; # the Assignment / FuncCall node, for path sensitivity
 }
 
 obj Site {
@@ -286,6 +321,7 @@ obj Analysis {
         abilities: dict = {},      # qualified ability name -> uni.Ability (the walker's entry abilities)
         by_owner: dict = {},       # node type -> qualified ability name
         visits: dict = {},         # ability -> list of node types it visits
+        visit_stmts: dict = {},    # ability -> list of (VisitStmt, node types)
         may_end: dict = {},        # ability -> True when some path through it visits nothing
         field_types: dict = {},    # walker field -> type text
         defs: dict = {},           # walker field -> list[Def]
@@ -336,11 +372,15 @@ obj Analysis {
             self.abilities[name] = ab;
             self.by_owner[owner_name(ab)] = name;
             targets: list = [];
+            stmts: list = [];
             for vs in ab.get_all_sub_nodes(uni.VisitStmt) {
                 found = self.visit_targets(vs.target, ab, vs.loc.first_line, 0);
-                targets.extend(found if found else ["*"]);   # unfiltered: any connected node type
+                found = found if found else ["*"];   # unfiltered: any connected node type
+                targets.extend(found);
+                stmts.append((vs, found));
             }
             self.visits[name] = targets;
+            self.visit_stmts[name] = stmts;
             self.may_end[name] = not covered(list(ab.body)) if isinstance(ab.body, (list, tuple)) else True;
         }
         # entry: the node type `root ++> X()` connects
@@ -424,11 +464,11 @@ obj Analysis {
                     in_exc = a.find_parent_of_type(uni.Except) is not None or is_empty_guard(a, f);
                     if a.aug_op is not None {
                         kind = "extend" if growable else "assign";
-                        self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, None, in_exc));
+                        self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, None, in_exc, a));
                     } else {
                         self_ref = any([walker_field(x) == f for x in a.value.get_all_sub_nodes(uni.AtomTrailer)]) if a.value is not None else False;
                         kind = "extend" if (growable and self_ref) else ("reset" if (growable and a.value is not None and is_empty_literal(a.value)) else "assign");
-                        self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, a.value, in_exc));
+                        self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, a.value, in_exc, a));
                     }
                 }
             }
@@ -442,9 +482,9 @@ obj Analysis {
                     m = t.right.value;
                     in_exc = fc.find_parent_of_type(uni.Except) is not None;
                     if m in EXTEND_METHODS {
-                        self.defs.setdefault(f, []).append(Def(name, fc.loc.first_line, "extend", None, in_exc));
+                        self.defs.setdefault(f, []).append(Def(name, fc.loc.first_line, "extend", None, in_exc, fc));
                     } elif m in RESET_METHODS {
-                        self.defs.setdefault(f, []).append(Def(name, fc.loc.first_line, "assign", None, in_exc));
+                        self.defs.setdefault(f, []).append(Def(name, fc.loc.first_line, "assign", None, in_exc, fc));
                     }
                 }
             }
@@ -552,29 +592,191 @@ obj Analysis {
     passing through abilities without LLM calls. The bool says whether a path
     ends (an ability with neither a further site nor a visit)."""
     def first_sites(ability: str, after: int, visited: set) -> tuple {
+        (paths, ends) = self.first_paths(ability, after, visited);
+        out: list = [];
+        for (s, path) in paths {
+            if s not in out {
+                out.append(s);
+            }
+        }
+        return (out, ends);
+    }
+
+    """Like first_sites, but every reachable site comes with the abilities the walk
+    passed through to reach it (the target's own ability last, the start's not
+    included): what the program may write on the way."""
+    def first_paths(ability: str, after: int, visited: set) -> tuple {
         later = [s for s in self.sites_in(ability) if s.call.loc.first_line > after];
         if later {
-            return ([later[0]], False);
+            return ([(later[0], [])], False);
         }
         out: list = [];
         ends = self.may_end.get(ability, False);
-        nxt = self.succ(ability);
-        if not nxt {
+        if not self.succ(ability) {
             return ([], True);
         }
-        for n in nxt {
-            if n in visited {
-                continue;
-            }
-            (ss, e) = self.first_sites(n, 0, visited | {n});
-            for s in ss {
-                if s not in out {
-                    out.append(s);
+        for (vs, targets) in self.visit_stmts.get(ability, []) {
+            for t in targets {
+                nexts = list(self.by_owner.values()) if t == "*" else ([self.by_owner[t]] if t in self.by_owner else []);
+                for n in nexts {
+                    if n in visited {
+                        continue;
+                    }
+                    (ps, e) = self.first_paths(n, 0, visited | {n});
+                    for (s, path) in ps {
+                        out.append((s, [(n, vs)] + path));   # (ability reached, the visit that reached it)
+                    }
+                    ends = ends or e;
                 }
             }
-            ends = ends or e;
         }
         return (out, ends);
+    }
+
+    """Whether a write can happen on the way to `vs` within the same ability: not
+    in a branch exclusive with the visit's, and not after an if-chain whose visit
+    branch returns."""
+    static def on_path(target: object, vs: uni.VisitStmt) -> bool {
+        if target is None {
+            return True;
+        }
+        anc = vs.find_parent_of_type(uni.IfStmt);
+        top = None;
+        while anc is not None {
+            top = anc;
+            body = list(anc.body);
+            eb = anc.else_body;
+            els = ([eb] if isinstance(eb, uni.IfStmt) else (list(eb.body) if eb is not None else []));
+            vs_body = contains(body, vs);
+            vs_else = contains(els, vs);
+            if (vs_body and contains(els, target)) or (vs_else and contains(body, target)) {
+                return False;
+            }
+            anc = anc.find_parent_of_type(uni.IfStmt);
+        }
+        if top is not None and returns_after(vs) and target.loc.first_line > top.loc.last_line {
+            return False;
+        }
+        return True;
+    }
+
+    """The writes of field `f` on the way from `src` to `dst` along `path`, in
+    path order (src's ability after the call, the abilities passed through, dst's
+    ability before the call)."""
+    def defs_on_path(f: str, src: Site, dst: Site, path: list) -> list {
+        out: list = [];
+        leave_src = path[0][1] if path else None;
+        for d in self.defs.get(f, []) {
+            if d.ability == src.ability and d.lineno >= src.call.loc.first_line {
+                if (leave_src is None and d.lineno < dst.call.loc.first_line) or (leave_src is not None and Analysis.on_path(d.ast_node, leave_src)) {
+                    out.append((0, d.lineno, d));
+                }
+            }
+        }
+        for (i, (ab, vs)) in enumerate(path) {
+            for d in self.defs.get(f, []) {
+                if d.ability != ab {
+                    continue;
+                }
+                if (i == len(path) - 1 and d.lineno < dst.call.loc.first_line) or (i < len(path) - 1 and Analysis.on_path(d.ast_node, path[i + 1][1])) {
+                    out.append((i + 1, d.lineno, d));
+                }
+            }
+        }
+        return [d for (_, __, d) in sorted(out, key=self._by_pos)];
+    }
+
+    static def _by_pos(item: tuple) -> tuple {
+        return (item[0], item[1]);
+    }
+
+    """How each of dst's bindings resolves when dst is reached from src along
+    `path`: the binding's value is the last write of its field on the way, or,
+    when nothing on the way writes it, the value the field had at src's call.
+    Recorded only where that gives a definite origin (CONST, COPY, RESP); the
+    static, path-free class stays the fallback."""
+    def edge_overrides(src: Site, dst: Site, path: list) -> dict {
+        out: dict = {};
+        for (pname, f) in dst.fields.items() {
+            if not f or f.endswith("[]") {
+                continue;
+            }
+            ds = self.defs_on_path(f, src, dst, path);
+            if ds {
+                last_ab = ds[-1].ability;
+                cands = self._prefer_main([d for d in ds if d.ability == last_ab]);
+            } else {
+                cands = self.reaching(f, src.ability, src.call.loc.first_line);
+                if not cands and not self.defs.get(f, []) {
+                    continue;   # a session constant: the static class already says so
+                }
+            }
+            results: list = [];
+            for d in cands {
+                if d.kind == "extend" {
+                    results.append(None);
+                    continue;
+                }
+                lit = None;
+                try {
+                    lit = repr(literal_value(d.rhs));
+                } except Exception {}
+                if lit is not None {
+                    results.append((Heterogeneity.CONST, None, lit));
+                    continue;
+                }
+                src_r = self.response_source(d.rhs, d.ability, d.lineno) if d.rhs is not None else None;
+                if src_r is not None {
+                    results.append((Heterogeneity.RESP, (src_r[0].key, src_r[1]), None));
+                    continue;
+                }
+                c = self.carrier_after(d, f, dst) if ds else None;
+                results.append((Heterogeneity.COPY, (c.key, self.carries(c, f)), None) if c is not None else None);
+            }
+            if results and all([r is not None and r == results[0] for r in results]) {
+                (het, source, lit) = results[0];
+                b = dst_binding_stub(pname, f, het, source, lit);
+                out[pname] = b;
+            }
+        }
+        return out;
+    }
+
+    """Walker fields written between site `src` and site `dst` along `path` (a list
+    of (ability, visit that reached it)): in src's ability after the call and on
+    the way to the visit that leaves it, in every ability passed through on the
+    way to its own leaving visit, in dst's ability before the call. Any kind of
+    write counts; a write on the call's own line (the result assigned) counts."""
+    def writes_between(src: Site, dst: Site, path: list) -> set {
+        out: set = set();
+        leave_src = path[0][1] if path else None;
+        for (f, ds) in self.defs.items() {
+            for d in ds {
+                hit = False;
+                if d.ability == src.ability and d.lineno >= src.call.loc.first_line {
+                    if leave_src is None {
+                        hit = d.lineno < dst.call.loc.first_line;
+                    } else {
+                        hit = Analysis.on_path(d.ast_node, leave_src);
+                    }
+                } else {
+                    for (i, (ab, vs)) in enumerate(path) {
+                        if d.ability != ab {
+                            continue;
+                        }
+                        if i == len(path) - 1 {
+                            hit = d.lineno < dst.call.loc.first_line;
+                        } else {
+                            hit = Analysis.on_path(d.ast_node, path[i + 1][1]);
+                        }
+                    }
+                }
+                if hit {
+                    out.add(f);
+                }
+            }
+        }
+        return out;
     }
 
     # -- binding classification -------------------------------------------
@@ -901,14 +1103,25 @@ obj Analysis {
             }
         }
         header = "\n".join(lines[:head_end]);
+        resp_spec = None;
+        try {
+            resp_spec = type_spec(rt.resp_type) if rt.resp_type is not None and rt.resp_type is not str else None;
+            if resp_spec is not None and resp_spec.get("k") != "obj" {
+                resp_spec = {"k": "wrapped", "of": resp_spec};   # byllm wraps non-object replies in schema_object_wrapper
+            }
+        } except Exception {}
         t = PromptTemplate(
-            key=s.key, model=model, call_params=call_params, system_prompt=system_prompt,
+            key=s.key, ability=s.ability, resp_spec=resp_spec,
+            model=model, call_params=call_params, system_prompt=system_prompt,
             tool_schema=(rt.get_tool_list() or None), response_format=rt.get_output_schema(),
             header=header, hint=schema_to_hint_text(rt.get_output_schema()) or "", hint_as_part=as_part,
             no_header_last=bool(extra_body.get("no_header_last", False))
         );
         for p in params {
             (het, src, lit, scope) = self.classify(s, p);
+            if het is Heterogeneity.COPY and src is not None and src[1] != p {
+                het = Heterogeneity.TAKE;   # the same bytes, another site's parameter name
+            }
             t.bindings.append(Binding(name=p, heterogeneity=het, kind=BindingKind.PARAM,
                                       source=src, literal=lit, field=s.fields.get(p, ""), scope=scope,
                                       label=f"{p} = "));
@@ -952,9 +1165,9 @@ obj Analysis {
         }
         exits: set = set();
         for s in self.sites {
-            (nxt, ends) = self.first_sites(s.ability, s.call.loc.first_line, set());
-            for n in nxt {
-                program.add_edge(s.key, n.key);
+            (paths, ends) = self.first_paths(s.ability, s.call.loc.first_line, set());
+            for (n, path) in paths {
+                program.add_edge(s.key, n.key, frozenset(self.writes_between(s, n, path)), self.edge_overrides(s, n, path));
             }
             if ends {
                 exits.add(s.key);
@@ -982,7 +1195,10 @@ def describe(p: Program) -> str {
             sc = f"  [scope {b.scope}]" if b.scope else "";
             out.append(f"    {b.kind.name:5} {b.name:16} {b.heterogeneity.name:8}{src}{lit}{sc}");
         }
-        out.append("    -> " + ", ".join([repr(e.dst) for e in p.successors(k)]));
+        for e in p.successors(k) {
+            ov = ", ".join([f"{n}={ob.heterogeneity.name}" + (f"<-{ob.source[0]!r}.{ob.source[1]}" if ob.source else "") + (f"={ob.literal}" if ob.literal is not None else "") for (n, ob) in e.overrides.items()]);
+            out.append(f"    -> {e.dst!r}" + (f"  writes {sorted(e.writes)}" if e.writes else "") + (f"  via-edge: {ov}" if ov else ""));
+        }
     }
     return "\n".join(out);
 }

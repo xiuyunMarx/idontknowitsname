@@ -13,9 +13,10 @@ Protocol (closed loop, like fact_bench / PBKV's "number of concurrent workflows"
     the other program's lanes have all finished (sessions in flight complete and count), so
     both programs share the pool for the whole run without guessing a JCT ratio. Default:
     coding fixed at 5 per lane, fact_check follows.
-  * header-last: not a server flag here. fact_check.jac in this directory declares
-    `extra_body={"no_header_last": True}` on its InterceptorLLM, so the server keeps that
-    program's headers in front while coding_agent's sites may still go header-last.
+  * registration: both programs' static analyses are registered with the server before
+    the warmup (static_analysis.agent_launcher), fact_check with no_header_last unless
+    --fact-header-last, so its headers stay in front while coding_agent's sites may go
+    header-last. An opaque baseline answers 404; that is its design.
   * every session is its own `jac run` process; the server log is joined by pid, so each
     program's [serve] rows are attributed exactly.
 
@@ -38,9 +39,9 @@ from benchmark.fact_check import fact_bench as fb
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-FACT_PROGRAM = os.path.join(HERE, "fact_check.jac")
-CODE_PROGRAM = os.path.join(HERE, "coding_agent.jac")
-FACT_CLAIMS = os.path.join(HERE, "hover_claims_120.tsv")
+FACT_PROGRAM = os.path.join(REPO, "benchmark", "fact_check", "fact_check.jac")   # the canonical programs, not copies
+CODE_PROGRAM = os.path.join(REPO, "benchmark", "coding", "coding_agent.jac")
+FACT_CLAIMS = os.path.join(REPO, "benchmark", "fact_check", "hover_claims_120.tsv")
 CODE_TASKS = os.path.join(REPO, "benchmark", "coding", "tasks.txt")
 
 PROGRAMS = {   # name -> (program path arg, claim env var, claims file arg, first synchronized wave key)
@@ -108,14 +109,17 @@ def report_program(tag, name, records, serves, window):
 
 
 def program_counters(path):
-    new, joined = [], 0
+    """(registered program files, opaque requests): the server registers each
+    program once at startup of the run and serves any request without a matching
+    call site as opaque text."""
+    registered, opaque = [], 0
     with open(path) as f:
         for ln in f:
-            if ln.startswith("[program] new: "):
-                new.append(ln[len("[program] new: "):].strip())
-            elif ln.startswith("[program] ") and "joined mid-program" in ln:
-                joined += 1
-    return new, joined
+            if ln.startswith("[program] ") and " sites, " in ln:
+                registered.append(os.path.basename(ln[len("[program] "):].split(":", 1)[0]))
+            elif ln.startswith("[call] ") and "opaque request" in ln:
+                opaque += 1
+    return registered, opaque
 
 
 def main():
@@ -134,9 +138,21 @@ def main():
     ap.add_argument("--tag", default="mixed")
     ap.add_argument("--server-log", default=None)
     ap.add_argument("--logdir", default=None)
+    ap.add_argument("--server", default="localhost:8964", metavar="HOST:PORT", help="where to register the programs")
+    ap.add_argument("--no-register", action="store_true", help="skip the registration (opaque baselines)")
+    ap.add_argument("--fact-header-last", action="store_true", help="let fact_check's sites go header-last too")
     args = ap.parse_args()
 
     os.environ.setdefault("FC_CACHE_DIR", os.path.join(REPO, "benchmark", "fact_check", "wiki_cache"))
+    if not args.no_register:
+        from static_analysis.agent_launcher import analyze_program, register
+        for prog, nhl in ((args.fact_program, not args.fact_header_last), (args.code_program, False)):
+            payload = analyze_program(os.path.abspath(prog))
+            try:
+                reply = register(args.server, payload, no_header_last=nhl)
+                print(f"[{args.tag}] registered {os.path.basename(prog)}: {reply} no_header_last={nhl}", flush=True)
+            except RuntimeError as e:
+                print(f"[{args.tag}] registration skipped for {os.path.basename(prog)}: {e}", flush=True)
     lanes = {"fact": args.fact_lanes, "code": args.code_lanes}
     per_lane = {"fact": args.fact_sessions, "code": args.code_sessions}
     follow = {name for name in PROGRAMS if per_lane[name] == 0}
@@ -193,9 +209,9 @@ def main():
         for name in PROGRAMS:
             pids = {r["pid"] for r in records if r["program"] == name and r["phase"] == "measured"}
             serves[name], counters = fb.parse_log(args.server_log, pids)
-        new, joined = program_counters(args.server_log)
-        print(f"[{tag}] programs learned={len(new)} ({', '.join(new)}) joined_mid_program={joined}"
-              + ("" if len(new) == 2 and joined == 0 else "   <-- UNEXPECTED, check the decompiler"), flush=True)
+        new, opaque = program_counters(args.server_log)
+        print(f"[{tag}] programs registered={len(new)} ({', '.join(new)}) opaque_requests={opaque}"
+              + ("" if len(new) == 2 and opaque == 0 else "   <-- UNEXPECTED: check the registration and the callsite field"), flush=True)
     for name in PROGRAMS:
         report_program(tag, name, records, serves[name], window)
     both = serves["fact"] + serves["code"]

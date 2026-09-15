@@ -132,6 +132,8 @@ class PromptTemplate:
     speculates with the template;
     """
     key: CallSiteID                            # the call expression this template belongs to
+    ability: str = ""                          # the walker ability the call sits in, e.g. "Planner.start" (binding scopes name these)
+    resp_spec: Optional[Dict[str, Any]] = None # structure of the return type, to render a reply's repr (see type_spec)
     model: str = ""
     call_params: Dict[str, Any] = field(default_factory=dict)  # temperature, max_tokens, ...
     system_prompt: str = ""                    # bytes before the user message, never re-laid-out
@@ -165,15 +167,7 @@ class PromptTemplate:
 
     # Layout
     def decide_layout(self) -> None:
-        """Order the params so the bytes most likely already cached lead: values
-        shared with another callsite first; among them the ones that survive this
-        site's own consecutive calls (session scope: constants, session copies,
-        append-only histories) before the ones a scope exit resets (a per-task
-        copy); then by heterogeneity rank. The header moves behind the values when
-        the leading param is shared. This reproduces the dynamic layout the old
-        server froze from traffic (its key was cross-site sharing, then the
-        fraction of the site's consecutive calls that saw a fresh value, then the
-        evolution kind), deterministically and without warmup."""
+        """Order the params so the bytes most likely already cached lead"""
         names = [b.name for b in self.params]
         ranked = sorted(names, key=lambda n: (0 if self.binding(n).shared else 1,
                                               0 if self.binding(n).scope == "" else 1,
@@ -195,9 +189,7 @@ class PromptTemplate:
                 body += "\n\n" + f"{b.label}{values[b.name]}" + b.tail
         if not self.header:
             return body
-        # header_last: the whole header block moves behind the values and the
-        # self block, so the message ends with the schema rows (as the old
-        # server's relayout_user laid it out).
+        # header_last: the whole header block moves behind the values, 
         return body + "\n" + self.header if self.header_last else self.header + "\n" + body
 
     def hint_join(self, user_text: str) -> str:
@@ -287,6 +279,7 @@ class CallInstance:
     t_arrive: float = 0.0
     t_done: float = 0.0
     response: str = ""
+    served_ids: List[int] = field(default_factory=list)      # token ids of the served prompt (first turn)
     engine_time: List[float] = field(default_factory=list)   # per HTTP turn
     gap: List[float] = field(default_factory=list)           # between turns
 
@@ -302,6 +295,8 @@ class Edge:
     """A visit-graph edge with the server's marks on it."""
     src: CallSiteID
     dst: CallSiteID
+    writes: FrozenSet[str] = frozenset()       # walker fields the program writes between the two calls (static)
+    overrides: Dict[str, Binding] = field(default_factory=dict)   # dst binding name -> how it resolves along THIS edge
     count: int = 0                             # times the transition was taken
     gap: List[float] = field(default_factory=list)   # seconds from src's reply to dst's arrival
     stats: CallStats = field(default_factory=CallStats)   # dst's timing when reached from src
@@ -347,6 +342,7 @@ class Program:
                 # describe the field
                 k = 3 if b.heterogeneity is Heterogeneity.EXTEND else 1
                 kind[b.field] = max(kind.get(b.field, 1), k)
+
         for t in self.sites.values():
             def key(n: str, t: PromptTemplate = t) -> Tuple[int, int, int]:
                 b = t.binding(n)
@@ -365,11 +361,29 @@ class Program:
         self.sites[t.key] = t
         return t
 
-    def add_edge(self, src: CallSiteID, dst: CallSiteID) -> Edge:
+    def add_edge(self, src: CallSiteID, dst: CallSiteID, writes: Optional[FrozenSet[str]] = None,
+                 overrides: Optional[Dict[str, Binding]] = None) -> Edge:
         e = self.edges.get((src, dst))
         if e is None:
             e = self.edges[(src, dst)] = Edge(src, dst)
+        if writes:
+            e.writes = e.writes | frozenset(writes)
+        if overrides:
+            e.overrides.update(overrides)
         return e
+
+    def resets(self) -> Dict[str, FrozenSet[str]]:
+        """ability -> walker fields whose values die when that ability runs (the
+        bindings' scopes, inverted): the runtime invalidation table."""
+        out: Dict[str, set] = {}
+        for t in self.sites.values():
+            for b in t.bindings:
+                base = b.field[:-2] if b.field.endswith("[]") else b.field
+                if not base or not b.scope:
+                    continue
+                for ab in b.scope.split("|"):
+                    out.setdefault(ab, set()).add(base)
+        return {k: frozenset(v) for k, v in out.items()}
 
     def successors(self, key: CallSiteID) -> List[Edge]:
         return [e for (s, _), e in self.edges.items() if s == key]
@@ -460,6 +474,131 @@ class PredictedCall:
     t90: float
 
 
+# ------------------------------------------------------------------ reply repr
+
+def type_spec(t: Any, depth: int = 0) -> Dict[str, Any]:
+    """The structure of a return type, as JSON, enough to write the repr of the
+    object byllm parses a reply into (`Verdict(label=<VerdictLabel.NEED_MORE: 3>,
+    rationale='r', sources=['a'])`): objects with their fields in declaration
+    order and default reprs, enums with their member names by value, containers,
+    primitives. Computed by the analyzer from the real classes."""
+    import dataclasses
+    import enum as _enum
+    import typing
+    if depth > 6 or t is None or t is type(None):
+        return {"k": "prim", "t": "none"}
+    origin = typing.get_origin(t)
+    args = typing.get_args(t)
+    if origin in (list, set, frozenset, tuple):
+        return {"k": "list", "item": type_spec(args[0], depth + 1) if args else {"k": "prim", "t": "any"}}
+    if origin is dict:
+        return {"k": "dict", "value": type_spec(args[1], depth + 1) if len(args) > 1 else {"k": "prim", "t": "any"}}
+    if origin is not None:   # Optional[X], X | Y: the first non-None member
+        inner = [a for a in args if a is not type(None)]
+        return {"k": "opt", "of": type_spec(inner[0], depth + 1)} if inner else {"k": "prim", "t": "none"}
+    if isinstance(t, type):
+        if issubclass(t, _enum.Enum):
+            return {"k": "enum", "name": t.__name__, "members": {str(m.value): m.name for m in t}}
+        if dataclasses.is_dataclass(t):
+            try:
+                hints = typing.get_type_hints(t)
+            except Exception:
+                hints = {}
+            fields = []
+            for f in dataclasses.fields(t):
+                if f.name.startswith("_"):
+                    continue
+                default: Optional[str] = None
+                if f.default is not dataclasses.MISSING:
+                    default = repr(f.default)
+                elif f.default_factory is not dataclasses.MISSING:  # type: ignore[misc]
+                    try:
+                        default = repr(f.default_factory())  # type: ignore[misc]
+                    except Exception:
+                        default = None
+                fields.append([f.name, type_spec(hints.get(f.name, f.type), depth + 1), default])
+            return {"k": "obj", "name": t.__name__, "fields": fields}
+        if t in (str, int, float, bool):
+            return {"k": "prim", "t": t.__name__}
+    return {"k": "prim", "t": "any"}
+
+
+def render_repr(value: Any, spec: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The repr of the object byllm builds from JSON `value` under `spec`, or None
+    when the value does not fit (the speculation is then simply not attempted)."""
+    if spec is None:
+        return None
+    k = spec.get("k")
+    if k == "wrapped":   # byllm's schema_object_wrapper around a non-object return type
+        if isinstance(value, dict) and "schema_object_wrapper" in value:
+            value = value["schema_object_wrapper"]
+        return render_repr(value, spec["of"])
+    if k == "prim":
+        t = spec.get("t")
+        if value is None:
+            return "None"
+        if t == "float" and isinstance(value, (int, float)) and not isinstance(value, bool):
+            return repr(float(value))
+        if t == "int" and isinstance(value, float) and value.is_integer():
+            return repr(int(value))
+        if t == "str" and not isinstance(value, str):
+            return None
+        return repr(value)
+    if k == "opt":
+        return "None" if value is None else render_repr(value, spec["of"])
+    if k == "enum":
+        name = spec["members"].get(str(value))
+        if name is None and isinstance(value, str):     # the member's name instead of its value
+            for v, n in spec["members"].items():
+                if n == value:
+                    name, value = n, (int(v) if v.lstrip("-").isdigit() else v)
+                    break
+        if name is None:
+            return None
+        return f"<{spec['name']}.{name}: {value!r}>"
+    if k == "list":
+        if not isinstance(value, list):
+            return None
+        parts = [render_repr(v, spec["item"]) for v in value]
+        return None if any(p is None for p in parts) else "[" + ", ".join(parts) + "]"   # type: ignore[arg-type]
+    if k == "dict":
+        if not isinstance(value, dict):
+            return None
+        parts = []
+        for kk, vv in value.items():
+            r = render_repr(vv, spec["value"])
+            if r is None:
+                return None
+            parts.append(f"{kk!r}: {r}")
+        return "{" + ", ".join(parts) + "}"
+    if k == "obj":
+        if not isinstance(value, dict):
+            return None
+        parts = []
+        for name, fspec, default in spec["fields"]:
+            if name in value:
+                r = render_repr(value[name], fspec)
+                if r is None:
+                    return None
+            elif default is not None:
+                r = default
+            else:
+                return None
+            parts.append(f"{name}={r}")
+        return f"{spec['name']}(" + ", ".join(parts) + ")"
+    return None
+
+
+def field_spec(spec: Optional[Dict[str, Any]], name: str) -> Optional[Dict[str, Any]]:
+    """The spec of one field of an object spec."""
+    if not spec or spec.get("k") != "obj":
+        return None
+    for fname, fspec, _ in spec["fields"]:
+        if fname == name:
+            return fspec
+    return None
+
+
 # ------------------------------------------------------------------ wire format
 
 def site_to_dict(cs: CallSiteID) -> Dict[str, Any]:
@@ -475,6 +614,8 @@ def template_to_dict(t: PromptTemplate) -> Dict[str, Any]:
     registers. Runtime marks (stats, order, header_last) are not on the wire."""
     return {
         "key": site_to_dict(t.key),
+        "ability": t.ability,
+        "resp_spec": t.resp_spec,
         "model": t.model,
         "call_params": t.call_params,
         "system_prompt": t.system_prompt,
@@ -484,34 +625,43 @@ def template_to_dict(t: PromptTemplate) -> Dict[str, Any]:
         "hint": t.hint,
         "hint_as_part": t.hint_as_part,
         "no_header_last": t.no_header_last,
-        "bindings": [{
-            "name": b.name,
-            "kind": b.kind.name,
-            "heterogeneity": b.heterogeneity.name,
-            "source": [site_to_dict(b.source[0]), b.source[1]] if b.source else None,
-            "literal": b.literal,
-            "field": b.field,
-            "scope": b.scope,
-            "label": b.label,
-            "tail": b.tail,
-        } for b in t.bindings],
+        "bindings": [_binding_to_dict(b) for b in t.bindings],
     }
+
+
+def _binding_to_dict(b: Binding) -> Dict[str, Any]:
+    return {
+        "name": b.name,
+        "kind": b.kind.name,
+        "heterogeneity": b.heterogeneity.name,
+        "source": [site_to_dict(b.source[0]), b.source[1]] if b.source else None,
+        "literal": b.literal,
+        "field": b.field,
+        "scope": b.scope,
+        "label": b.label,
+        "tail": b.tail,
+    }
+
+
+def _binding_from_dict(b: Dict[str, Any]) -> Binding:
+    src = b.get("source")
+    return Binding(
+        name=b["name"], heterogeneity=Heterogeneity[b.get("heterogeneity", "VOLATILE")],
+        kind=BindingKind[b.get("kind", "PARAM")],
+        source=(site_from_dict(src[0]), str(src[1])) if src else None,
+        literal=b.get("literal"), field=b.get("field", ""), scope=b.get("scope", ""),
+        label=b.get("label", ""), tail=b.get("tail", ""))
 
 
 def template_from_dict(d: Dict[str, Any]) -> PromptTemplate:
     t = PromptTemplate(
-        key=site_from_dict(d["key"]), model=d.get("model", ""), call_params=dict(d.get("call_params") or {}),
+        key=site_from_dict(d["key"]), ability=d.get("ability", ""), resp_spec=d.get("resp_spec"),
+        model=d.get("model", ""), call_params=dict(d.get("call_params") or {}),
         system_prompt=d.get("system_prompt", ""), tool_schema=d.get("tool_schema"),
         response_format=d.get("response_format"), header=d.get("header", ""), hint=d.get("hint", ""),
         hint_as_part=bool(d.get("hint_as_part", False)), no_header_last=bool(d.get("no_header_last", False)))
     for b in d.get("bindings", []):
-        src = b.get("source")
-        t.bindings.append(Binding(
-            name=b["name"], heterogeneity=Heterogeneity[b.get("heterogeneity", "VOLATILE")],
-            kind=BindingKind[b.get("kind", "PARAM")],
-            source=(site_from_dict(src[0]), str(src[1])) if src else None,
-            literal=b.get("literal"), field=b.get("field", ""), scope=b.get("scope", ""),
-            label=b.get("label", ""), tail=b.get("tail", "")))
+        t.bindings.append(_binding_from_dict(b))
     return t
 
 
@@ -519,7 +669,8 @@ def program_to_dict(p: Program) -> Dict[str, Any]:
     return {
         "entry": site_to_dict(p.entry),
         "sites": [template_to_dict(t) for t in p.sites.values()],
-        "edges": [[site_to_dict(a), site_to_dict(b)] for (a, b) in p.edges],
+        "edges": [[site_to_dict(a), site_to_dict(b), sorted(e.writes),
+                   {n: _binding_to_dict(ob) for n, ob in e.overrides.items()}] for (a, b), e in p.edges.items()],
         "exits": [site_to_dict(k) for k in p.exits],
     }
 
@@ -528,8 +679,9 @@ def program_from_dict(d: Dict[str, Any]) -> Program:
     p = Program(entry=site_from_dict(d["entry"]))
     for t in d.get("sites", []):
         p.add_site(template_from_dict(t))
-    for a, b in d.get("edges", []):
-        p.add_edge(site_from_dict(a), site_from_dict(b))
+    for row in d.get("edges", []):
+        p.add_edge(site_from_dict(row[0]), site_from_dict(row[1]), frozenset(row[2]) if len(row) > 2 else None,
+                   {n: _binding_from_dict(ob) for n, ob in row[3].items()} if len(row) > 3 else None)
     p.exits = frozenset(site_from_dict(k) for k in d.get("exits", []))
     return p
 

@@ -80,6 +80,12 @@ class KVPlanner:
         self._served.setdefault(sid, []).append((ids, fixed_len))
         self._dirty = True
 
+    def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None:
+        """A served prompt's values past `keep_len` are dead (the program reset the
+        walker fields they carried): that tail is demoted, it will not be reused."""
+        self._demote.append((ids, keep_len))
+        self._dirty = True
+
     def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
         """A call arrived, update ground truth for the next prediction"""
         js = [j for j in self._jobs.get(sid, {}).values() if j.site == site]

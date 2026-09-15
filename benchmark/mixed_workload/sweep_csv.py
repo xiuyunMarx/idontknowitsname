@@ -11,7 +11,7 @@ FIELDS = ["run", "model", "fact_lanes", "code_lanes", "concurrency", "arm", "pro
           "sessions", "failed", "jct_p50_s", "jct_p95_s", "jct_mean_s",
           "jct_overlap_p50_s", "jct_overlap_p95_s", "jct_overlap_mean_s", "overlap_n",
           "ttft_p50_ms", "ttft_p95_ms", "ttft_p50_inv2_ms", "calls", "prompt_tokens_per_call",
-          "device_pct", "host_pct", "miss_pct", "accuracy", "programs_learned", "joined_mid_program"]
+          "device_pct", "host_pct", "miss_pct", "accuracy", "programs_registered", "opaque_requests"]
 ROW_RE = r"\s+(\d+)\s+(\d+)ms\s+(\d+)ms\s+(\d+)\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%"
 
 
@@ -35,9 +35,9 @@ def rows_for(label, model, path):
     arm, f, c = ARMS[m.group(1)], int(m.group(2)), int(m.group(3))
     txt = open(path).read()
     base = {"run": label, "model": model, "fact_lanes": f, "code_lanes": c, "concurrency": f + c, "arm": arm}
-    mm = re.search(r"programs learned=(\d+) .* joined_mid_program=(\d+)", txt)
+    mm = re.search(r"programs registered=(\d+) .* opaque_requests=(\d+)", txt)
     if mm:
-        base["programs_learned"], base["joined_mid_program"] = mm.group(1), mm.group(2)
+        base["programs_registered"], base["opaque_requests"] = mm.group(1), mm.group(2)
     log = path[:-4] + ".log"
     if os.path.exists(log):
         for l in open(log):
