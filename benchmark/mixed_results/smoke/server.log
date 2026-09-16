@@ -1,0 +1,553 @@
+[http] listening on 0.0.0.0:8964
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-09-15 16:17:40] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[rank0]:[W915 16:17:41.722058443 ProcessGroupGloo.cpp:516] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-09-15 16:17:42] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Multi-thread loading shards:   0% Completed | 0/5 [00:00<?, ?it/s]Multi-thread loading shards:  20% Completed | 1/5 [00:00<00:00,  7.09it/s]Multi-thread loading shards:  40% Completed | 2/5 [00:00<00:00,  3.05it/s]Multi-thread loading shards:  60% Completed | 3/5 [00:01<00:00,  2.69it/s]Multi-thread loading shards:  80% Completed | 4/5 [00:01<00:00,  2.39it/s]Multi-thread loading shards: 100% Completed | 5/5 [00:02<00:00,  2.25it/s]Multi-thread loading shards: 100% Completed | 5/5 [00:02<00:00,  2.49it/s]
+  0%|          | 0/7 [00:00<?, ?it/s]Capturing batches (bs=24 avail_mem=2.71 GB):   0%|          | 0/7 [00:00<?, ?it/s]Capturing batches (bs=24 avail_mem=2.71 GB):  14%|█▍        | 1/7 [00:01<00:07,  1.32s/it]Capturing batches (bs=16 avail_mem=2.66 GB):  14%|█▍        | 1/7 [00:01<00:07,  1.32s/it]Capturing batches (bs=12 avail_mem=2.63 GB):  14%|█▍        | 1/7 [00:01<00:07,  1.32s/it]Capturing batches (bs=12 avail_mem=2.63 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.52it/s]Capturing batches (bs=8 avail_mem=2.63 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.52it/s] Capturing batches (bs=4 avail_mem=2.61 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.52it/s]Capturing batches (bs=4 avail_mem=2.61 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.47it/s]Capturing batches (bs=2 avail_mem=2.60 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.47it/s]Capturing batches (bs=1 avail_mem=2.58 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.47it/s]Capturing batches (bs=1 avail_mem=2.58 GB): 100%|██████████| 7/7 [00:01<00:00,  6.47it/s]Capturing batches (bs=1 avail_mem=2.58 GB): 100%|██████████| 7/7 [00:01<00:00,  4.10it/s]
+[ledger] device=31830 tokens host=54253 tokens stride=8 kv_bytes_per_token=147456
+[warmup] engine ready in 350 ms
+[loop] 0: head ClaimAnalyzer.decompose_claim:90 body ['ClaimAnalyzer.decompose_claim:90', 'EvidenceAnalyzer.verify_claim:249', 'EvidenceScout.assess_evidence:203']
+[loop] 1: head EvidenceScout.assess_evidence:203 body ['EvidenceScout.assess_evidence:203'] in loop 0
+[layout] ClaimAnalyzer.decompose_claim:90 order=['claim', 'evidences', 'maximum_questions'] header_last=False bindings=[('maximum_questions', 'CONST'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[layout] EvidenceScout.assess_evidence:203 order=['claim', 'evidences', 'search_results', 'question'] header_last=False bindings=[('search_results', 'VOLATILE'), ('question', 'RESP'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'COPY')]
+[layout] EvidenceAnalyzer.verify_claim:249 order=['claim', 'evidences'] header_last=False bindings=[('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[program] /home/xiaoyu/idontknowitsname/benchmark/applications/fact_check.jac: 3 sites, entry ClaimAnalyzer.decompose_claim:90, exits ['EvidenceAnalyzer.verify_claim:249', 'EvidenceScout.assess_evidence:203'], edges ['ClaimAnalyzer.decompose_claim:90->EvidenceAnalyzer.verify_claim:249', 'ClaimAnalyzer.decompose_claim:90->EvidenceScout.assess_evidence:203', 'EvidenceAnalyzer.verify_claim:249->ClaimAnalyzer.decompose_claim:90', 'EvidenceScout.assess_evidence:203->EvidenceAnalyzer.verify_claim:249', 'EvidenceScout.assess_evidence:203->EvidenceScout.assess_evidence:203']
+[loop] 0: head Planner.plan:125 body ['Analyzer.diagnose:236', 'Coder.implement:148', 'Planner.plan:125']
+[loop] 1: head Coder.implement:148 body ['Analyzer.diagnose:236', 'Coder.implement:148'] in loop 0
+[layout] Planner.plan:125 order=['module', 'spec', 'tries'] header_last=True bindings=[('spec', 'VOLATILE'), ('module', 'EXTEND'), ('tries', 'CONST'), ('self', 'CONST')]
+[layout] Coder.implement:148 order=['module', 'spec', 'tries', 'plan', 'advice'] header_last=True bindings=[('spec', 'COPY'), ('module', 'EXTEND'), ('plan', 'RESP'), ('advice', 'VOLATILE'), ('tries', 'EXTEND'), ('self', 'CONST')]
+[layout] Analyzer.diagnose:236 order=['module', 'spec', 'tries'] header_last=True bindings=[('spec', 'COPY'), ('module', 'EXTEND'), ('tries', 'EXTEND'), ('self', 'CONST')]
+[layout] Committer.commit:259 order=['module', 'attempts'] header_last=True bindings=[('module', 'EXTEND'), ('attempts', 'EXTEND'), ('self', 'CONST')]
+[program] /home/xiaoyu/idontknowitsname/benchmark/applications/coding_agent.jac: 4 sites, entry Planner.plan:125, exits ['Committer.commit:259'], edges ['Analyzer.diagnose:236->Coder.implement:148', 'Coder.implement:148->Analyzer.diagnose:236', 'Coder.implement:148->Committer.commit:259', 'Coder.implement:148->Planner.plan:125', 'Planner.plan:125->Coder.implement:148']
+[layout] Extractor.extract:70 order=['document', 'question'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('self', 'CONST')]
+[layout] Analyst.compute:89 order=['document', 'question', 'facts'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('facts', 'RESP'), ('self', 'CONST')]
+[layout] Auditor.check:111 order=['document', 'question', 'facts', 'analysis'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('facts', 'COPY'), ('analysis', 'RESP'), ('self', 'CONST')]
+[layout] Writer.answer:135 order=['question', 'facts', 'analysis', 'audit'] header_last=True bindings=[('question', 'COPY'), ('facts', 'COPY'), ('analysis', 'COPY'), ('audit', 'RESP'), ('self', 'CONST')]
+[program] /home/xiaoyu/idontknowitsname/benchmark/applications/doc_analysis.jac: 4 sites, entry Extractor.extract:70, exits ['Writer.answer:135'], edges ['Analyst.compute:89->Auditor.check:111', 'Auditor.check:111->Writer.answer:135', 'Extractor.extract:70->Analyst.compute:89']
+[loop] 0: head Agent.step:157 body ['Agent.step:157']
+[layout] Agent.step:157 order=['tools', 'question', 'history'] header_last=False bindings=[('tools', 'CONST'), ('question', 'COPY'), ('history', 'EXTEND'), ('self', 'CONST')]
+[program] /home/xiaoyu/idontknowitsname/benchmark/applications/BFCL_agent.jac: 1 sites, entry Agent.step:157, exits ['Agent.step:157'], edges ['Agent.step:157->Agent.step:157']
+[relayout] Extractor.extract:70 "document = '[page 59]\\nTable of Contents \\n3M Company and Subsidiaries\\nConsolidated Statement of Cash Flow s\\nYears ended December 31\\n \\n(Millions)\\n \\n2018\\n"...
+[call] 744789 #0 Extractor.extract:70 ctx=()
+[invalidate] 744789 Extractor.run kills ['facts']
+[timing] 744789 unplanned site=Extractor.extract:70
+[priority] plan-prio-eaba9a2b demote=0/0n retire=0/0n protect=2 nodes=0 ms=0.1
+[relayout] ClaimAnalyzer.decompose_claim:90 'ClaimAnalyzer.decompose_claim(maximum_questions: int, claim: str, evidences: list[Evidence]) -> list[str] --- Propose between one and maximum_questions self-con'...
+[call] 744784 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['questions']
+[timing] 744784 unplanned site=ClaimAnalyzer.decompose_claim:90
+[relayout] Agent.step:157 'Agent.step(tools: str, question: str, history: list[Step]) -> Action --- Answer `question` by searching and reading pages. Choose the next tool from `tools` giv'...
+[call] 744790 #0 Agent.step:157 ctx=(1,)
+[timing] 744790 unplanned site=Agent.step:157
+[relayout] Planner.plan:125 'module = \'\'\nspec = \'from typing import List\\n\\n\\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\\n    """ Check if in given list of numb'...
+[call] 744787 #0 Planner.plan:125 ctx=(1,)
+[invalidate] 744787 Planner.start kills ['advice', 'plan', 'spec', 'tries']
+[timing] 744787 unplanned site=Planner.plan:125
+[priority] plan-prio-199243df demote=0/0n retire=0/0n protect=5 nodes=2 ms=0.4
+[priority] plan-prio-48fc4f85 demote=0/0n retire=0/0n protect=7 nodes=3 ms=0.5
+[serve] 744789-1t0-9dfa5528 prompt_tokens=2895 cached_tokens=0 cached_device=0 cached_host=0 ttft_ms=698.27
+[ledger] drift +over=0 +under=6 (total {'over': 0, 'under': 6}) device_used=48
+[serve] 744784-1t0-5e248f29 prompt_tokens=468 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=875.10
+[serve] 744790-1t0-731e8274 prompt_tokens=428 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=841.98
+[serve] 744787-1t0-f9092e07 prompt_tokens=423 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=807.48
+[promote] plan-hold-04214219 tokens=48 device=48 host=0 started=0 free=27174 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-04214219 tokens=48 duration_ms=23.14
+[promote] plan-hold-8c61e8d0 tokens=48 device=48 host=0 started=0 free=27170 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-8c61e8d0 tokens=48 duration_ms=5.01
+[promote] plan-hold-3d079032 tokens=48 device=48 host=0 started=0 free=27166 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-3d079032 tokens=48 duration_ms=6.25
+[promote] plan-hold-0fda9b8b tokens=48 device=48 host=0 started=0 free=27162 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-0fda9b8b tokens=48 duration_ms=5.17
+[promote] plan-hold-a0904f56 tokens=48 device=48 host=0 started=0 free=27158 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-a0904f56 tokens=48 duration_ms=5.20
+[promote] plan-hold-f9d0beb8 tokens=48 device=48 host=0 started=0 free=27154 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-f9d0beb8 tokens=48 duration_ms=5.16
+[promote] plan-hold-911591a6 tokens=48 device=48 host=0 started=0 free=27150 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-911591a6 tokens=48 duration_ms=5.27
+[promote] plan-hold-da83a7fe tokens=48 device=48 host=0 started=0 free=27146 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-da83a7fe tokens=48 duration_ms=5.16
+[promote] plan-hold-674f5f20 tokens=48 device=48 host=0 started=0 free=27142 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-674f5f20 tokens=48 duration_ms=5.17
+[promote] plan-hold-2793d8c8 tokens=48 device=48 host=0 started=0 free=27138 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-2793d8c8 tokens=48 duration_ms=5.31
+[promote] plan-hold-6d1efff9 tokens=48 device=48 host=0 started=0 free=27134 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-6d1efff9 tokens=48 duration_ms=5.24
+[decode] 744784-1t0-5e248f29 decode_ms=527.32 output_tokens=26
+[ctl] 744784-1t0-5e248f29 queue_ms=0.1 advance_ms=8.7 pre_ms=1.3 post_ms=1.5
+[priority] plan-prio-98e7dc93 demote=1/1n retire=0/0n protect=7 nodes=7 ms=0.7
+[promote] plan-hold-df08558b tokens=416 device=416 host=0 started=0 free=27072 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-df08558b tokens=416 duration_ms=19.69
+[decode] 744790-1t0-731e8274 decode_ms=1350.03 output_tokens=66
+[ctl] 744790-1t0-731e8274 queue_ms=0.0 advance_ms=1.6 pre_ms=0.7 post_ms=1.0
+[priority] plan-prio-ae1ebdb9 demote=1/2n retire=0/0n protect=7 nodes=8 ms=0.6
+[close] 744790 calls=1
+[promote] plan-hold-194b3088 tokens=328 device=328 host=0 started=0 free=26954 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-194b3088 tokens=328 duration_ms=20.11
+[priority] plan-prio-849b6019 demote=0/0n retire=1/2n protect=6 nodes=7 ms=0.5
+[decode] 744787-1t0-f9092e07 decode_ms=2085.92 output_tokens=102
+[ctl] 744787-1t0-f9092e07 queue_ms=0.0 advance_ms=2.9 pre_ms=0.9 post_ms=1.6
+[relayout] Coder.implement:148 'module = \'\'\nspec = \'from typing import List\\n\\n\\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\\n    """ Check if in given list of numb'...
+[call] 744787 #1 Coder.implement:148 predicted=hit ctx=(1, 1)
+[invalidate] 744787 Coder.write kills ['plan']
+[timing] 744787 err_s=+0.01 done=48/52 kind=hold state=queued site=Coder.implement:148
+[priority] plan-prio-58c938c4 demote=1/1n retire=0/0n protect=6 nodes=7 ms=0.5
+[priority] plan-prio-c4df14ea demote=0/0n retire=0/0n protect=6 nodes=7 ms=0.4
+[serve] 744787-2t0-b5c69dce prompt_tokens=589 cached_tokens=185 cached_device=185 cached_host=0 ttft_ms=146.07
+[relayout] EvidenceScout.assess_evidence:203 'EvidenceScout.assess_evidence(search_results: str, question: str, claim: str, evidences: list[Evidence]) -> Finding --- Assess only the supplied search results,'...
+[call] 744784 #1 EvidenceScout.assess_evidence:203 predicted=hit ctx=(1, 1)
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+2.01 done=48/415 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-e724ddcd demote=0/0n retire=0/0n protect=6 nodes=7 ms=0.4
+[promote] plan-hold-2a8f61f3 tokens=48 device=48 host=0 started=0 free=24621 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-2a8f61f3 tokens=48 duration_ms=39.36
+[promote] plan-hold-6f65de22 tokens=48 device=48 host=0 started=0 free=24618 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-6f65de22 tokens=48 duration_ms=376.82
+[serve] 744784-2t0-4cd0f5b4 prompt_tokens=1878 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=445.03
+[decode] 744789-1t0-9dfa5528 decode_ms=4021.20 output_tokens=156
+[ctl] 744789-1t0-9dfa5528 queue_ms=0.1 advance_ms=14.6 pre_ms=5.1 post_ms=9.9
+[priority] plan-prio-c4cbc546 demote=1/2n retire=0/0n protect=7 nodes=9 ms=1.0
+[promote] plan-hold-70bb3764 tokens=2776 device=2776 host=0 started=0 free=24506 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-70bb3764 tokens=2776 duration_ms=18.98
+[promote] plan-hold-d6d1de58 tokens=2776 device=2776 host=0 started=0 free=24504 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-d6d1de58 tokens=2776 duration_ms=4.43
+[relayout] Analyst.compute:89 "document = '[page 59]\\nTable of Contents \\n3M Company and Subsidiaries\\nConsolidated Statement of Cash Flow s\\nYears ended December 31\\n \\n(Millions)\\n \\n2018\\n"...
+[call] 744789 #1 Analyst.compute:89 predicted=hit ctx=()
+[invalidate] 744789 Analyst.run kills ['facts']
+[timing] 744789 err_s=+0.12 done=2776/3041 kind=hold state=queued site=Analyst.compute:89
+[priority] plan-prio-705c2c15 demote=0/0n retire=0/0n protect=6 nodes=10 ms=0.5
+[promote] plan-hold-25bfd984 tokens=2776 device=2776 host=0 started=0 free=24234 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-25bfd984 tokens=2776 duration_ms=39.18
+[promote] plan-hold-59187ad6 tokens=48 device=48 host=0 started=0 free=24231 reserve=2048 ms=0.1
+[serve] 744789-2t0-68ebce87 prompt_tokens=3040 cached_tokens=2778 cached_device=2778 cached_host=0 ttft_ms=148.18
+[promote-rpc] plan-hold-59187ad6 tokens=48 duration_ms=76.82
+[decode] 744784-2t0-4cd0f5b4 decode_ms=1278.04 output_tokens=56
+[ctl] 744784-2t0-4cd0f5b4 queue_ms=0.0 advance_ms=0.7 pre_ms=3.3 post_ms=1.5
+[priority] plan-prio-d07073bb demote=1/2n retire=0/0n protect=6 nodes=11 ms=0.7
+[promote] plan-hold-c003793d tokens=408 device=408 host=0 started=0 free=23579 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-c003793d tokens=408 duration_ms=38.79
+[serve] 744784-2t1-9de873ea prompt_tokens=2489 cached_tokens=1872 cached_device=1872 cached_host=0 ttft_ms=177.05
+[decode] 744784-2t1-9de873ea decode_ms=1158.52 output_tokens=56
+[ctl] 744784-2t1-9de873ea queue_ms=0.0 advance_ms=0.1 pre_ms=3.4 post_ms=0.5
+[priority] plan-prio-3f15610e demote=1/3n retire=0/0n protect=6 nodes=12 ms=0.6
+[decode] 744789-2t0-68ebce87 decode_ms=1725.81 output_tokens=76
+[ctl] 744789-2t0-68ebce87 queue_ms=0.0 advance_ms=0.4 pre_ms=3.4 post_ms=7.4
+[priority] plan-prio-0ce9f879 demote=1/1n retire=0/0n protect=6 nodes=12 ms=0.7
+[promote] plan-hold-cc438ab6 tokens=2784 device=2784 host=0 started=0 free=23395 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-cc438ab6 tokens=2784 duration_ms=19.10
+[relayout] Auditor.check:111 "document = '[page 59]\\nTable of Contents \\n3M Company and Subsidiaries\\nConsolidated Statement of Cash Flow s\\nYears ended December 31\\n \\n(Millions)\\n \\n2018\\n"...
+[call] 744789 #2 Auditor.check:111 predicted=hit ctx=()
+[invalidate] 744789 Auditor.run kills ['analysis']
+[timing] 744789 err_s=+0.05 done=2784/3158 kind=hold state=queued site=Auditor.check:111
+[priority] plan-prio-ab3eb633 demote=0/0n retire=0/0n protect=5 nodes=8 ms=0.3
+[promote] plan-hold-43efa62a tokens=48 device=48 host=0 started=0 free=23046 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-43efa62a tokens=48 duration_ms=38.85
+[serve] 744789-3t0-a1187aef prompt_tokens=3158 cached_tokens=2811 cached_device=2811 cached_host=0 ttft_ms=158.38
+[decode] 744789-3t0-a1187aef decode_ms=208.98 output_tokens=11
+[ctl] 744789-3t0-a1187aef queue_ms=0.0 advance_ms=0.3 pre_ms=3.9 post_ms=1.4
+[relayout] Writer.answer:135 "question = 'What is the FY2018 capital expenditure amount (in USD millions) for 3M? Give a response to the question by relying on the details shown in the cash "...
+[call] 744789 #3 Writer.answer:135 predicted=hit ctx=()
+[invalidate] 744789 Writer.run kills ['audit']
+[timing] 744789 err_s=+0.01 done=48/515 kind=hold state=queued site=Writer.answer:135
+[priority] plan-prio-cdf8ff32 demote=1/9n retire=0/0n protect=5 nodes=8 ms=0.5
+[priority] plan-prio-7f4bb95a demote=0/0n retire=0/0n protect=4 nodes=8 ms=0.2
+[serve] 744789-4t0-51581e35 prompt_tokens=515 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=147.41
+[decode] 744787-2t0-b5c69dce decode_ms=4405.09 output_tokens=168
+[ctl] 744787-2t0-b5c69dce queue_ms=0.0 advance_ms=1.0 pre_ms=1.2 post_ms=1.6
+[priority] plan-prio-aa0edd17 demote=1/2n retire=0/0n protect=4 nodes=8 ms=0.4
+[call] 744784 #2 EvidenceScout.assess_evidence:203 predicted=hit ctx=(1, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=+2.01 done=408/415 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-d0372469 demote=0/0n retire=0/0n protect=4 nodes=8 ms=0.3
+[promote] plan-hold-ed4836aa tokens=48 device=48 host=0 started=0 free=20428 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-ed4836aa tokens=48 duration_ms=39.26
+[promote] plan-hold-c80ca9af tokens=416 device=416 host=0 started=0 free=19360 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-c80ca9af tokens=416 duration_ms=430.96
+[serve] 744784-3t0-b5728b70 prompt_tokens=3531 cached_tokens=415 cached_device=415 cached_host=0 ttft_ms=756.45
+[promote] plan-hold-d41e009d tokens=408 device=408 host=0 started=0 free=19348 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-d41e009d tokens=408 duration_ms=17.45
+[call] 744787 #2 Planner.plan:125 predicted=miss ctx=(2,)
+[invalidate] 744787 Planner.start kills ['advice', 'idx', 'spec', 'tries']
+[timing] 744787 err_s=+2.01 done=52/52 kind=hold state=done site=Planner.plan:125
+[priority] plan-prio-93bf7593 demote=2/6n retire=0/0n protect=4 nodes=9 ms=0.6
+[promote] plan-hold-6b2ab4e2 tokens=48 device=48 host=0 started=0 free=18775 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-6b2ab4e2 tokens=48 duration_ms=39.46
+[serve] 744787-3t0-80811ce6 prompt_tokens=611 cached_tokens=52 cached_device=52 cached_host=0 ttft_ms=170.82
+[decode] 744789-4t0-51581e35 decode_ms=2724.72 output_tokens=91
+[ctl] 744789-4t0-51581e35 queue_ms=0.0 advance_ms=0.2 pre_ms=0.9 post_ms=0.0
+[priority] plan-prio-ac531b88 demote=1/3n retire=0/0n protect=4 nodes=10 ms=0.5
+[serve] 744789-4t1-d879e266 prompt_tokens=883 cached_tokens=509 cached_device=509 cached_host=0 ttft_ms=148.28
+[decode] 744784-3t0-b5728b70 decode_ms=1241.96 output_tokens=47
+[ctl] 744784-3t0-b5728b70 queue_ms=0.0 advance_ms=7.2 pre_ms=5.5 post_ms=1.1
+[relayout] EvidenceAnalyzer.verify_claim:249 "EvidenceAnalyzer.verify_claim(claim: str, evidences: list[Evidence]) -> Verdict --- Apply HoVer's decision rule to the claim and all evidence together. Return S"...
+[call] 744784 #3 EvidenceAnalyzer.verify_claim:249 predicted=miss ctx=(1,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.01 done=48/1490 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-7aa444a4 demote=1/4n retire=0/0n protect=4 nodes=10 ms=0.6
+[promote] plan-hold-465b0e90 tokens=416 device=416 host=0 started=0 free=18298 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-465b0e90 tokens=416 duration_ms=13.83
+[priority] plan-prio-7d0b24f4 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.4
+[promote] plan-hold-d7b87791 tokens=48 device=48 host=0 started=0 free=15848 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-d7b87791 tokens=48 duration_ms=439.41
+[serve] 744784-4t0-eda36912 prompt_tokens=2501 cached_tokens=51 cached_device=51 cached_host=0 ttft_ms=605.53
+[decode] 744789-4t1-d879e266 decode_ms=2086.06 output_tokens=73
+[ctl] 744789-4t1-d879e266 queue_ms=0.0 advance_ms=0.1 pre_ms=1.9 post_ms=0.1
+[priority] plan-prio-7b28ec67 demote=1/4n retire=0/0n protect=4 nodes=12 ms=0.7
+[close] 744789 calls=4
+[priority] plan-prio-f38b3491 demote=0/0n retire=5/21n protect=4 nodes=12 ms=1.2
+[decode] 744784-4t0-eda36912 decode_ms=1732.45 output_tokens=84
+[ctl] 744784-4t0-eda36912 queue_ms=0.0 advance_ms=10.5 pre_ms=3.2 post_ms=4.4
+[call] 744784 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 744784 err_s=+0.01 done=416/2446 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-4fca2f05 demote=1/2n retire=0/0n protect=4 nodes=12 ms=0.7
+[priority] plan-prio-89ef8db4 demote=0/0n retire=0/0n protect=4 nodes=12 ms=0.5
+[serve] 744784-5t0-05838737 prompt_tokens=2492 cached_tokens=422 cached_device=422 cached_host=0 ttft_ms=518.74
+[promote] plan-hold-7567eb19 tokens=48 device=48 host=0 started=0 free=13548 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-7567eb19 tokens=48 duration_ms=2.82
+[promote] plan-hold-5a7a3127 tokens=48 device=48 host=0 started=0 free=13546 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-5a7a3127 tokens=48 duration_ms=4.95
+[promote] plan-hold-8a019ac9 tokens=416 device=416 host=0 started=0 free=13534 reserve=2048 ms=0.1
+[promote-rpc] plan-hold-8a019ac9 tokens=416 duration_ms=15.23
+[decode] 744787-3t0-80811ce6 decode_ms=3988.14 output_tokens=136
+[ctl] 744787-3t0-80811ce6 queue_ms=0.0 advance_ms=3.3 pre_ms=1.0 post_ms=1.8
+[call] 744787 #3 Coder.implement:148 predicted=hit ctx=(2, 1)
+[invalidate] 744787 Coder.write kills ['plan']
+[timing] 744787 err_s=-0.00 done=48/238 kind=hold state=queued site=Coder.implement:148
+[priority] plan-prio-4a4d739c demote=1/1n retire=0/0n protect=4 nodes=13 ms=0.8
+[priority] plan-prio-89f47db6 demote=1/2n retire=0/0n protect=4 nodes=13 ms=0.6
+[serve] 744787-4t0-cb7e9cec prompt_tokens=810 cached_tokens=373 cached_device=373 cached_host=0 ttft_ms=149.00
+[promote] plan-hold-e48090cd tokens=1536 device=1536 host=0 started=0 free=13084 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-e48090cd tokens=1536 duration_ms=8.09
+[decode] 744784-5t0-05838737 decode_ms=660.40 output_tokens=26
+[ctl] 744784-5t0-05838737 queue_ms=0.0 advance_ms=1.4 pre_ms=3.3 post_ms=5.0
+[priority] plan-prio-750f67c9 demote=1/2n retire=0/0n protect=4 nodes=14 ms=0.8
+[promote] plan-hold-5985b166 tokens=2440 device=2440 host=0 started=0 free=12975 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-5985b166 tokens=2440 duration_ms=9.82
+[call] 744784 #5 EvidenceScout.assess_evidence:203 predicted=hit ctx=(2, 1)
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+0.00 done=1536/2439 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-201832f0 demote=2/3n retire=0/0n protect=4 nodes=15 ms=0.9
+[serve] 744784-6t0-47af8d4d prompt_tokens=3902 cached_tokens=1538 cached_device=1538 cached_host=0 ttft_ms=617.30
+[promote] plan-hold-e33c7976 tokens=1536 device=1536 host=0 started=0 free=10564 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-e33c7976 tokens=1536 duration_ms=15.62
+[decode] 744784-6t0-47af8d4d decode_ms=1164.83 output_tokens=56
+[ctl] 744784-6t0-47af8d4d queue_ms=0.0 advance_ms=8.7 pre_ms=4.7 post_ms=1.4
+[priority] plan-prio-4e0daa90 demote=1/5n retire=0/0n protect=4 nodes=16 ms=0.9
+[decode] 744787-4t0-cb7e9cec decode_ms=4519.51 output_tokens=194
+[ctl] 744787-4t0-cb7e9cec queue_ms=0.0 advance_ms=1.5 pre_ms=1.3 post_ms=1.9
+[priority] plan-prio-928a2f9b demote=1/2n retire=0/0n protect=4 nodes=16 ms=0.8
+[promote] plan-hold-38dfbaa4 tokens=2432 device=2432 host=0 started=0 free=10465 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-38dfbaa4 tokens=2432 duration_ms=0.91
+[call] 744784 #6 EvidenceScout.assess_evidence:203 predicted=hit ctx=(2, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=+0.03 done=2432/2439 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-6461fc7f demote=0/0n retire=0/0n protect=4 nodes=17 ms=0.7
+[call] 744787 #4 Planner.plan:125 predicted=hit ctx=(3,)
+[invalidate] 744787 Planner.start kills ['advice', 'idx', 'spec', 'tries']
+[timing] 744787 err_s=+0.00 done=238/238 kind=hold state=done site=Planner.plan:125
+[promote] plan-hold-4f7d23b9 tokens=2384 device=2384 host=0 started=0 free=7349 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-4f7d23b9 tokens=2384 duration_ms=480.16
+[serve] 744784-7t0-d906fd8f prompt_tokens=5555 cached_tokens=2439 cached_device=2439 cached_host=0 ttft_ms=808.69
+[priority] plan-prio-47ea436f demote=4/12n retire=0/0n protect=4 nodes=20 ms=1.1
+[promote] plan-hold-a1da0dc3 tokens=232 device=232 host=0 started=0 free=6786 reserve=2048 ms=0.1
+[serve] 744787-5t0-893a6dcc prompt_tokens=800 cached_tokens=239 cached_device=239 cached_host=0 ttft_ms=502.47
+[promote-rpc] plan-hold-a1da0dc3 tokens=232 duration_ms=147.46
+[promote] plan-hold-acc73d9a tokens=2432 device=2432 host=0 started=0 free=6784 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-acc73d9a tokens=2432 duration_ms=10.00
+[promote] plan-hold-9c27c699 tokens=2440 device=2440 host=0 started=0 free=6760 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-9c27c699 tokens=2440 duration_ms=20.42
+[decode] 744784-7t0-d906fd8f decode_ms=1118.56 output_tokens=47
+[ctl] 744784-7t0-d906fd8f queue_ms=0.0 advance_ms=16.8 pre_ms=6.6 post_ms=1.7
+[call] 744784 #7 EvidenceAnalyzer.verify_claim:249 predicted=hit ctx=(2,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.00 done=2384/3514 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-771f1025 demote=1/8n retire=0/0n protect=4 nodes=22 ms=1.3
+[promote] plan-hold-c1802b36 tokens=2440 device=2440 host=0 started=0 free=6692 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-c1802b36 tokens=2440 duration_ms=1.33
+[priority] plan-prio-10b5eda1 demote=0/0n retire=0/0n protect=4 nodes=22 ms=0.8
+[promote] plan-hold-cd91c8e4 tokens=2384 device=2384 host=0 started=0 free=4558 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-cd91c8e4 tokens=2384 duration_ms=481.61
+[serve] 744784-8t0-514dc7b2 prompt_tokens=4525 cached_tokens=2391 cached_device=2391 cached_host=0 ttft_ms=551.09
+[decode] 744787-5t0-893a6dcc decode_ms=2762.87 output_tokens=107
+[ctl] 744787-5t0-893a6dcc queue_ms=0.0 advance_ms=4.8 pre_ms=1.1 post_ms=2.1
+[call] 744787 #5 Coder.implement:148 predicted=hit ctx=(3, 1)
+[invalidate] 744787 Coder.write kills ['plan']
+[timing] 744787 err_s=-0.00 done=232/466 kind=hold state=queued site=Coder.implement:148
+[priority] plan-prio-fab88d37 demote=1/1n retire=0/0n protect=4 nodes=23 ms=1.1
+[priority] plan-prio-7623d440 demote=2/4n retire=0/0n protect=4 nodes=23 ms=1.0
+[serve] 744787-6t0-aa31e20a prompt_tokens=984 cached_tokens=562 cached_device=562 cached_host=0 ttft_ms=149.00
+[promote] plan-hold-71d375d6 tokens=3560 device=3560 host=0 started=0 free=3991 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-71d375d6 tokens=3560 duration_ms=14.30
+[decode] 744784-8t0-514dc7b2 decode_ms=1937.41 output_tokens=87
+[ctl] 744784-8t0-514dc7b2 queue_ms=0.0 advance_ms=17.9 pre_ms=5.3 post_ms=7.2
+[call] 744784 #8 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(3,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 744784 err_s=+0.00 done=2440/4470 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-d6e527d9 demote=1/3n retire=0/0n protect=4 nodes=24 ms=1.2
+[priority] plan-prio-f9493c93 demote=0/0n retire=0/0n protect=4 nodes=24 ms=0.8
+[serve] 744784-9t0-dcbd04f0 prompt_tokens=4516 cached_tokens=2446 cached_device=2446 cached_host=0 ttft_ms=551.52
+[promote] plan-hold-da1e7731 tokens=2440 device=2440 host=0 started=0 free=1859 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-da1e7731 tokens=2440 duration_ms=9.54
+[promote] plan-hold-abc54554 tokens=3560 device=3560 host=0 started=0 free=1845 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-abc54554 tokens=3560 duration_ms=21.65
+[decode] 744784-9t0-dcbd04f0 decode_ms=544.04 output_tokens=26
+[ctl] 744784-9t0-dcbd04f0 queue_ms=0.0 advance_ms=2.2 pre_ms=5.9 post_ms=7.6
+[priority] plan-prio-b828e607 demote=1/2n retire=0/0n protect=4 nodes=25 ms=1.3
+[decode] 744787-6t0-aa31e20a decode_ms=2408.18 output_tokens=92
+[ctl] 744787-6t0-aa31e20a queue_ms=0.0 advance_ms=2.1 pre_ms=1.4 post_ms=2.2
+[priority] plan-prio-b7f1be4b demote=1/2n retire=0/0n protect=4 nodes=25 ms=1.2
+[promote] plan-hold-f995ba06 tokens=4464 device=4464 host=0 started=0 free=1803 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-f995ba06 tokens=4464 duration_ms=1.26
+[call] 744784 #9 EvidenceScout.assess_evidence:203 predicted=hit ctx=(3, 1)
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+0.00 done=3560/4463 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-92b20676 demote=4/5n retire=0/0n protect=4 nodes=26 ms=1.9
+[serve] 744784-10t0-c301cdcb prompt_tokens=5926 cached_tokens=3562 cached_device=3562 cached_host=0 ttft_ms=631.04
+[call] 744787 #6 Planner.plan:125 predicted=hit ctx=(4,)
+[invalidate] 744787 Planner.start kills ['advice', 'idx', 'spec', 'tries']
+[timing] 744787 err_s=-0.00 done=466/466 kind=hold state=done site=Planner.plan:125
+[priority] plan-prio-f7407325 demote=6/16n retire=0/0n protect=5 nodes=28 ms=1.7
+[promote] plan-hold-de6cec7c tokens=464 device=464 host=0 started=0 free=2822 reserve=2048 ms=0.2
+[promote-rpc] plan-hold-de6cec7c tokens=464 duration_ms=38.27
+[serve] 744787-7t0-ed26e5c9 prompt_tokens=937 cached_tokens=467 cached_device=467 cached_host=0 ttft_ms=157.87
+[promote] plan-hold-d64b9e80 tokens=3560 device=3560 host=0 started=0 free=2804 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-d64b9e80 tokens=3560 duration_ms=12.77
+[decode] 744784-10t0-c301cdcb decode_ms=1307.54 output_tokens=56
+[ctl] 744784-10t0-c301cdcb queue_ms=0.0 advance_ms=13.2 pre_ms=6.7 post_ms=1.7
+[priority] plan-prio-93bdb8c2 demote=1/10n retire=0/0n protect=5 nodes=31 ms=1.6
+[decode] 744787-7t0-ed26e5c9 decode_ms=2399.77 output_tokens=118
+[ctl] 744787-7t0-ed26e5c9 queue_ms=0.0 advance_ms=5.7 pre_ms=1.3 post_ms=2.0
+[call] 744787 #7 Coder.implement:148 predicted=hit ctx=(4, 1)
+[invalidate] 744787 Coder.write kills ['plan']
+[timing] 744787 err_s=+0.00 done=464/567 kind=hold state=queued site=Coder.implement:148
+[priority] plan-prio-f9da1d3e demote=1/2n retire=0/0n protect=5 nodes=31 ms=1.2
+[priority] plan-prio-d274ff6d demote=3/6n retire=0/0n protect=5 nodes=31 ms=1.2
+[serve] 744787-8t0-8244ed26 prompt_tokens=1122 cached_tokens=699 cached_device=699 cached_host=0 ttft_ms=131.37
+[promote] plan-hold-b1e64ecb tokens=4456 device=4456 host=0 started=0 free=2224 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-b1e64ecb tokens=4456 duration_ms=14.80
+[call] 744784 #10 EvidenceScout.assess_evidence:203 predicted=hit ctx=(3, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=-0.03 done=4456/4463 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-1d121e1b demote=0/0n retire=0/0n protect=5 nodes=32 ms=1.2
+[promote] plan-hold-42caab09 tokens=4408 device=4408 host=0 started=0 free=150 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-42caab09 tokens=4408 duration_ms=37.84
+[promote] plan-hold-8d93d420 tokens=4456 device=4456 host=0 started=0 free=211 reserve=2048 ms=0.3
+[serve] 744784-11t0-4dbd6a60 prompt_tokens=7579 cached_tokens=4463 cached_device=4463 cached_host=0 ttft_ms=892.37
+[promote-rpc] plan-hold-8d93d420 tokens=4456 duration_ms=48.20
+[promote] plan-hold-f237aa57 tokens=4464 device=4464 host=0 started=0 free=169 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-f237aa57 tokens=4464 duration_ms=4.98
+[decode] 744784-11t0-4dbd6a60 decode_ms=1019.31 output_tokens=47
+[ctl] 744784-11t0-4dbd6a60 queue_ms=0.0 advance_ms=21.9 pre_ms=9.1 post_ms=1.8
+[call] 744784 #11 EvidenceAnalyzer.verify_claim:249 predicted=hit ctx=(3,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.00 done=4408/5538 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-a5bfa122 demote=1/11n retire=0/0n protect=5 nodes=34 ms=1.9
+[promote] plan-hold-f588ad29 tokens=4464 device=4464 host=0 started=0 free=116 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-f588ad29 tokens=4464 duration_ms=10.82
+[priority] plan-prio-468f3f27 demote=0/0n retire=0/0n protect=5 nodes=34 ms=1.2
+[promote] plan-hold-e5997f24 tokens=4408 device=4408 host=0 started=0 free=412 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-e5997f24 tokens=4408 duration_ms=518.34
+[serve] 744784-12t0-101aa996 prompt_tokens=6549 cached_tokens=4415 cached_device=4415 cached_host=0 ttft_ms=602.39
+[decode] 744787-8t0-8244ed26 decode_ms=4470.34 output_tokens=144
+[ctl] 744787-8t0-8244ed26 queue_ms=0.0 advance_ms=1.5 pre_ms=1.6 post_ms=2.0
+[priority] plan-prio-80100f09 demote=1/2n retire=0/0n protect=5 nodes=35 ms=1.6
+[promote] plan-hold-df4a5e7b tokens=5584 device=5584 host=0 started=0 free=274 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-df4a5e7b tokens=5584 duration_ms=4.51
+[decode] 744784-12t0-101aa996 decode_ms=1844.21 output_tokens=87
+[ctl] 744784-12t0-101aa996 queue_ms=0.0 advance_ms=24.2 pre_ms=7.4 post_ms=9.9
+[call] 744784 #12 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(4,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 744784 err_s=+0.00 done=4464/6494 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-f3b1188b demote=1/3n retire=0/0n protect=5 nodes=36 ms=1.7
+[priority] plan-prio-d27ce7ef demote=0/0n retire=0/0n protect=5 nodes=36 ms=1.3
+[serve] 744784-13t0-fc7eeba6 prompt_tokens=6540 cached_tokens=4470 cached_device=4470 cached_host=0 ttft_ms=559.69
+[promote] plan-hold-17e5212b tokens=4464 device=4464 host=0 started=0 free=925 reserve=2048 ms=0.3
+[promote-rpc] plan-hold-17e5212b tokens=4464 duration_ms=3.18
+[promote] plan-hold-57185027 tokens=5584 device=5584 host=0 started=0 free=915 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-57185027 tokens=5584 duration_ms=19.61
+[decode] 744784-13t0-fc7eeba6 decode_ms=550.34 output_tokens=26
+[ctl] 744784-13t0-fc7eeba6 queue_ms=0.0 advance_ms=1.9 pre_ms=8.3 post_ms=10.3
+[priority] plan-prio-caf1c300 demote=1/2n retire=0/0n protect=5 nodes=37 ms=1.9
+[promote] plan-hold-f7741b12 tokens=6488 device=6488 host=0 started=0 free=911 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-f7741b12 tokens=6488 duration_ms=1.44
+[call] 744787 #8 Planner.plan:125 predicted=hit ctx=(5,)
+[invalidate] 744787 Planner.start kills ['advice', 'idx', 'spec', 'tries']
+[timing] 744787 err_s=+0.00 done=567/567 kind=hold state=done site=Planner.plan:125
+[priority] plan-prio-aafd4c15 demote=8/24n retire=0/0n protect=4 nodes=38 ms=1.9
+[promote] plan-hold-e7fb2387 tokens=568 device=568 host=0 started=0 free=386 reserve=2048 ms=0.1
+[serve] 744787-9t0-29f7d2f5 prompt_tokens=1092 cached_tokens=568 cached_device=568 cached_host=0 ttft_ms=142.26
+[promote-rpc] plan-hold-e7fb2387 tokens=568 duration_ms=117.04
+[decode] 744787-9t0-29f7d2f5 decode_ms=1511.11 output_tokens=76
+[ctl] 744787-9t0-29f7d2f5 queue_ms=0.0 advance_ms=4.6 pre_ms=1.6 post_ms=2.0
+[call] 744787 #9 Coder.implement:148 predicted=hit ctx=(5, 1)
+[invalidate] 744787 Coder.write kills ['plan']
+[timing] 744787 err_s=+0.00 done=568/725 kind=hold state=queued site=Coder.implement:148
+[call] 744784 #13 EvidenceScout.assess_evidence:203 predicted=hit ctx=(4, 1)
+[priority] plan-prio-15a972a5 demote=1/1n retire=0/0n protect=4 nodes=39 ms=1.6
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+0.03 done=5584/6487 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[serve] 744787-10t0-c73a3fa8 prompt_tokens=1234 cached_tokens=854 cached_device=854 cached_host=0 ttft_ms=113.10
+[priority] plan-prio-42a7eeac demote=10/15n retire=0/0n protect=4 nodes=39 ms=3.5
+[serve] 744784-14t0-4e154b80 prompt_tokens=7950 cached_tokens=5586 cached_device=5586 cached_host=0 ttft_ms=779.24
+[promote] plan-hold-d26ddd0a tokens=5584 device=5584 host=0 started=0 free=312 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-d26ddd0a tokens=5584 duration_ms=20.08
+[decode] 744784-14t0-4e154b80 decode_ms=1205.71 output_tokens=56
+[ctl] 744784-14t0-4e154b80 queue_ms=3.6 advance_ms=18.2 pre_ms=9.4 post_ms=2.1
+[priority] plan-prio-aa0fbbb0 demote=1/13n retire=0/0n protect=4 nodes=40 ms=2.1
+[promote] plan-hold-2fafb35c tokens=6480 device=6480 host=0 started=0 free=145 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-2fafb35c tokens=6480 duration_ms=9.20
+[decode] 744787-10t0-c73a3fa8 decode_ms=3690.53 output_tokens=146
+[ctl] 744787-10t0-c73a3fa8 queue_ms=0.1 advance_ms=1.9 pre_ms=1.8 post_ms=2.0
+[priority] plan-prio-56f3e02a demote=1/2n retire=0/0n protect=4 nodes=41 ms=1.6
+[call] 744784 #14 EvidenceScout.assess_evidence:203 predicted=hit ctx=(4, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=+0.02 done=6480/6487 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-43f18041 demote=0/0n retire=0/0n protect=4 nodes=41 ms=1.5
+[promote] plan-hold-52b3797e tokens=6432 device=6432 host=0 started=0 free=293 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-52b3797e tokens=6432 duration_ms=555.69
+[promote] plan-hold-480250c2 tokens=6480 device=6480 host=0 started=0 free=292 reserve=2048 ms=0.4
+[serve] 744784-15t0-4a04a27b prompt_tokens=9603 cached_tokens=6487 cached_device=6487 cached_host=0 ttft_ms=916.51
+[promote-rpc] plan-hold-480250c2 tokens=6480 duration_ms=65.06
+[promote] plan-hold-405e1bb2 tokens=6488 device=6488 host=0 started=0 free=275 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-405e1bb2 tokens=6488 duration_ms=22.81
+[relayout] Committer.commit:259 'module = \'from typing import List\\n\\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\\n    """ Check if in given list of numbers, are any'...
+[call] 744787 #10 Committer.commit:259 predicted=miss ctx=()
+[invalidate] 744787 Committer.finish kills ['idx']
+[timing] 744787 err_s=+9.51 done=567/567 kind=hold state=done site=Committer.commit:259
+[priority] plan-prio-0b7a0bee demote=0/0n retire=0/0n protect=4 nodes=43 ms=1.7
+[serve] 744787-11t0-58c29031 prompt_tokens=2103 cached_tokens=726 cached_device=726 cached_host=0 ttft_ms=374.44
+[decode] 744784-15t0-4a04a27b decode_ms=1382.47 output_tokens=47
+[ctl] 744784-15t0-4a04a27b queue_ms=0.0 advance_ms=31.4 pre_ms=11.7 post_ms=2.2
+[call] 744784 #15 EvidenceAnalyzer.verify_claim:249 predicted=hit ctx=(4,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.00 done=6432/7562 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-a59e1daa demote=1/16n retire=0/0n protect=4 nodes=43 ms=2.2
+[promote] plan-hold-ea2d8665 tokens=6488 device=6488 host=0 started=0 free=471 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-ea2d8665 tokens=6488 duration_ms=13.79
+[priority] plan-prio-054c152c demote=0/0n retire=0/0n protect=4 nodes=43 ms=1.6
+[promote] plan-hold-3a9fb490 tokens=6432 device=6432 host=0 started=0 free=733 reserve=2048 ms=0.4
+[promote-rpc] plan-hold-3a9fb490 tokens=6432 duration_ms=558.68
+[serve] 744784-16t0-eadcc40c prompt_tokens=8573 cached_tokens=6439 cached_device=6439 cached_host=0 ttft_ms=650.94
+[promote] plan-hold-6d105003 tokens=7608 device=7608 host=0 started=0 free=601 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-6d105003 tokens=7608 duration_ms=17.83
+[decode] 744787-11t0-58c29031 decode_ms=2765.15 output_tokens=99
+[ctl] 744787-11t0-58c29031 queue_ms=0.0 advance_ms=0.3 pre_ms=3.5 post_ms=0.1
+[decode] 744784-16t0-eadcc40c decode_ms=1888.06 output_tokens=87
+[ctl] 744784-16t0-eadcc40c queue_ms=0.0 advance_ms=34.4 pre_ms=10.4 post_ms=12.8
+[priority] plan-prio-ab2b41e3 demote=2/16n retire=0/0n protect=4 nodes=45 ms=2.5
+[call] 744784 #16 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(5,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 744784 err_s=+0.02 done=6488/8518 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[serve] 744787-11t1-27bbfdca prompt_tokens=2487 cached_tokens=2097 cached_device=2097 cached_host=0 ttft_ms=133.30
+[priority] plan-prio-1dec24a7 demote=0/0n retire=0/0n protect=4 nodes=45 ms=1.7
+[serve] 744784-17t0-38bcd706 prompt_tokens=8564 cached_tokens=6494 cached_device=6494 cached_host=0 ttft_ms=728.12
+[promote] plan-hold-e9c18e79 tokens=6488 device=6488 host=0 started=0 free=624 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-e9c18e79 tokens=6488 duration_ms=2.86
+[promote] plan-hold-f606adce tokens=7608 device=7608 host=0 started=0 free=610 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-f606adce tokens=7608 duration_ms=9.22
+[decode] 744784-17t0-38bcd706 decode_ms=562.29 output_tokens=26
+[ctl] 744784-17t0-38bcd706 queue_ms=0.0 advance_ms=2.3 pre_ms=10.5 post_ms=12.7
+[priority] plan-prio-a1759815 demote=1/2n retire=0/0n protect=4 nodes=46 ms=2.3
+[decode] 744787-11t1-27bbfdca decode_ms=2743.56 output_tokens=104
+[ctl] 744787-11t1-27bbfdca queue_ms=0.0 advance_ms=0.0 pre_ms=3.7 post_ms=0.0
+[priority] plan-prio-7837f459 demote=1/15n retire=0/0n protect=4 nodes=46 ms=2.0
+[promote] plan-hold-fce2318d tokens=8512 device=8512 host=0 started=0 free=507 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-fce2318d tokens=8512 duration_ms=1.68
+[close] 744787 calls=11
+[priority] plan-prio-3b383c86 demote=0/0n retire=12/58n protect=3 nodes=37 ms=2.9
+[call] 744784 #17 EvidenceScout.assess_evidence:203 predicted=hit ctx=(5, 1)
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+0.10 done=7608/8511 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-4d5ce788 demote=8/9n retire=0/0n protect=3 nodes=37 ms=4.9
+[serve] 744784-18t0-ac17c650 prompt_tokens=9974 cached_tokens=7610 cached_device=7610 cached_host=0 ttft_ms=724.41
+[promote] plan-hold-c108c287 tokens=7608 device=7608 host=0 started=0 free=865 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-c108c287 tokens=7608 duration_ms=4.12
+[decode] 744784-18t0-ac17c650 decode_ms=1214.39 output_tokens=56
+[ctl] 744784-18t0-ac17c650 queue_ms=0.0 advance_ms=23.7 pre_ms=11.6 post_ms=2.2
+[priority] plan-prio-04b48d65 demote=1/17n retire=0/0n protect=3 nodes=38 ms=2.5
+[promote] plan-hold-52c90c47 tokens=8504 device=8504 host=0 started=0 free=821 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-52c90c47 tokens=8504 duration_ms=1.76
+[call] 744784 #18 EvidenceScout.assess_evidence:203 predicted=hit ctx=(5, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=+0.01 done=8504/8511 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-e390579d demote=0/0n retire=0/0n protect=3 nodes=39 ms=1.8
+[promote] plan-hold-166ab0cc tokens=8456 device=8456 host=0 started=0 free=1485 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-166ab0cc tokens=8456 duration_ms=609.41
+[promote] plan-hold-6ca55f63 tokens=8504 device=8504 host=0 started=0 free=1484 reserve=2048 ms=0.6
+[serve] 744784-19t0-902170c7 prompt_tokens=11627 cached_tokens=8511 cached_device=8511 cached_host=0 ttft_ms=994.32
+[promote-rpc] plan-hold-6ca55f63 tokens=8504 duration_ms=164.26
+[promote] plan-hold-e486c270 tokens=8512 device=8512 host=0 started=0 free=1470 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-e486c270 tokens=8512 duration_ms=7.59
+[decode] 744784-19t0-902170c7 decode_ms=1043.48 output_tokens=47
+[ctl] 744784-19t0-902170c7 queue_ms=0.0 advance_ms=37.4 pre_ms=13.6 post_ms=2.2
+[call] 744784 #19 EvidenceAnalyzer.verify_claim:249 predicted=hit ctx=(5,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.00 done=8456/9586 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-2bf988b7 demote=1/19n retire=0/0n protect=3 nodes=41 ms=2.9
+[promote] plan-hold-a159e71b tokens=8512 device=8512 host=0 started=0 free=1498 reserve=2048 ms=0.5
+[promote-rpc] plan-hold-a159e71b tokens=8512 duration_ms=21.11
+[priority] plan-prio-aff9b3cb demote=0/0n retire=0/0n protect=3 nodes=42 ms=2.0
+[promote] plan-hold-7e65b698 tokens=8456 device=8456 host=0 started=0 free=1411 reserve=2048 ms=0.5
+[serve] 744784-20t0-e520ff59 prompt_tokens=10597 cached_tokens=8463 cached_device=8463 cached_host=0 ttft_ms=658.72
+[promote-rpc] plan-hold-7e65b698 tokens=8456 duration_ms=24.99
+[promote] plan-hold-38839706 tokens=9632 device=9632 host=0 started=0 free=1346 reserve=2048 ms=0.8
+[decode] 744784-20t0-e520ff59 decode_ms=1435.30 output_tokens=66
+[ctl] 744784-20t0-e520ff59 queue_ms=0.0 advance_ms=39.4 pre_ms=12.5 post_ms=14.9
+[promote-rpc] plan-hold-38839706 tokens=9632 duration_ms=17.29
+[priority] plan-prio-fa392913 demote=1/3n retire=0/0n protect=3 nodes=43 ms=2.6
+[promote] plan-hold-b4bbbb9c tokens=10480 device=10480 host=0 started=0 free=1346 reserve=2048 ms=0.7
+[promote-rpc] plan-hold-b4bbbb9c tokens=10480 duration_ms=2.02
+[serve] 744784-20t1-47881bc2 prompt_tokens=11073 cached_tokens=10591 cached_device=10591 cached_host=0 ttft_ms=192.05
+[decode] 744784-20t1-47881bc2 decode_ms=1462.59 output_tokens=68
+[ctl] 744784-20t1-47881bc2 queue_ms=0.0 advance_ms=0.1 pre_ms=13.9 post_ms=2.1
+[call] 744784 #20 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(6,)
+[invalidate] 744784 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 744784 err_s=+0.00 done=8512/10542 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-b527ecdf demote=1/4n retire=0/0n protect=3 nodes=44 ms=2.8
+[priority] plan-prio-44edfad3 demote=0/0n retire=0/0n protect=3 nodes=44 ms=2.0
+[promote] plan-hold-f55ca851 tokens=8512 device=8512 host=0 started=0 free=985 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-f55ca851 tokens=8512 duration_ms=420.49
+[serve] 744784-21t0-5218ea0b prompt_tokens=10588 cached_tokens=8518 cached_device=8518 cached_host=0 ttft_ms=644.17
+[promote] plan-hold-a0954e33 tokens=9632 device=9632 host=0 started=0 free=969 reserve=2048 ms=0.7
+[promote-rpc] plan-hold-a0954e33 tokens=9632 duration_ms=21.81
+[decode] 744784-21t0-5218ea0b decode_ms=566.86 output_tokens=26
+[ctl] 744784-21t0-5218ea0b queue_ms=0.0 advance_ms=3.1 pre_ms=12.8 post_ms=15.2
+[priority] plan-prio-f37bf061 demote=1/2n retire=0/0n protect=3 nodes=45 ms=2.8
+[promote] plan-hold-c3cb4453 tokens=10536 device=10536 host=0 started=0 free=959 reserve=2048 ms=0.7
+[promote-rpc] plan-hold-c3cb4453 tokens=10536 duration_ms=1.95
+[call] 744784 #21 EvidenceScout.assess_evidence:203 predicted=hit ctx=(6, 1)
+[invalidate] 744784 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 744784 err_s=+0.14 done=9632/10535 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-1e62de55 demote=10/11n retire=0/0n protect=3 nodes=46 ms=6.5
+[serve] 744784-22t0-5ed980b0 prompt_tokens=11998 cached_tokens=9634 cached_device=9634 cached_host=0 ttft_ms=781.16
+[promote] plan-hold-bce16be5 tokens=9632 device=9632 host=0 started=0 free=919 reserve=2048 ms=0.7
+[promote-rpc] plan-hold-bce16be5 tokens=9632 duration_ms=20.27
+[decode] 744784-22t0-5ed980b0 decode_ms=1231.47 output_tokens=56
+[ctl] 744784-22t0-5ed980b0 queue_ms=0.0 advance_ms=27.7 pre_ms=13.6 post_ms=2.5
+[priority] plan-prio-36c94660 demote=1/21n retire=0/0n protect=3 nodes=47 ms=3.0
+[promote] plan-promote-ce033096 tokens=10480 device=10480 host=0 started=0 free=872 reserve=2048 ms=0.6
+[promote-rpc] plan-promote-ce033096 tokens=10480 duration_ms=1.93
+[promote] plan-hold-41c907bd tokens=10528 device=10528 host=0 started=0 free=872 reserve=2048 ms=0.8
+[promote-rpc] plan-hold-41c907bd tokens=10528 duration_ms=2.19
+[call] 744784 #22 EvidenceScout.assess_evidence:203 predicted=hit ctx=(6, 2)
+[invalidate] 744784 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 744784 err_s=+0.01 done=10528/10535 kind=hold state=queued site=EvidenceScout.assess_evidence:203
+[priority] plan-prio-f4524450 demote=0/0n retire=0/0n protect=3 nodes=48 ms=2.3
+[promote] plan-hold-c49f49a3 tokens=10480 device=10480 host=0 started=0 free=872 reserve=2048 ms=0.6
+[promote-rpc] plan-hold-c49f49a3 tokens=10480 duration_ms=1.99
+[call] 744784 #23 EvidenceAnalyzer.verify_claim:249 predicted=hit ctx=(6,)
+[invalidate] 744784 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 744784 err_s=+0.07 done=10480/11610 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:249
+[priority] plan-prio-ab69a800 demote=0/0n retire=0/0n protect=3 nodes=48 ms=2.4
+[promote] plan-hold-56a13ac7 tokens=10536 device=8518 host=2018 started=0 free=872 reserve=2048 ms=0.7
+[promote-deferred] plan-hold-56a13ac7 deferred: no room for 2018 host tokens (free=872, reserve=2048)
+[close] 744784 calls=24
+[priority] plan-prio-56670c72 demote=0/0n retire=24/175n protect=0 nodes=0 ms=10.1
+/home/xiaoyu/miniconda3/envs/sglang/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -1,0 +1,128 @@
+\section{Design}
+\sysname is a compiler--engine co-design for serving structured LLM agents. Agent frameworks let developers declare LLM calls as typed functions of the program; the compiler lowers each call into a prompt with a fixed skeleton, and the serving engine receives that prompt as opaque text. \sysname closes this gap on both sides. At compile time, a static analysis of the agent program recovers, for every LLM call site, the constant bytes of its prompt, the origin and lifetime of every bound argument, and the graph of call sites the program can walk. At serving time, the engine consumes this description: it re-lays out each request so that reusable bytes lead the prompt, keeps per-program branch and timing statistics keyed by the program's loop structure, reconstructs the known part of the calls it expects next, and turns those expectations into KV-cache promotion and eviction decisions.
+
+The division of labour is fixed. Everything that is a property of the program (which call sites exist, what bytes are constant, which values are copied, appended to, or replaced, which fields a transition rewrites, how the sites nest into loops) comes from the compiler and is exact. Everything that depends on inputs and on the model (which branch a session takes, how long a call runs, how long the agent's own code runs between calls) is measured by the engine. Nothing about the program's structure is learned from traffic.
+
+\subsection{Recovering Heterogeneity at Compile Time}
+\label{subsec:static}
+
+\subsubsection{Call sites and prompt templates}
+A \emph{call site} $x$ is one call expression of an LLM function in the program, identified by the qualified function name, the line of the call expression, and the source file. Two calls of the same function from two places are two sites, because they may sit in different control-flow contexts and receive differently derived arguments.
+
+The compiler describes each site by a prompt template
+\[
+T_x=\langle S_x,\;H_x,\;(\ell_1,n_1),\ldots,(\ell_m,n_m),\;\tau_x\rangle,
+\]
+where $S_x$ is the system prompt, $H_x$ is the site-specific header (the signature line and the schema rows of its parameter and return types), each $(\ell_i,n_i)$ is a binding slot with its literal label $\ell_i$ and parameter name $n_i$, and $\tau_x$ is the output-format hint appended to the message. The constant bytes are rendered by the framework's own prompt factory on the compiled module, without running the agent, so they equal the runtime's bytes exactly. Rendering fills the slots with binding values; splitting locates $H_x$ and the labels in a received message and cuts out the values. A template is valid when
+\[
+\textsc{Render}(T_x,\textsc{Split}(T_x,u))=u
+\]
+for every request $u$ the site emits. Schema rows are derived from type annotations rather than from argument values, so a list-typed parameter renders the same rows whether the list is empty or not, and $H_x$ is one constant per site.
+
+On the wire, every request carries the identifier of the call site that produced it. The engine resolves it against the template the program registered; a request from an unregistered site is served as opaque text, so the mechanisms below only ever act on prompts whose structure is known.
+
+\subsubsection{Binding heterogeneity and lifetime}
+\label{subsubsec:bindings}
+A bound argument of an LLM call is a field of the agent's state, an element of such a field, a literal, or a value derived from an earlier reply. The compiler classifies every binding by reaching definitions of its field over the program's visit graph, the graph whose nodes are the abilities the agent walks and whose edges are its visit statements. Writes to a field are recorded by kind: an \emph{extend} (append, in-place growth, or a self-referencing concatenation of a growable type), a \emph{reset} (the field is emptied), or an arbitrary \emph{assignment}. Each binding receives one of five classes:
+\begin{itemize}
+\item \emph{Constant}: a literal of the program, the same bytes in every session;
+\item \emph{Copied}: the same bytes as a value an earlier call of the session carried, at this site or another;
+\item \emph{Extended}: an append-only container, so the earlier value minus its closing delimiter is a prefix of the new one;
+\item \emph{Response}: a field of an earlier site's reply, rendered as the program renders that object;
+\item \emph{Volatile}: fresh on every call, or produced through a channel the compiler cannot see through (a tool result, an external input).
+\end{itemize}
+Where a field's reaching definitions differ by path, the class is the conservative one; the path-specific origin is recorded on the edge instead, as described below.
+
+Each binding also carries a \emph{lifetime scope}: the set of abilities whose execution replaces its value. A value never reassigned lives for the session; a value reset at the start of a planner round lives for that round; a value assigned by an analyzer lives until the analyzer runs again. Scopes are what makes an earlier value usable: at serving time a value is looked up only among the calls made since the latest run of a scope-resetting ability.
+
+\subsubsection{The call-site graph and its loops}
+\label{subsubsec:graph}
+The compiler connects call sites into a directed graph: the successors of a site are the first sites reachable through the walker's visit statements, passing through abilities that make no LLM call. The entry is the site reached from the node the program attaches to its root; a site after which some path visits nothing is an exit. A node type the program constructs several times (inside a loop or a comprehension) is visited several times in a row by one visit statement, so the compiler adds a self edge to the call site of its ability: this is how a fan-out over several scouts appears in the graph.
+
+Each edge $x\to y$ carries three static facts. \emph{Writes} are the fields the program assigns between the two calls, computed branch-sensitively (a write in an if-branch exclusive with the visit, or after a visit that returns, is not on the path). \emph{Invalidates} are the fields written by a reset or an assignment rather than an append, whose earlier bytes therefore stop being a prefix. \emph{Overrides} record, for each binding of $y$, its definite origin along this particular edge when there is one: a constant the program assigns on the way, or the reply field it copies. Where several control-flow paths collapse into one edge, an override survives only if every path agrees on it.
+
+Finally, the compiler decomposes the graph into nested loops using Bourdoncle's weak topological ordering: a depth-first search closes a strongly connected component at the vertex it entered it by, then searches that component again from its head to find the components nested inside. Every site is thereby assigned the chain of loops enclosing it, outermost first. For the coding agent this yields a per-function loop headed by the planner site that contains a retry loop headed by the coder site; for the fact checker, a per-round loop headed by the decomposition site that contains the scouts' fan-out self loop. The loop structure is what the engine's branch statistics are keyed by (\S\ref{subsubsec:pfa}).
+
+\subsubsection{Layout policy}
+\label{subsubsec:layout}
+Because KV reuse requires an identical token prefix, the order in which bindings appear decides how much of a request the cache can serve. The layout is a function of the static classes and is decided once for the whole program, so that sites which carry the same fields lay them out in the same relative order and their prompts share a byte prefix.
+
+A field is \emph{shared} when two or more sites carry it, the producing site included. Shared fields lead every site that carries them, ordered by a program-wide key: session-scoped fields before scope-reset ones (a value that survives a site's own repeated calls beats one a loop iteration replaces), and copied fields before extended ones. Unshared bindings follow, most stable first, by class rank
+\[
+\mathrm{Constant}<\mathrm{Copied}<\mathrm{Response}<\mathrm{Extended}<\mathrm{Volatile}.
+\]
+A within-scope constant placed before an append-only value loses nothing, since the append-only prefix property still holds after it, whereas placed after it the constant is re-prefilled on every call; a copied value is preferred to a reply-derived one because it is known before the producing call returns. Bindings that tie keep their declaration order. The site's own row (the object the method is called on, with its constant member rows) is placed after the parameters.
+
+The site header $H_x$ normally leads the message. When the leading binding is shared, $H_x$ would separate two sites' common bytes from the system prompt; the layout then moves the header behind the values:
+\[
+S_x\;\Vert\;b_{\pi(1)}\;\Vert\;\cdots\;\Vert\;b_{\pi(m)}\;\Vert\;H_x\;\Vert\;\tau_x.
+\]
+A program may declare that its headers must lead; the layout then reorders bindings only.
+
+\subsection{Serving with the Recovered Structure}
+
+\subsubsection{Prompt re-layout}
+When a request arrives, the engine splits its call message with the site's template, in whatever layout it arrived, and renders the values again in the served layout with the hint appended. The transformation is idempotent, so a message the framework re-sends (the next turn of a tool-using call, or a retry after a failed parse) is re-laid out first and then recognised as a continuation of the open call rather than a new one. The values themselves are never changed; only their order and the header's position are.
+
+\subsubsection{Branch and timing statistics keyed by loop context}
+\label{subsubsec:pfa}
+The engine treats each program as a probabilistic finite automaton whose states are pairs $(x,\mathbf{c})$ of a call site and an \emph{iteration context}: the vector of pass counts of the loops enclosing $x$, outermost first, each count capped at eight. A session keeps one counter per loop. Entering a loop starts its counter at one; reaching the head of a loop the session is already in is another pass, which increments that loop's counter and drops the counters of the loops nested inside it; leaving a loop drops its counter. The context is therefore a compression of the session's call history that retains exactly what the program's guards can depend on: how many times each enclosing loop has run.
+
+Every observed transition $x\to y$ is counted under the context $\mathbf{c}$ the call at $x$ was made in, and the end of a session is counted as the outcome $\bot$ of its last call. Each observation is written at every backoff level of its context: the full vector, the vector without its outermost count, and so on down to the empty context, which pools the site's transitions regardless of iteration. The probability of an outcome $o$ (a successor site or $\bot$) is interpolated across these levels in Witten--Bell fashion, from the most general to the most specific. With $C_{\mathbf{u}}(o)$ the count of $o$ under level $\mathbf{u}$, $n_{\mathbf{u}}=\sum_o C_{\mathbf{u}}(o)$, and $T_{\mathbf{u}}$ the number of distinct outcomes seen under $\mathbf{u}$,
+\[
+\lambda_{\mathbf{u}}=\frac{n_{\mathbf{u}}}{n_{\mathbf{u}}+T_{\mathbf{u}}},\qquad
+\widehat{P}(o\mid x,\mathbf{u})=\lambda_{\mathbf{u}}\frac{C_{\mathbf{u}}(o)}{n_{\mathbf{u}}}+(1-\lambda_{\mathbf{u}})\,\widehat{P}(o\mid x,\operatorname{parent}(\mathbf{u})),
+\]
+where below the empty context sits a uniform prior over the site's static successors, including $\bot$ at an exit site. A well-observed context dominates its estimate; a context seen once or twice leans on its more general levels rather than becoming a deterministic prediction; and before any session has completed, every site is planned from the static graph alone. The $\bot$ outcome consumes probability mass and yields no successor. A loop's exit probability is thus learned as a function of how many times it has run, without the compiler having to export the guard that decides it.
+
+The timing annotations are kept on the graph: for each edge, the distribution of the gap between the source's reply and the successor's arrival, the agent's own execution time between the two calls; and for each site, the distribution of its end-to-end duration, kept both per site and per incoming edge. Quantiles are taken from the raw samples.
+
+\subsubsection{Predicting the calls to come}
+For every live session the engine produces, at each arrival and again at each reply, a forecast
+\[
+\widehat{\mathcal{C}}=\{(x,\,p_x,\,t_{50,x},\,t_{90,x},\,\varrho_x)\}
+\]
+of the sites it expects, each with its reachability $p_x$, its median and pessimistic arrival times relative to the session's timing anchor, and the call-site paths $\varrho_x$ by which it is reached. The forecast is a bounded best-first expansion over the static graph. A frontier element is $(\pi,x,\mathbf{c},u_{50},s^2,d)$: the path probability, the site, the iteration context the path has walked into, the median completion time of the path's last call, the accumulated squared timing spread, and the depth. For a successor $y$ with step probability $\widehat{P}(y\mid x,\mathbf{c})$, the path probability becomes $\pi'=\pi\widehat{P}(y\mid x,\mathbf{c})$, the context advances as a real transition would, and with $g_{50},g_{90}$ the gap quantiles of the edge,
+\[
+a_{50}=u_{50}+g_{50},\qquad s_a^2=s^2+(g_{90}-g_{50})^2,\qquad a_{90}=a_{50}+\sqrt{s_a^2}.
+\]
+Expanding beyond $y$ adds $y$'s duration quantiles $e_{50},e_{90}$ the same way. The search expands the most probable frontier element first, keeps at most three successors per element, and prunes a path when its probability falls below $p_{\min}=0.02$, its median arrival exceeds a 120-second horizon, its depth exceeds eight, or 64 elements have been expanded. When several paths reach the same site, their probabilities are summed and capped at one, the earliest arrival pair is kept, and every path is retained for the value-flow reconstruction below. Because the context advances along each path, a site revisited in a later iteration is predicted with the branch probabilities of that iteration, not with the site's average.
+
+\subsubsection{Reconstructing the known part of a predicted call}
+\label{subsubsec:reconstruct}
+For a predicted site $y$ the engine renders as much of its next message as the session already determines, in the served layout, walking the bindings in order and stopping at the first one it cannot resolve. A constant is its literal. A copied value is the latest bytes of its field carried by any call within the binding's scope. A response value is the named field of the producer's latest reply, parsed and rendered as the program's own object representation; if the producer's reply is still pending, the value is unknown rather than taken from an earlier iteration. An extended value contributes its earlier bytes minus the closing delimiter, a known head with an open tail, unless the path being predicted writes nothing to its field, in which case the value is complete.
+
+The path decides. Along a single edge, the edge's writes, invalidations, and overrides apply: a field invalidated on the way yields nothing; a copied field written on the way is stale and yields nothing; an override supplies the origin the program fixes on that edge (an empty string assigned before the call, a reply field copied into the state). Along a multi-hop path, writes and invalidations accumulate and the latest definite override of a field is carried forward, an intervening unknown write ending the search. When a site is reached by several paths, the reconstruction must hold on all of them: writes and invalidations are unioned and an override survives only if every path derives the same origin.
+
+The complete rendered message, when every binding resolves, is tokenised as the engine would tokenise the real request; otherwise the rendered head is tokenised up to the last whole token. The site's static prefix (the system prompt and, if it leads, the header) is the fallback target when nothing longer is known.
+
+\subsubsection{Deadline-driven promotion}
+Each predicted call with a target prefix of at least one cache block becomes a job. Its deadline, for a prediction $(x,p_x,t_{50,x},t_{90,x})$ and timing anchor $a$, is
+\[
+d=\max\bigl(t_{\mathrm{now}},\;a+t_{50,x}-\kappa\,(t_{90,x}-t_{50,x})\bigr),\qquad\kappa=0.5,
+\]
+so that an uncertain arrival is prepared for earlier. The anchor is the arrival time of the session's current call while that call is being served, and its reply time once it has replied; the forecast is refreshed at both events, replacing the session's previous jobs. A job whose predicted call has not arrived five seconds past its pessimistic arrival $\max(d,a+t_{90,x})$ is discarded.
+
+Let $U$ be the target tokens cached in neither tier and $H$ those resident on the host but not on the device, as the engine's cache ledger sees them. With the profiled prefill rate under load $R_{\mathrm{prefill}}$ and host-to-device rate $R_{\mathrm{promote}}$, the latest start of a job is
+\[
+r=d-\frac{U}{R_{\mathrm{prefill}}}-\frac{H}{R_{\mathrm{promote}}}.
+\]
+A job is released when the engine is idle or the current time is within half a second of $r$; among released jobs whose cached frontier reaches past what they have already loaded, the earliest deadline runs, one promotion at a time. A job whose target is not on the host carries no load; it only protects the tokens it names, and is picked up as a promotion the moment the ledger learns that another session computed part of its prefix. A promotion refused for lack of device space pauses all promotions for a few planner cycles.
+
+\subsubsection{Lifecycle-aware eviction}
+The engine's device-resident radix nodes are divided into four bands, listed in order of eviction:
+\begin{enumerate}
+\item \emph{retired}: private tails of sessions that have ended;
+\item \emph{transient}: tails of served prompts that no later call will repeat, and the replies generated after them;
+\item \emph{unclassified}: cache not covered by the current plan;
+\item \emph{planned}: nodes on the path of at least one live prediction.
+\end{enumerate}
+The first three bands are LRU-ordered; the planned band is ordered by protection score, then recency. Every live prediction adds to the nodes on its target prefix the score
+\[
+S(t)=p_x\exp\!\left(-\frac{\max(0,d-t)}{\tau}\right),\qquad\tau=60\ \text{s},
+\]
+so a prefix due now for a likely call outranks one due in a minute for an unlikely one. At every plan refresh the previous protections are withdrawn before the new scores are applied, so a prediction that lapsed does not keep protecting anything; an empty plan is still pushed, for the same reason. The host tier evicts retired entries first and is otherwise LRU, so a misprediction costs a promotion rather than a recomputation.
+
+Band transitions are driven by the program's structure. When a request has been served, the engine computes its \emph{forward head}: the longest leading part of the served message that some later call's prompt repeats byte for byte, found by comparing the site's served layout position by position with that of every site reachable along a static path of up to three edges, a binding surviving only if no edge on the path writes its field. The nodes past the forward head are demoted to transient. Being reconstructible before the call is deliberately not the criterion: a reply-derived or constant value can be rebuilt, yet it sits behind the point at which every later prompt diverges, so nothing will hit it. When an arriving call's edge invalidates fields, every earlier served prompt of the session is demoted from its first binding that carried a dead field, and those fields start a new generation: later reconstructions look only at calls from that generation on, the producing call included when the new value is its reply. When the session ends, its transient tails become retired.
+
+A session ends when the agent process reports it or when the session has gone quiet: 120 seconds without a request, or 15 seconds once the learned probability that the program ends after its last call, in its current iteration context, reaches one half.

@@ -279,6 +279,8 @@ class Engine:
                     self._calibrate(ids, stats)
                     self.last = stats
                     self.last["ttft_ms"] = (first_token_at - started) * 1000
+                    self.last["inflight_prefill"] = self._inflight_prefill   # controller's view at first token
+                    self.last["inflight_decode"] = self._inflight_decode
                     print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
                                                             for k, v in self.last.items()), flush=True)
                 text = out.get("text") or ""          # cumulative: incremental_streaming_output is off

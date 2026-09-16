@@ -39,7 +39,7 @@ from static_analysis.primitives import (Binding, BindingKind, CallInstance, Call
 
 P_MIN = 0.02           # plan only steps predicted at least this likely
 T_BASE = 120.0         # idle seconds before a session is finalized
-T_SHORT = 15.0         # idle timeout once the session sits on an exit site
+T_SHORT = 15.0         # idle timeout once the session probably ended (P(end) >= 0.5 at its last call)
 SWEEP_S = 5.0          # idle sweeper period
 MAX_TOKENS = 4096      # decode cap when the request does not set one
 MAX_BATCH = 32
@@ -61,6 +61,8 @@ class LiveSession:
     predicted: Optional[CallSiteID] = None       # Last top-1 prediction, for hit logging
     plan_anchor: float = 0.0                     # monotonic t the gap predictions count from
     opaque: int = 0                              # requests served without a registered call site
+    field_valid_from: Dict[str, int] = field(default_factory=dict)  # field -> first history index in its live generation
+    counters: Dict[int, int] = field(default_factory=dict)   # loop index -> passes through its head, for the latest call
 
     @property
     def history(self) -> List[CallInstance]:
@@ -85,6 +87,7 @@ class Controller:
         self._plan_tok: "OrderedDict[Tuple[CallSiteID, bool, str], Optional[List[int]]]" = OrderedDict()
         self._relayout_seen: set = set()          # sites whose served layout was logged once
         self._resets: Dict[str, Dict[str, frozenset]] = {}   # agent file -> ability -> fields it resets
+        self._registered: Dict[str, str] = {}     # agent file -> the static payload it was registered with
         self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if plan else None
 
     # ------------------------------------------------------------------ lifecycle
@@ -130,25 +133,40 @@ class Controller:
                     continue
                 t = T_BASE
                 last = sess.open or (sess.calls[-1] if sess.calls else None)
-                if sess.program is not None and last is not None and last.key in sess.program.exits:
-                    t = T_SHORT   # the program may end here: a shorter wait
+                if (sess.program is not None and last is not None
+                        and sess.program.end_prob(last.key, sess.counters) >= 0.5):
+                    t = T_SHORT   # the program probably ended here: a shorter wait
                 if now - sess.last_seen > t:
                     self._finalize(sid)
 
     # ------------------------------------------------------------------ registration
     def register(self, body: dict) -> dict:
-        """Adopt a program's static analysis."""
-        program = program_from_dict(body["program"])
+        """Adopt a program's static analysis. Registering the same analysis again
+        (every launch of the agent re-analyzes and re-registers) keeps the Program
+        already serving: its branch and timing statistics are what the next session
+        is planned with."""
         file = os.path.abspath(str(body["file"]))
+        payload = json.dumps({"program": body["program"], "no_header_last": bool(body.get("no_header_last"))},
+                             sort_keys=True)
+        if self._registered.get(file) == payload and file in self.programs:
+            known = self.programs[file]
+            print(f"[program] {file}: unchanged, statistics kept", flush=True)
+            return {"ok": True, "file": file, "sites": len(known.sites), "unchanged": True}
+        program = program_from_dict(body["program"])
         if body.get("no_header_last"):          # the registrant's choice for this program (fact_check keeps its headers in front)
             for t in program.sites.values():
                 t.no_header_last = True
         if self.enable_relayout:
             program.decide_layouts(header_last=HEADER_LAST)
+        program.decide_loops()
+        for i, lp in enumerate(program.loops):
+            print(f"[loop] {i}: head {lp.head!r} body {sorted(repr(k) for k in lp.body)}"
+                  + (f" in loop {lp.parent}" if lp.parent is not None else ""), flush=True)
         for t in program.sites.values():
             print(f"[layout] {t.key!r} order={t.order} header_last={t.header_last} "
                   f"bindings={[(b.name, b.heterogeneity.name) for b in t.bindings]}", flush=True)
         self.programs[file] = program
+        self._registered[file] = payload
         self._resets[file] = program.resets()
         for k, t in program.sites.items():
             self._by_site[(k.signature, k.lineno, os.path.basename(k.file or file))] = (program, t)
@@ -233,20 +251,19 @@ class Controller:
             return
         t_post = time.perf_counter()
         tpl = inst.template
-        # Past the head some later prompt can still share, this prompt is one-off:
-        # its fresh bindings and the reply. Only that tail is demoted; the head
-        # stays in the normal band. The head is the longer of what the session could
-        # rebuild before the call (bytes earlier prompts already hold) and what a
-        # successor's prompt will carry unchanged (the static edges say which
-        # fields the program rewrites on the way).
+        # Past the head some later prompt repeats byte for byte, this prompt is
+        # one-off: its fresh bindings and the reply. Only that tail is demoted; the
+        # head stays in the normal band. The head is what a later call's prompt
+        # will carry unchanged, along any static path of a few hops (the edges say
+        # which fields the program rewrites on the way). Being reconstructible
+        # before the call is not the criterion: a reply-derived or constant value
+        # is rebuildable, yet its bytes sit behind the point where every later
+        # prompt already diverged, so nothing will hit them.
         head = len(self._prefix_tokens(tpl))
-        prev = sess.calls[-1] if sess.calls else None
-        via = sess.program.edges.get((prev.key, tpl.key)) if (prev is not None and sess.program is not None) else None
-        text_head, _ = self._resolve(sess, tpl, via, upto=inst)
-        for text in (text_head, self._forward_head(sess, inst)):
-            cut = self._planned_tokens(tpl, text, False) if text else None
-            if cut is not None and len(cut) > head:
-                head = len(cut)
+        fwd = self._forward_head(sess, inst)
+        cut = self._planned_tokens(tpl, fwd, False) if fwd else None
+        if cut is not None and len(cut) > head:
+            head = len(cut)
         self.planner.note_served(sess.id, ids, head)
         sess.plan_anchor = inst.t_done          # the anchor every gap sample counts from
         self._plan_session(sess)                # replace: the freshest view of the future
@@ -278,13 +295,18 @@ class Controller:
         if values:
             self._relayout(sess, req.body, inst)
         hit = "" if sess.predicted is None else f" predicted={'hit' if sess.predicted == tpl.key else 'miss'}"
-        print(f"[call] {sess.id} #{len(sess.calls)} {tpl.key!r}{hit}", flush=True)
         prev = sess.calls[-1] if sess.calls else None
+        via = prog.edges.get((prev.key, tpl.key)) if prev is not None else None
         if prev is not None:
             e = prog.add_edge(prev.key, tpl.key)      # the transition is known at arrival
             e.count += 1
             e.gap.append(max(0.0, req.t_arrive - prev.t_done))
-        self._invalidate(sess, tpl)
+            # the branch taken, under the iteration context prev was called in
+            prog.observe_branch(prev.key, prog.context(prev.key, sess.counters), tpl.key)
+        sess.counters = prog.step_counters(sess.counters, prev.key if prev is not None else None, tpl.key)
+        print(f"[call] {sess.id} #{len(sess.calls)} {tpl.key!r}{hit} ctx={prog.context(tpl.key, sess.counters)}",
+              flush=True)
+        self._invalidate(sess, tpl, via)
         sess.open = inst
         sess.epoch += 1
         sess.plan_anchor = req.t_arrive     # an early anchor to start planning; the reply re-anchors
@@ -367,8 +389,10 @@ class Controller:
         cur = sess.open or (sess.calls[-1] if sess.calls else None)
         if prog is None or planner is None or cur is None:
             return
-        calls = prog.predict_tree(cur.key, p_min=P_MIN)
-        sess.predicted = calls[0].key if calls else None
+        calls = prog.predict_tree(cur.key, sess.counters, p_min=P_MIN)
+        # the hit log measures the next call: the likeliest direct successor
+        direct = [c for c in calls if len(c.path) == 2]
+        sess.predicted = direct[0].key if direct else (calls[0].key if calls else None)
         anchor = sess.plan_anchor or time.monotonic()
         jobs: List[Job] = []
         for c in calls:
@@ -383,8 +407,8 @@ class Controller:
         tpl = prog.sites.get(c.key) if prog else None
         if prog is None or tpl is None:
             return []
-        cur = sess.open or (sess.calls[-1] if sess.calls else None)
-        via = prog.edges.get((cur.key, c.key)) if cur is not None else None
+        paths = c.paths or ([c.path] if c.path else [])
+        via = self._paths_effect(prog, paths)
         text, complete = self._resolve(sess, tpl, via)
         now = time.monotonic()
         deadline = max(now, anchor + c.t50 - KVPlanner.SAFETY_K * (c.t90 - c.t50))
@@ -408,6 +432,81 @@ class Controller:
                     value=c.p * (unc + 0.8 * host), deadline=deadline, t90=t90,
                     host=host, done_upto=len(toks) if resident else 0,
                     state="done" if resident else "queued")]
+
+    @staticmethod
+    def _path_effect(prog: Program, path: Tuple[CallSiteID, ...]) -> Optional[Edge]:
+        """Compose the value-flow facts along a predicted callsite path.
+
+        Writes and invalidations accumulate.  For each target binding, the latest
+        definite override of its walker field is carried forward; an intervening
+        unknown write stops the search.  This makes a multi-hop prediction obey
+        the same flow constraints as a direct successor.
+        """
+        if len(path) < 2:
+            return None
+        edges: List[Edge] = []
+        for src, dst in zip(path, path[1:]):
+            e = prog.edges.get((src, dst))
+            if e is None:
+                return None
+            edges.append(e)
+        if len(edges) == 1:
+            return edges[0]
+
+        effect = Edge(src=path[0], dst=path[-1])
+        effect.writes = frozenset().union(*(e.writes for e in edges))
+        effect.invalidates = frozenset().union(*(e.invalidates for e in edges))
+        target = prog.sites.get(path[-1])
+        if target is None:
+            return effect
+
+        for b in target.params:
+            base = b.field[:-2] if b.field.endswith("[]") else b.field
+            if not base or b.field.endswith("[]"):
+                continue
+            for e in reversed(edges):
+                candidates = [ov for ov in e.overrides.values()
+                              if (ov.field[:-2] if ov.field.endswith("[]") else ov.field) == base]
+                if candidates:
+                    first = candidates[0]
+                    origin = (first.heterogeneity, first.source, first.literal)
+                    if all((ov.heterogeneity, ov.source, ov.literal) == origin for ov in candidates):
+                        effect.overrides[b.name] = Binding(
+                            name=b.name, heterogeneity=first.heterogeneity,
+                            source=first.source, literal=first.literal, field=b.field)
+                    break
+                if base in e.writes:
+                    break                       # latest write has no reconstructible origin
+        return effect
+
+    @staticmethod
+    def _paths_effect(prog: Program, paths: List[Tuple[CallSiteID, ...]]) -> Optional[Edge]:
+        """Conservatively merge the effects of every path reaching one callsite.
+
+        A predicted call has cumulative probability across these paths, so its
+        reconstructed prefix must be valid on all of them. Writes/invalidations
+        therefore union, while a value override survives only when every path
+        derives the same origin.
+        """
+        effects = [Controller._path_effect(prog, path) for path in paths]
+        if not effects or any(e is None for e in effects):
+            return None
+        known = [e for e in effects if e is not None]
+        if len(known) == 1:
+            return known[0]
+        merged = Edge(src=known[0].src, dst=known[0].dst)
+        merged.writes = frozenset().union(*(e.writes for e in known))
+        merged.invalidates = frozenset().union(*(e.invalidates for e in known))
+        first = known[0].overrides
+        merged.overrides = {
+            name: ov for name, ov in first.items()
+            if all(name in e.overrides
+                   and (ov.heterogeneity, ov.source, ov.literal, ov.field)
+                   == (e.overrides[name].heterogeneity, e.overrides[name].source,
+                       e.overrides[name].literal, e.overrides[name].field)
+                   for e in known[1:])
+        }
+        return merged
 
     # ------------------------------------------------------------------ speculation
     def _resolve(self, sess: LiveSession, tpl: PromptTemplate, via: Optional[Edge] = None,
@@ -454,8 +553,11 @@ class Controller:
         reset by an ability is looked up only in calls from that ability's latest
         run onward (the call inside it carries the post-reset bytes)."""
         H = Heterogeneity
-        if via is not None and b.name in via.overrides:
-            ov = via.overrides[b.name]      # how this binding resolves along the predicted edge
+        ov = via.overrides.get(b.name) if via is not None else None
+        if ov is not None:
+            # How this binding resolves along the predicted path.  A definite
+            # override is strict: if its source is not in history yet, do not
+            # fall back to an older value of the same field.
             b = Binding(name=b.name, heterogeneity=ov.heterogeneity, kind=b.kind, source=ov.source,
                         literal=ov.literal, field=b.field, scope=b.scope, label=b.label, tail=b.tail)
         if b.heterogeneity is H.CONST:
@@ -465,7 +567,11 @@ class Controller:
             return self._latest(hist, tpl.key, b.name), None
         if b.heterogeneity in (H.COPY, H.TAKE, H.EXTEND):
             v = None
-            if b.field:                     # the walker field's latest bytes, whichever call carried them
+            if ov is not None and b.source is not None:
+                v = self._latest(hist, b.source[0], b.source[1])
+                if v is None:
+                    return None, None
+            elif b.field:                   # the walker field's latest bytes, whichever call carried them
                 v = self._latest_field(hist, b.field)
             if v is None and b.source is not None:
                 v = self._latest(hist, b.source[0], b.source[1])
@@ -473,10 +579,14 @@ class Controller:
                 v = self._latest(hist, None, b.name)
             if v is None:
                 return None, None
-            untouched = via is not None and bool(b.field) and b.field not in via.writes
+            base = b.field[:-2] if b.field.endswith("[]") else b.field
+            untouched = via is not None and bool(base) and base not in via.writes
             if b.heterogeneity is H.EXTEND and not untouched:
+                if via is not None and base in via.invalidates:
+                    return None, None       # reset/assignment: the old bytes are not a prefix
                 return None, (v[:-1] if len(v) >= 2 else None)
-            if b.heterogeneity in (H.COPY, H.TAKE) and via is not None and b.field and b.field in via.writes:
+            if (b.heterogeneity in (H.COPY, H.TAKE) and ov is None
+                    and via is not None and base and base in via.writes):
                 return None, None           # rewritten on this edge: the earlier bytes are stale
             return v, None
         if b.heterogeneity is H.RESP and b.source is not None:
@@ -485,17 +595,20 @@ class Controller:
                 return None, None           # one element of a reply list: which one is the next call's is not known
             src_tpl = sess.program.sites.get(site) if sess.program else None
             for inst in reversed(hist):
-                if inst.key == site and inst.response:
-                    try:
-                        obj = json.loads(inst.response)
-                    except Exception:
-                        return None, None
-                    spec = src_tpl.resp_spec if src_tpl is not None else None
-                    if not path:
-                        return render_repr(obj, spec), None          # the whole reply, as the program's object repr
-                    if isinstance(obj, dict) and path in obj:
-                        return render_repr(obj[path], field_spec(spec, path) or {"k": "prim", "t": "any"}), None
+                if inst.key != site:
+                    continue
+                if not inst.response:
+                    return None, None        # latest producer is pending; never use a prior iteration's reply
+                try:
+                    obj = json.loads(inst.response)
+                except Exception:
                     return None, None
+                spec = src_tpl.resp_spec if src_tpl is not None else None
+                if not path:
+                    return render_repr(obj, spec), None          # the whole reply, as the program's object repr
+                if isinstance(obj, dict) and path in obj:
+                    return render_repr(obj[path], field_spec(spec, path) or {"k": "prim", "t": "any"}), None
+                return None, None
         return None, None
 
     @staticmethod
@@ -505,6 +618,9 @@ class Controller:
         hist = sess.history
         if upto is not None and upto in hist:
             hist = hist[:hist.index(upto)]
+        base = b.field[:-2] if b.field.endswith("[]") else b.field
+        if base and base in sess.field_valid_from:
+            return hist[sess.field_valid_from[base]:]
         if not b.scope:
             return hist
         resets = set(b.scope.split("|"))
@@ -513,50 +629,88 @@ class Controller:
                 return hist[i:]
         return hist
 
-    def _forward_head(self, sess: LiveSession, inst: CallInstance) -> str:
-        """The longest leading part of a served call message that some successor's
-        prompt repeats byte for byte: the bindings, in served order, whose walker
-        field the successor carries in the same position and the program does not
-        write on the edge to it (a CONST counts when the successor has the same
-        literal there)."""
+    def _forward_head(self, sess: LiveSession, inst: CallInstance, max_hops: int = 3) -> str:
+        """The longest leading part of a served call message that some later call's
+        prompt repeats byte for byte: along every static path of up to `max_hops`
+        edges from this site, the target's served layout is compared position by
+        position, and a field survives only if no edge on the path writes it."""
         prog, t = sess.program, inst.template
         if prog is None or not inst.values:
             return ""
         best: List[str] = []
         mine = [t.binding(n) for n in t.served_order()]
-        for e in prog.successors(inst.key):
-            nxt = prog.sites.get(e.dst)
-            if nxt is None:
-                continue
-            theirs = [nxt.binding(n) for n in nxt.served_order()]
-            lines: List[str] = []
-            if t.header and not t.header_last:
-                if not (nxt.header == t.header and not nxt.header_last):
+        paths: List[Tuple[CallSiteID, ...]] = [(inst.key,)]
+        for _ in range(max_hops):
+            paths = [p + (e.dst,) for p in paths for e in prog.successors(p[-1])]
+            for path in paths:
+                effect = self._path_effect(prog, path)
+                nxt = prog.sites.get(path[-1])
+                if effect is None or nxt is None:
                     continue
-                lines.append(t.header)
-            for a, b in zip(mine, theirs):
-                same_field = bool(a.field) and a.field == b.field and a.field not in e.writes
-                same_const = (a.heterogeneity is Heterogeneity.CONST and b.heterogeneity is Heterogeneity.CONST
-                              and a.literal == b.literal)
-                if not (same_field or same_const) or a.name not in inst.values:
-                    break
-                lines.append(f"{a.label}{inst.values[a.name]}")
-            if len(lines) > len(best):
-                best = lines
+                # These bytes precede every user binding in the rendered prompt.
+                if t.system_prompt != nxt.system_prompt or t.tool_schema != nxt.tool_schema:
+                    continue
+                theirs = [nxt.binding(n) for n in nxt.served_order()]
+                lines: List[str] = []
+                if t.header and not t.header_last:
+                    if not (nxt.header == t.header and not nxt.header_last):
+                        continue
+                    lines.append(t.header)
+                elif nxt.header and not nxt.header_last:
+                    continue                # successor has a leading header; current does not
+                for a, b in zip(mine, theirs):
+                    same_field = bool(a.field) and a.field == b.field
+                    same_const = (a.heterogeneity is Heterogeneity.CONST and b.heterogeneity is Heterogeneity.CONST
+                                  and a.literal == b.literal)
+                    if a.label != b.label or not (same_field or same_const) or a.name not in inst.values:
+                        break
+                    if same_field and a.field in effect.writes:
+                        # written on the way: an append-only field keeps its bytes minus the
+                        # closing delimiter as a prefix of the next value; anything else is stale
+                        v = inst.values[a.name]
+                        if (b.heterogeneity is Heterogeneity.EXTEND and a.field not in effect.invalidates
+                                and len(v) >= 2):
+                            lines.append(f"{a.label}{v[:-1]}")
+                        break
+                    lines.append(f"{a.label}{inst.values[a.name]}")
+                if len(lines) > len(best):
+                    best = lines
+            if not paths:
+                break
         return "\n".join(best)
 
-    def _invalidate(self, sess: LiveSession, tpl: PromptTemplate) -> None:
-        """Runtime value invalidation: the arriving call's ability resets some walker
-        fields, so every earlier served prompt of the session is dead from the first
-        binding that carried one of them. That tail is demoted in the KV cache (the
-        surviving head, e.g. the module, stays in the normal band)."""
+    def _invalidate(self, sess: LiveSession, tpl: PromptTemplate,
+                    via: Optional[Edge]) -> None:
+        """Invalidate fields that is killed on the actual incoming edge.
+
+        Current-format static edges distinguish append-only writes from resets and
+        arbitrary assignments.  An unknown/dynamic edge falls back to the older
+        ability-level scope table.  History generation boundaries prevent stale
+        values from being resolved, and matching KV tails are demoted.
+        """
         prog = sess.program
         if prog is None or self.planner is None:
             return
         file = next((f for f, p in self.programs.items() if p is prog), "")
-        dead = self._resets.get(file, {}).get(tpl.ability)
+        dead = via.invalidates if via is not None else self._resets.get(file, {}).get(tpl.ability)
         if not dead:
             return
+        boundary = len(sess.calls)             # the arriving/open call will occupy this index
+        for name in dead:
+            start = boundary
+            floor = sess.field_valid_from.get(name, 0)
+            if via is not None:
+                origins = [ov for ov in via.overrides.values()
+                           if (ov.field[:-2] if ov.field.endswith("[]") else ov.field) == name
+                           and ov.source is not None]
+                # A call whose reply/binding creates the new value belongs to the
+                # new generation even though the assignment executes after it.
+                for ov in origins:
+                    for i in range(len(sess.calls) - 1, floor - 1, -1):
+                        if sess.calls[i].key == ov.source[0]:  # type: ignore[index]
+                            start = min(start, i)
+                            break
+            sess.field_valid_from[name] = start
         for inst in sess.calls:
             if not inst.served_ids or not inst.values:
                 continue
@@ -578,7 +732,7 @@ class Controller:
             text = "\n".join(lines)
             keep = len(self._planned_tokens(t, text, False) or []) if text else len(self._prefix_tokens(t))
             self.planner.invalidate(sess.id, inst.served_ids, keep)
-        print(f"[invalidate] {sess.id} {tpl.ability} resets {sorted(dead)}", flush=True)
+        print(f"[invalidate] {sess.id} {tpl.ability} kills {sorted(dead)}", flush=True)
 
     @staticmethod
     def _latest_field(hist: List[CallInstance], field: str) -> Optional[str]:
@@ -646,6 +800,10 @@ class Controller:
         if self.planner is not None:
             self.planner.drop_session(sid)
         self._close_call(sess)
+        prog = sess.program
+        if prog is not None and sess.calls:
+            last = sess.calls[-1]                  # the session ended after this call
+            prog.observe_branch(last.key, prog.context(last.key, sess.counters), None)
         print(f"[close] {sid} calls={len(sess.calls)}" + (f" opaque={sess.opaque}" if sess.opaque else ""), flush=True)
         return True
 
@@ -653,11 +811,15 @@ class Controller:
 async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True,
                kv_tokens: Optional[int] = None,
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
-               enable_relayout: bool = True, sched: str = "fcfs", risk_aging_s: float = 10.0) -> None:
+               enable_relayout: bool = True, sched: str = "fcfs", risk_aging_s: float = 10.0,
+               promote: bool = True, eviction: Optional[str] = None,
+               engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384,
-                              "radix_eviction_policy": "priority" if plan else "lru"}
+                              "radix_eviction_policy": eviction or ("priority" if plan else "lru")}
+    if engine_log:
+        kwargs["log_level"] = engine_log        # "info": sglang's own batch logs (#running-req, #queue-req, throughput)
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens   # real device pool cap (sglang server arg)
     if host_gb is not None:
@@ -672,6 +834,8 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True
         kwargs["enable_priority_scheduling"] = False
         kwargs["cache_risk_aging_s"] = risk_aging_s
     ctrl = Controller(model, server, plan=plan, enable_relayout=enable_relayout, **kwargs)
+    if ctrl.planner is not None:
+        ctrl.planner.promote_enabled = promote #type: ignore[assignment]
     await ctrl.start_serving()
 
 
@@ -691,6 +855,12 @@ if __name__ == "__main__":
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine waiting-queue order: fcfs + request priorities, longest-prefix-match, "
                          "or cache-risk (cached tokens at risk first, FCFS otherwise)")
+    ap.add_argument("--no-promote", action="store_true",
+                    help="planner steers eviction only: no speculative host->device loads")
+    ap.add_argument("--eviction", choices=["lru", "priority"], default=None,
+                    help="engine eviction policy override (default: priority with the planner, lru without)")
+    ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None,
+                    help="sglang log level; info prints the scheduler's batch statistics")
     ap.add_argument("--risk-aging-s", type=float, default=10.0, metavar="S",
                     help="--sched risk: an uncached request overtakes a fully cached one after waiting S s longer")
     a = ap.parse_args()
@@ -698,4 +868,5 @@ if __name__ == "__main__":
         HEADER_LAST = False
     asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
-                     sched=a.sched, risk_aging_s=a.risk_aging_s))
+                     sched=a.sched, risk_aging_s=a.risk_aging_s, promote=not a.no_promote, eviction=a.eviction,
+                     engine_log=a.engine_log))

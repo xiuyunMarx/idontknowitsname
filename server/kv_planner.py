@@ -83,7 +83,14 @@ class KVPlanner:
     def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None:
         """A served prompt's values past `keep_len` are dead (the program reset the
         walker fields they carried): that tail is demoted, it will not be reused."""
+        keep_len = max(0, min(keep_len, len(ids)))
         self._demote.append((ids, keep_len))
+        served = self._served.get(sid, [])
+        for i, (old_ids, old_keep) in enumerate(served):
+            if old_ids == ids and keep_len < old_keep:
+                # Session retirement must start at the most aggressive
+                # invalidation boundary, not the boundary recorded at service.
+                served[i] = (old_ids, keep_len)
         self._dirty = True
 
     def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
@@ -146,7 +153,11 @@ class KVPlanner:
         return (not self.engine.serving
                 or now >= self._latest_start(job, now) - self.RELEASE_SLACK_S)
 
+    promote_enabled = True      # --no-promote: jobs only steer eviction, no host->device loads
+
     def _pick(self, now: float) -> Optional[Job]:
+        if not self.promote_enabled:
+            return None
         """The released job with the earliest deadline (value breaks ties) whose cached
         frontier, as the ledger sees it now, reaches past `done_upto`: a promotion is
         an RPC, no request slot, no compute. `kind` is not consulted: it is the
@@ -198,16 +209,21 @@ class KVPlanner:
                     j.cooldown_cycles = self.NO_ROOM_COOLDOWN_CYCLES
 
     def _gc(self, now: float) -> None:
-        # done jobs stay until replaced or the session drops: note_arrival reads
-        # them back when the predicted call lands
+        # Keep completed jobs until they are replaced or the session ends, so note_arrival can retrieve them when the predicted call actually arrives.
+        changed = False
         for sid, held in list(self._jobs.items()):
             for k, j in list(held.items()):
                 if j.state == "void":
                     del held[k]
+                    changed = True
                 elif j.state == "queued" and now > j.t90 + self.STALE_SLACK_S:
                     j.state = "void"  # the predicted call never came
+                    changed = True
             if not held:
                 del self._jobs[sid]
+                changed = True
+        if changed:
+            self._dirty = True         # remove stale protection on this tick
 
     # ------------------------------------------------------------------ eviction steering
     async def push_priorities(self, now: float) -> None:
@@ -229,6 +245,7 @@ class KVPlanner:
         protect = [(list(k), max(1, int(self.SCORE_SCALE * s))) for k, s in score.items()]
         demote, self._demote = self._demote, []
         retire, self._retire = self._retire, []
-        if protect or demote or retire:
-            await self.engine.set_kv_priority(demote, protect, f"plan-prio-{uuid.uuid4().hex[:8]}",
-                                              retire=retire)
+        # An empty map is still a meaningful replacement: the scheduler RPC
+        # removes protections installed by the previous plan.
+        await self.engine.set_kv_priority(demote, protect, f"plan-prio-{uuid.uuid4().hex[:8]}",
+                                          retire=retire)

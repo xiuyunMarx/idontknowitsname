@@ -326,6 +326,7 @@ obj Analysis {
         field_types: dict = {},    # walker field -> type text
         defs: dict = {},           # walker field -> list[Def]
         sites: list = [],          # list[Site], in line order
+        multi_owner: set = set(),  # node types the program builds several of (constructed inside a loop or comprehension)
         entry_owner: str = "";
 
     # -- program shape ------------------------------------------------------
@@ -392,6 +393,18 @@ obj Analysis {
         }
         if not self.entry_owner and self.by_owner {
             self.entry_owner = list(self.by_owner.keys())[0];
+        }
+        # fan-out: a node type constructed inside a loop or comprehension exists
+        # several times, so a visit to it queues several nodes and the ability
+        # runs back to back: its call site may be followed by itself
+        for kind in (uni.InForStmt, uni.IterForStmt, uni.WhileStmt, uni.ListCompr) {
+            for lp in self.ast.get_all_sub_nodes(kind) {
+                for fc in lp.get_all_sub_nodes(uni.FuncCall) {
+                    if isinstance(fc.target, uni.Name) and fc.target.value in self.by_owner {
+                        self.multi_owner.add(fc.target.value);
+                    }
+                }
+            }
         }
     }
 
@@ -612,8 +625,14 @@ obj Analysis {
         }
         out: list = [];
         ends = self.may_end.get(ability, False);
+        mine = self.sites_in(ability);
+        if mine and owner_name(self.abilities[ability]) in self.multi_owner {
+            # the next queued node of the same type: the whole tail of this run
+            # and the head of the next execute in between (path entry with no visit)
+            out.append((mine[0], [(ability, None)]));
+        }
         if not self.succ(ability) {
-            return ([], True);
+            return (out, True);
         }
         for (vs, targets) in self.visit_stmts.get(ability, []) {
             for t in targets {
@@ -668,7 +687,8 @@ obj Analysis {
         leave_src = path[0][1] if path else None;
         for d in self.defs.get(f, []) {
             if d.ability == src.ability and d.lineno >= src.call.loc.first_line {
-                if (leave_src is None and d.lineno < dst.call.loc.first_line) or (leave_src is not None and Analysis.on_path(d.ast_node, leave_src)) {
+                if (not path and d.lineno < dst.call.loc.first_line) or (path and leave_src is None)
+                    or (leave_src is not None and Analysis.on_path(d.ast_node, leave_src)) {
                     out.append((0, d.lineno, d));
                 }
             }
@@ -754,8 +774,10 @@ obj Analysis {
             for d in ds {
                 hit = False;
                 if d.ability == src.ability and d.lineno >= src.call.loc.first_line {
-                    if leave_src is None {
+                    if not path {
                         hit = d.lineno < dst.call.loc.first_line;
+                    } elif leave_src is None {
+                        hit = True;             # fan-out re-entry: the whole tail runs
                     } else {
                         hit = Analysis.on_path(d.ast_node, leave_src);
                     }
@@ -774,6 +796,19 @@ obj Analysis {
                 if hit {
                     out.add(f);
                 }
+            }
+        }
+        return out;
+    }
+
+    """Fields whose old bytes stop being a prefix between `src` and `dst`.
+    Append-only writes deliberately do not invalidate: the old representation is
+    still a useful prefix of the new one. Resets and arbitrary assignments do."""
+    def invalidates_between(src: Site, dst: Site, path: list) -> set {
+        out: set = set();
+        for f in self.defs.keys() {
+            if any([d.kind != "extend" for d in self.defs_on_path(f, src, dst, path)]) {
+                out.add(f);
             }
         }
         return out;
@@ -819,7 +854,7 @@ obj Analysis {
         main = [d for d in ds if not d.in_except];
         return main if main else ds;
     }
-
+    
     """The first site after definition `d` (before `upto` when in the same
     ability) that carries field `f`, searching forward through the visit graph
     and stopping at abilities that redefine `f`."""
@@ -1167,7 +1202,10 @@ obj Analysis {
         for s in self.sites {
             (paths, ends) = self.first_paths(s.ability, s.call.loc.first_line, set());
             for (n, path) in paths {
-                program.add_edge(s.key, n.key, frozenset(self.writes_between(s, n, path)), self.edge_overrides(s, n, path));
+                program.add_edge(s.key, n.key,
+                                 frozenset(self.writes_between(s, n, path)),
+                                 self.edge_overrides(s, n, path),
+                                 frozenset(self.invalidates_between(s, n, path)));
             }
             if ends {
                 exits.add(s.key);
@@ -1187,6 +1225,10 @@ def analyze(path: str) -> Program {
 
 def describe(p: Program) -> str {
     out = [f"entry: {p.entry!r}   exits: {sorted([repr(k) for k in p.exits])}"];
+    p.decide_loops();
+    for (i, lp) in enumerate(p.loops) {
+        out.append(f"loop {i}: head {lp.head!r}  body {sorted([repr(k) for k in lp.body])}" + (f"  in loop {lp.parent}" if lp.parent is not None else ""));
+    }
     for (k, t) in p.sites.items() {
         out.append(f"{k!r}  model={t.model}  header={len(t.header)}B  hint={len(t.hint)}B  system={len(t.system_prompt)}B");
         for b in t.bindings {
@@ -1197,7 +1239,9 @@ def describe(p: Program) -> str {
         }
         for e in p.successors(k) {
             ov = ", ".join([f"{n}={ob.heterogeneity.name}" + (f"<-{ob.source[0]!r}.{ob.source[1]}" if ob.source else "") + (f"={ob.literal}" if ob.literal is not None else "") for (n, ob) in e.overrides.items()]);
-            out.append(f"    -> {e.dst!r}" + (f"  writes {sorted(e.writes)}" if e.writes else "") + (f"  via-edge: {ov}" if ov else ""));
+            out.append(f"    -> {e.dst!r}" + (f"  writes {sorted(e.writes)}" if e.writes else "")
+                       + (f"  invalidates {sorted(e.invalidates)}" if e.invalidates else "")
+                       + (f"  via-edge: {ov}" if ov else ""));
         }
     }
     return "\n".join(out);

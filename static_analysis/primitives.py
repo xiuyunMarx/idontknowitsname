@@ -296,6 +296,7 @@ class Edge:
     src: CallSiteID
     dst: CallSiteID
     writes: FrozenSet[str] = frozenset()       # walker fields the program writes between the two calls (static)
+    invalidates: FrozenSet[str] = frozenset()  # written non-append-only: earlier bytes are no longer a prefix
     overrides: Dict[str, Binding] = field(default_factory=dict)   # dst binding name -> how it resolves along THIS edge
     count: int = 0                             # times the transition was taken
     gap: List[float] = field(default_factory=list)   # seconds from src's reply to dst's arrival
@@ -305,17 +306,41 @@ class Edge:
         return _quantile(self.gap, q)
 
 @dataclass
+class Loop:
+    """A nested strongly connected component of the callsite graph, from
+    Bourdoncle's weak topological ordering: `head` is the site the search entered
+    it by, `body` every site inside (nested loops included), `parent` the
+    enclosing loop. The runtime counts passes through the head; the branch
+    statistics of a site are keyed by the counts of the loops enclosing it."""
+    head: CallSiteID
+    body: FrozenSet[CallSiteID] = frozenset()
+    parent: Optional[int] = None
+
+
+CTX_CAP = 8     # iteration counts beyond this share one bucket
+END: Optional[CallSiteID] = None   # the outcome "the session ended here" in the branch tables
+
+
+@dataclass
 class Program:
     """The callsites of one agent as a directed graph.
 
-    Nodes and edges come from the compiler (the visit graph). Frequencies and
-    times on them come from the server. Nothing else is learned.
+    Nodes, edges and the loop nesting come from the compiler (the visit graph).
+    Frequencies and times on them come from the server: a branch is counted
+    under the iteration counts of the loops enclosing its source, so a loop's
+    exit probability is learned as a function of how often it has run.
+    Nothing else is learned.
     """
     entry: CallSiteID
     sites: Dict[CallSiteID, PromptTemplate] = field(default_factory=dict)
     edges: Dict[Tuple[CallSiteID, CallSiteID], Edge] = field(default_factory=dict)
     exits: FrozenSet[CallSiteID] = frozenset()        # sites after which the session may end
     n_sessions: int = 0
+    loops: List[Loop] = field(default_factory=list)                       # decide_loops
+    chain: Dict[CallSiteID, Tuple[int, ...]] = field(default_factory=dict)  # site -> enclosing loops, outermost first
+    # (site, iteration context) -> outcome (successor site, or END) -> count; every
+    # observation is written at every backoff level of its context (see context_levels)
+    ctx_counts: Dict[Tuple[CallSiteID, Tuple[int, ...]], Dict[Optional[CallSiteID], int]] = field(default_factory=dict)
 
     # Layout
     def decide_layouts(self, header_last: bool = True) -> None:
@@ -362,14 +387,30 @@ class Program:
         return t
 
     def add_edge(self, src: CallSiteID, dst: CallSiteID, writes: Optional[FrozenSet[str]] = None,
-                 overrides: Optional[Dict[str, Binding]] = None) -> Edge:
+                 overrides: Optional[Dict[str, Binding]] = None,
+                 invalidates: Optional[FrozenSet[str]] = None) -> Edge:
         e = self.edges.get((src, dst))
+        fresh = e is None
         if e is None:
             e = self.edges[(src, dst)] = Edge(src, dst)
         if writes:
             e.writes = e.writes | frozenset(writes)
-        if overrides:
-            e.overrides.update(overrides)
+        if invalidates:
+            e.invalidates = e.invalidates | frozenset(invalidates)
+        if overrides is not None:
+            if fresh:
+                e.overrides = dict(overrides)
+            else:
+                # Several CFG paths can collapse into the same callsite edge.  An
+                # override is usable only when every path agrees on its origin;
+                # last-writer-wins here would let one branch describe another.
+                e.overrides = {
+                    name: old for name, old in e.overrides.items()
+                    if name in overrides
+                    and (old.heterogeneity, old.source, old.literal, old.field)
+                    == (overrides[name].heterogeneity, overrides[name].source,
+                        overrides[name].literal, overrides[name].field)
+                }
         return e
 
     def resets(self) -> Dict[str, FrozenSet[str]]:
@@ -388,18 +429,100 @@ class Program:
     def successors(self, key: CallSiteID) -> List[Edge]:
         return [e for (s, _), e in self.edges.items() if s == key]
 
-    # Runtime marks
-    def observe(self, prev: Optional[CallInstance], cur: CallInstance) -> None:
-        """Mark one transition: the edge count, the gap before `cur`, and `cur`'s
-        timing both on its site and on the edge it was reached by."""
-        turns = len(cur.engine_time)
-        cur.template.stats.add_record(cur.engine_time, turns, cur.gap)
+    # Loops
+    def decide_loops(self) -> None:
+        """Nested loop decomposition of the static graph (Bourdoncle 1993, the
+        recursive strategy): a depth-first search from the entry; a vertex whose
+        lowest reachable DFS number is its own closes a strongly connected
+        component, which is then re-searched from its head to find the components
+        nested inside. Sites unreachable from the entry are searched afterwards."""
+        succ: Dict[CallSiteID, List[CallSiteID]] = {k: [] for k in self.sites}
+        for (a, b) in self.edges:
+            succ.setdefault(a, []).append(b)
+        inf = float("inf")
+        dfn: Dict[CallSiteID, float] = {}
+        stack: List[CallSiteID] = []
+        loops: List[Loop] = []
+        chain: Dict[CallSiteID, Tuple[int, ...]] = {}
+        num = 0
+
+        def visit(v: CallSiteID, parent: Tuple[int, ...]) -> float:
+            nonlocal num
+            stack.append(v)
+            num += 1
+            dfn[v] = num
+            head: float = num
+            loop = False
+            for w in succ.get(v, []):
+                m = visit(w, parent) if dfn.get(w, 0) == 0 else dfn[w]
+                if m <= head:
+                    head, loop = m, True
+            if head == dfn[v]:
+                dfn[v] = inf
+                el = stack.pop()
+                if loop:
+                    while el != v:
+                        dfn[el] = 0          # searched again, inside the component
+                        el = stack.pop()
+                    component(v, parent)
+                else:
+                    chain[v] = parent
+            return head
+
+        def component(v: CallSiteID, parent: Tuple[int, ...]) -> None:
+            idx = len(loops)
+            loops.append(Loop(head=v, parent=parent[-1] if parent else None))
+            mine = parent + (idx,)
+            chain[v] = mine
+            for w in succ.get(v, []):
+                if dfn.get(w, 0) == 0:
+                    visit(w, mine)
+            loops[idx].body = frozenset(k for k, c in chain.items() if idx in c)
+
+        order = [self.entry] + [k for k in self.sites if k != self.entry]
+        for k in order:
+            if k in self.sites and dfn.get(k, 0) == 0:
+                visit(k, ())
+        self.loops, self.chain = loops, chain
+
+    def entry_counters(self, key: CallSiteID) -> Dict[int, int]:
+        """The counters of a session whose first call is `key`: one pass of every
+        loop enclosing it."""
+        return {L: 1 for L in self.chain.get(key, ())}
+
+    def step_counters(self, counters: Dict[int, int], prev: Optional[CallSiteID],
+                      cur: CallSiteID) -> Dict[int, int]:
+        """The counters after the transition prev -> cur: loops left are dropped,
+        loops entered start at one, and reaching the head of a loop the session is
+        already in is another pass of it (its inner loops are left, hence reset)."""
         if prev is None:
-            return
-        e = self.add_edge(prev.key, cur.key)
-        e.count += 1
-        e.gap.append(max(0.0, cur.t_arrive - prev.t_done))
-        e.stats.add_record(cur.engine_time, turns, cur.gap)
+            return self.entry_counters(cur)
+        cchain = self.chain.get(cur, ())
+        new = {L: n for L, n in counters.items() if L in cchain}
+        for L in cchain:
+            if L not in new:
+                new[L] = 1
+            elif self.loops[L].head == cur:
+                new[L] += 1
+        return new
+
+    def context(self, key: CallSiteID, counters: Dict[int, int]) -> Tuple[int, ...]:
+        """The iteration context of a call at `key`: the counts of its enclosing
+        loops, outermost first, capped."""
+        return tuple(min(CTX_CAP, counters.get(L, 0)) for L in self.chain.get(key, ()))
+
+    @staticmethod
+    def context_levels(ctx: Tuple[int, ...]) -> List[Tuple[int, ...]]:
+        """Backoff levels of a context, most general first: no counts, the innermost
+        loop's count, ..., every count."""
+        return [ctx[k:] for k in range(len(ctx), -1, -1)]
+
+    def observe_branch(self, src: CallSiteID, ctx: Tuple[int, ...], outcome: Optional[CallSiteID]) -> None:
+        """One outcome after a call at `src` in iteration context `ctx`: the next
+        site, or END when the session finished there."""
+        for lvl in self.context_levels(ctx):
+            table = self.ctx_counts.setdefault((src, lvl), {})
+            table[outcome] = table.get(outcome, 0) + 1
 
     def gap_q(self, src: CallSiteID, dst: CallSiteID, q: float) -> float:
         """Quantile of the agent's own time between src's reply and dst's arrival."""
@@ -415,22 +538,28 @@ class Program:
         t = self.sites.get(dst)
         return t.stats.quantile_duration(q) if t is not None and t.stats.engine_time else 0.0
 
-    def predict_tree(self, cur: CallSiteID, p_min: float = 0.02, horizon_s: float = 120.0,
+    def predict_tree(self, cur: CallSiteID, counters: Optional[Dict[int, int]] = None,
+                     p_min: float = 0.02, horizon_s: float = 120.0,
                      max_nodes: int = 64, top_k: int = 3, max_depth: int = 8) -> List["PredictedCall"]:
         """Fan-out prediction from the current site over the static graph: every
-        step expands the top_k successors by edge frequency, arrival times add the
-        edge gap and the predecessor's duration. Zero counts fall back to a uniform
-        prior over the static successors, so the first session is planned too."""
+        step expands the top_k successors by branch probability in the path's
+        iteration context (the counters advance along the path), arrival times
+        add the edge gap and the predecessor's duration. Zero counts fall back to
+        a uniform prior over the static successors, so the first session is
+        planned too."""
         from math import sqrt
         out: Dict[CallSiteID, PredictedCall] = {}
-        frontier: List[Tuple[float, CallSiteID, Optional[CallSiteID], float, float, int]] = [
-            (1.0, cur, None, 0.0, 0.0, 0)]   # (path p, site, its predecessor, t50, spread^2, depth)
+        ctr0 = dict(counters) if counters is not None else self.entry_counters(cur)
+        frontier: List[Tuple[float, CallSiteID, Optional[CallSiteID], float, float, int,
+                             Tuple[CallSiteID, ...], Dict[int, int]]] = [
+            (1.0, cur, None, 0.0, 0.0, 0, (cur,), ctr0)]
+        # row: (path p, site, its predecessor, t50, spread^2, depth, callsite path, counters at site)
         expanded = 0
         while frontier and expanded < max_nodes:
             frontier.sort(key=lambda row: -row[0])
-            path_p, q, q_pred, t50, var, depth = frontier.pop(0)
+            path_p, q, q_pred, t50, var, depth, path, ctr = frontier.pop(0)
             expanded += 1
-            for key, p_step in self.branch_probs(q)[:top_k]:
+            for key, p_step in self.branch_probs(q, ctr)[:top_k]:
                 p = path_p * p_step
                 if p < p_min:
                     continue
@@ -440,28 +569,58 @@ class Program:
                     continue
                 spread2 = var + (g90 - g50) ** 2
                 a90 = a50 + sqrt(spread2)
+                next_path = path + (key,)
                 known = out.get(key)
                 if known is None:
-                    out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90)
+                    out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90,
+                                             path=next_path, paths=[next_path])
                 else:
                     known.p = min(1.0, known.p + p)
+                    if next_path not in known.paths:
+                        known.paths.append(next_path)
                     if a50 < known.t50:
-                        known.t50, known.t90 = a50, a90
+                        known.t50, known.t90, known.path = a50, a90, next_path
                 if depth + 1 < max_depth:
                     d50, d90 = self.duration_q(q, key, 0.5), self.duration_q(q, key, 0.9)
-                    frontier.append((p, key, q, a50 + d50, spread2 + (d90 - d50) ** 2, depth + 1))
+                    frontier.append((p, key, q, a50 + d50,
+                                     spread2 + (d90 - d50) ** 2, depth + 1, next_path,
+                                     self.step_counters(ctr, q, key)))
         return sorted(out.values(), key=lambda c: -c.p)
 
-    def branch_probs(self, key: CallSiteID) -> List[Tuple[CallSiteID, float]]:
-        """P(next = dst | current = key) from edge counts; uniform over the
-        static successors before any count exists (the cold-start prior)."""
+    def outcome_probs(self, key: CallSiteID, counters: Optional[Dict[int, int]] = None) -> Dict[Optional[CallSiteID], float]:
+        """P(outcome | current = key, iteration context) over the successor sites and
+        END, from the branch tables, Witten-Bell interpolated from the pooled counts
+        of the site down to its full context: a well-supported context dominates, a
+        sparse one leans on its more general levels. Below every level sits a
+        uniform prior over the static successors (and END, at an exit site), the
+        cold-start estimate. Without counters only the pooled level is used."""
         succ = self.successors(key)
-        if not succ:
-            return []
-        total = sum(e.count for e in succ)
-        if total == 0:
-            return [(e.dst, 1.0 / len(succ)) for e in succ]
-        return sorted(((e.dst, e.count / total) for e in succ), key=lambda kv: -kv[1])
+        outcomes: List[Optional[CallSiteID]] = [e.dst for e in succ]
+        if key in self.exits or not outcomes:
+            outcomes.append(END)
+        probs: Dict[Optional[CallSiteID], float] = {o: 1.0 / len(outcomes) for o in outcomes}
+        ctx = self.context(key, counters) if counters is not None else ()
+        for lvl in self.context_levels(ctx):
+            table = self.ctx_counts.get((key, lvl))
+            if not table:
+                continue
+            n = sum(table.values())
+            lam = n / (n + len(table))
+            probs = {o: (1.0 - lam) * p for o, p in probs.items()}
+            for o, c in table.items():
+                probs[o] = probs.get(o, 0.0) + lam * c / n
+        return probs
+
+    def branch_probs(self, key: CallSiteID, counters: Optional[Dict[int, int]] = None) -> List[Tuple[CallSiteID, float]]:
+        """The successor sites of `key` by probability; END consumes mass and yields
+        no successor."""
+        probs = self.outcome_probs(key, counters)
+        return sorted(((o, p) for o, p in probs.items() if o is not END),   # type: ignore[misc]
+                      key=lambda kv: -kv[1])
+
+    def end_prob(self, key: CallSiteID, counters: Optional[Dict[int, int]] = None) -> float:
+        """P(the session ends after a call at `key` in this iteration context)."""
+        return self.outcome_probs(key, counters).get(END, 0.0)
 
 
 @dataclass
@@ -472,6 +631,8 @@ class PredictedCall:
     p: float
     t50: float
     t90: float
+    path: Tuple[CallSiteID, ...] = ()           # earliest path retained for value-flow reconstruction
+    paths: List[Tuple[CallSiteID, ...]] = field(default_factory=list)  # every bounded-search path reaching the site
 
 
 # ------------------------------------------------------------------ reply repr
@@ -670,7 +831,8 @@ def program_to_dict(p: Program) -> Dict[str, Any]:
         "entry": site_to_dict(p.entry),
         "sites": [template_to_dict(t) for t in p.sites.values()],
         "edges": [[site_to_dict(a), site_to_dict(b), sorted(e.writes),
-                   {n: _binding_to_dict(ob) for n, ob in e.overrides.items()}] for (a, b), e in p.edges.items()],
+                   {n: _binding_to_dict(ob) for n, ob in e.overrides.items()},
+                   sorted(e.invalidates)] for (a, b), e in p.edges.items()],
         "exits": [site_to_dict(k) for k in p.exits],
     }
 
@@ -681,7 +843,8 @@ def program_from_dict(d: Dict[str, Any]) -> Program:
         p.add_site(template_from_dict(t))
     for row in d.get("edges", []):
         p.add_edge(site_from_dict(row[0]), site_from_dict(row[1]), frozenset(row[2]) if len(row) > 2 else None,
-                   {n: _binding_from_dict(ob) for n, ob in row[3].items()} if len(row) > 3 else None)
+                   {n: _binding_from_dict(ob) for n, ob in row[3].items()} if len(row) > 3 else None,
+                   frozenset(row[4]) if len(row) > 4 else None)
     p.exits = frozenset(site_from_dict(k) for k in d.get("exits", []))
     return p
 
