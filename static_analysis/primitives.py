@@ -256,17 +256,19 @@ class PromptTemplate:
         return values
 
     def fixed_head(self) -> str:
-        """Bytes of the user message known before any value: the header unless it
-        was moved behind the values, then only the leading CONST params."""
-        if self.header_last:
-            head = []
-            for n in self.served_order():
-                b = self.binding(n)
-                if b.heterogeneity is not Heterogeneity.CONST:
-                    break
-                head.append(f"{b.label}{b.literal}")
-            return "\n".join(head)
-        return self.header
+        """Static leading bytes, including CONST params after a leading header.
+
+        In particular, header-first agents' tool descriptions remain shared
+        when the session's question/history is retired. This does not re-layout
+        the prompt; it only identifies its existing constant prefix.
+        """
+        head = [self.header] if self.header and not self.header_last else []
+        for n in self.served_order():
+            b = self.binding(n)
+            if b.heterogeneity is not Heterogeneity.CONST:
+                break
+            head.append(f"{b.label}{b.literal}")
+        return "\n".join(head)
 
 
 # ------------------------------------------------------------------ instance
@@ -546,7 +548,9 @@ class Program:
         iteration context (the counters advance along the path), arrival times
         add the edge gap and the predecessor's duration. Zero counts fall back to
         a uniform prior over the static successors, so the first session is
-        planned too."""
+        planned too. Each result describes only the next visit to its site:
+        alternative first-arrival paths merge, later visits on the same path do
+        not. The search still walks those visits to reach downstream sites."""
         from math import sqrt
         out: Dict[CallSiteID, PredictedCall] = {}
         ctr0 = dict(counters) if counters is not None else self.entry_counters(cur)
@@ -570,16 +574,20 @@ class Program:
                 spread2 = var + (g90 - g50) ** 2
                 a90 = a50 + sqrt(spread2)
                 next_path = path + (key,)
-                known = out.get(key)
-                if known is None:
-                    out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90,
-                                             path=next_path, paths=[next_path])
-                else:
-                    known.p = min(1.0, known.p + p)
-                    if next_path not in known.paths:
-                        known.paths.append(next_path)
-                    if a50 < known.t50:
-                        known.t50, known.t90, known.path = a50, a90, next_path
+                # Exclude the current call at path[0]: its first future return
+                # is still useful. Later returns must not contribute writes,
+                # probability, or timing to the site's next-call prediction.
+                if key not in path[1:]:
+                    known = out.get(key)
+                    if known is None:
+                        out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90,
+                                                 path=next_path, paths=[next_path])
+                    else:
+                        known.p = min(1.0, known.p + p)
+                        if next_path not in known.paths:
+                            known.paths.append(next_path)
+                        if a50 < known.t50:
+                            known.t50, known.t90, known.path = a50, a90, next_path
                 if depth + 1 < max_depth:
                     d50, d90 = self.duration_q(q, key, 0.5), self.duration_q(q, key, 0.9)
                     frontier.append((p, key, q, a50 + d50,
@@ -625,14 +633,14 @@ class Program:
 
 @dataclass
 class PredictedCall:
-    """One future call the tree search expects, with arrival-time quantiles
+    """The next visit to a site the tree search expects, with arrival-time quantiles
     (seconds past the anchor)."""
     key: CallSiteID
     p: float
     t50: float
     t90: float
     path: Tuple[CallSiteID, ...] = ()           # earliest path retained for value-flow reconstruction
-    paths: List[Tuple[CallSiteID, ...]] = field(default_factory=list)  # every bounded-search path reaching the site
+    paths: List[Tuple[CallSiteID, ...]] = field(default_factory=list)  # alternative paths to the next visit
 
 
 # ------------------------------------------------------------------ reply repr

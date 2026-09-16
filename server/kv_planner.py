@@ -31,7 +31,8 @@ class KVPlanner:
     SAFETY_K = 0.5              # deadline tightening per unit of arrival spread
     MAX_ATTEMPTS = 3            # failed promotion RPCs before a job is dropped
     STALE_SLACK_S = 5.0         # past t90 by this much: the call never came
-    SCORE_TAU_S = 60.0          # eviction score decay: a prefix due in tau seconds counts 1/e of one due now
+    MIN_HORIZON_S = 0.5         # a call due now still counts as half a second away in the density
+    PROTECT_FRAC = 0.6          # share of the device pool the planned band may cover
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
@@ -42,7 +43,7 @@ class KVPlanner:
         self._wake = asyncio.Event()
         self._dirty = False   # the priority map no longer mirrors the plan
         self._demote: List[Tuple[List[int], int]] = []  # served (ids, fixed_len) awaiting demotion
-        self._served: Dict[str, List[Tuple[List[int], int]]] = {}  # sid -> its served prompts (private tails)
+        self._served: Dict[str, List[Tuple[List[int], int]]] = {}  # sid -> (prompt, static retirement boundary)
         self._retire: List[Tuple[List[int], int]] = []  # ended sessions' prompts awaiting retirement
 
     # ------------------------------------------------------------------ intake
@@ -72,12 +73,15 @@ class KVPlanner:
                     prev.state = "void"
         self._dirty = True
 
-    def note_served(self, sid: str, ids: List[int], fixed_len: int) -> None:
+    def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None:
         """A real call landed: everything past `fixed_len` (the head the flow rules
-        can rebuild) is transient, and the prompt is remembered as the session's
-        private cache for retirement when it ends."""
+        can rebuild) is transient. At session end only `static_len` survives:
+        reusable *within-session* history is private too, not a static prefix.
+        Other live plans can still protect shared bytes when retirement lands."""
+        fixed_len = max(0, min(fixed_len, len(ids)))
+        static_len = max(0, min(static_len, fixed_len))
         self._demote.append((ids, fixed_len))
-        self._served.setdefault(sid, []).append((ids, fixed_len))
+        self._served.setdefault(sid, []).append((ids, static_len))
         self._dirty = True
 
     def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None:
@@ -114,14 +118,21 @@ class KVPlanner:
                 j.state = "void"
         self._dirty = True
 
-    def drop_session(self, sid: str) -> None:
-        """The session ended (quiet past its timeout, or closed): its jobs are void and
-        its private cache is retired — evicted before anything a live session might
-        still reuse (PBKV's lifecycle-aware tier)."""
-        for j in self._jobs.pop(sid, {}).values():
-            j.state = "void"
+    def retire_session(self, sid: str) -> None:
+        """The program has reached its end for this session: its private cache is
+        retired now — evicted before anything a live session might still reuse
+        (PBKV's lifecycle-aware tier). The session itself stays open for stats."""
+        for j in self._jobs.get(sid, {}).values():
+            if j.state in ("queued", "running"):
+                j.state = "void"
         self._retire.extend(self._served.pop(sid, []))
         self._dirty = True
+
+    def drop_session(self, sid: str) -> None:
+        """The session ended (quiet past its timeout, or closed): void its jobs and
+        retire whatever is not retired yet."""
+        self.retire_session(sid)
+        self._jobs.pop(sid, None)
 
     def wake(self) -> None:
         self._wake.set()
@@ -231,18 +242,38 @@ class KVPlanner:
         if not self._dirty:
             return
         self._dirty = False
-        score: Dict[tuple, float] = {}
+        # Value density of a job: the tokens its resident prefix saves, times the
+        # chance the call comes, per second until it comes. Protection is selective:
+        # jobs are taken in density order until PROTECT_FRAC of the device pool is
+        # covered, so the planned band never swallows the whole pool.
+        cands: List[Tuple[float, int, tuple]] = []
         for held in self._jobs.values():
             live = [j for j in held.values() if j.state != "void"]
             if not live:
                 continue
             newest = max(j.epoch for j in live)   # older epochs' done jobs are history
+            best: Dict[tuple, Tuple[float, int]] = {}
             for j in live:
-                if j.epoch == newest:
-                    key = tuple(j.toks)
-                    s = j.p * math.exp(-max(0.0, j.deadline - now) / self.SCORE_TAU_S)
-                    score[key] = max(score.get(key, 0.0), s)   # one prefix, one session: its best job
-        protect = [(list(k), max(1, int(self.SCORE_SCALE * s))) for k, s in score.items()]
+                if j.epoch != newest:
+                    continue
+                saved = len(j.toks) - self.engine.cost(j.toks)[0]
+                if saved <= 0:
+                    continue
+                density = j.p * saved / max(j.deadline - now, self.MIN_HORIZON_S)
+                key = tuple(j.toks)
+                if density > best.get(key, (0.0, 0))[0]:
+                    best[key] = (density, saved)       # one prefix, one session: its best job
+            cands.extend((d, saved, k) for k, (d, saved) in best.items())
+        cands.sort(key=lambda c: -c[0])
+        budget = self.PROTECT_FRAC * self.engine.ledger.device_cap_tokens() if cands else 0
+        protect: List[Tuple[List[int], int]] = []
+        used = 0
+        top = cands[0][0] if cands else 1.0
+        for density, saved, key in cands:
+            if used + saved > budget and protect:
+                break
+            used += saved
+            protect.append((list(key), max(1, int(self.SCORE_SCALE * density / top))))
         demote, self._demote = self._demote, []
         retire, self._retire = self._retire, []
         # An empty map is still a meaningful replacement: the scheduler RPC

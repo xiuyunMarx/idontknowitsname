@@ -1,21 +1,0 @@
-[http] listening on 0.0.0.0:8964
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[2026-09-15 22:17:53] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[2026-09-15 22:17:53] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[rank0]:[W915 22:17:54.781775210 ProcessGroupGloo.cpp:516] Warning: Unable to resolve hostname to a (local) address. Using the loopback address as fallback. Manually set the network interface to bind to with GLOO_SOCKET_IFNAME. (function operator())
-[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
-[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
-[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
-Multi-thread loading shards:   0% Completed | 0/5 [00:00<?, ?it/s]Multi-thread loading shards:  20% Completed | 1/5 [00:00<00:00,  7.36it/s]Multi-thread loading shards:  40% Completed | 2/5 [00:00<00:00,  3.11it/s]Multi-thread loading shards:  60% Completed | 3/5 [00:01<00:00,  2.69it/s]Multi-thread loading shards:  80% Completed | 4/5 [00:01<00:00,  2.37it/s]Multi-thread loading shards: 100% Completed | 5/5 [00:02<00:00,  2.22it/s]Multi-thread loading shards: 100% Completed | 5/5 [00:02<00:00,  2.47it/s]
-  0%|          | 0/7 [00:00<?, ?it/s]Capturing batches (bs=24 avail_mem=2.71 GB):   0%|          | 0/7 [00:00<?, ?it/s]Capturing batches (bs=24 avail_mem=2.71 GB):  14%|█▍        | 1/7 [00:01<00:08,  1.35s/it]Capturing batches (bs=16 avail_mem=2.66 GB):  14%|█▍        | 1/7 [00:01<00:08,  1.35s/it]Capturing batches (bs=12 avail_mem=2.63 GB):  14%|█▍        | 1/7 [00:01<00:08,  1.35s/it]Capturing batches (bs=12 avail_mem=2.63 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.46it/s]Capturing batches (bs=8 avail_mem=2.63 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.46it/s] Capturing batches (bs=4 avail_mem=2.61 GB):  43%|████▎     | 3/7 [00:01<00:01,  2.46it/s]Capturing batches (bs=4 avail_mem=2.61 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.37it/s]Capturing batches (bs=2 avail_mem=2.60 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.37it/s]Capturing batches (bs=1 avail_mem=2.58 GB):  71%|███████▏  | 5/7 [00:01<00:00,  4.37it/s]Capturing batches (bs=1 avail_mem=2.58 GB): 100%|██████████| 7/7 [00:01<00:00,  6.22it/s]Capturing batches (bs=1 avail_mem=2.58 GB): 100%|██████████| 7/7 [00:01<00:00,  3.97it/s]
-[ledger] device=31830 tokens host=54253 tokens stride=8 kv_bytes_per_token=147456
-[warmup] engine ready in 345 ms
-[layout] Extractor.extract:72 order=['document', 'question'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('self', 'CONST')]
-[layout] Analyst.compute:91 order=['document', 'question', 'facts'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('facts', 'RESP'), ('self', 'CONST')]
-[layout] Auditor.check:113 order=['document', 'question', 'facts', 'analysis'] header_last=True bindings=[('document', 'COPY'), ('question', 'COPY'), ('facts', 'COPY'), ('analysis', 'RESP'), ('self', 'CONST')]
-[layout] Writer.answer:137 order=['question', 'facts', 'analysis', 'audit'] header_last=True bindings=[('question', 'COPY'), ('facts', 'COPY'), ('analysis', 'COPY'), ('audit', 'RESP'), ('self', 'CONST')]
-[program] /home/xiaoyu/idontknowitsname/benchmark/applications/doc_analysis.jac: 4 sites, entry Extractor.extract:72, exits ['Writer.answer:137'], edges ['Analyst.compute:91->Auditor.check:113', 'Auditor.check:113->Writer.answer:137', 'Extractor.extract:72->Analyst.compute:91']
-/home/xiaoyu/miniconda3/envs/sglang/lib/python3.12/multiprocessing/resource_tracker.py:279: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
-  warnings.warn('resource_tracker: There appear to be %d '

@@ -111,7 +111,7 @@ class Markov:
         row = self.row(i)
         if not row:
             return None, 0.0
-        j = max(row, key=row.get)
+        j = max(row, key=row.get) #type: ignore
         return j, row[j]
 
     def reach(self, i: int, horizon: int = HORIZON, gamma: float = GAMMA) -> Dict[int, float]:
@@ -174,6 +174,9 @@ class CacheScoutController:
         await self.engine.warmup()
         while True:
             req = await self.pool.get()
+            if req.kind == "register":
+                req.reply({"ok": True, "ignored": True, "file": req.body["file"]})
+                continue
             if req.kind == "close":
                 known = req.session in self.current or req.session in self.seq
                 for d in (self.current, self.last_seen, self.served, self.seq, self.turn, self.last_body):
@@ -275,9 +278,9 @@ class CacheScoutController:
                 if not self._push_pending:
                     break
 
-
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
-               hicache_io: Optional[str], r_min: float, horizon: int, sched: str = "fcfs") -> None:
+               hicache_io: Optional[str], r_min: float, horizon: int, sched: str = "fcfs",
+               engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384, "radix_eviction_policy": "priority"}
@@ -287,6 +290,8 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
         kwargs["host_cache_gb"] = host_gb
     if hicache_io:
         kwargs["hicache_io_backend"] = hicache_io
+    if engine_log:
+        kwargs["log_level"] = engine_log
     if sched == "lpm":
         kwargs["schedule_policy"] = "lpm"
         kwargs["enable_priority_scheduling"] = False
@@ -334,9 +339,11 @@ if __name__ == "__main__":
     ap.add_argument("--horizon", type=int, default=HORIZON, help="look-ahead steps in the survival probability")
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine queue order (fcfs is the paper's setting; the others exist for the sweep script)")
+    ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None)
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         _selftest()
     else:
-        asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.sched))
+        asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.sched,
+                         engine_log=a.engine_log))

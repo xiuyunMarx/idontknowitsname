@@ -16,15 +16,15 @@ Concurrency: up to MAX_INFLIGHT_PROMOTIONS promotions pending or in flight
 low-priority stream, so more in flight means a deeper FIFO, not more PCIe
 contention; each promotion's nodes are locked until its copy lands, so concurrent
 ones cannot evict each other. Space: a promotion uses free device slots plus
-RETIRED nodes it may reclaim, never active cache, and only if a real prefill
-chunk stays free afterwards (prefetch_prefix reserve) — locked promotion slots
+RETIRED and TRANSIENT nodes it may reclaim, never locked or protected cache,
+and only if a real prefill chunk stays free afterwards (prefetch_prefix reserve) — locked promotion slots
 sit outside the scheduler's admission budget, so without the reserve concurrent
 promotions can lock the whole pool and the next prefill dies with OOM.
 
 Eviction steering (`kv_priority` RPC) on SGLang's own `TreeNode.priority`:
 four bands on the device tier, lowest evicted first, LRU inside a band.
-  RETIRED (-2)     a session's private bytes once the session ended (PBKV's
-                   lifecycle tier): no live session can reuse them
+  RETIRED (-2)     bytes past an ended session's static prefix (PBKV's lifecycle
+                   tier); another live plan's protection takes precedence
   TRANSIENT (-1)   the one-off tail of a served prompt, past the head the flow
                    rules can rebuild: fresh binding values, generated tokens
   0                anything unclassified (request-priority inserts 0..2 collapse here)
@@ -81,14 +81,14 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
         raise Deferred(f"deferred: {len(tc.ongoing_promote)} promotions in flight")
     reserve = self.chunked_prefill_size or self.max_prefill_tokens
     device, host, started, event = tc.prefetch_prefix(
-        list(token_ids), reserve=reserve, evict_max_priority=RETIRED)
+        list(token_ids), reserve=reserve, evict_max_priority=TRANSIENT)
     free = tc.cache_controller.mem_pool_device_allocator.available_size()
     print(f"[promote] {rid} tokens={len(token_ids)} device={device} host={host} "
           f"started={started} free={free} reserve={reserve} "
           f"ms={(time.perf_counter() - t0) * 1000:.1f}", flush=True)
     if host > 0 and started == 0:
         # declined for space: keep the job queued so the planner retries once
-        # retired cache or free slots appear, instead of believing it landed
+        # reclaimable cache or free slots appear, instead of believing it landed
         raise Deferred(f"deferred: no room for {host} host tokens (free={free}, reserve={reserve})")
     if wait and event is not None:
         event.finish_event.synchronize()
@@ -102,8 +102,13 @@ def _descend(tc, ids: List[int]):
 
 def _band_tail(tc, ids: List[int], fixed_len: int, band: int) -> int:
     """Set `band` on the nodes of `ids` lying wholly past `fixed_len` and on the
-    generated tokens hanging below the prompt; a node straddling or preceding the
-    head is left alone. Returns how many changed."""
+    generated tokens hanging below the prompt. Split at the first page boundary
+    after the retained head, so a large private suffix cannot hide inside the
+    same radix node as the static prefix. Returns how many changed."""
+    page = tc.page_size
+    boundary = (max(0, fixed_len) + page - 1) // page * page
+    if 0 < boundary < len(ids):
+        _descend(tc, ids[:boundary])  # match_prefix splits, without touching LRU
     node, end = _descend(tc, ids)
     n = 0
     if end == len(ids):   # the reply's tokens continue the prompt: one-off too

@@ -1,42 +1,66 @@
 #!/bin/bash
-# Start the serving engine detached and wait until it is ready.
-#   ./start_server.bash [arm] [extra server flags]
-# arm: ours (default) | lru (relayout only) | lruraw (plain engine) | kvonly (planner only)
-# Env: MODEL HOST (GB) KV (device tokens) SCHED LOG
-#      CLIP: per-request decode reservation used by sglang's prefill admission
-#            (SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION; default 4096 = the agents' max_tokens,
-#            which caps running requests at ~7 in a 31.8k-token pool while it sits half used)
-set -u
-cd "$(dirname "$0")"
-P=/home/xiaoyu/miniconda3/envs/sglang/bin/python
-export PATH=/home/xiaoyu/miniconda3/envs/sglang/bin:$PATH   # flashinfer's JIT needs ninja from the env
-ARM=${1:-ours}; [ $# -gt 0 ] && shift
-MODEL=${MODEL:-Qwen/Qwen3-8B}; HOST=${HOST:-16}; KV=${KV:-}; SCHED=${SCHED:-fcfs}; CLIP=${CLIP:-}
-[ -n "$CLIP" ] && export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION=$CLIP
-LOG=${LOG:-benchmark/mixed_results/server_${ARM}.log}
+# Start one serving arm in the background and wait for model warmup.
+#
+#   ./start_server.bash [ours|kvonly|reorder-only|sglang|continuum|cachescout] [server flags]
+#
+# Environment: MODEL, HOST, KV, SCHED, CLIP, LOG
+set -euo pipefail
 
-case $ARM in
-  ours)   FLAGS="";;
-  lru)    FLAGS="--lru";;
-  lruraw) FLAGS="--lru --no-relayout";;
-  kvonly) FLAGS="--no-relayout";;
-  *) echo "unknown arm: $ARM" >&2; exit 2;;
+cd "$(dirname "$0")"
+
+PYTHON=/home/xiaoyu/miniconda3/envs/sglang/bin/python
+export PATH="$(dirname "$PYTHON"):$PATH"
+
+ARM=${1:-ours}
+if (( $# > 0 )); then
+  shift
+fi
+
+case "$ARM" in
+  ours)             MODULE=server.server;            ARM_FLAGS=() ;;
+  kvonly)           MODULE=server.server;            ARM_FLAGS=(--no-relayout) ;;
+  reorder-only|lru) MODULE=server.server;            ARM_FLAGS=(--lru) ;;
+  sglang|lruraw)    MODULE=server.server;            ARM_FLAGS=(--lru --no-relayout) ;;
+  continuum)        MODULE=server.continuum_server;  ARM_FLAGS=() ;;
+  cachescout)       MODULE=server.cacheScout_server; ARM_FLAGS=() ;;
+  *) echo "unknown arm: $ARM" >&2; exit 2 ;;
 esac
 
-if pgrep -f "[s]erver\.server" >/dev/null; then
-  pkill -9 -f "[s]glang::|[s]erver\.server"
+MODEL=${MODEL:-Qwen/Qwen3-8B}
+HOST=${HOST:-16}
+KV=${KV:-}
+SCHED=${SCHED:-fcfs}
+CLIP=${CLIP:-}
+LOG=${LOG:-benchmark/mixed_results/server_${ARM}.log}
+
+if [[ -n "$CLIP" ]]; then
+  export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION="$CLIP"
+fi
+
+SERVER_PATTERN='[s]erver\.(server|continuum_server|cacheScout_server)'
+if pgrep -f "$SERVER_PATTERN" >/dev/null; then
+  pkill -9 -f "$SERVER_PATTERN|[s]glang::"
   sleep 5
 fi
+
 mkdir -p "$(dirname "$LOG")"
-nohup $P -m server.server "$MODEL" $FLAGS --sched "$SCHED" --host "$HOST" ${KV:+--kv $KV} "$@" > "$LOG" 2>&1 &
+
+COMMAND=("$PYTHON" -m "$MODULE" "$MODEL" "${ARM_FLAGS[@]}" --sched "$SCHED" --host "$HOST")
+if [[ -n "$KV" ]]; then
+  COMMAND+=(--kv "$KV")
+fi
+COMMAND+=("$@")
+
+nohup "${COMMAND[@]}" >"$LOG" 2>&1 &
 PID=$!
 
-until grep -q "\[warmup\] engine ready" "$LOG" 2>/dev/null; do
+until grep -q '\[warmup\] engine ready' "$LOG" 2>/dev/null; do
   if ! kill -0 "$PID" 2>/dev/null; then
-    echo "server died, last lines of $LOG:" >&2
-    tail -5 "$LOG" >&2
+    echo "$ARM server failed; last lines of $LOG:" >&2
+    tail -n 5 "$LOG" >&2
     exit 1
   fi
   sleep 3
 done
-echo "$ARM server ready: pid=$PID log=$LOG clip=${CLIP:-4096} $(grep -o '\[ledger\] device=[0-9]* tokens host=[0-9]* tokens' "$LOG")"
+
+echo "$ARM server ready: pid=$PID log=$LOG"

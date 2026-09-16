@@ -226,6 +226,9 @@ class ContinuumController:
         asyncio.create_task(self._expire_loop())
         while True:
             req = await self.pool.get()
+            if req.kind == "register":
+                req.reply({"ok": True, "ignored": True, "file": req.body["file"]})
+                continue
             if req.kind == "close":
                 self.pinner.note_finished(req.session)
                 closed = self.pinner.forget(req.session)
@@ -310,7 +313,8 @@ class ContinuumController:
 
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
                hicache_io: Optional[str], ttl_default: Optional[float], sched: str = "fcfs",
-               pin: bool = True, eviction: str = "priority") -> None:
+               pin: bool = True, eviction: str = "priority",
+               engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384, "radix_eviction_policy": eviction}
@@ -320,6 +324,8 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
         kwargs["host_cache_gb"] = host_gb
     if hicache_io:
         kwargs["hicache_io_backend"] = hicache_io
+    if engine_log:
+        kwargs["log_level"] = engine_log
     if sched == "lpm":
         kwargs["schedule_policy"] = "lpm"
         kwargs["enable_priority_scheduling"] = False
@@ -389,6 +395,7 @@ if __name__ == "__main__":
                     help="control: identical server and engine config, but never push pins to the engine")
     ap.add_argument("--eviction", choices=["priority", "lru"], default="priority",
                     help="engine radix eviction policy; pins need priority. lru + --no-pin = the vanilla path through this server")
+    ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None)
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -397,4 +404,4 @@ if __name__ == "__main__":
         if not a.no_pin and a.eviction != "priority":
             ap.error("pins need --eviction priority")
         asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.ttl_default, a.sched,
-                         pin=not a.no_pin, eviction=a.eviction))
+                         pin=not a.no_pin, eviction=a.eviction, engine_log=a.engine_log))

@@ -38,6 +38,8 @@ from static_analysis.primitives import (Binding, BindingKind, CallInstance, Call
                                         render_repr)
 
 P_MIN = 0.02           # plan only steps predicted at least this likely
+PLAN_DEPTH = 1         # predict the direct successors only
+END_SURE = 0.95        # retire a session's cache at a reply when the program is this likely to end here
 T_BASE = 120.0         # idle seconds before a session is finalized
 T_SHORT = 15.0         # idle timeout once the session probably ended (P(end) >= 0.5 at its last call)
 SWEEP_S = 5.0          # idle sweeper period
@@ -259,14 +261,22 @@ class Controller:
         # before the call is not the criterion: a reply-derived or constant value
         # is rebuildable, yet its bytes sit behind the point where every later
         # prompt already diverged, so nothing will hit them.
-        head = len(self._prefix_tokens(tpl))
+        static_head = len(self._prefix_tokens(tpl))
+        head = static_head
         fwd = self._forward_head(sess, inst)
         cut = self._planned_tokens(tpl, fwd, False) if fwd else None
         if cut is not None and len(cut) > head:
             head = len(cut)
-        self.planner.note_served(sess.id, ids, head)
-        sess.plan_anchor = inst.t_done          # the anchor every gap sample counts from
-        self._plan_session(sess)                # replace: the freshest view of the future
+        self.planner.note_served(sess.id, ids, head, static_len=static_head)
+        prog = sess.program
+        if prog is not None and (not prog.successors(tpl.key)
+                                 or prog.end_prob(tpl.key, sess.counters) >= END_SURE):
+            # the program ends here: its private cache is one-off from this moment,
+            # no need to wait for the process to exit
+            self.planner.retire_session(sess.id)
+        else:
+            sess.plan_anchor = inst.t_done          # the anchor every gap sample counts from
+            self._plan_session(sess)                # replace: the freshest view of the future
         self.planner.wake()
         print(f"[ctl] {rid} queue_ms={(t_cls - req.t_arrive) * 1000:.1f} advance_ms={advance_ms:.1f} "
               f"pre_ms={(t0 - t_pre) * 1000:.1f} post_ms={(time.perf_counter() - t_post) * 1000:.1f}", flush=True)
@@ -389,7 +399,7 @@ class Controller:
         cur = sess.open or (sess.calls[-1] if sess.calls else None)
         if prog is None or planner is None or cur is None:
             return
-        calls = prog.predict_tree(cur.key, sess.counters, p_min=P_MIN)
+        calls = prog.predict_tree(cur.key, sess.counters, p_min=P_MIN, max_depth=PLAN_DEPTH)
         # the hit log measures the next call: the likeliest direct successor
         direct = [c for c in calls if len(c.path) == 2]
         sess.predicted = direct[0].key if direct else (calls[0].key if calls else None)
