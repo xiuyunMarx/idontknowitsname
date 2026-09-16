@@ -50,6 +50,17 @@ HEADER_LAST = True     # --no-header-last clears it: layouts never move the head
 _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
 
 
+def json_schema_of(body: dict) -> Optional[str]:
+    """The JSON schema a request's `response_format` asks the reply to follow
+    (byllm sends one for every typed return), serialized for sglang's
+    constrained decoding; None for free text or a bare json_object request."""
+    rf = body.get("response_format")
+    if not isinstance(rf, dict) or rf.get("type") != "json_schema":
+        return None
+    schema = (rf.get("json_schema") or {}).get("schema")
+    return json.dumps(schema) if isinstance(schema, dict) else None
+
+
 @dataclass
 class LiveSession:
     id: str                                       # Session id, from the agent (its pid)
@@ -228,6 +239,9 @@ class Controller:
             sp = {"temperature": 0.7 if body.get("temperature") is None else body.get("temperature"),
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
+            schema = json_schema_of(body)
+            if schema is not None:
+                sp["json_schema"] = schema         # constrained decoding, as the client asked
             turn = len(inst.engine_time) if inst is not None else 0
             rid = f"{sess.id}-{sess.epoch}t{turn}-{uuid.uuid4().hex[:8]}"
             ids = self.engine.tokenize(prompt)

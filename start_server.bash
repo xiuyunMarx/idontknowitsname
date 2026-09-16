@@ -1,7 +1,8 @@
 #!/bin/bash
 # Start one serving arm in the background and wait for model warmup.
 #
-#   ./start_server.bash [ours|kvonly|reorder-only|sglang|continuum|cachescout] [server flags]
+#   ./start_server.bash [ours|kvonly|relayout|vanilla|continuum|cachescout] [server flags]
+#   relayout = re-layout only (no planner), vanilla = vanilla SGLang (no re-layout, no planner)
 #
 # Environment: MODEL, HOST, KV, SCHED, CLIP, LOG
 set -euo pipefail
@@ -19,8 +20,8 @@ fi
 case "$ARM" in
   ours)             MODULE=server.server;            ARM_FLAGS=() ;;
   kvonly)           MODULE=server.server;            ARM_FLAGS=(--no-relayout) ;;
-  reorder-only|lru) MODULE=server.server;            ARM_FLAGS=(--lru) ;;
-  sglang|lruraw)    MODULE=server.server;            ARM_FLAGS=(--lru --no-relayout) ;;
+  relayout)         MODULE=server.server;            ARM_FLAGS=(--lru) ;;
+  vanilla)          MODULE=server.server;            ARM_FLAGS=(--lru --no-relayout) ;;
   continuum)        MODULE=server.continuum_server;  ARM_FLAGS=() ;;
   cachescout)       MODULE=server.cacheScout_server; ARM_FLAGS=() ;;
   *) echo "unknown arm: $ARM" >&2; exit 2 ;;
@@ -31,7 +32,7 @@ HOST=${HOST:-16}
 KV=${KV:-}
 SCHED=${SCHED:-fcfs}
 CLIP=${CLIP:-}
-LOG=${LOG:-benchmark/mixed_results/server_${ARM}.log}
+LOG=${LOG:-benchmark/mixed_results/cache/server_log/server_${ARM}.log}
 
 if [[ -n "$CLIP" ]]; then
   export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION="$CLIP"

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Which part of the planner costs TTFT on coding at one concurrency: four servers, same load.
 #   ./benchmark/isolate_planner.bash [c] [sessions per lane]
-# arms: lru (relayout only) | prio (lru arm on the priority eviction policy, no planner)
+# arms: relayout (re-layout only) | prio (relayout arm on the priority eviction policy, no planner)
 #       | hold (planner steers eviction, no promotions) | ours (full)
 set -u
 cd "$(dirname "$0")/.."
@@ -16,9 +16,9 @@ arm() {  # $1 name, $2 start_server arm, $3 extra server flags
   grep "^\[$TAG/" $OUT/$TAG.out | tee -a $LOG
 }
 
-arm lru  lru  "--engine-log info"
-arm prio lru  "--eviction priority --engine-log info"
-arm hold ours "--no-promote --engine-log info"
-arm ours ours "--engine-log info"
+arm relayout relayout "--engine-log info"
+arm prio     relayout "--eviction priority --engine-log info"
+arm hold     ours     "--no-promote --engine-log info"
+arm ours     ours     "--engine-log info"
 bash benchmark/kill_bench.bash >/dev/null
 echo "$(date +%T) ISOLATE-DONE" | tee -a $LOG

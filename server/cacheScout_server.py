@@ -200,6 +200,9 @@ class CacheScoutController:
             sp = {"temperature": 0.7 if body.get("temperature") is None else body.get("temperature"),
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
+            rf = body.get("response_format") or {}
+            if rf.get("type") == "json_schema" and isinstance((rf.get("json_schema") or {}).get("schema"), dict):
+                sp["json_schema"] = json.dumps(rf["json_schema"]["schema"])   # constrained decoding, as the client asked
             ids = self.engine.tokenize(prompt)
             agent, depth = self.fp.observe(sid, ids)
             if not cont:

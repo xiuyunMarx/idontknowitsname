@@ -1,4 +1,4 @@
-"""Sweep doc_analysis concurrency: python -m benchmark.sweep_finance [arm] [--c ...] [--sessions N] [--fresh]"""
+"""Sweep doc_analysis concurrency on an already running server."""
 import sys
 
 from benchmark.sweep_common import sweep

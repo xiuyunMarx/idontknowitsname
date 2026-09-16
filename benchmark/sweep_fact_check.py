@@ -1,4 +1,4 @@
-"""Sweep fact_check concurrency: python -m benchmark.sweep_fact_check [arm] [--c ...] [--sessions N] [--fresh]"""
+"""Sweep fact_check concurrency on an already running server."""
 import sys
 
 from benchmark.sweep_common import sweep

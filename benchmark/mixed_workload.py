@@ -9,8 +9,9 @@ program with 0 sessions per lane "follows": it keeps taking inputs until every
 fixed lane has finished. Sessions completed within the same fixed windows are
 reported so arms run separately can be compared.
 
-Results go to benchmark/mixed_results/<tag>/: one log per session, sessions.jsonl,
-summary.json, and a row per program appended to benchmark/mixed_results/summary.csv.
+Results go to benchmark/mixed_results/cache/<tag>/: one log per session,
+sessions.jsonl, summary.json, and a row per program appended to
+benchmark/mixed_results/cache/summary.csv.
 """
 import argparse
 import csv
@@ -239,7 +240,7 @@ def summarize(records: List[dict], server: Dict[str, dict], windows: List[int]) 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", required=True)
-    ap.add_argument("--lanes", default="fact_check=4,coding_agent=8,doc_analysis=4,BFCL_agent=4",
+    ap.add_argument("--lanes", default="fact_check=3,coding_agent=4,doc_analysis=2,BFCL_agent=7",
                     help="program=lanes,...; the four applications by default")
     ap.add_argument("--sessions", default="5", help="per lane: N, or program=N,... (0 = follow)")
     ap.add_argument("--warmup", type=int, default=1, help="sequential sessions per program before measuring")
@@ -271,6 +272,10 @@ def main() -> int:
         for _ in range(a.warmup):
             task = runner.take(p, tasks[p], wrap=True)
             runner.run_session(p, task, "warmup")  #type: ignore
+
+    # Warmup is not part of the measured dataset.  Rewind the per-program
+    # cursors so a fixed-size run still measures every input exactly once.
+    runner.next_idx.clear()
 
     threads = []
     for p, n in lanes.items():

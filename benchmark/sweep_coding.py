@@ -1,4 +1,4 @@
-"""Sweep coding_agent concurrency: python -m benchmark.sweep_coding [arm] [--c ...] [--sessions N] [--fresh]"""
+"""Sweep coding_agent concurrency on an already running server."""
 import sys
 
 from benchmark.sweep_common import sweep

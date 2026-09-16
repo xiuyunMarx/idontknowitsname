@@ -1,4 +1,4 @@
-"""Sweep BFCL_agent concurrency: python -m benchmark.sweep_BFCL [arm] [--c ...] [--sessions N] [--fresh]"""
+"""Sweep BFCL_agent concurrency on an already running server."""
 import sys
 
 from benchmark.sweep_common import sweep
