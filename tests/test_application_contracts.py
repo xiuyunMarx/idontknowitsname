@@ -55,17 +55,29 @@ class ApplicationContracts(unittest.TestCase):
         self.assertNotIn("tries", retry.invalidates)
 
     def test_document_stays_leading_until_its_last_consumer(self):
+        # question and document are the same static class; the declaration puts
+        # question first, the observed sizes put the document first at every site
+        p = self.programs["doc_analysis"]
         ts = self.sites("doc_analysis")
+        self.assertEqual(ts["Extractor.extract"].served_order(), ["question", "document"])
+        moved = p.observe_sizes({"question": 60, "document": 10000})
+        self.assertEqual({k.signature for k in moved}, {"Extractor.extract", "Analyst.compute", "Auditor.check"})
         for name in ("Extractor.extract", "Analyst.compute", "Auditor.check"):
             t = ts[name]
             self.assertEqual(t.served_order()[:2], ["document", "question"])
             self.assertTrue(t.header_last)
+        self.assertEqual(ts["Analyst.compute"].served_order(), ["document", "question", "facts"])
+        self.assertEqual(ts["Auditor.check"].served_order(), ["document", "question", "facts", "analysis"])
         self.assertNotIn("document", ts["Writer.answer"].served_order())
+        # sizes are kept from the first value: a later, different count changes nothing
+        self.assertEqual(p.observe_sizes({"question": 20000, "facts": 300}), [])
 
     def test_bfcl_keeps_append_only_history_and_self_loop(self):
         p = self.programs["BFCL_agent"]
         t = self.sites("BFCL_agent")["Agent.step"]
-        self.assertEqual(t.served_order(), ["tools", "question", "history"])
+        self.assertEqual(t.served_order(), ["tools", "question", "history", "observation"])
+        self.assertEqual(t.binding("observation").heterogeneity, Heterogeneity.VOLATILE)
+        self.assertIn("observation", p.edges[(t.key, t.key)].invalidates)
         self.assertEqual(t.binding("history").heterogeneity, Heterogeneity.EXTEND)
         self.assertEqual(t.binding("tools").heterogeneity, Heterogeneity.CONST)
         self.assertIn((t.key, t.key), p.edges)

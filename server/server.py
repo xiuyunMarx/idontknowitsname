@@ -253,21 +253,12 @@ class Controller:
             return
         t_post = time.perf_counter()
         tpl = inst.template
-        # Past the head some later prompt repeats byte for byte, this prompt is
-        # one-off: its fresh bindings and the reply. Only that tail is demoted; the
-        # head stays in the normal band. The head is what a later call's prompt
-        # will carry unchanged, along any static path of a few hops (the edges say
-        # which fields the program rewrites on the way). Being reconstructible
-        # before the call is not the criterion: a reply-derived or constant value
-        # is rebuildable, yet its bytes sit behind the point where every later
-        # prompt already diverged, so nothing will hit them.
-        static_head = len(self._prefix_tokens(tpl))
-        head = static_head
+        head = len(self._prefix_tokens(tpl))
         fwd = self._forward_head(sess, inst)
         cut = self._planned_tokens(tpl, fwd, False) if fwd else None
         if cut is not None and len(cut) > head:
             head = len(cut)
-        self.planner.note_served(sess.id, ids, head, static_len=static_head)
+        self.planner.note_served(sess.id, ids, head, static_len=head)
         prog = sess.program
         if prog is not None and (not prog.successors(tpl.key)
                                  or prog.end_prob(tpl.key, sess.counters) >= END_SURE):
@@ -301,6 +292,14 @@ class Controller:
         if values is None:
             print(f"[call] {sess.id} {tpl.key!r}: message does not fit the template; served as is", flush=True)
             values = {}
+        if values and self.enable_relayout:
+            # a field's first value: its token count breaks layout ties within a class
+            sizes = {b.field: len(self.engine.tokenize(values[b.name])) for b in tpl.params
+                     if b.field and b.name in values and b.field not in prog.field_tokens}
+            for k in prog.observe_sizes(sizes):
+                t = prog.sites[k]
+                print(f"[layout] {k!r} order={t.order} header_last={t.header_last} "
+                      f"sized={ {f: prog.field_tokens[f] for f in sorted(sizes)} }", flush=True)
         inst = CallInstance(template=tpl, values=values, t_arrive=req.t_arrive, t_done=req.t_arrive)
         if values:
             self._relayout(sess, req.body, inst)

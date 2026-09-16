@@ -74,9 +74,8 @@ class KVPlanner:
         self._dirty = True
 
     def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None:
-        """A real call landed: everything past `fixed_len` (the head the flow rules
-        can rebuild) is transient. At session end only `static_len` survives:
-        reusable *within-session* history is private too, not a static prefix.
+        """A real call landed: everything past "fixed_len" (the head the flow rules
+        can rebuild) is transient. At session end only "static_len" survives
         Other live plans can still protect shared bytes when retirement lands."""
         fixed_len = max(0, min(fixed_len, len(ids)))
         static_len = max(0, min(static_len, fixed_len))
@@ -85,16 +84,14 @@ class KVPlanner:
         self._dirty = True
 
     def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None:
-        """A served prompt's values past `keep_len` are dead (the program reset the
-        walker fields they carried): that tail is demoted, it will not be reused."""
+        """A served prompt's values past `keep_len` are marked as evictable."""
         keep_len = max(0, min(keep_len, len(ids)))
         self._demote.append((ids, keep_len))
         served = self._served.get(sid, [])
         for i, (old_ids, old_keep) in enumerate(served):
             if old_ids == ids and keep_len < old_keep:
-                # Session retirement must start at the most aggressive
-                # invalidation boundary, not the boundary recorded at service.
                 served[i] = (old_ids, keep_len)
+                # Session retirement must start at the most aggressive invalidation boundary
         self._dirty = True
 
     def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
@@ -120,8 +117,7 @@ class KVPlanner:
 
     def retire_session(self, sid: str) -> None:
         """The program has reached its end for this session: its private cache is
-        retired now — evicted before anything a live session might still reuse
-        (PBKV's lifecycle-aware tier). The session itself stays open for stats."""
+        retired now. The session itself stays open for stats."""
         for j in self._jobs.get(sid, {}).values():
             if j.state in ("queued", "running"):
                 j.state = "void"
@@ -242,10 +238,7 @@ class KVPlanner:
         if not self._dirty:
             return
         self._dirty = False
-        # Value density of a job: the tokens its resident prefix saves, times the
-        # chance the call comes, per second until it comes. Protection is selective:
-        # jobs are taken in density order until PROTECT_FRAC of the device pool is
-        # covered, so the planned band never swallows the whole pool.
+        # Prioritize predicted calls by the expected value of keeping their reusable prefix resident: reusable tokens × arrival probability /  time-to-use. Protect prefixes in descending priority until they occupy PROTECT_FRAC of the device KV-cache capacity.
         cands: List[Tuple[float, int, tuple]] = []
         for held in self._jobs.values():
             live = [j for j in held.values() if j.state != "void"]

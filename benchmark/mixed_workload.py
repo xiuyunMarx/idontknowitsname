@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 APPS = os.path.join(HERE, "applications")
 DATA = os.path.join(APPS, "bench_data")
-RESULTS = os.path.join(HERE, "mixed_results")
+RESULTS = os.path.join(HERE, "mixed_results/cache")
 JAC = os.environ.get("JAC") or (os.path.join(os.path.dirname(sys.executable), "jac")
                                if os.path.exists(os.path.join(os.path.dirname(sys.executable), "jac")) else "jac")
 

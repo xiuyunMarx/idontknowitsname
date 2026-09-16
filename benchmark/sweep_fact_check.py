@@ -4,4 +4,4 @@ import sys
 from benchmark.sweep_common import sweep
 
 if __name__ == "__main__":
-    sys.exit(sweep("fact_check", "fact", inputs=120, levels="6,8,10,12,14,16,18,20,22,24,26,28,30,32"))
+    sys.exit(sweep("fact_check", "fact", inputs=120, levels="8,12,16,20,24,28,32"))

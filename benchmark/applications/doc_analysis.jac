@@ -65,11 +65,11 @@ sem DocTask.document = "The relevant pages of the filing, each preceded by a pag
 
 
 node Extractor {
-    def extract(document: str, question: str) -> list[Fact] by llm(temperature=0.0, max_tokens=1024);
+    def extract(question: str, document: str) -> list[Fact] by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         try {
-            visitor.facts = self.extract(visitor.document, visitor.question);
+            visitor.facts = self.extract(visitor.question, visitor.document);
         } except Exception as e {
             visitor.errors.append(f"extraction failed: {e}");
         }
@@ -84,11 +84,11 @@ sem Extractor.extract.question = "The question to be answered.";
 
 
 node Analyst {
-    def compute(document: str, question: str, facts: list[Fact]) -> Analysis by llm(temperature=0.0, max_tokens=1024);
+    def compute(question: str, document: str, facts: list[Fact]) -> Analysis by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         try {
-            visitor.analysis = self.compute(visitor.document, visitor.question, visitor.facts);
+            visitor.analysis = self.compute(visitor.question, visitor.document, visitor.facts);
         } except Exception as e {
             visitor.errors.append(f"analysis failed: {e}");
             visitor.analysis = Analysis(reasoning="The analysis could not be produced.");
@@ -105,12 +105,12 @@ sem Analyst.compute.facts = "The facts the extractor found, in document order.";
 
 
 node Auditor {
-    def check(document: str, question: str, facts: list[Fact], analysis: Analysis) -> Audit by llm(temperature=0.0, max_tokens=1024);
+    def check(question: str, document: str, facts: list[Fact], analysis: Analysis) -> Audit by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         analysis = visitor.analysis or Analysis();
         try {
-            visitor.audit = self.check(visitor.document, visitor.question, visitor.facts, analysis);
+            visitor.audit = self.check(visitor.question, visitor.document, visitor.facts, analysis);
         } except Exception as e {
             visitor.errors.append(f"audit failed: {e}");
             visitor.audit = Audit(passed=False, issues=["The audit could not be produced."]);
@@ -128,7 +128,7 @@ sem Auditor.check.analysis = "The analyst's computation and result.";
 
 
 node Writer {
-    def answer(question: str, facts: list[Fact], analysis: Analysis, audit: Audit) -> Answer by llm(temperature=0.0, max_tokens=1024);
+    def  answer(question: str, facts: list[Fact], analysis: Analysis, audit: Audit) -> Answer by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         analysis = visitor.analysis or Analysis();

@@ -144,7 +144,16 @@ class ReclamationTests(unittest.TestCase):
         ids = list(range(100))
         add(tc, ids)
 
+        class Ledger:
+            def device_cap_tokens(self):
+                return 10_000
+
         class Engine:
+            ledger = Ledger()
+
+            def cost(self, toks):
+                return 0, 0         # the prefix is resident: every token of it is saved
+
             async def set_kv_priority(self, demote, protect, rid, retire):
                 kv_priority(scheduler(tc), demote, protect, rid, retire)
 

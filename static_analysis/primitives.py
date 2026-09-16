@@ -343,8 +343,41 @@ class Program:
     # (site, iteration context) -> outcome (successor site, or END) -> count; every
     # observation is written at every backoff level of its context (see context_levels)
     ctx_counts: Dict[Tuple[CallSiteID, Tuple[int, ...]], Dict[Optional[CallSiteID], int]] = field(default_factory=dict)
+    # walker field -> token count of its value the first time the server saw one;
+    # breaks the ties the static classes leave (see decide_layouts)
+    field_tokens: Dict[str, int] = field(default_factory=dict)
+    layout_policy: Optional[bool] = None       # header_last given to decide_layouts; None = not decided
 
     # Layout
+    def site_depth(self) -> Dict[CallSiteID, int]:
+        """Shortest path from the entry over the static edges; a site the entry
+        cannot reach counts as beyond every reachable one."""
+        depth = {self.entry: 0}
+        frontier = [self.entry]
+        while frontier:
+            nxt = []
+            for k in frontier:
+                for (a, b) in self.edges:
+                    if a == k and b not in depth:
+                        depth[b] = depth[k] + 1
+                        nxt.append(b)
+            frontier = nxt
+        far = len(self.sites)
+        return {k: depth.get(k, far) for k in self.sites}
+
+    def observe_sizes(self, sizes: Dict[str, int]) -> List[CallSiteID]:
+        """The server saw a value of these fields for the first time: keep the token
+        counts and decide the layouts again with them. Returns the sites whose
+        layout moved. A field keeps the count of its first value, so the layouts
+        settle once every field has been seen."""
+        new = {f: n for f, n in sizes.items() if f and f not in self.field_tokens}
+        if not new or self.layout_policy is None:
+            return []
+        self.field_tokens.update(new)
+        before = {k: (t.order, t.header_last) for k, t in self.sites.items()}
+        self.decide_layouts(header_last=self.layout_policy)
+        return [k for k, t in self.sites.items() if (t.order, t.header_last) != before[k]]
+
     def decide_layouts(self, header_last: bool = True) -> None:
         """Choose every site's served order together, so sites that carry the same
         walker fields lay them out in the same relative order and their prompts
@@ -353,8 +386,15 @@ class Program:
         Shared fields lead, ordered by a program-wide key: session-scoped before
         scope-reset ones (a value that survives this site's own repeated calls
         beats one a loop iteration replaces), constants before copies before
-        append-only histories. Unshared values follow, most stable first. The
-        header moves behind the values only where the leading value is shared."""
+        append-only histories. Unshared values follow, most stable first. Within
+        one class, the field that first appears at an earlier site leads (the
+        later site's prompt then extends the earlier one's); among fields that
+        appear together, the one with the longer value leads (token counts the
+        server observed, see observe_sizes: a longer shared value saves more).
+        The header moves behind the values only where the leading value is shared."""
+        self.layout_policy = header_last
+        depth = self.site_depth()
+        first: Dict[str, int] = {}
         carriers: Dict[str, set] = {}
         scoped: Dict[str, bool] = {}
         kind: Dict[str, int] = {}
@@ -363,6 +403,7 @@ class Program:
                 if not b.field:
                     continue
                 carriers.setdefault(b.field, set()).add(t.key)
+                first[b.field] = min(first.get(b.field, depth[t.key]), depth[t.key])
                 scoped[b.field] = scoped.get(b.field, False) or b.scope != ""
                 # the field's own kind: append-only if any site sees it extend, else
                 # a copy; a producer's VOLATILE or a reset's CONST view does not
@@ -371,12 +412,13 @@ class Program:
                 kind[b.field] = max(kind.get(b.field, 1), k)
 
         for t in self.sites.values():
-            def key(n: str, t: PromptTemplate = t) -> Tuple[int, int, int]:
+            def key(n: str, t: PromptTemplate = t) -> Tuple[int, int, int, int, int]:
                 b = t.binding(n)
                 f = b.field
+                size = -self.field_tokens.get(f, 0) if f else 0
                 if f and len(carriers.get(f, ())) >= 2:
-                    return (0, 1 if scoped[f] else 0, kind[f])
-                return (1, 1 if b.scope else 0, LAYOUT_RANK[b.heterogeneity])
+                    return (0, 1 if scoped[f] else 0, kind[f], first[f], size)
+                return (1, 1 if b.scope else 0, LAYOUT_RANK[b.heterogeneity], first.get(f, depth[t.key]), size)
             names = [b.name for b in t.params]
             t.order = sorted(names, key=key)
             lead = t.binding(t.order[0]) if t.order else None

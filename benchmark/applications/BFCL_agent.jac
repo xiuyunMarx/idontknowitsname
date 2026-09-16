@@ -13,6 +13,7 @@ glob DATA: str = os.environ.get("BF_DATA") or os.path.join(HERE, "bench_data", "
 glob ANSWERS: str = os.environ.get("BF_ANSWERS") or os.path.join(HERE, "bench_data", "BFCL", "BFCL_v4_web_search_answers.json");
 glob MAX_STEPS: int = int(os.environ.get("BF_MAX_STEPS") or "8");
 glob PAGE_CHARS: int = int(os.environ.get("BF_PAGE_CHARS") or "6000");
+glob EXCERPT_CHARS: int = int(os.environ.get("BF_EXCERPT_CHARS") or "300");
 glob CACHE_DIR: str = os.environ.get("BF_CACHE_DIR") or os.path.join(HERE, "..", "reproduce", "web_cache");
 glob TOOL_DELAY_S: float = float(os.environ.get("BF_TOOL_DELAY_S") or "0");
 glob WIKIPEDIA_API: str = "https://en.wikipedia.org/w/api.php";
@@ -124,7 +125,7 @@ obj Step {
 sem Step.thought = "Why this tool was called.";
 sem Step.tool = "The tool that was called.";
 sem Step.argument = "The argument it was called with.";
-sem Step.observation = "What the tool returned.";
+sem Step.observation = "A short excerpt of what the tool returned; the latest full result is `observation`.";
 
 
 obj Action {
@@ -142,21 +143,23 @@ walker Task {
     has question: str;
     has gold: list[str] = [];
     has history: list[Step] = [];
+    has observation: str = "";
     has answer: str = "";
     has steps: int = 0;
     has errors: list[str] = [];
 }
 
 sem Task = "One session answering one multi-hop question with web tools.";
-sem Task.history = "Every step taken so far, oldest first, with its observation.";
+sem Task.history = "Every step taken so far, oldest first, each with an excerpt of its result.";
+sem Task.observation = "The full result of the latest tool call.";
 
 
 node Agent {
-    def step(tools: str, question: str, history: list[Step]) -> Action by llm(temperature=0.0, max_tokens=1024);
+    def step(observation: str, tools: str, question: str, history: list[Step]) -> Action by llm(temperature=0.0, max_tokens=1024);
 
     can act with Task entry {
         try {
-            action = self.step(TOOLS, visitor.question, visitor.history);
+            action = self.step(visitor.observation, TOOLS, visitor.question, visitor.history);
         } except Exception as e {
             visitor.errors.append(f"step {visitor.steps + 1} failed: {e}");
             action = Action(thought="The step could not be produced.", tool="answer", argument="");
@@ -168,7 +171,8 @@ node Agent {
 }
 
 sem Agent = "Decides the next tool call from the question and the history.";
-sem Agent.step = "Answer `question` by searching and reading pages. Choose the next tool from `tools` given `history`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for.";
+sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the full result of the previous step; `history` summarizes the earlier ones. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for.";
+sem Agent.step.observation = "The full result of the latest tool call; empty on the first step.";
 sem Agent.step.tools = "The tools available, one per line.";
 sem Agent.step.question = "The question to answer.";
 sem Agent.step.history = "The steps taken so far with their observations, oldest first.";
@@ -182,12 +186,20 @@ node Executor {
         if step.tool == "answer" {
             visitor.answer = step.argument;
         } else {
-            step.observation = self.tools.call(step.tool, step.argument);
-            if visitor.steps < MAX_STEPS {
+            visitor.observation = self.tools.call(step.tool, step.argument);
+            step.observation = visitor.observation[:EXCERPT_CHARS];
+            if visitor.steps < MAX_STEPS{
                 visit [self-->][?:Agent];
                 return;
             }
             visitor.errors.append(f"gave up after {visitor.steps} steps");
+        }
+        if not visitor.gold {
+            verdict = "UNGRADED";
+        } elif matches(visitor.answer, visitor.gold) {
+            verdict = "PASSED";
+        } else {
+            verdict = "FAILED";
         }
         verdict = "UNGRADED" if not visitor.gold else ("PASSED" if matches(visitor.answer, visitor.gold) else "FAILED");
         print(f"Verdict: {verdict}");
@@ -232,7 +244,6 @@ def load_jsonl(path: str) -> list[dict] {
     }
     return rows;
 }
-
 def load_task(task_id: str) -> Task {
     question = "";
     for row in load_jsonl(DATA) {
