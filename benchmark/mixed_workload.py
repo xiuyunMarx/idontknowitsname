@@ -29,7 +29,8 @@ REPO = os.path.dirname(HERE)
 APPS = os.path.join(HERE, "applications")
 DATA = os.path.join(APPS, "bench_data")
 RESULTS = os.path.join(HERE, "mixed_results")
-JAC = os.environ.get("JAC", "jac")
+JAC = os.environ.get("JAC") or (os.path.join(os.path.dirname(sys.executable), "jac")
+                               if os.path.exists(os.path.join(os.path.dirname(sys.executable), "jac")) else "jac")
 
 ENV_DEFAULTS = {
     "FC_MIN_ROUNDS": "2",

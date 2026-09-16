@@ -152,7 +152,7 @@ sem Task.history = "Every step taken so far, oldest first, with its observation.
 
 
 node Agent {
-    def step(tools: str, question: str, history: list[Step]) -> Action by llm(temperature=0.0, max_tokens=4096);
+    def step(tools: str, question: str, history: list[Step]) -> Action by llm(temperature=0.0, max_tokens=1024);
 
     can act with Task entry {
         try {

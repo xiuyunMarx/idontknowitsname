@@ -3,11 +3,16 @@
 #   ./start_server.bash [arm] [extra server flags]
 # arm: ours (default) | lru (relayout only) | lruraw (plain engine) | kvonly (planner only)
 # Env: MODEL HOST (GB) KV (device tokens) SCHED LOG
+#      CLIP: per-request decode reservation used by sglang's prefill admission
+#            (SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION; default 4096 = the agents' max_tokens,
+#            which caps running requests at ~7 in a 31.8k-token pool while it sits half used)
 set -u
 cd "$(dirname "$0")"
 P=/home/xiaoyu/miniconda3/envs/sglang/bin/python
+export PATH=/home/xiaoyu/miniconda3/envs/sglang/bin:$PATH   # flashinfer's JIT needs ninja from the env
 ARM=${1:-ours}; [ $# -gt 0 ] && shift
-MODEL=${MODEL:-Qwen/Qwen3-8B}; HOST=${HOST:-16}; KV=${KV:-}; SCHED=${SCHED:-fcfs}
+MODEL=${MODEL:-Qwen/Qwen3-8B}; HOST=${HOST:-16}; KV=${KV:-}; SCHED=${SCHED:-fcfs}; CLIP=${CLIP:-}
+[ -n "$CLIP" ] && export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION=$CLIP
 LOG=${LOG:-benchmark/mixed_results/server_${ARM}.log}
 
 case $ARM in
@@ -34,4 +39,4 @@ until grep -q "\[warmup\] engine ready" "$LOG" 2>/dev/null; do
   fi
   sleep 3
 done
-echo "$ARM server ready: pid=$PID log=$LOG $(grep -o '\[ledger\] device=[0-9]* tokens host=[0-9]* tokens' "$LOG")"
+echo "$ARM server ready: pid=$PID log=$LOG clip=${CLIP:-4096} $(grep -o '\[ledger\] device=[0-9]* tokens host=[0-9]* tokens' "$LOG")"

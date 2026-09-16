@@ -65,7 +65,7 @@ sem DocTask.document = "The relevant pages of the filing, each preceded by a pag
 
 
 node Extractor {
-    def extract(document: str, question: str) -> list[Fact] by llm(temperature=0.0, max_tokens=4096);
+    def extract(document: str, question: str) -> list[Fact] by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         try {
@@ -84,7 +84,7 @@ sem Extractor.extract.question = "The question to be answered.";
 
 
 node Analyst {
-    def compute(document: str, question: str, facts: list[Fact]) -> Analysis by llm(temperature=0.0, max_tokens=4096);
+    def compute(document: str, question: str, facts: list[Fact]) -> Analysis by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         try {
@@ -105,7 +105,7 @@ sem Analyst.compute.facts = "The facts the extractor found, in document order.";
 
 
 node Auditor {
-    def check(document: str, question: str, facts: list[Fact], analysis: Analysis) -> Audit by llm(temperature=0.0, max_tokens=4096);
+    def check(document: str, question: str, facts: list[Fact], analysis: Analysis) -> Audit by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         analysis = visitor.analysis or Analysis();
@@ -128,7 +128,7 @@ sem Auditor.check.analysis = "The analyst's computation and result.";
 
 
 node Writer {
-    def answer(question: str, facts: list[Fact], analysis: Analysis, audit: Audit) -> Answer by llm(temperature=0.0, max_tokens=4096);
+    def answer(question: str, facts: list[Fact], analysis: Analysis, audit: Audit) -> Answer by llm(temperature=0.0, max_tokens=1024);
 
     can run with DocTask entry {
         analysis = visitor.analysis or Analysis();
