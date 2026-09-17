@@ -2,7 +2,9 @@ import os;
 import re;
 import sys;
 import json;
+import math;
 import time;
+import random;
 import hashlib;
 import requests;
 import from jaclang.byllm.llm { InterceptorLLM }
@@ -13,9 +15,10 @@ glob DATA: str = os.environ.get("BF_DATA") or os.path.join(HERE, "bench_data", "
 glob ANSWERS: str = os.environ.get("BF_ANSWERS") or os.path.join(HERE, "bench_data", "BFCL", "BFCL_v4_web_search_answers.json");
 glob MAX_STEPS: int = int(os.environ.get("BF_MAX_STEPS") or "8");
 glob PAGE_CHARS: int = int(os.environ.get("BF_PAGE_CHARS") or "6000");
-glob EXCERPT_CHARS: int = int(os.environ.get("BF_EXCERPT_CHARS") or "300");
+glob EXCERPT_CHARS: int = int(os.environ.get("BF_EXCERPT_CHARS") or "0");
 glob CACHE_DIR: str = os.environ.get("BF_CACHE_DIR") or os.path.join(HERE, "..", "reproduce", "web_cache");
 glob TOOL_DELAY_S: float = float(os.environ.get("BF_TOOL_DELAY_S") or "0");
+glob TOOL_DELAY_STD_S: float = float(os.environ.get("BF_TOOL_DELAY_STD_S") or "0");
 glob WIKIPEDIA_API: str = "https://en.wikipedia.org/w/api.php";
 
 glob TOOLS: str = "\n".join([
@@ -66,11 +69,21 @@ obj AgentTools {
                 }
             }
         }
-        remaining = TOOL_DELAY_S - (time.monotonic() - t0);
+        remaining = self.delay_for(kind, key) - (time.monotonic() - t0);
         if remaining > 0 {
             time.sleep(remaining);
         }
         return text;
+    }
+
+    def delay_for(kind: str, key: str) -> float {
+        if TOOL_DELAY_S <= 0 or TOOL_DELAY_STD_S <= 0 {
+            return TOOL_DELAY_S;
+        }
+        sigma2 = math.log(1 + (TOOL_DELAY_STD_S / TOOL_DELAY_S) ** 2);
+        mu = math.log(TOOL_DELAY_S) - sigma2 / 2;
+        seed = int(hashlib.md5(f"{kind}:{key}".encode()).hexdigest()[:8], 16);
+        return random.Random(seed).lognormvariate(mu, math.sqrt(sigma2));
     }
 
     def wiki(params: dict) -> dict {
@@ -125,7 +138,7 @@ obj Step {
 sem Step.thought = "Why this tool was called.";
 sem Step.tool = "The tool that was called.";
 sem Step.argument = "The argument it was called with.";
-sem Step.observation = "A short excerpt of what the tool returned; the latest full result is `observation`.";
+sem Step.observation = "What the tool returned.";
 
 
 obj Action {
@@ -150,7 +163,7 @@ walker Task {
 }
 
 sem Task = "One session answering one multi-hop question with web tools.";
-sem Task.history = "Every step taken so far, oldest first, each with an excerpt of its result.";
+sem Task.history = "Every step taken so far, oldest first, each with what its tool returned.";
 sem Task.observation = "The full result of the latest tool call.";
 
 
@@ -171,11 +184,11 @@ node Agent {
 }
 
 sem Agent = "Decides the next tool call from the question and the history.";
-sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the full result of the previous step; `history` summarizes the earlier ones. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for.";
-sem Agent.step.observation = "The full result of the latest tool call; empty on the first step.";
+sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the result of the previous step; `history` lists every step so far with its result. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for.";
+sem Agent.step.observation = "The result of the latest tool call; empty on the first step.";
 sem Agent.step.tools = "The tools available, one per line.";
 sem Agent.step.question = "The question to answer.";
-sem Agent.step.history = "The steps taken so far with their observations, oldest first.";
+sem Agent.step.history = "The steps taken so far with their results, oldest first.";
 
 
 node Executor {
@@ -187,7 +200,7 @@ node Executor {
             visitor.answer = step.argument;
         } else {
             visitor.observation = self.tools.call(step.tool, step.argument);
-            step.observation = visitor.observation[:EXCERPT_CHARS];
+            step.observation = visitor.observation if EXCERPT_CHARS <= 0 else visitor.observation[:EXCERPT_CHARS];
             if visitor.steps < MAX_STEPS{
                 visit [self-->][?:Agent];
                 return;

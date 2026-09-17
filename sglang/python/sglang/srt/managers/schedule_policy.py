@@ -59,6 +59,12 @@ CLIP_MAX_NEW_TOKENS = int(
     os.environ.get("SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION", "4096")
 )
 
+# Tokens kept out of the admission budget so planned host->device prefetches
+# (model/promote.py) have room to land; 0 admits into the whole pool.
+PREFETCH_RESERVE_TOKENS = int(os.environ.get("SGLANG_PREFETCH_RESERVE_TOKENS", "0"))
+if PREFETCH_RESERVE_TOKENS > 0:
+    print(f"[admission] prefetch reserve tokens={PREFETCH_RESERVE_TOKENS}", flush=True)
+
 # Threshold for in-batch prefix cache.
 # If a request has a matched prefix length (against existing cache) less than this value,
 # the scheduler runs the in-batch prefix caching check for this request.
@@ -450,7 +456,7 @@ class PrefillAdder:
 
         if self.rem_chunk_tokens is not None:
             self.rem_chunk_tokens -= mixed_with_decode_tokens
-        self.rem_total_token_offset = mixed_with_decode_tokens
+        self.rem_total_token_offset = mixed_with_decode_tokens + PREFETCH_RESERVE_TOKENS
         self.cur_rem_token_offset = mixed_with_decode_tokens
 
         self.req_states = None

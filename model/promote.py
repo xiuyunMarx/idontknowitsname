@@ -35,6 +35,7 @@ four bands on the device tier, lowest evicted first, LRU inside a band.
 The host tier is not steered (HostStrategy): retired first, then plain LRU, so a
 private prefix the device gave up stays reloadable until recency retires it.
 """
+import os
 import time
 from typing import Dict, List, Sequence, Tuple
 
@@ -48,6 +49,10 @@ RETIRED = -2
 TRANSIENT = -1
 PLAN_BASE = 10
 MAX_INFLIGHT_PROMOTIONS = 8   # concurrent sessions x a couple of predicted calls each
+# With an admission reserve (SGLANG_PREFETCH_RESERVE_TOKENS) a promotion may also
+# displace unprotected normal-band cache: the reserve is the planner's staging area.
+PREFETCH_RESERVE_TOKENS = int(os.environ.get("SGLANG_PREFETCH_RESERVE_TOKENS", "0"))
+PROMOTE_EVICT_MAX = PLAN_BASE - 1 if PREFETCH_RESERVE_TOKENS > 0 else TRANSIENT
 
 
 class Deferred(RuntimeError):
@@ -81,7 +86,7 @@ def hicache_promote(self: Scheduler, token_ids, rid: str = "", wait: bool = Fals
         raise Deferred(f"deferred: {len(tc.ongoing_promote)} promotions in flight")
     reserve = self.chunked_prefill_size or self.max_prefill_tokens
     device, host, started, event = tc.prefetch_prefix(
-        list(token_ids), reserve=reserve, evict_max_priority=TRANSIENT)
+        list(token_ids), reserve=reserve, evict_max_priority=PROMOTE_EVICT_MAX)
     free = tc.cache_controller.mem_pool_device_allocator.available_size()
     print(f"[promote] {rid} tokens={len(token_ids)} device={device} host={host} "
           f"started={started} free={free} reserve={reserve} "

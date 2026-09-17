@@ -153,6 +153,7 @@ class Engine:
 
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
+        self._live_tokens:int = 0     # KV tokens held by requests past their first token (sglang's token usage)
         self.device_profile: Optional[DeviceProfile] = None  # measured rates; see model.device_profiler
         self.promote_no_room = False  # last promote() deferral was for device space, not queue depth
         if device_kv_tokens is None:
@@ -185,6 +186,11 @@ class Engine:
     def serving(self) -> bool:
         """Real requests in flight."""
         return self._inflight_prefill + self._inflight_decode > 0
+
+    @property
+    def live_tokens(self) -> int:
+        """Device KV tokens locked by running requests: prompt plus decoded so far."""
+        return self._live_tokens
 
     def shutdown(self) -> None:
         self.engine.shutdown()
@@ -275,6 +281,7 @@ class Engine:
                     first_token_at = time.perf_counter()
                     self._inflight_prefill -= 1
                     self._inflight_decode += 1
+                    self._live_tokens += len(ids)
                     stats = self._cache_stats(meta)  # local: `last` is shared across requests
                     self._calibrate(ids, stats)
                     self.last = stats
@@ -284,7 +291,9 @@ class Engine:
                     print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
                                                             for k, v in self.last.items()), flush=True)
                 text = out.get("text") or ""          # cumulative: incremental_streaming_output is off
-                out_tokens = len(out.get("output_ids") or ())
+                new_out = len(out.get("output_ids") or ())
+                self._live_tokens += new_out - out_tokens
+                out_tokens = new_out
                 if progress is not None:
                     progress(first_token_at, out_tokens)
         finally:
@@ -293,6 +302,7 @@ class Engine:
                 self._inflight_prefill -= 1
             else:
                 self._inflight_decode -= 1
+                self._live_tokens -= len(ids) + out_tokens
                 self.note_landed(ids)  # a served prompt is cached too
                 print(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} "
                       f"output_tokens={out_tokens}", flush=True)

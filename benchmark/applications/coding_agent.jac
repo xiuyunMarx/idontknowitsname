@@ -113,7 +113,6 @@ def strip_fences(text: str) -> str {
     return inner.lstrip("\n");
 }
 
-
 node Planner {
     def plan(spec: str, module: str, tries: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=1024);
 

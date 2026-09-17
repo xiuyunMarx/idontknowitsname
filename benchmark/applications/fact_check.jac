@@ -81,7 +81,7 @@ walker FactCheck {
 }
 
 node ClaimAnalyzer {
-    def decompose_claim(maximum_questions: int, claim: str, evidences: list[Evidence]) -> list[str] by llm(temperature=0.0, max_tokens=1024);
+    def decompose_claim(maximum_questions: int, claim: str, evidences: list[Evidence]) -> list[str] by llm(temperature=0.0, max_tokens=4096);
 
     can decompose with FactCheck entry {
         visitor.round += 1;
@@ -196,7 +196,7 @@ node EvidenceScout {
         question: str,
         claim: str,
         evidences: list[Evidence]
-    ) -> Finding by llm(temperature=0.0, max_tokens=1024);
+    ) -> Finding by llm(temperature=0.0, max_tokens=4096);
 
     can investigate with FactCheck entry {
         question = visitor.questions[self.slot];
@@ -243,7 +243,7 @@ sem EvidenceScout.assess_evidence.search_results = "Untrusted retrieved text; us
 
 
 node EvidenceAnalyzer {
-    def verify_claim(claim: str, evidences: list[Evidence]) -> Verdict by llm(temperature=0.0, max_tokens=1024);
+    def verify_claim(claim: str, evidences: list[Evidence]) -> Verdict by llm(temperature=0.0, max_tokens=4096);
 
     can decide with FactCheck entry {
         verdict: Verdict;

@@ -1,27 +1,17 @@
 \section{Introduction}
-LLM agents rarely relies on a single model requests. Instead, they typically issue a series of dependent LLM calls to accomplish a task. Intermediate results evolve and stream across these calls as the agent executes, resulting in heavy KV-cache pressure. Agents' task performance is often bottlenecked by the efficiency of KV-cache management. Repeatedly processing and retaining these overlapping contexts
-can impose substantial computation and memory overhead on the serving system. Efficient KV-cache management is therefore critical to improve the performance of serving LLM agents. Existing agent serving systems, such as Pythia \cite{yu2026pythia}, CacheScout~\cite{zhang2026cachescout}, PBKV ~\cite{zheng2026pbkv}, and KVFlow~\cite{pan2025kvflow}, optimize KV-cache management by exploiting future invocations and workflow information. They exploit these knowledge to guide KV-cache retention, eviction and prefetching. 
 
-Meanwhile, agent frameworks increasingly expose LLM calls as programming abstractions rather than manual prompt construction. ByLLM~\cite{dantanarayana2025mtp} introduces a language-level abstraction that delegates function execution to an LLM, with the runtime using semantic information from the code like function signatures and parameter names to construct model requests. NVIDIA Object-Oriented Agents (NOOA)~\cite{furgale2026nooa} similarly embeds LLM-driven behavior into native Python objects and translates program-level declarations into prompts and model interactions. DSPy~\cite{khattab2024dspy} represents LM invocations through declarative signatures and modules, while the framework automatically generates a concrete prompt. This trend even extends beyond hand-written agent code. SIGIL~\cite{dantanarayana2026sigil} compiles natural-language skill documents into programs with explicit control flow and typed LLM calls, which the runtime lowers into prompts. Across these systems, LLM behaviors are specified using structured programming constructs, while framework runtimes translate those constructs into concrete prompts and model requests. 
+Agent frameworks increasingly expose LLM calls as programming abstractions rather than manual prompt construction. Systems such as ByLLM~\cite{dantanarayana2025mtp}, NVIDIA Object-Oriented Agents (NOOA)~\cite{furgale2026nooa}, and DSPy~\cite{khattab2024dspy} allow developers to describe model behavior using functions, objects, signatures, and modules, which framework runtimes lower into concrete prompts. This approach also appears in systems such as SIGIL~\cite{dantanarayana2026sigil}, which compiles natural-language skill documents into programs containing typed LLM calls. LLM requests from these frameworks are generated programmatically: they are the serializations of program state rather than free text. 
 
-These two trends expose an substantial granularity mismatch. Agent-serving systems optimize KV-cache management primarily at the granularity of requests and call sequences, whereas such LLM-as-programming-abstractions frameworks assemble each request from multiple program components. Therefore, treating such programmatically generated prompts as monolithic requests may lose valuable information for efficient LLM serving.
+We observed that these programmatically generated LLM requests are inherently heterogeneous. The heterogeneity arises from three dimensions:
+\begin{enumerate*}[label=(\textbf{\arabic*})]
+    \item Sharing scope: one value can be shared across multiple invocations, or only within a single invocation.
+    \item Lifetime: Different bindings have different lifetimes. Some bindings are single-shot volatile inputs, while others may be reuse across the whole session.
+    \item Evolution pattern: context for LLM calls can evolve differently overtime, such as
+  remaining fixed, being replaced, or accumulating across invocations. 
+\end{enumerate*}
+Figure ~\ref{fig:heterogeneity-sample} illustrates this heterogeneity in a HoVer-style \cite{jiang2020hover} fact check agent. The claim persists throughout a verification  session, the evidence list accumulates over time, and each search result is consumed once and replaced. Although these values appear in the same model invocation, they offer substantially different reuse opportunities.
 
-We observed that these programmatically generated LLM requests are inherently heterogeneous. Components within a generated prompt can have different sharing scopes and lifetimes. For example, some components may remain fixed across invocations, some are shared across call sites, and some can grow or be replaced as execution progresses. Figure~\ref{fig:heterogeneity-sample} shows an example, the four bindings of \texttt{assess\_evidence} have distinct lifetimes and evolution patterns. For example, \texttt{evidences} are session-scoped and accumulate over time, while \texttt{search\_results} is just a single-shot result. In this case, placing \texttt{evidences} after \texttt{search\_research} blocks KV-cache reuse of \texttt{evidences} across requests. Then model engine needs to recompute for these tokens, wasting scarce computational resource. This kind of differences in sharing scope and lifetime requires a more fine-grained management of KV-cache entries.
-
-However, existing agent serving system are blind to this heterogeneity as they overlook the granularity inside the prompt. Mitigating this gap introduces two challenges. First, heterogeneity is not always explicit in the prompt, their sharing scope and lifetime are closely bonded with the program-level structure. Second, context scale and workflow evolution are often non-deterministic due to the inherent uncertainty of LLMs. Proactively management of KV-cache requires balance the trade-off between the cost of memory usage and the benefit of cache reuse. 
-
-
-To close this gap, we propose \sysname, a compiler-server co-design that exploits prompt heterogeneity to achieve more efficient KV-cache management. \sysname's compiler pass performs static analysis to identify heterogeneous binding evolution patterns and application-level structure, and proactively re-layouts prompts to improve cache reuse. The serving runtime exploits the application-level structure and binding evolution patterns to optimize KV-cache behavior across requests by prefetching, protection, and eviction, according to the predicted future utility of cache entries. We implemented \sysname on SGLang~\cite{zheng2024sglang}. Our evaluation shows that \sysname ...
-
-In summary, we make the following contributions.
-\begin{itemize}
-    \item We identify the inherent heterogeneity in programmatically generated prompts and its implications for serving.
-    \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management. 
-    \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to...
-\end{itemize}
-
-
-\begin{figure}
+\begin{figure}[h]
     \centering
     \includegraphics[width=1.0\linewidth]{figures/Sample_heterogeneity.pdf}
     \vspace{4pt}
@@ -33,3 +23,26 @@ In summary, we make the following contributions.
     \caption{Heterogeneity within a HoVer-style \cite{jiang2020hover} Fact Check Agent's generated prompt for the summary-making function. \texttt{assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against the accumulated evidence and search results, then answers it.}
     \label{fig:heterogeneity-sample}
 \end{figure}
+
+This distinction matters because main-stream KV-cache serving backbones are prefix-based. In the
+example, placing the accumulating \texttt{evidences} binding after the short-lived \texttt{search\_results} binding prevents the model from reusing the evidence prefix whenever the search result changes. The model must therefore recompute KV states for tokens whose contents remain unchanged. Moreover, without knowing which components persist or evolve, the serving system cannot accurately determine which cached tokens should be retained, evicted, or prefetched.
+
+However, existing agent serving systems primarily optimize at the level of requests or agent invocation sequences. Pythia~\cite{yu2026pythia} profiles agent workflows to guide cache management, request scheduling, and autoscaling. CacheScout~\cite{zhang2026cachescout} learns execution transitions online to guide eviction and prefetching, while PBKV~\cite{zheng2026pbkv} predicts future invocations and estimates the reuse potential of cached requests. These systems exploit predictability between invocations, but treat the contents of each prompt as an opaque token sequence. Consequently, they cannot identify the heterogeneity within a single prompt, leading to a suboptimal serving performance for such program-itegrated agents.
+
+To close the gap, we present \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management. \sysname achieves this by exposing additional prefix reuse and keeping the resulting KV states resident when they are likely to be needed. The identification and exploitation of prompt heterogeneity introduces the following two challenges:
+
+\textbf{First, heterogeneity is not always explicit in prompt.} The sharing scope and lifetime of bindings are closely bonded with the program-level structure and actual runtime assignment. Determining which layout best serves prefix caching is therefore not trivial. \sysname combines static analysis with runtime information to determine prompt layouts. The compiler derives a partial order over prompt components based on their sharing scopes and lifetimes. Then, \sysname uses the actual token lengths of bindings observed from log to order components left unconstrained by this partial order, producing a concrete layout that improves prefix cache efficiency.
+
+\textbf{Second, exploiting future reuse requires coordinating cache retention and prefetching.}
+Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would would lead to unnecessary recomputation. \sysname addresses this challenge through two coordinated planners: a protection planner prioritizes cached prefixes according to their expected reuse and benefit, while a prefetch planner schedules transfers based on predicted invocation deadlines and available device memory.
+
+We implemented \sysname on SGLang~\cite{zheng2024sglang}..... We evaluated \sysname with three representative agent workloads: HoVer-style ~\cite{jiang2020hover} fact check agent, HumanEval ~\cite{chen2021evaluating} code agent, and a BFCL ~\cite{patil2025bfcl} tool-use agent.....
+Our evaluation shows that \sysname ...
+
+In summary, we make the following contributions.
+\begin{itemize}
+    \item We identify the inherent heterogeneity in programmatically generated prompts and its implications for serving.
+    \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management.... 
+    \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to...
+\end{itemize}
+

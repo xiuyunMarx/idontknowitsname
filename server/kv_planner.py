@@ -36,6 +36,7 @@ class KVPlanner:
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
+    PROMOTE_MAX_USAGE = 0.8     # no load-backs while the device pool is fuller than this: they only churn
 
     def __init__(self, engine) -> None:
         self.engine = engine
@@ -162,16 +163,27 @@ class KVPlanner:
 
     promote_enabled = True      # --no-promote: jobs only steer eviction, no host->device loads
 
+    def _pool_full(self) -> bool:
+        """If the KV cache already occupied/pinned by currently running requests exceeds PROMOTE_MAX_USAGE of the GPU KV-cache capacity, stop promoting KV from host memory back to GPU."""
+        live = getattr(self.engine, "live_tokens", None)
+        ledger = getattr(self.engine, "ledger", None)
+        if live is None or ledger is None:
+            return False
+        cap = ledger.device_cap_tokens()
+        return bool(cap) and live / cap > self.PROMOTE_MAX_USAGE
+
     def _pick(self, now: float) -> Optional[Job]:
-        if not self.promote_enabled:
-            return None
-        """The released job with the earliest deadline (value breaks ties) whose cached
-        frontier, as the ledger sees it now, reaches past `done_upto`: a promotion is
-        an RPC, no request slot, no compute. `kind` is not consulted: it is the
-        ledger's view at plan time, and a job planned as "hold" is picked as soon as
-        the ledger learns more of its prefix is cached (another session computed the
-        shared head, or a calibration). Until then it only carries eviction
-        protection."""
+        """Return the ready job that should be promoted next.
+
+        A job is eligible when the cache currently contains more of its prefix
+        than has already been restored to the device. Prefer the earliest
+        deadline, breaking ties by expected value.
+
+        Recheck the cache instead of relying on ``job.kind`` because another
+        session may have cached a shared prefix since the job was created.
+        """
+        if not self.promote_enabled or self._pool_full():
+            return
         best: Optional[Job] = None
         for held in self._jobs.values():
             for j in held.values():

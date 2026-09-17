@@ -112,8 +112,8 @@ def main(argv: List[str]) -> int:
         names = argv[argv.index("--trace") + 1].split(",")
         by = {k.signature.split(".")[0]: k for k in p.sites}
         trace = [next(k for k in p.sites if k.signature.startswith(n)) for n in names]
-    print("trace:", " -> ".join(repr(k) for k in trace))
-    chosen = {k: list(t.order) for k, t in p.sites.items()}
+    print("trace:", " -> ".join(repr(k) for k in trace)) 
+    chosen = {k: list(t.order) for k, t in p.sites.items()} #type: ignore
     fields = sorted({b.field for t in p.sites.values() for b in t.params if b.field})
     results = []
     for perm in itertools.permutations(fields):
