@@ -36,7 +36,7 @@ class KVPlanner:
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
-    PROMOTE_MAX_USAGE = 0.8     # no load-backs while the device pool is fuller than this: they only churn
+    PROMOTE_MAX_USAGE = 1.2      # no load-backs while the device pool is fuller than this. Closed for CLIP=4096
 
     def __init__(self, engine) -> None:
         self.engine = engine
@@ -49,10 +49,12 @@ class KVPlanner:
 
     # ------------------------------------------------------------------ intake
     def submit(self, sid: str, epoch: int, jobs: List[Job], extend: bool = False) -> None:
-        """Adopt a session's fresh job set. Replace semantics: a previously queued
-        job not re-submitted is void — its branch collapsed. A re-submitted key with
-        longer toks keeps its progress and gets refreshed timing; `extend` merges
-        instead of replacing (routing follow-ups add jobs)."""
+        """Update a session's jobs.
+
+        By default, jobs missing from the new list are cancelled. Existing jobs
+        keep their progress and receive the latest tokens, timing, and value.
+        With ``extend=True``, new jobs are added without cancelling old ones.
+        """
         held = self._jobs.setdefault(sid, {})
         for j in jobs:
             prev = held.get(j.key)
@@ -165,13 +167,9 @@ class KVPlanner:
 
     def _pool_full(self) -> bool:
         """If the KV cache already occupied/pinned by currently running requests exceeds PROMOTE_MAX_USAGE of the GPU KV-cache capacity, stop promoting KV from host memory back to GPU."""
-        live = getattr(self.engine, "live_tokens", None)
-        ledger = getattr(self.engine, "ledger", None)
-        if live is None or ledger is None:
-            return False
-        cap = ledger.device_cap_tokens()
-        return bool(cap) and live / cap > self.PROMOTE_MAX_USAGE
-
+        usage = getattr(self.engine, "token_usage", None)   # sglang's own token usage, from the last planner RPC
+        return usage is not None and usage > self.PROMOTE_MAX_USAGE
+    
     def _pick(self, now: float) -> Optional[Job]:
         """Return the ready job that should be promoted next.
 

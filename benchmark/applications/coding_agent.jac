@@ -114,7 +114,7 @@ def strip_fences(text: str) -> str {
 }
 
 node Planner {
-    def plan(spec: str, module: str, tries: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=1024);
+    def plan(spec: str, module: str, tries: list[Attempt]) -> Plan by llm(temperature=0.0, max_tokens=4096);
 
     can start with CodeTask entry {
         visitor.spec = visitor.tasks[visitor.idx].spec;
@@ -138,7 +138,7 @@ sem Planner.plan.spec = "The signature and docstring of the function to implemen
 
 
 node Coder {
-    def implement(spec: str, module: str, plan: Plan, advice: str, tries: list[Attempt]) -> str by llm(temperature=0.0, max_tokens=1024);
+    def implement(spec: str, module: str, plan: Plan, advice: str, tries: list[Attempt]) -> str by llm(temperature=0.0, max_tokens=4096);
 
     can write with CodeTask entry {
         task = visitor.tasks[visitor.idx];
@@ -228,7 +228,7 @@ sem Tester = "Runs pytest over the module plus the latest attempt.";
 
 
 node Analyzer {
-    def diagnose(spec: str, module: str, tries: list[Attempt]) -> Diagnosis by llm(temperature=0.0, max_tokens=1024);
+    def diagnose(spec: str, module: str, tries: list[Attempt]) -> Diagnosis by llm(temperature=0.0, max_tokens=4096);
 
     can analyze with CodeTask entry {
         try {
@@ -250,7 +250,7 @@ sem Analyzer.diagnose.spec = "The signature and docstring of the function being 
 
 
 node Committer {
-    def commit(module: str, attempts: list[Attempt]) -> CommitMessage by llm(temperature=0.0, max_tokens=1024);
+    def commit(module: str, attempts: list[Attempt]) -> CommitMessage by llm(temperature=0.0, max_tokens=4096);
 
     can finish with CodeTask entry {
         msg: CommitMessage;

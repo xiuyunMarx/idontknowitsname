@@ -23,7 +23,7 @@ from benchmark.mixed_workload import RESULTS as DRIVER_RESULTS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-RESULTS = os.path.join(HERE, "mixed_results", "sweeps")
+RESULTS = os.environ.get("SWEEP_OUT") or os.path.join(HERE, "mixed_results", "sweeps")   # SWEEP_OUT: alternate output dir
 COLUMNS = ["c", "sessions", "failed", "jct_p50_s", "jct_p95_s", "jct_mean_s", "ttft_p50_ms", "ttft_p95_ms",
            "ttft_mean_ms", "device_pct", "host_pct", "miss_pct", "predicted_hit", "accuracy", "calls",
            "prompt_tokens_per_call"]
@@ -43,7 +43,7 @@ def run_level(program: str, tag: str, c: int, sessions: int, warmup: int, server
 
 def sweep(program: str, prefix: str, inputs: int, levels: str) -> int:
     ap = argparse.ArgumentParser(description=f"concurrency sweep of {program} on a running server")
-    ap.add_argument("arm", nargs="?", default="ours", choices=["ours", "relayout", "vanilla", "kvonly"],
+    ap.add_argument("arm", nargs="?", default="ours", choices=["ours", "relayout", "vanilla", "kvonly", "cachescout", "continuum"],
                     help="the arm the running server was started as; names the outputs")
     ap.add_argument("--c", default=levels, help="comma-separated concurrency levels")
     ap.add_argument("--sessions", default="auto",

@@ -9,6 +9,7 @@ two scheduler RPCs the planner steers HiCache with (promote, kv_priority).
 import asyncio
 import functools
 import random
+import re
 import time
 import uuid
 import json
@@ -69,7 +70,7 @@ class KVLedger:
                 self._host[h] = now
                 self._host.move_to_end(h)
         self._trim()
-
+    
     def _trim(self) -> None:
         while len(self._device) > self.device_cap:  # LRU falls off; the host copy survives
             self._device.popitem(last=False)
@@ -153,7 +154,7 @@ class Engine:
 
         self._inflight_prefill:int = 0
         self._inflight_decode:int = 0
-        self._live_tokens:int = 0     # KV tokens held by requests past their first token (sglang's token usage)
+        self.token_usage: Optional[float] = None   # sglang's own token usage, as of the last planner RPC
         self.device_profile: Optional[DeviceProfile] = None  # measured rates; see model.device_profiler
         self.promote_no_room = False  # last promote() deferral was for device space, not queue depth
         if device_kv_tokens is None:
@@ -186,11 +187,6 @@ class Engine:
     def serving(self) -> bool:
         """Real requests in flight."""
         return self._inflight_prefill + self._inflight_decode > 0
-
-    @property
-    def live_tokens(self) -> int:
-        """Device KV tokens locked by running requests: prompt plus decoded so far."""
-        return self._live_tokens
 
     def shutdown(self) -> None:
         self.engine.shutdown()
@@ -281,7 +277,6 @@ class Engine:
                     first_token_at = time.perf_counter()
                     self._inflight_prefill -= 1
                     self._inflight_decode += 1
-                    self._live_tokens += len(ids)
                     stats = self._cache_stats(meta)  # local: `last` is shared across requests
                     self._calibrate(ids, stats)
                     self.last = stats
@@ -291,9 +286,7 @@ class Engine:
                     print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
                                                             for k, v in self.last.items()), flush=True)
                 text = out.get("text") or ""          # cumulative: incremental_streaming_output is off
-                new_out = len(out.get("output_ids") or ())
-                self._live_tokens += new_out - out_tokens
-                out_tokens = new_out
+                out_tokens = len(out.get("output_ids") or ())
                 if progress is not None:
                     progress(first_token_at, out_tokens)
         finally:
@@ -302,7 +295,6 @@ class Engine:
                 self._inflight_prefill -= 1
             else:
                 self._inflight_decode -= 1
-                self._live_tokens -= len(ids) + out_tokens
                 self.note_landed(ids)  # a served prompt is cached too
                 print(f"[decode] {request_id} decode_ms={(time.perf_counter() - first_token_at) * 1000:.2f} "
                       f"output_tokens={out_tokens}", flush=True)
@@ -344,8 +336,9 @@ class Engine:
         rpc = functools.partial(self.engine.collective_rpc, "hicache_promote",
                                 token_ids=list(toks), rid=request_id, wait=wait)
         try:
-            await asyncio.get_running_loop().run_in_executor(None, rpc)
+            self._note_usage(await asyncio.get_running_loop().run_in_executor(None, rpc))
         except AssertionError as e:
+            self._note_usage(str(e))
             if "deferred" in str(e):
                 self.promote_no_room = "no room" in str(e)
                 print(f"[promote-deferred] {request_id} {e}", flush=True)
@@ -364,11 +357,17 @@ class Engine:
         rpc = functools.partial(self.engine.collective_rpc, "kv_priority",
                                 demote=demote, protect=protect, rid=request_id, retire=list(retire))
         try:
-            await asyncio.get_running_loop().run_in_executor(None, rpc)
+            self._note_usage(await asyncio.get_running_loop().run_in_executor(None, rpc))
         except AssertionError as e:
             print(f"[priority] {request_id} failed: {e}", flush=True)
             return False
         return True
+
+    def _note_usage(self, message: Optional[str]) -> None:
+        """Planner RPC replies carry `usage=<float>`: the scheduler's token usage."""
+        m = re.search(r"usage=([0-9.]+)", message or "")
+        if m:
+            self.token_usage = float(m.group(1))
 
     # ---- warmup --------------------------------------------------
 

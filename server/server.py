@@ -155,9 +155,7 @@ class Controller:
     # ------------------------------------------------------------------ registration
     def register(self, body: dict) -> dict:
         """Adopt a program's static analysis. Registering the same analysis again
-        (every launch of the agent re-analyzes and re-registers) keeps the Program
-        already serving: its branch and timing statistics are what the next session
-        is planned with."""
+        (every launch of the agent re-analyzes and re-registers) won't change already serving Program."""
         file = os.path.abspath(str(body["file"]))
         payload = json.dumps({"program": body["program"], "no_header_last": bool(body.get("no_header_last"))},
                              sort_keys=True)
@@ -241,7 +239,7 @@ class Controller:
                   "stop": body.get("stop")}
             schema = json_schema_of(body)
             if schema is not None:
-                sp["json_schema"] = schema         # constrained decoding, as the client asked
+                sp["json_schema"] = schema         # constrained decoding
             turn = len(inst.engine_time) if inst is not None else 0
             rid = f"{sess.id}-{sess.epoch}t{turn}-{uuid.uuid4().hex[:8]}"
             ids = self.engine.tokenize(prompt)
@@ -274,11 +272,9 @@ class Controller:
             head = len(cut)
         self.planner.note_served(sess.id, ids, head, static_len=head)
         prog = sess.program
-        if prog is not None and (not prog.successors(tpl.key)
+        if prog is not None and (len(prog.successors(tpl.key)) == 0 # No successor
                                  or prog.end_prob(tpl.key, sess.counters) >= END_SURE):
-            # the program ends here: its private cache is one-off from this moment,
-            # no need to wait for the process to exit
-            self.planner.retire_session(sess.id)
+            self.planner.retire_session(sess.id) # session ends here, retire
         else:
             sess.plan_anchor = inst.t_done          # the anchor every gap sample counts from
             self._plan_session(sess)                # replace: the freshest view of the future
@@ -412,10 +408,9 @@ class Controller:
         cur = sess.open or (sess.calls[-1] if sess.calls else None)
         if prog is None or planner is None or cur is None:
             return
-        calls = prog.predict_tree(cur.key, sess.counters, p_min=P_MIN, max_depth=PLAN_DEPTH)
-        # the hit log measures the next call: the likeliest direct successor
-        direct = [c for c in calls if len(c.path) == 2]
-        sess.predicted = direct[0].key if direct else (calls[0].key if calls else None)
+        calls = prog.predict(cur=cur.key, counters=sess.counters, p_min=P_MIN)
+        # calls = prog.predict_tree(cur.key, sess.counters, p_min=P_MIN, max_depth=PLAN_DEPTH)
+        sess.predicted = calls[0].key if calls else None # used for logging hits/misses on the next call
         anchor = sess.plan_anchor or time.monotonic()
         jobs: List[Job] = []
         for c in calls:
@@ -773,9 +768,7 @@ class Controller:
         return None
 
     def _planned_tokens(self, tpl: PromptTemplate, text: str, complete: bool) -> Optional[List[int]]:
-        """Token ids of the prompt a predicted call would send: the whole rendered
-        prompt when `text` is the complete user message, else the rendered prefix up
-        to the end of `text` minus a possibly split last token. Memoized."""
+        """Token ids of the prompt a predicted call would send"""
         key = (tpl.key, complete, text)
         hit = self._plan_tok.get(key, ...)
         if hit is not ...:
@@ -840,7 +833,8 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 16384,
-                              "radix_eviction_policy": eviction or ("priority" if plan else "lru")}
+                              "radix_eviction_policy": eviction or ("priority" if plan else "lru"),
+                              "grammar_backend": os.environ.get("GRAMMAR_BACKEND", "llguidance")}   # constrained decoding
     if engine_log:
         kwargs["log_level"] = engine_log        # "info": sglang's own batch logs (#running-req, #queue-req, throughput)
     if kv_tokens:

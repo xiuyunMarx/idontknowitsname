@@ -1074,6 +1074,7 @@ class Engine(EngineScoreMixin, EngineBase):
         recv_req = self.send_to_rpc.recv_pyobj(zmq.BLOCKY)
         assert isinstance(recv_req, RpcReqOutput)
         assert recv_req.success, recv_req.message
+        return recv_req.message
 
     def save_remote_model(self, **kwargs):
         self.collective_rpc("save_remote_model", **kwargs)

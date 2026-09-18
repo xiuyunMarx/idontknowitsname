@@ -1,11 +1,22 @@
 \section{Design}
 \label{sec:design}
+In this section, we present the design of \sysname, an effcient serving engine for program-integrated LLM agents. \sysname is a compiler-server co-design that exposes and exploits prompt heterogeneity for efficient KV-cache management. 
 
-To bridge the gap between the structured nature of programmatically generated prompts and the opaque treatment they receive at the serving layer, we propose \sysname, an effcient serving engine for program-integrated LLM agents. \sysname is a
-compiler-server co-design that identifies and exploits prompt heterogeneity for more efficient KV-cache management. On the compiler side, \sysname performs static analysis to recover the sharing scopes and lifetimes of prompt components, and proactively re-lays out prompt bindings to expose longer reusable prefixes. On the server side, \sysname uses the recovered heterogeneity information to guide KV-cache scheduling, including cache prefetching, protection, and prediction-guided eviction. Together, these mechanisms enable the serving system to manage KV cache according to the expected reuse and lifetime of different prompt components rather than treating each request as an undifferentiated token sequence.
+On the compiler side, \sysname performs static analysis over the agent program to expose the heterogeneity of prompts. The heterogeneity metadata is enveloped into a template descriptor. This descriptor includes agent application level structure and the heterogeneity within each LLM callsites. Server side then will consume this descriptor. First, \sysname's combines runtime observations and the template descriptor to decide the optimal layout to expose longer prefix share to the underlying KV cache. Then, runtime logs are applied to predictively manage KV cache retention and eviction, Together with the metadata from the template descriptor.
 
-\subsection{Adaptive Compiler Transformation}
-\label{sec:relayout}
-On compiler side, \sysname uses static analysis and short runtime observation to decide the ordering of prompt components. 
-\subsection{Predictive KV-Cache Scheduling}
-\label{sec:kv-scheduling}
+\subsection{Static Analysis for Template Derivation}
+The static pass of \sysname's compiler analysis generates a set of per call-site template descriptors and a global program structure template. The per call-site template descriptor captures the heterogeneity of prompts at each LLM callsite, while the global program structure template captures the overall dataflow of the agent. 
+
+\subsection{Generate call-site template}
+As we discussed in~\ref{sec:motivation}. Components within an programmatically generated prompt can be roughly devided into two categories: 
+\begin{enumerate*}[label=(\roman*)]
+    \item \textbf{Invariant Specifications:} These are the components that is fixed once the program is compiled, such as system prompt, schema specifications, task descriptions.
+    \item \textbf{Dynamic Bindings:} Because LLM calls are declared as functions, the parameter values are the actual user inputs. These runtime values are the dynamic bindings that are determined during runtime. 
+\end{enumerate*}
+
+Therefore, we define our call-site template as:
+\[
+\mathcal{T}_c=\langle \mathcal{I}_c,\mathcal{B}_c,\mathcal{A}_c \rangle .
+\]
+Where $\mathcal{I}_c$ is the invariant specifications, $\mathcal{B}_c$ is the dynamic bindings, and $\mathcal{A}_c$ is the heterogeneity annotations for each bindings. The annotation $\mathcal{A}_c$ is a maping from each dynamic binding to its heterogeneity type, which is derived from the static analysis.
+

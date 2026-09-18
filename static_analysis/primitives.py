@@ -10,7 +10,7 @@ typed bindings; the server only ever sees values. The split is:
   CallInstance    one request: a template plus the binding values it carried.
 """
 from __future__ import annotations
-
+from math import sqrt
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from statistics import median
@@ -530,8 +530,7 @@ class Program:
         self.loops, self.chain = loops, chain
 
     def entry_counters(self, key: CallSiteID) -> Dict[int, int]:
-        """The counters of a session whose first call is `key`: one pass of every
-        loop enclosing it."""
+        """Record the iteration index of each enclosing loop when the session first calls `key`"""
         return {L: 1 for L in self.chain.get(key, ())}
 
     def step_counters(self, counters: Dict[int, int], prev: Optional[CallSiteID],
@@ -582,6 +581,25 @@ class Program:
         t = self.sites.get(dst)
         return t.stats.quantile_duration(q) if t is not None and t.stats.engine_time else 0.0
 
+    def predict(self, cur: CallSiteID, counters: Optional[Dict[int, int]] = None, p_min:float=0.02,
+                horizon_s:float=120.0, top_k:int=3) -> List["PredictedCall"]:
+        """Only do depth=1 prediction, identical behavior with predict_tree(cur, max_depth=1)."""
+        prediction: List[PredictedCall] = []
+        if counters is None:
+            ctr = self.entry_counters(cur)
+        else:
+            ctr = dict(counters)
+        for next_call, prob in self.branch_probs(cur, ctr)[:top_k]:
+            if prob < p_min:
+                continue
+            t50 = self.gap_q(cur, next_call, 0.5)
+            t90 = self.gap_q(cur, next_call, 0.9)
+            if t50 > horizon_s:
+                continue
+            path = (cur, next_call)
+            prediction.append(PredictedCall(key=next_call, p=prob, t50=t50, t90=max(t50,t90),path=path, paths=[path]))
+        return prediction
+        
     def predict_tree(self, cur: CallSiteID, counters: Optional[Dict[int, int]] = None,
                      p_min: float = 0.02, horizon_s: float = 120.0,
                      max_nodes: int = 64, top_k: int = 3, max_depth: int = 8) -> List["PredictedCall"]:
@@ -593,7 +611,6 @@ class Program:
         planned too. Each result describes only the next visit to its site:
         alternative first-arrival paths merge, later visits on the same path do
         not. The search still walks those visits to reach downstream sites."""
-        from math import sqrt
         out: Dict[CallSiteID, PredictedCall] = {}
         ctr0 = dict(counters) if counters is not None else self.entry_counters(cur)
         frontier: List[Tuple[float, CallSiteID, Optional[CallSiteID], float, float, int,

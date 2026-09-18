@@ -32,6 +32,7 @@ python -m server.continuum_server --selftest
 """
 import argparse
 import asyncio
+import os
 import bisect
 import json
 import math
@@ -320,7 +321,9 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
                engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    kwargs: Dict[str, Any] = {"context_length": 16384, "radix_eviction_policy": eviction}
+    kwargs: Dict[str, Any] = {"context_length": 16384,
+                              "radix_eviction_policy": eviction,
+                              "grammar_backend": os.environ.get("GRAMMAR_BACKEND", "llguidance")}   # constrained decoding
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens
     if host_gb is not None:

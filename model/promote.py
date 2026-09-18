@@ -175,7 +175,8 @@ def kv_priority(self: Scheduler, demote: List[Tuple[List[int], int]],
         node = planned[nid][0]
         node.priority = max(node.priority, PLAN_BASE + k)
     print(f"[priority] {rid} demote={len(demote)}/{demoted}n retire={len(retire)}/{retired}n "
-          f"protect={len(protect)} nodes={len(planned)} ms={(time.perf_counter() - t0) * 1000:.1f}", flush=True)
+          f"protect={len(protect)} nodes={len(planned)} ms={(time.perf_counter() - t0) * 1000:.1f} "
+          f"{_usage_tag(self)}", flush=True)
 
 
 _HOST = HostStrategy()
@@ -197,6 +198,16 @@ HiRadixCache.evict_host = _evict_host   # type: ignore[assignment]
 _orig_rpc = Scheduler.handle_rpc_request
 
 
+def _usage_tag(self: Scheduler) -> str:
+    """sglang's token usage (the `token usage` of its batch log): the share of the
+    device pool that is neither free nor evictable, i.e. locked by running
+    requests. Shared prefixes count once and requests in prefill are included."""
+    try:
+        return f"usage={self._get_token_info()[1]:.4f}"
+    except Exception:
+        return ""
+
+
 def handle_rpc_request(self: Scheduler, recv_req):
     """The stock handler ends every RPC with torch.distributed.barrier(), which
     syncs the scheduler's stream and costs a decode step per call. These RPCs are
@@ -206,9 +217,9 @@ def handle_rpc_request(self: Scheduler, recv_req):
         return _orig_rpc(self, recv_req)
     try:
         getattr(self, recv_req.method)(**recv_req.parameters)
-        return RpcReqOutput(True, "")
+        return RpcReqOutput(True, _usage_tag(self))
     except Deferred as e:
-        return RpcReqOutput(False, str(e))
+        return RpcReqOutput(False, f"{e} {_usage_tag(self)}")
     except Exception as e:  # surfaced to the caller as a failed promotion
         return RpcReqOutput(False, f"failed: {e!r}")
 
