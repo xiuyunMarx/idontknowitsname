@@ -43,6 +43,7 @@ END_SURE = 0.95        # retire a session's cache at a reply when the program is
 T_BASE = 120.0         # idle seconds before a session is finalized
 T_SHORT = 15.0         # idle timeout once the session probably ended (P(end) >= 0.5 at its last call)
 SWEEP_S = 5.0          # idle sweeper period
+GRAMMAR_BACKEND = os.environ.get("GRAMMAR_BACKEND", "xgrammar")   # sglang grammar backend; "none" = no constrained decoding (schema not forwarded)
 MAX_TOKENS = 4096      # decode cap when the request does not set one
 MAX_BATCH = 32
 HEADER_LAST = True     # --no-header-last clears it: layouts never move the header behind the values
@@ -238,14 +239,16 @@ class Controller:
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
             schema = json_schema_of(body)
-            if schema is not None:
+            if schema is not None and GRAMMAR_BACKEND != "none":
                 sp["json_schema"] = schema         # constrained decoding
             turn = len(inst.engine_time) if inst is not None else 0
             rid = f"{sess.id}-{sess.epoch}t{turn}-{uuid.uuid4().hex[:8]}"
             ids = self.engine.tokenize(prompt)
             t0 = time.perf_counter()
+            admit = self._served_head(sess, inst) if (self.planner is not None and inst is not None) else None
             text = await self.engine.generate(prompt, rid, sp, ids=ids,
-                                              priority=PRIORITY_CONT if cont else PRIORITY_REAL)
+                                              priority=PRIORITY_CONT if cont else PRIORITY_REAL,
+                                              host_admit_len=admit)   # the volatile tail stays out of the host tier
             dt = time.perf_counter() - t0
             if inst is not None:
                 if not inst.engine_time:
@@ -265,11 +268,7 @@ class Controller:
             return
         t_post = time.perf_counter()
         tpl = inst.template
-        head = len(self._prefix_tokens(tpl))
-        fwd = self._forward_head(sess, inst)
-        cut = self._planned_tokens(tpl, fwd, False) if fwd else None
-        if cut is not None and len(cut) > head:
-            head = len(cut)
+        head = admit if admit is not None else self._served_head(sess, inst)
         self.planner.note_served(sess.id, ids, head, static_len=head)
         prog = sess.program
         if prog is not None and (len(prog.successors(tpl.key)) == 0 # No successor
@@ -647,6 +646,18 @@ class Controller:
                 return hist[i:]
         return hist
 
+    def _served_head(self, sess: LiveSession, inst: CallInstance) -> int:
+        """Token length of the served prompt's reusable head: the site's static prefix,
+        extended to the longest prefix some later call repeats (see _forward_head).
+        Everything past it is the call's volatile tail."""
+        tpl = inst.template
+        head = len(self._prefix_tokens(tpl))
+        fwd = self._forward_head(sess, inst)
+        cut = self._planned_tokens(tpl, fwd, False) if fwd else None
+        if cut is not None and len(cut) > head:
+            head = len(cut)
+        return head
+
     def _forward_head(self, sess: LiveSession, inst: CallInstance, max_hops: int = 3) -> str:
         """The longest leading part of a served call message that some later call's
         prompt repeats byte for byte: along every static path of up to `max_hops`
@@ -832,9 +843,9 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True
                engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    kwargs: Dict[str, Any] = {"context_length": 16384,
+    kwargs: Dict[str, Any] = {"context_length": 32768,
                               "radix_eviction_policy": eviction or ("priority" if plan else "lru"),
-                              "grammar_backend": os.environ.get("GRAMMAR_BACKEND", "llguidance")}   # constrained decoding
+                              "grammar_backend": GRAMMAR_BACKEND}   # constrained decoding
     if engine_log:
         kwargs["log_level"] = engine_log        # "info": sglang's own batch logs (#running-req, #queue-req, throughput)
     if kv_tokens:

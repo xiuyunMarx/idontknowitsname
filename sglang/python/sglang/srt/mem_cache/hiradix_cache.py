@@ -52,6 +52,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Host admission bands (mirror model/promote.py): KV past a request's host_admit_len is
+# demoted to TRANSIENT at insert and is never written through to the host tier; nodes the
+# planner protects (priority >= PLAN_BASE) are left alone.
+HOST_ADMIT_TRANSIENT = -1
+HOST_ADMIT_PROTECTED_MIN = 10
+
+
 class HiRadixCache(RadixCache):
 
     def __init__(self, params: CacheInitParams, server_args: ServerArgs):
@@ -653,6 +660,8 @@ class HiRadixCache(RadixCache):
         # skip the hit count update for chunked requests
         if self.cache_controller.write_policy == "write_back" or chunked:
             return
+        if node.priority < 0:
+            return   # demoted (volatile) KV is never admitted to the host tier
         node.hit_count += 1
 
         if not node.backuped:
@@ -1472,6 +1481,9 @@ class HiRadixCache(RadixCache):
 
         if len(key) == 0:
             return InsertResult(prefix_len=0)
+        admit = getattr(params, "host_admit_len", None)
+        if admit is not None:   # page-align up, like promote._band_tail, so the split lands on a page boundary
+            admit = min(len(key), -(-max(0, admit) // self.page_size) * self.page_size)
 
         if self.is_eagle and value is not None:
             # Make sure the value len equal to the EAGLE bigram key len
@@ -1480,12 +1492,19 @@ class HiRadixCache(RadixCache):
         node = self.root_node
         child_key = self.get_child_key_fn(key)
         total_prefix_length = 0
+        offset = 0   # tokens of the request's key consumed so far
 
         while len(key) > 0 and child_key in node.children.keys():
             node = node.children[child_key]
             node.last_access_time = time.monotonic()
-            node.priority = max(node.priority, priority)
             prefix_len = self.key_match_fn(node.key, key)
+            if admit is not None and offset < admit < offset + prefix_len:
+                prefix_len = admit - offset   # split at the admission boundary: the head stays admissible
+            if admit is not None and offset >= admit:
+                if node.priority < HOST_ADMIT_PROTECTED_MIN:
+                    node.priority = HOST_ADMIT_TRANSIENT   # volatile tail: demoted at insert, not written to host
+            else:
+                node.priority = max(node.priority, priority)
 
             if prefix_len == len(node.key):
                 if node.evicted:
@@ -1519,17 +1538,20 @@ class HiRadixCache(RadixCache):
 
             key = key[prefix_len:]
             value = value[prefix_len:]
+            offset += prefix_len
 
             if len(key):
                 child_key = self.get_child_key_fn(key)
 
-        if len(key):
-            new_node = TreeNode(priority=priority)
+        while len(key):   # at most two nodes: the admissible head and the volatile tail
+            cut = admit - offset if (admit is not None and offset < admit < offset + len(key)) else len(key)
+            past = admit is not None and offset >= admit
+            new_node = TreeNode(priority=HOST_ADMIT_TRANSIENT if past else priority)
             new_node.parent = node
-            new_node.key = key
-            new_node.value = value.clone()
-            node.children[child_key] = new_node
-            self.evictable_size_ += len(value)
+            new_node.key = key[:cut]
+            new_node.value = value[:cut].clone()
+            node.children[self.get_child_key_fn(new_node.key)] = new_node
+            self.evictable_size_ += cut
             self._update_leaf_status(node)
             self._update_leaf_status(new_node)
 
@@ -1542,6 +1564,10 @@ class HiRadixCache(RadixCache):
 
             if self.cache_controller.write_policy != "write_back":
                 self._inc_hit_count(new_node, chunked)
+            node = new_node
+            key = key[cut:]
+            value = value[cut:]
+            offset += cut
         return InsertResult(prefix_len=total_prefix_length)
 
     def release_aborted_request(self, rid: str):

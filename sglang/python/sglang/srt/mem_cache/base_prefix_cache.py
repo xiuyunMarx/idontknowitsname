@@ -65,6 +65,7 @@ class InsertParams:
     # General
     chunked: bool = False
     priority: int = 0
+    host_admit_len: Optional[int] = None   # KV past this prompt offset will not the written into host
 
 
 @dataclasses.dataclass

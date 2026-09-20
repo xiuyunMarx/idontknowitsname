@@ -1,22 +1,75 @@
 \section{Design}
 \label{sec:design}
-In this section, we present the design of \sysname, an effcient serving engine for program-integrated LLM agents. \sysname is a compiler-server co-design that exposes and exploits prompt heterogeneity for efficient KV-cache management. 
+\subsection{Overview}
+In this section, We present the design of \sysname, an effcient serving engine for program-integrated LLM agents. \sysname adopts a two-tier compiler-server co-design. One the compiler side, \sysname performs static analysis to gather heterogeneity metadata, and on the server side, \sysname leverages this metadata to optimize KV-cache scheduling. We first introduce an interface \emph{Agent Descriptor} to bridge the compiler and server, together with a unified mechanism to construct the agent descriptor via static analysis and runtime observations. Second, we present a heterogeneity-aware KV-cache scheduling strategy that leverages the agent descriptor to enhance serving performance.
 
-On the compiler side, \sysname performs static analysis over the agent program to expose the heterogeneity of prompts. The heterogeneity metadata is enveloped into a template descriptor. This descriptor includes agent application level structure and the heterogeneity within each LLM callsites. Server side then will consume this descriptor. First, \sysname's combines runtime observations and the template descriptor to decide the optimal layout to expose longer prefix share to the underlying KV cache. Then, runtime logs are applied to predictively manage KV cache retention and eviction, Together with the metadata from the template descriptor.
-
-\subsection{Static Analysis for Template Derivation}
-The static pass of \sysname's compiler analysis generates a set of per call-site template descriptors and a global program structure template. The per call-site template descriptor captures the heterogeneity of prompts at each LLM callsite, while the global program structure template captures the overall dataflow of the agent. 
-
-\subsection{Generate call-site template}
-As we discussed in~\ref{sec:motivation}. Components within an programmatically generated prompt can be roughly devided into two categories: 
+\subsection{Agent Descriptor for Heterogeneity Metadata}
+Here we define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. An agent descriptor contains two parts: 
 \begin{enumerate*}[label=(\roman*)]
-    \item \textbf{Invariant Specifications:} These are the components that is fixed once the program is compiled, such as system prompt, schema specifications, task descriptions.
-    \item \textbf{Dynamic Bindings:} Because LLM calls are declared as functions, the parameter values are the actual user inputs. These runtime values are the dynamic bindings that are determined during runtime. 
+    \item \textbf{Call-site Template:} It provides a heuritic of the components' lifetime, sharing scope and evolution pattern.
+    \item \textbf{Workflow Automaton:} It contains the program-level structure of an agent, including workflow dependencies, execution time estimation and transition probabilities.
+\end{enumerate*} 
+\sysname's two-tier design let the compiler to provide a rough skeleton, while the server refines it with runtime observations. Two sides are therefore connected by this agent descriptor, and jointly serve a more effcient KV-cache scheduling strategy. 
+
+\subsubsection{Call-site Template}
+\label{sec:template}
+As discussed in \S\ref{sec:motivation}, the components of a programmatically generated prompt fall into two categories:
+\begin{enumerate*}[label=(\roman*)]
+    \item \textbf{Invariant Specifications:} the components that are fixed once the program is compiled, such as the system prompt, response schema, and the tool declarations. They are rendered from the compiler's own intermediate representation and stays constant.
+    \item \textbf{Dynamic Bindings:} because LLM calls are declared as ordinary functions, the arguments of a call site are supplied in runtime. These runtime values are the dynamic bindings.
 \end{enumerate*}
 
-Therefore, we define our call-site template as:
+We therefore define the call-site template as
 \[
-\mathcal{T}_c=\langle \mathcal{I}_c,\mathcal{B}_c,\mathcal{A}_c \rangle .
+\mathcal{T}_c=\langle \mathcal{I}_c,\ \mathcal{B}_c,\ \mathcal{H}_c \rangle ,
 \]
-Where $\mathcal{I}_c$ is the invariant specifications, $\mathcal{B}_c$ is the dynamic bindings, and $\mathcal{A}_c$ is the heterogeneity annotations for each bindings. The annotation $\mathcal{A}_c$ is a maping from each dynamic binding to its heterogeneity type, which is derived from the static analysis.
+where $\mathcal{I}_c$ is the invariant specifications, $\mathcal{B}_c$ is the dynamic bindings, and $\mathcal{H}_c$ is the heterogeneity annotation over those bindings. All three are recovered by static analysis. The server will derive a layout for $\mathcal{T}_c$ (\S\ref{sec:relayout}), under which a valuation of $\mathcal{B}_c$ renders to the served prompt. 
 
+\paragraph{Heterogeneity annotation.}
+For each dynamic binding, $\mathcal{H}_c$ records both how its value evolves from one call to the next and how long that value stays valid:
+\[
+\mathcal{H}_c:\ \mathcal{B}_c \longrightarrow \mathcal{E} \times \mathcal{S} .
+\]
+The evolution component $\mathcal{E}$ classifies a binding by its value provenance. We distinguish $\mathcal{E}$ into five classes, listed from the most to the least reusable:
+\begin{enumerate}
+    \item \textbf{CONST:} the value is fixed by the program text and is identical at every call.
+    \item \textbf{COPY:} the value is the same as the value another call site carries, so the bytes are already resident once that call site has run.
+    \item \textbf{RESP:} the value comes from the reply produced by another call site.
+    \item \textbf{EXTEND:} the binding is an append-only context, and the previous value remains a prefix of the new one.
+    \item \textbf{VOLATILE:} the value is freshly produced at each call, or its origin lies outside what the analysis can see.
+\end{enumerate}
+We write $\rho$ for the rank of a class in the order above, which expresses how much of a binding's bytes an earlier call can already supply..
+
+The lifetime component $\mathcal{S}$ names the program scope whose completion invalidates a binding's value ($\mathcal{S}=\emptyset$ meaning that the value survives for the whole session once produced). For example, \texttt{claim} in \texttt{scout.assess\_evidence} in figure~\ref{fig:heterogeneity-sample} has $\mathcal{E}=\textbf{CONST}$ and $\mathcal{S}=\emptyset$. Lifetime is independent of evolution, and the server needs both. The evolution class governs which bytes a later prompt can reuse, while the lifetime governs when cached bytes can be given up.
+
+\subsubsection{Workflow Automaton}
+
+An agent typically consists of a sequence of dependent LLM calls whose workflow structure is implicit in the program. Concretely, we abstract an agent as a time-annotated probabilistic finite-state machine (TPFM). We formulate the TPFM as: 
+\[
+\mathcal{A} = (Q, P, q_0, F, \mathcal{T}),
+\]
+where:
+\begin{enumerate}
+    \item $Q$ is the set of states. Each state $q\in Q$ is labelled by an LLM callsite; 
+
+    \item $P$ denotes the transition probabilities between states.
+
+    \item $q_0 \in Q$ is the entrance callsite.
+
+    \item $F$ specifies the termination probability of the agent at each state.
+
+    \item $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ denotes the timing annotations associated with states and transitions, where $D^{\mathrm{exec}}_q$ is the execution-time distribution of the LLM callsite represented by state $q$, and $D^{\mathrm{gap}}_{q,q'}$ is the inter-call gap distribution between the completion of callsite $q$ and the invocation of its successor $q'$.
+\end{enumerate}
+
+Static analysis fixes the shape of this automaton, while its weights comes from runtime logs. The states, the entry, the transitions among them, and final states are recovered from code. $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ and $P$ are often unknown at compile time and model dependent. The server observes these online and accumulates them across sessions, updating the statistical model of the agent consistently. Together the two halves give the server a forward-looking view of a session.
+
+\subsection{Heterogeneity-aware KV-cache Arrangement}
+\subsubsection{Adaptive Prompt re-layout}
+\label{sec:relayout}
+To best exploit the prefix cache opportunity, we need to arrange the dynamic bindings in a prompt so that the most reusable ones are placed first. 
+
+
+\subsubsection{Proactive KV-cache retention and eviction}
+
+1. Volitile tail will first be evicted and not written to host. (Host Admission policy)
+2. Prob*length/time

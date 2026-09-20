@@ -977,6 +977,7 @@ class TokenizerManager(TokenizerCommunicatorMixin, TokenizerManagerScoreMixin):
                 routed_dp_rank=obj.routed_dp_rank,
                 disagg_prefill_dp_rank=obj.disagg_prefill_dp_rank,
                 priority=obj.priority,
+                host_admit_len=getattr(obj, "host_admit_len", None),
                 extra_key=obj.extra_key,
                 routing_key=obj.routing_key,
                 token_type_ids=token_type_ids,

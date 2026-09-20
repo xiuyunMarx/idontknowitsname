@@ -107,10 +107,10 @@ class Binding:
     heterogeneity: Heterogeneity = Heterogeneity.VOLATILE
     kind: BindingKind = BindingKind.PARAM
     source: Optional[Tuple[CallSiteID, str]] = None   # COPY/TAKE: (site, binding name); RESP: (site, json path)
-    literal: Optional[str] = None              # CONST: the bytes
-    field: str = ""                            # walker field the value carries ("f[]": one element of it; "" none)
-    scope: str = ""                            # the CFG scope whose exit invalidates the value ("" = session)
-    label: str = ""                            # bytes written before the value, e.g. "spec = "
+    literal: Optional[str] = None              # the bytes dumped into the prompt for this binding (If heterogeneity is CONST)
+    field: str = ""                            # the walker field thatthis value comes from; "f[]" = one element of field f; "" = not from a field
+    scope: str = ""                            # CFG scope where the value expires ("" = session)
+    label: str = ""                            # parameter name, e.g. "spec = "
     tail: str = ""                             # constant bytes written after the value, e.g. self's member rows
 
     @property
@@ -168,6 +168,7 @@ class PromptTemplate:
     # Layout
     def decide_layout(self) -> None:
         """Order the params so the bytes most likely already cached lead"""
+        raise DeprecationWarning("PromptTemplate.decide_layout is deprecated; use Program.decide_layouts instead")
         names = [b.name for b in self.params]
         ranked = sorted(names, key=lambda n: (0 if self.binding(n).shared else 1,
                                               0 if self.binding(n).scope == "" else 1,
@@ -379,19 +380,19 @@ class Program:
         return [k for k, t in self.sites.items() if (t.order, t.header_last) != before[k]]
 
     def decide_layouts(self, header_last: bool = True) -> None:
-        """Choose every site's served order together, so sites that carry the same
-        walker fields lay them out in the same relative order and their prompts
-        share a byte prefix. A field counts as shared when two or more sites carry
-        it (the producer included: its prompt's head is what the consumers reuse).
-        Shared fields lead, ordered by a program-wide key: session-scoped before
-        scope-reset ones (a value that survives this site's own repeated calls
-        beats one a loop iteration replaces), constants before copies before
-        append-only histories. Unshared values follow, most stable first. Within
-        one class, the field that first appears at an earlier site leads (the
-        later site's prompt then extends the earlier one's); among fields that
-        appear together, the one with the longer value leads (token counts the
-        server observed, see observe_sizes: a longer shared value saves more).
-        The header moves behind the values only where the leading value is shared."""
+        """
+        Order prompt fields to maximize shared prefix reuse.
+
+        - A field is shared if two or more sites carry it, including its producer.
+        - Put shared fields first, using this program-wide priority:
+            1. Session-scoped fields before fields reset by a scope or loop iteration.
+            2. Constants before copies before append-only histories.
+            3. Fields first seen at an earlier site before those first seen later.
+            4. For fields first seen together, longer values first, using token counts from observe_sizes.
+
+        - Put unshared fields afterward, most stable first.
+        - Keep the header first unless the leading field is shared; then move the header after the values.
+            """
         self.layout_policy = header_last
         depth = self.site_depth()
         first: Dict[str, int] = {}
@@ -405,8 +406,7 @@ class Program:
                 carriers.setdefault(b.field, set()).add(t.key)
                 first[b.field] = min(first.get(b.field, depth[t.key]), depth[t.key])
                 scoped[b.field] = scoped.get(b.field, False) or b.scope != ""
-                # the field's own kind: append-only if any site sees it extend, else
-                # a copy; a producer's VOLATILE or a reset's CONST view does not
+                # the field's own kind: append-only if any site sees it extend, else a copy; a producer's VOLATILE or a reset's CONST view does not
                 # describe the field
                 k = 3 if b.heterogeneity is Heterogeneity.EXTEND else 1
                 kind[b.field] = max(kind.get(b.field, 1), k)

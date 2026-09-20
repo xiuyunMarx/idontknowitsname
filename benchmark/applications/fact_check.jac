@@ -111,7 +111,7 @@ node ClaimAnalyzer {
 }
 
 sem ClaimAnalyzer = "The fan-out dispatcher of a HoVer-style multi-hop fact checker.";
-sem ClaimAnalyzer.decompose_claim = "Propose between one and maximum_questions self-contained factual questions that can be researched independently and in parallel in this round. With no evidence yet, cover every entity, relation, comparison, date, and quantity needed to decide the whole claim. With evidence present, target only the parts whose findings are INSUFFICIENT or in conflict; follow-up questions may use entities and answers already established by earlier findings (multi-hop), and must not repeat a question that already has a SUPPORTS or CONTRADICTS finding. Do not answer the questions.";
+sem ClaimAnalyzer.decompose_claim = "Propose between one and maximum_questions self-contained factual questions that can be researched independently and in parallel in this round. With no evidence yet, cover every entity, relation, comparison, date, and quantity needed to decide the whole claim. With evidence present, target only the parts whose findings are INSUFFICIENT or in conflict; follow-up questions may use entities and answers already established by earlier findings (multi-hop), and must not repeat a question that already has a SUPPORTS or CONTRADICTS finding. Do not answer the questions. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem ClaimAnalyzer.decompose_claim.claim = "The complete claim to verify.";
 sem ClaimAnalyzer.decompose_claim.evidences = "Every finding collected in earlier rounds of this fact check, oldest first; empty in the first round.";
 sem ClaimAnalyzer.decompose_claim.maximum_questions = "The hard upper bound on independent fan-out branches this round.";
@@ -235,7 +235,7 @@ sem EvidenceScout = "One independent branch in the fact check's evidence fan-out
 sem EvidenceScout.slot = "Zero-based position of the question assigned to this scout.";
 sem EvidenceScout.websearch = "Search English Wikipedia for passages relevant to one independent evidence question.";
 sem EvidenceScout.websearch.query = "A self-contained factual question used as the Wikipedia search query.";
-sem EvidenceScout.assess_evidence = "Assess only the supplied search results, using earlier evidence solely to resolve references in the question. Return one Finding. Copy its question exactly. Do not use unstated background knowledge, invent a source, or treat the absence of evidence as a contradiction. The source and excerpt must be copied from the search results. If the results do not settle the question, return INSUFFICIENT.";
+sem EvidenceScout.assess_evidence = "Assess only the supplied search results, using earlier evidence solely to resolve references in the question. Return one Finding. Copy its question exactly. Do not use unstated background knowledge, invent a source, or treat the absence of evidence as a contradiction. The source and excerpt must be copied from the search results. If the results do not settle the question, return INSUFFICIENT. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem EvidenceScout.assess_evidence.claim = "The complete claim, supplied only so the finding's stance can be measured against it.";
 sem EvidenceScout.assess_evidence.evidences = "Every finding collected in earlier rounds of this fact check, oldest first.";
 sem EvidenceScout.assess_evidence.question = "The single independent question assigned to this scout.";
@@ -286,7 +286,7 @@ node EvidenceAnalyzer {
 }
 
 sem EvidenceAnalyzer = "The single fan-in verifier that combines all independent evidence branches and decides whether another round is needed.";
-sem EvidenceAnalyzer.verify_claim = "Apply HoVer's decision rule to the claim and all evidence together. Return SUPPORTED only if reliable evidence collectively establishes every material part of the claim and no reliable evidence contradicts it. Return NOT_SUPPORTED when a material part is contradicted. Return NEED_MORE when a material part is still insufficiently evidenced and a further search could settle it. Explain the cross-document reasoning, and cite only source strings present in the evidence objects.";
+sem EvidenceAnalyzer.verify_claim = "Apply HoVer's decision rule to the claim and all evidence together. Return SUPPORTED only if reliable evidence collectively establishes every material part of the claim and no reliable evidence contradicts it. Return NOT_SUPPORTED when a material part is contradicted. Return NEED_MORE when a material part is still insufficiently evidenced and a further search could settle it. Explain the cross-document reasoning, and cite only source strings present in the evidence objects. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem EvidenceAnalyzer.verify_claim.claim = "The complete claim to classify.";
 sem EvidenceAnalyzer.verify_claim.evidences = "The complete set of findings collected so far, oldest first.";
 

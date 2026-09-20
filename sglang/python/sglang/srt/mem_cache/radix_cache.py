@@ -492,7 +492,8 @@ class RadixCache(BasePrefixCache):
         if is_insert:
             priority = getattr(req, "priority", 0) or 0
             result = self.insert(
-                InsertParams(key=radix_key, value=values, priority=priority)
+                InsertParams(key=radix_key, value=values, priority=priority,
+                             host_admit_len=getattr(req, "host_admit_len", None))
             )
             new_prefix_len = result.prefix_len
             # Free the duplicates that were already in the tree
@@ -533,6 +534,7 @@ class RadixCache(BasePrefixCache):
                 value=values,
                 chunked=chunked,
                 priority=getattr(req, "priority", 0) or 0,
+                host_admit_len=getattr(req, "host_admit_len", None),
             )
         )
         new_prefix_len = result.prefix_len

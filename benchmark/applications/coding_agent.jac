@@ -131,7 +131,7 @@ node Planner {
 }
 
 sem Planner = "Reads the next function's spec and decides how to implement it.";
-sem Planner.plan = "Describe the algorithm for the function in `spec` and list the edge cases its tests are likely to probe. The functions in `module` are accepted and may be reused. Do not write code.";
+sem Planner.plan = "Describe the algorithm for the function in `spec` and list the edge cases its tests are likely to probe. The functions in `module` are accepted and may be reused. Do not write code. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem Planner.plan.module = "The accepted code of the module so far.";
 sem Planner.plan.tries = "Earlier attempts at this function with their pytest output, oldest first; empty on the first try.";
 sem Planner.plan.spec = "The signature and docstring of the function to implement next.";
@@ -243,7 +243,7 @@ node Analyzer {
 }
 
 sem Analyzer = "Explains a failed attempt from its pytest output.";
-sem Analyzer.diagnose = "Explain why the latest attempt fails, citing the failing assertion or exception in its pytest output, and give concrete instructions for the next attempt. Do not write the full solution.";
+sem Analyzer.diagnose = "Explain why the latest attempt fails, citing the failing assertion or exception in its pytest output, and give concrete instructions for the next attempt. Do not write the full solution. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem Analyzer.diagnose.module = "The accepted code of the module so far; the tests run against it plus the attempt.";
 sem Analyzer.diagnose.tries = "Attempts at this function with their pytest output, oldest first; the last one failed.";
 sem Analyzer.diagnose.spec = "The signature and docstring of the function being implemented.";
@@ -276,7 +276,7 @@ node Committer {
 }
 
 sem Committer = "Writes the commit message once every function is accepted or given up on.";
-sem Committer.commit = "Write a commit message for the module. If some function still fails its tests, say so in the body.";
+sem Committer.commit = "Write a commit message for the module. If some function still fails its tests, say so in the body. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem Committer.commit.module = "The accepted code of the module.";
 sem Committer.commit.attempts = "Every attempt with its pytest output, oldest first; the ones marked passed form the module.";
 

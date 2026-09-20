@@ -55,6 +55,7 @@ R_MIN = 0.5          # prefetch only when the next agent is this predictable
 IDLE_S = 120.0       # a session silent this long is no longer "current"
 KEEP_PER_SESSION = 8 # served prompts kept tagged per session (RPC size cap)
 BANDS = 8            # p_surv quantisation levels above the unclassified band
+GRAMMAR_BACKEND = os.environ.get("GRAMMAR_BACKEND", "xgrammar")   # sglang grammar backend; "none" = no constrained decoding (schema not forwarded)
 MAX_TOKENS = 4096
 
 _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
@@ -202,7 +203,7 @@ class CacheScoutController:
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,
                   "stop": body.get("stop")}
             rf = body.get("response_format") or {}
-            if rf.get("type") == "json_schema" and isinstance((rf.get("json_schema") or {}).get("schema"), dict):
+            if GRAMMAR_BACKEND != "none" and rf.get("type") == "json_schema" and isinstance((rf.get("json_schema") or {}).get("schema"), dict):
                 sp["json_schema"] = json.dumps(rf["json_schema"]["schema"])   # constrained decoding, as the client asked
             ids = self.engine.tokenize(prompt)
             agent, depth = self.fp.observe(sid, ids)
@@ -287,8 +288,8 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
                engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
-    kwargs: Dict[str, Any] = {"context_length": 16384, "radix_eviction_policy": "priority",
-                              "grammar_backend": os.environ.get("GRAMMAR_BACKEND", "llguidance")}   # constrained decoding
+    kwargs: Dict[str, Any] = {"context_length": 32768, "radix_eviction_policy": "priority",
+                              "grammar_backend": GRAMMAR_BACKEND}   # constrained decoding
     if kv_tokens:
         kwargs["max_total_tokens"] = kv_tokens
     if host_gb is not None:

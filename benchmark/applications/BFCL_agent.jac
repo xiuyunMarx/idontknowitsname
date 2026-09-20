@@ -184,7 +184,7 @@ node Agent {
 }
 
 sem Agent = "Decides the next tool call from the question and the history.";
-sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the result of the previous step; `history` lists every step so far with its result. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for.";
+sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the result of the previous step; `history` lists every step so far with its result. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem Agent.step.observation = "The result of the latest tool call; empty on the first step.";
 sem Agent.step.tools = "The tools available, one per line.";
 sem Agent.step.question = "The question to answer.";

@@ -213,6 +213,10 @@ class GenerateReqInput(BaseReq):
     # Priority for the request
     priority: Optional[int] = None
 
+    # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
+    # and is not admitted to the host tier (None: admit everything)
+    host_admit_len: Optional[int] = None
+
     # Extra key for classifying the request (e.g. cache_salt)
     extra_key: Optional[Union[List[str], str]] = None
 
@@ -656,6 +660,7 @@ class GenerateReqInput(BaseReq):
             disagg_prefill_dp_rank=self.disagg_prefill_dp_rank,
             conversation_id=self.conversation_id,
             priority=self.priority,
+            host_admit_len=self.host_admit_len,
             extra_key=self.extra_key,
             no_logs=self.no_logs,
             custom_labels=self.custom_labels,
@@ -728,6 +733,10 @@ class TokenizedGenerateReqInput(BaseReq):
     # Priority for the request
     priority: Optional[int] = None
 
+    # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
+    # and is not admitted to the host tier (None: admit everything)
+    host_admit_len: Optional[int] = None
+
     # Extra key for classifying the request (e.g. cache_salt)
     extra_key: Optional[str] = None
 
@@ -796,6 +805,10 @@ class EmbeddingReqInput(BaseReq):
     is_cross_encoder_request: bool = False
     # Priority for the request
     priority: Optional[int] = None
+
+    # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
+    # and is not admitted to the host tier (None: admit everything)
+    host_admit_len: Optional[int] = None
     # Routing key for routing-key schedule policy
     routing_key: Optional[str] = None
 
@@ -934,6 +947,10 @@ class TokenizedEmbeddingReqInput(BaseReq):
     routed_dp_rank: Optional[int] = None
     # Priority for the request
     priority: Optional[int] = None
+
+    # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
+    # and is not admitted to the host tier (None: admit everything)
+    host_admit_len: Optional[int] = None
     # The number of dimensions the resulting output embeddings should have. It is applicable for Matryoshka Embeddings.
     dimensions: Optional[int] = None
     # LoRA related

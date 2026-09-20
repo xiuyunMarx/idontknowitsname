@@ -256,7 +256,8 @@ class Engine:
                        sampling_params: Optional[Dict[str, Any]] = None,
                        priority: int = PRIORITY_REAL,
                        progress: Optional[Callable[[float, int], None]] = None,
-                       ids: Optional[List[int]] = None) -> str:
+                       ids: Optional[List[int]] = None,
+                       host_admit_len: Optional[int] = None) -> str:
         """A real request: prefill until its first token, then decode. Higher `priority`
         is scheduled first. `progress(first_token_at, out_tokens)` is called on every
         output. `ids` is the prompt's tokenization when the caller already has it."""
@@ -270,7 +271,8 @@ class Engine:
         try:
             async for out in await self.engine.async_generate(  #type: ignore
                     prompt=prompt, sampling_params=sampling_params or self.sp,
-                    rid=request_id, priority=priority, stream=True):
+                    rid=request_id, priority=priority, stream=True,
+                    host_admit_len=host_admit_len):   # KV past this prompt offset never enters the host tier
                 meta = out.get("meta_info") or {}
                 if first_token:
                     first_token = False
