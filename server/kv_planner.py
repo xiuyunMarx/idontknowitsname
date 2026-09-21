@@ -77,9 +77,7 @@ class KVPlanner:
         self._dirty = True
 
     def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None:
-        """A real call landed: everything past "fixed_len" (the head the flow rules
-        can rebuild) is transient. At session end only "static_len" survives
-        Other live plans can still protect shared bytes when retirement lands."""
+        """A real call landed: everything past "fixed_len" (the head the flow rules can rebuild) is transient. At session end only "static_len" survives. Other live plans can still protect shared bytes when retirement lands."""
         fixed_len = max(0, min(fixed_len, len(ids)))
         static_len = max(0, min(static_len, fixed_len))
         self._demote.append((ids, fixed_len))

@@ -4,31 +4,43 @@ Requests are opaque: no decompiler, no re-layout, no workflow graph. CacheScout
 identifies agents from the requests themselves and learns their execution order
 online; everything below is that paper's mechanism mapped onto this engine.
 
-Agent identity   prompt-prefix fingerprint over BLOCK-token block hashes. A prompt's
-                 anchor is its longest block-prefix already seen from another
-                 session (system prompt + tool/callsite header, never per-session
-                 text); the agent id is that anchor's chain hash. Unknown until a
-                 prefix has recurred across sessions.
-Transitions      first-order Markov chain over agents, per session stream:
+Agent identity   prompt-prefix fingerprint over BLOCK-token block hashes (paper Sec. 4).
+                 The anchor is the agent's fixed context (Sec. 2.2.1: system prompt,
+                 tool definitions, few-shot): the block prefix every session running
+                 the agent shares. The trie keeps per-block session support and the
+                 anchor ends at the first block whose support falls below CLIFF of its
+                 parent's (or below 2 sessions). Session text that a few sessions
+                 happen to share (the same task) drops off that cliff once other
+                 sessions disagree, so anchors stay at the fixed context instead of
+                 growing into per-task prefixes. The agent id is the anchor's chain
+                 hash; unknown until a prefix has recurred across sessions.
+Transitions      first-order Markov chain over agents (Sec. 3.2), per session stream:
                  P_ij = (C_ij + EPS) / sum_k (C_ik + EPS), C_ij += 1 per dispatch.
-Eviction         Score(b) = (p_surv(a_b) + DELTA) * (exp(-lambda*age(b)) + DELTA) * |b|.
-                 p_surv(a): how soon agent a is reached again from the current agents
-                 of the sessions active in the last IDLE_S seconds, a discounted
-                 H-step reach probability. Blocks are tagged with the agent whose
+Survival         Sec. 3.3, Eq. 7-8: the edges (a, b) with P_ab >= TAU form a sparse
+                 execution graph; one BFS from the current agent gives hop distances
+                 E[a], and p_surv(a) = 1 - min(E[a], E_MAX) / E_MAX. Every session
+                 active in the last IDLE_S seconds contributes its current agent and a
+                 block takes the max over them. Blocks are tagged with the agent whose
                  request produced them (its anchor and its served prompt + reply).
-                 Mapped onto the engine's eviction bands: band = quantised p_surv,
+Eviction         Score(b) = (p_surv(a_b) + DELTA) * (exp(-lambda*age(b)) + DELTA) * |b|,
+                 mapped onto the engine's eviction bands: band = quantised p_surv,
                  LRU inside a band is the age factor; |b| is not representable.
-Prefetch         after a dispatch of agent i with argmax_j P_ij = j* and
-                 predictability R = P_ij* >= R_MIN, warm j*'s anchor: a host->device
-                 promotion when it is on the host tier. CacheScout's compute warmup
-                 (a background request that builds the anchor) is not issued: anchors
-                 here are ~300 shared tokens that stay device-resident, so it would
-                 be a no-op, and this server does no speculative prefill.
+Prefetch         Sec. 3.4: when the chain's predictability R = 1 - H(next|cur)/H(next)
+                 (Eq. 2) reaches R_MIN, warm the argmax successor's anchor, rate-limited
+                 per anchor (WARMUP_MIN_S): a host->device promotion when it is on the
+                 host tier. CacheScout's compute warmup (a max_tokens=1 request that
+                 builds the anchor) is not issued: anchors here are a few hundred shared
+                 tokens that stay device-resident or on the host tier, and this server
+                 does no speculative prefill.
+Score map        pushed to the scheduler after a dispatch, coalesced and at most once
+                 per PUSH_MIN_S: the paper scores blocks inside the engine once per
+                 scheduler step; here each push is a scheduler RPC that walks the
+                 tagged prefixes, so it is rate-limited instead.
 No termination signal: CacheScout has none, so a session close only drops
 bookkeeping; its blocks age out under the recency factor like any other.
 Scheduling: standard FCFS, every request PRIORITY_REAL.
 
-python -m server.cacheScout_server [MODEL] [--kv N] [--host GB] [--r-min R] [--horizon H]
+python -m server.cacheScout_server [MODEL] [--kv N] [--host GB] [--r-min R] [--horizon H] [--tau T]
 python -m server.cacheScout_server --selftest
 """
 import argparse
@@ -36,6 +48,7 @@ import asyncio
 import os
 import json
 import math
+import random
 import re
 import time
 import uuid
@@ -47,11 +60,15 @@ from model.model import PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 
 BLOCK = 16           # fingerprint block size (vLLM's default block, CacheScout's substrate)
+MAX_ANCHOR_BLOCKS = 256   # blocks of a prompt the fingerprint trie records (4096 tokens)
+CLIFF = 0.5          # a block is fixed context while its session support >= CLIFF x its parent's
 EPS = 0.01           # Laplace smoothing of the transition counts
 DELTA = 0.05         # score floor so no block is ever exactly zero
-HORIZON = 3          # steps of look-ahead in p_surv
-GAMMA = 0.9          # per-step discount in p_surv
-R_MIN = 0.5          # prefetch only when the next agent is this predictable
+TAU = 0.2            # confidence threshold of the execution graph's edges (Eq. 7)
+E_MAX = 3            # hop-distance horizon of the survival score (Eq. 8)
+R_MIN = 0.5          # prefetch only when the chain's predictability R (Eq. 2) is this high
+WARMUP_MIN_S = 2.0   # the paper's rate limit on warmups: one per anchor per this interval
+PUSH_MIN_S = 0.5     # score-map pushes to the scheduler are coalesced to one per this interval
 IDLE_S = 120.0       # a session silent this long is no longer "current"
 KEEP_PER_SESSION = 8 # served prompts kept tagged per session (RPC size cap)
 BANDS = 8            # p_surv quantisation levels above the unclassified band
@@ -62,17 +79,20 @@ _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
 
 
 class Fingerprint:
-    """Block-hash trie over prompt prefixes; an anchor is the deepest block-prefix
-    seen from >= 2 distinct sessions."""
+    """Block-hash trie over prompt prefixes with per-block session support. The
+    anchor is the prefix whose support has not fallen off a cliff: the fixed
+    context every session running the agent sends, not the task text a few of
+    them share."""
 
-    def __init__(self, block: int = BLOCK) -> None:
-        self.block = block
-        self.seen: Dict[int, Set[str]] = defaultdict(set)   # chain hash -> sessions (capped at 2)
-        self.anchor_ids: Dict[int, List[int]] = {}           # agent id -> anchor token ids
+    def __init__(self, block: int = BLOCK, cliff: float = CLIFF, max_blocks: int = MAX_ANCHOR_BLOCKS) -> None:
+        self.block, self.cliff, self.max_blocks = block, cliff, max_blocks
+        self.support: Dict[int, Set[str]] = defaultdict(set)   # chain hash -> sessions that sent it
+        self.anchor_ids: Dict[int, List[int]] = {}             # agent id -> anchor token ids
 
     def chain(self, ids: List[int]) -> List[int]:
         out, h = [], 0
-        for i in range(0, len(ids) - self.block + 1, self.block):
+        for k in range(min(len(ids) // self.block, self.max_blocks)):
+            i = k * self.block
             h = hash((h, tuple(ids[i:i + self.block])))
             out.append(h)
         return out
@@ -80,15 +100,15 @@ class Fingerprint:
     def observe(self, sid: str, ids: List[int]) -> Tuple[Optional[int], int]:
         """Record the prompt; return (agent id, anchor token length), agent None if
         no block-prefix of it has recurred across sessions yet."""
-        agent, depth, shared = None, 0, True
+        agent, depth, prev, fixed = None, 0, 0, True
         for k, h in enumerate(self.chain(ids)):
-            s = self.seen[h]
-            if len(s) < 2:
-                s.add(sid)
-            if shared and len(s) >= 2:
-                agent, depth = h, (k + 1) * self.block
+            s = self.support[h]
+            s.add(sid)           # deeper blocks are recorded too: their support decides later anchors
+            n = len(s)
+            if fixed and n >= 2 and n >= self.cliff * prev:
+                agent, depth, prev = h, (k + 1) * self.block, n
             else:
-                shared = False   # the anchor is the consecutive shared prefix; keep recording blocks
+                fixed = False    # the anchor is the consecutive fixed prefix
         if agent is not None and agent not in self.anchor_ids:
             self.anchor_ids[agent] = list(ids[:depth])
         return agent, depth
@@ -103,32 +123,64 @@ class Markov:
         self.counts[i][j] += 1
         self.agents.update((i, j))
 
-    def row(self, i: int) -> Dict[int, float]:
+    def prob(self, i: int, j: int) -> float:
+        """Eq. 3, Laplace-smoothed over the known agents."""
         row = self.counts.get(i, {})
-        n = len(self.agents)
-        z = sum(row.values()) + EPS * n
-        return {a: (row.get(a, 0) + EPS) / z for a in self.agents} if z > 0 else {}
+        z = sum(row.values()) + EPS * len(self.agents)
+        return (row.get(j, 0) + EPS) / z if z > 0 else 0.0
 
     def predict(self, i: int) -> Tuple[Optional[int], float]:
-        row = self.row(i)
+        """Eq. 5: the most frequent observed successor and its probability."""
+        row = self.counts.get(i)
         if not row:
             return None, 0.0
-        j = max(row, key=row.get) #type: ignore
-        return j, row[j]
+        j = max(row, key=row.get)  # type: ignore[arg-type]
+        return j, self.prob(i, j)
 
-    def reach(self, i: int, horizon: int = HORIZON, gamma: float = GAMMA) -> Dict[int, float]:
-        """Discounted probability of visiting each agent within `horizon` steps from i."""
-        dist = {i: 1.0}
-        out: Dict[int, float] = defaultdict(float)
-        for k in range(horizon):
-            nxt: Dict[int, float] = defaultdict(float)
-            for a, p in dist.items():
-                for b, q in self.row(a).items():
-                    nxt[b] += p * q
-            for b, p in nxt.items():
-                out[b] += gamma ** k * p
-            dist = nxt
-        return {b: min(1.0, p) for b, p in out.items()}
+    def successors(self, i: int, tau: float = TAU) -> List[int]:
+        """Eq. 7: the high-confidence edges out of i. Only observed transitions can
+        carry an edge: an unobserved one has P = EPS / z, smoothing mass only."""
+        row = self.counts.get(i, {})
+        z = sum(row.values()) + EPS * len(self.agents)
+        return [j for j, c in row.items() if (c + EPS) / z >= tau]
+
+    def hops(self, i: int, tau: float = TAU, e_max: int = E_MAX) -> Dict[int, int]:
+        """Sec. 3.3: one BFS over the tau-graph from i; hop distance E[a] of every
+        agent reachable in fewer than e_max hops (farther ones score 0 anyway)."""
+        dist, frontier = {i: 0}, [i]
+        for d in range(1, e_max):
+            nxt = []
+            for a in frontier:
+                for b in self.successors(a, tau):
+                    if b not in dist:
+                        dist[b] = d
+                        nxt.append(b)
+            if not nxt:
+                break
+            frontier = nxt
+        return dist
+
+    def predictability(self) -> float:
+        """Eq. 2: R = 1 - H(A_t+1 | A_t) / H(A_t+1) over the observed transitions."""
+        total = sum(sum(row.values()) for row in self.counts.values())
+        if total == 0:
+            return 0.0
+        marginal: Dict[int, int] = defaultdict(int)
+        h_cond = 0.0
+        for row in self.counts.values():
+            n_i = sum(row.values())
+            for j, c in row.items():
+                marginal[j] += c
+                h_cond -= (c / total) * math.log(c / n_i)
+        h_next = -sum((c / total) * math.log(c / total) for c in marginal.values())
+        if h_next <= 0.0:
+            return 1.0   # one successor ever: fully determined
+        return max(0.0, 1.0 - h_cond / h_next)
+
+
+def _survival(hops: int, e_max: int) -> float:
+    """Eq. 8."""
+    return 1.0 - min(hops, e_max) / e_max
 
 
 def _answer(body: dict, text: str) -> Any:
@@ -154,12 +206,12 @@ def _band(p: float) -> int:
 
 
 class CacheScoutController:
-    def __init__(self, model: str, server: HttpServer, r_min: float = R_MIN, horizon: int = HORIZON,
-                 **engine_kwargs) -> None:
+    def __init__(self, model: str, server: HttpServer, r_min: float = R_MIN, e_max: int = E_MAX,
+                 tau: float = TAU, **engine_kwargs) -> None:
         self.engine = Engine(model, **engine_kwargs)
         self.server = server
         self.pool = server.pool
-        self.r_min, self.horizon = r_min, horizon
+        self.r_min, self.e_max, self.tau = r_min, e_max, tau
         self.fp = Fingerprint()
         self.chain = Markov()
         self.current: Dict[str, int] = {}                  # sid -> agent of its last dispatch
@@ -168,9 +220,11 @@ class CacheScoutController:
         self.seq: Dict[str, int] = defaultdict(int)
         self.turn: Dict[str, int] = defaultdict(int)
         self.last_body: Dict[str, dict] = {}
+        self.warmed: Dict[int, float] = {}                 # agent -> monotonic time of its last warmup
         self._push_lock = asyncio.Lock()    # coalesces score-map pushes
         self._rpc_lock = asyncio.Lock()     # the engine's collective_rpc is one ZMQ socket: one RPC at a time
         self._push_pending = False
+        self._last_push = -math.inf
 
     async def start_serving(self) -> None:
         await self.engine.warmup()
@@ -231,14 +285,19 @@ class CacheScoutController:
             await self._push()
 
     async def _after_dispatch(self, sid: str, agent: int, rid: str) -> None:
-        nxt, r = self.chain.predict(agent)
-        if nxt is not None and r >= self.r_min and nxt in self.fp.anchor_ids:
+        """Sec. 3.4: gated on the chain's predictability, warm the predicted next agent's anchor."""
+        nxt, p = self.chain.predict(agent)
+        r = self.chain.predictability()
+        now = time.monotonic()
+        if (nxt is not None and r >= self.r_min and nxt in self.fp.anchor_ids
+                and now - self.warmed.get(nxt, -math.inf) >= WARMUP_MIN_S):
+            self.warmed[nxt] = now
             anchor = self.fp.anchor_ids[nxt]
             unc, host = self.engine.cost(anchor)
             if host > 0:   # anchor sits on the host tier: warm it onto the device
                 async with self._rpc_lock:
                     ok = await self.engine.promote(anchor, f"scout-{rid}")
-                print(f"[prefetch] {rid} next={nxt & 0xffffffff:08x} R={r:.2f} anchor={len(anchor)} "
+                print(f"[prefetch] {rid} next={nxt & 0xffffffff:08x} P={p:.2f} R={r:.2f} anchor={len(anchor)} "
                       f"host={host} started={ok}", flush=True)
         await self._push()
 
@@ -247,17 +306,18 @@ class CacheScoutController:
         for IDLE_S drop out of the current set (their blocks keep plain LRU)."""
         now = time.monotonic()
         surv: Dict[int, float] = defaultdict(float)
+        hops: Dict[int, Dict[int, int]] = {}   # one BFS per distinct current agent
         for sid, a in self.current.items():
             if now - self.last_seen.get(sid, 0.0) > IDLE_S:
                 continue
-            for b, p in self.chain.reach(a, self.horizon).items():
-                surv[b] = max(surv[b], p)
+            if a not in hops:
+                hops[a] = self.chain.hops(a, self.tau, self.e_max)
+            for b, e in hops[a].items():
+                surv[b] = max(surv[b], _survival(e, self.e_max))
         out: List[Tuple[List[int], int]] = []
         for a, p in surv.items():
             k = _band(p)
-            if k <= 0:
-                continue
-            if a in self.fp.anchor_ids:
+            if k > 0 and a in self.fp.anchor_ids:
                 out.append((self.fp.anchor_ids[a], k))
         for sid, kept in self.served.items():
             if now - self.last_seen.get(sid, 0.0) > IDLE_S:
@@ -270,21 +330,27 @@ class CacheScoutController:
 
     async def _push(self) -> None:
         """Mirror the score map into the engine's eviction bands (kv_priority replaces
-        the previous map wholesale). Coalesces bursts: one push in flight, one queued."""
+        the previous map wholesale). Coalesces bursts: one push in flight, one queued,
+        and at most one push per PUSH_MIN_S."""
         if self._push_lock.locked():
             self._push_pending = True
             return
         async with self._push_lock:
             while True:
+                wait = PUSH_MIN_S - (time.monotonic() - self._last_push)
+                if wait > 0:
+                    await asyncio.sleep(wait)
                 self._push_pending = False
                 prot = self._protect()
                 async with self._rpc_lock:
                     await self.engine.set_kv_priority([], prot, f"scout-{uuid.uuid4().hex[:8]}")
+                self._last_push = time.monotonic()
                 if not self._push_pending:
                     break
 
+
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
-               hicache_io: Optional[str], r_min: float, horizon: int, sched: str = "fcfs",
+               hicache_io: Optional[str], r_min: float, e_max: int, tau: float, sched: str = "fcfs",
                engine_log: Optional[str] = None) -> None:
     server = HttpServer(port=port)
     await server.start()
@@ -304,7 +370,7 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     elif sched == "risk":
         kwargs["schedule_policy"] = "cache-risk"
         kwargs["enable_priority_scheduling"] = False
-    ctrl = CacheScoutController(model, server, r_min=r_min, horizon=horizon, **kwargs)
+    ctrl = CacheScoutController(model, server, r_min=r_min, e_max=e_max, tau=tau, **kwargs)
     await ctrl.start_serving()
 
 
@@ -322,14 +388,45 @@ def _selftest() -> None:
     b, d2 = fp.observe("s1", sysp + hdr_b + [100, 101, 102, 103])
     assert b is not None and b not in (a, b0) and d2 == 12
     assert fp.anchor_ids[a] == sysp + hdr_a and fp.anchor_ids[b] == sysp + hdr_b
+    # the cliff: task text two sessions share looks fixed until other sessions disagree
+    fp2 = Fingerprint(block=4)
+    task = [30, 31, 32, 33]
+    fp2.observe("u1", sysp + hdr_a + task)
+    _, d = fp2.observe("u2", sysp + hdr_a + task)
+    assert d == 16, "two sessions only: the shared task block passes as anchor"
+    for i in range(3, 9):
+        fp2.observe(f"u{i}", sysp + hdr_a + [50 + i] * 4)
+    a2, d = fp2.observe("u9", sysp + hdr_a + task)
+    assert d == 12, "3 of 9 sessions share the task: it fell off the cliff"
+    a3, _ = fp2.observe("u10", sysp + hdr_a + [70, 71, 72, 73])
+    assert a3 == a2 and fp2.anchor_ids[a2] == sysp + hdr_a, "one agent per fixed context"
     m = Markov()
     for _ in range(9):
         m.observe(a, b); m.observe(b, a)
     m.observe(a, a)
-    nxt, r = m.predict(a)
-    assert nxt == b and 0.85 < r < 0.95, (nxt, r)
-    reach = m.reach(a, horizon=2)
-    assert reach[b] > reach[a] > 0 and reach[b] <= 1.0
+    nxt, p = m.predict(a)
+    assert nxt == b and 0.85 < p < 0.95, (nxt, p)
+    assert m.hops(a) == {a: 0, b: 1}, "the a->a edge (P=0.1) is below TAU"
+    assert m.hops(b) == {b: 0, a: 1}
+    assert 0.7 < m.predictability() < 0.8, m.predictability()
+    rnd = random.Random(0)
+    noise = Markov()
+    for _ in range(4000):
+        noise.observe(rnd.randrange(4), rnd.randrange(4))
+    assert noise.predictability() < 0.05, noise.predictability()
+    # many agents: the scorer stays a sparse BFS, not a dense matrix walk
+    big = Markov()
+    for i in range(2000):
+        big.observe(i, (i + 1) % 2000)
+    for _ in range(6000):
+        big.observe(rnd.randrange(2000), rnd.randrange(2000))
+    t0 = time.perf_counter()
+    for i in range(40):
+        big.hops(i)
+    big.predictability()
+    dt = time.perf_counter() - t0
+    assert dt < 0.5, f"40 BFS + R over 2000 agents took {dt:.2f}s"
+    assert _survival(0, 3) == 1.0 and _survival(3, 3) == 0.0 and _survival(9, 3) == 0.0
     assert _band(0.0) == 0 and _band(0.01) == 1 and _band(1.0) == BANDS
     print("cachescout selftest ok")
 
@@ -341,8 +438,9 @@ if __name__ == "__main__":
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel")
-    ap.add_argument("--r-min", type=float, default=R_MIN, help="prefetch when the next agent's probability >= R")
-    ap.add_argument("--horizon", type=int, default=HORIZON, help="look-ahead steps in the survival probability")
+    ap.add_argument("--r-min", type=float, default=R_MIN, help="prefetch when the chain's predictability R >= this")
+    ap.add_argument("--horizon", type=int, default=E_MAX, help="E_max: hop-distance horizon of the survival score")
+    ap.add_argument("--tau", type=float, default=TAU, help="edge confidence threshold of the execution graph")
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine queue order (fcfs is the paper's setting; the others exist for the sweep script)")
     ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None)
@@ -351,5 +449,5 @@ if __name__ == "__main__":
     if a.selftest:
         _selftest()
     else:
-        asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.sched,
+        asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.tau, a.sched,
                          engine_log=a.engine_log))

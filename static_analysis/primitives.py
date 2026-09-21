@@ -600,67 +600,9 @@ class Program:
             prediction.append(PredictedCall(key=next_call, p=prob, t50=t50, t90=max(t50,t90),path=path, paths=[path]))
         return prediction
         
-    def predict_tree(self, cur: CallSiteID, counters: Optional[Dict[int, int]] = None,
-                     p_min: float = 0.02, horizon_s: float = 120.0,
-                     max_nodes: int = 64, top_k: int = 3, max_depth: int = 8) -> List["PredictedCall"]:
-        """Fan-out prediction from the current site over the static graph: every
-        step expands the top_k successors by branch probability in the path's
-        iteration context (the counters advance along the path), arrival times
-        add the edge gap and the predecessor's duration. Zero counts fall back to
-        a uniform prior over the static successors, so the first session is
-        planned too. Each result describes only the next visit to its site:
-        alternative first-arrival paths merge, later visits on the same path do
-        not. The search still walks those visits to reach downstream sites."""
-        out: Dict[CallSiteID, PredictedCall] = {}
-        ctr0 = dict(counters) if counters is not None else self.entry_counters(cur)
-        frontier: List[Tuple[float, CallSiteID, Optional[CallSiteID], float, float, int,
-                             Tuple[CallSiteID, ...], Dict[int, int]]] = [
-            (1.0, cur, None, 0.0, 0.0, 0, (cur,), ctr0)]
-        # row: (path p, site, its predecessor, t50, spread^2, depth, callsite path, counters at site)
-        expanded = 0
-        while frontier and expanded < max_nodes:
-            frontier.sort(key=lambda row: -row[0])
-            path_p, q, q_pred, t50, var, depth, path, ctr = frontier.pop(0)
-            expanded += 1
-            for key, p_step in self.branch_probs(q, ctr)[:top_k]:
-                p = path_p * p_step
-                if p < p_min:
-                    continue
-                g50, g90 = self.gap_q(q, key, 0.5), self.gap_q(q, key, 0.9)
-                a50 = t50 + g50
-                if a50 > horizon_s:
-                    continue
-                spread2 = var + (g90 - g50) ** 2
-                a90 = a50 + sqrt(spread2)
-                next_path = path + (key,)
-                # Exclude the current call at path[0]: its first future return
-                # is still useful. Later returns must not contribute writes,
-                # probability, or timing to the site's next-call prediction.
-                if key not in path[1:]:
-                    known = out.get(key)
-                    if known is None:
-                        out[key] = PredictedCall(key=key, p=min(1.0, p), t50=a50, t90=a90,
-                                                 path=next_path, paths=[next_path])
-                    else:
-                        known.p = min(1.0, known.p + p)
-                        if next_path not in known.paths:
-                            known.paths.append(next_path)
-                        if a50 < known.t50:
-                            known.t50, known.t90, known.path = a50, a90, next_path
-                if depth + 1 < max_depth:
-                    d50, d90 = self.duration_q(q, key, 0.5), self.duration_q(q, key, 0.9)
-                    frontier.append((p, key, q, a50 + d50,
-                                     spread2 + (d90 - d50) ** 2, depth + 1, next_path,
-                                     self.step_counters(ctr, q, key)))
-        return sorted(out.values(), key=lambda c: -c.p)
 
     def outcome_probs(self, key: CallSiteID, counters: Optional[Dict[int, int]] = None) -> Dict[Optional[CallSiteID], float]:
-        """P(outcome | current = key, iteration context) over the successor sites and
-        END, from the branch tables, Witten-Bell interpolated from the pooled counts
-        of the site down to its full context: a well-supported context dominates, a
-        sparse one leans on its more general levels. Below every level sits a
-        uniform prior over the static successors (and END, at an exit site), the
-        cold-start estimate. Without counters only the pooled level is used."""
+        """P(outcome | current = key, iteration context) over the successor sites"""
         succ = self.successors(key)
         outcomes: List[Optional[CallSiteID]] = [e.dst for e in succ]
         if key in self.exits or not outcomes:

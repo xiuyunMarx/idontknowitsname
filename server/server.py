@@ -335,8 +335,7 @@ class Controller:
         return inst
 
     def _close_call(self, sess: LiveSession) -> None:
-        """The open call is over: its timing goes on its site and on the edge it
-        was reached by."""
+        """The open call is over: its timing goes on its site and on the edge it was reached by."""
         inst = sess.open
         if inst is None:
             return

@@ -37,9 +37,7 @@ class KVLedger:
     """Shadow model of the engine's two-tier KV cache, in stride-sized blocks.
 
     Chain-hashed prefixes mirror the radix cache's content addressing; dict order is
-    the LRU order. The host tier is inclusive of the device tier (HiCache writes
-    through), so a device overflow just drops the device entry — the host copy is
-    what makes the eviction repairable by promotion. The shadow cannot see the
+    the LRU order. the host copy is what makes the eviction repairable by promotion. The shadow cannot see the
     engine's true eviction order, so every real request's measured cache split
     recalibrates it: drift is bounded by one request, not by the session."""
 
