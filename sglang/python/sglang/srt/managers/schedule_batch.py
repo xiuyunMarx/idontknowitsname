@@ -587,6 +587,7 @@ class Req(ReqDllmMixin):
         vocab_size: Optional[int] = None,
         priority: Optional[int] = None,
         host_admit_len: Optional[int] = None,
+        sched_priority: Optional[int] = None,
         metrics_collector: Optional[SchedulerMetricsCollector] = None,
         extra_key: Optional[str] = None,
         routing_key: Optional[str] = None,
@@ -689,6 +690,7 @@ class Req(ReqDllmMixin):
         self.eos_token_ids = eos_token_ids
         self.vocab_size = vocab_size
         self.priority = priority
+        self.sched_priority = sched_priority   # queue rank (higher first); None: fall back to `priority`
         self.host_admit_len = host_admit_len   # KV past this prompt offset is volatile: not written to the host tier
 
         # For incremental decoding

@@ -358,7 +358,7 @@ class SchedulePolicy:
         """Sorts the waiting queue based on the request priority then received titmestamp."""
         waiting_queue.sort(
             key=lambda x: (
-                x.priority * priority_sign,
+                (x.priority if getattr(x, "sched_priority", None) is None else x.sched_priority) * priority_sign,
                 x.time_stats.wait_queue_entry_time,
             )
         )

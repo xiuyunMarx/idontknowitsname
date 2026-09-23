@@ -32,10 +32,12 @@ Expiry    a pin is dropped once its time is up and the program has nothing runni
 Pressure  pins are eviction bands above ordinary cache. The program that arrived
           last is evicted first, as in the paper. A hard pin would deadlock once the
           live set exceeds the pool. The host tier stays LRU.
-Scheduling  plain FCFS. Continuum also lets pinned requests jump the queue; that can
-          starve new programs and is left out on purpose.
+Scheduling  plain FCFS by default. --program-fcfs turns on Continuum's program-level
+          scheduling: the queue is ordered by the program's first arrival, so requests of
+          programs already in progress (the pinned ones) go ahead of newly arrived programs;
+          this can starve late programs, which is why it is off by default.
 
-python -m server.continuum_server [MODEL] [--kv N] [--host GB] [--ttl-default S] [--no-pin]
+python -m server.continuum_server [MODEL] [--kv N] [--host GB] [--ttl-default S] [--no-pin] [--program-fcfs]
 python -m server.continuum_server --selftest
 """
 import argparse
@@ -58,6 +60,7 @@ from server.http_server import HttpServer, PendingRequest
 from server.wire import is_continuation   # only to count turns in the log, as server.server does
 
 K = 100              # records under a key before its distribution is trusted
+PROGRAM_RANK_BASE = 1 << 30   # --program-fcfs: queue rank = base - arrival ordinal (sglang runs higher ranks first)
 QUEUE_WINDOW = 32    # how many recent unpinned arrivals the queueing delay T averages
 MIN_PROGRAMS = 5     # finished programs before eta is estimated from data
 TICK_S = 0.5         # how often expired pins are swept
@@ -271,7 +274,7 @@ def _answer(body: dict, text: str) -> Any:
 
 class ContinuumController:
     def __init__(self, model: str, server: HttpServer, ttl_default: Optional[float] = None,
-                 pin: bool = True, **engine_kwargs) -> None:
+                 pin: bool = True, program_fcfs: bool = False, **engine_kwargs) -> None:
         self.engine = Engine(model, **engine_kwargs)
         self.server = server
         self.pool = server.pool
@@ -284,6 +287,8 @@ class ContinuumController:
         self.seq: Dict[str, int] = defaultdict(int)      # sid -> calls so far (log only)
         self.turn: Dict[str, int] = defaultdict(int)     # sid -> turn within the open call (log only)
         self.last_body: Dict[str, dict] = {}
+        self.program_fcfs = program_fcfs
+        self.order: Dict[str, int] = {}                  # sid -> arrival ordinal (program-level FCFS)
         self._push_lock = asyncio.Lock()    # one push in flight, one queued
         self._rpc_lock = asyncio.Lock()     # the engine's collective_rpc is one ZMQ socket
         self._push_pending = False
@@ -303,7 +308,7 @@ class ContinuumController:
             if req.kind == "close":
                 self.pinner.note_finished(req.session)
                 closed = self.pinner.forget(req.session)
-                for d in (self.seq, self.turn, self.last_body):
+                for d in (self.seq, self.turn, self.last_body, self.order):
                     d.pop(req.session, None)
                 print(f"[close] {req.session} eta={self.pinner.eta():.2f}", flush=True)
                 req.reply(closed)
@@ -311,6 +316,7 @@ class ContinuumController:
                     asyncio.create_task(self._push())
                 continue
             hit, closed = self.pinner.note_arrival(req.session, req.t_arrive)
+            self.order.setdefault(req.session, len(self.order))
             self.inflight[req.session] += 1
             asyncio.create_task(self._serve(req, hit, closed))
 
@@ -341,8 +347,10 @@ class ContinuumController:
                 sp["json_schema"] = json.dumps(rf["json_schema"]["schema"])
             first: List[float] = []
             t_call = time.perf_counter()
+            rank = (PROGRAM_RANK_BASE - self.order[sid]) if self.program_fcfs else None   # earlier program, higher rank
             text = await self.engine.generate(prompt, rid, sp, ids=ids, priority=PRIORITY_REAL,
-                                              progress=lambda t_first, _n: first.append(t_first))
+                                              progress=lambda t_first, _n: first.append(t_first),
+                                              sched_priority=rank)
             req.reply(_answer(body, text))
             self.last_body[sid] = body
         except Exception as e:
@@ -392,7 +400,7 @@ class ContinuumController:
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
                hicache_io: Optional[str], ttl_default: Optional[float], sched: str = "fcfs",
                pin: bool = True, eviction: str = "priority",
-               engine_log: Optional[str] = None) -> None:
+               engine_log: Optional[str] = None, program_fcfs: bool = False) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 32768,
@@ -412,7 +420,7 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     elif sched == "risk":
         kwargs["schedule_policy"] = "cache-risk"
         kwargs["enable_priority_scheduling"] = False
-    ctrl = ContinuumController(model, server, ttl_default, pin=pin, **kwargs)
+    ctrl = ContinuumController(model, server, ttl_default, pin=pin, program_fcfs=program_fcfs, **kwargs)
     await ctrl.start_serving()
 
 
@@ -490,6 +498,8 @@ if __name__ == "__main__":
                     help="fixed TTL while fewer than K records exist (default: the paper's ln(T + reload))")
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine queue order (fcfs is this baseline's setting)")
+    ap.add_argument("--program-fcfs", action="store_true",
+                    help="Continuum's program-level scheduling: programs are served in order of first arrival")
     ap.add_argument("--no-pin", action="store_true",
                     help="control: same server and engine config, but never push pins to the engine")
     ap.add_argument("--eviction", choices=["priority", "lru"], default="priority",
@@ -503,4 +513,5 @@ if __name__ == "__main__":
         if not a.no_pin and a.eviction != "priority":
             ap.error("pins need --eviction priority")
         asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.ttl_default, a.sched,
-                         pin=not a.no_pin, eviction=a.eviction, engine_log=a.engine_log))
+                         pin=not a.no_pin, eviction=a.eviction, engine_log=a.engine_log,
+                         program_fcfs=a.program_fcfs))

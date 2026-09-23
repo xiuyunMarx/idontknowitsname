@@ -1,0 +1,64 @@
+
+\begin{figure*}[!t]
+  \centering
+  \definecolor{csScaf}{RGB}{225,225,225}
+  \definecolor{csTask}{RGB}{204,224,245}
+  \definecolor{csDesc}{RGB}{207,236,214}
+  \definecolor{csVal}{RGB}{252,224,195}
+  \definecolor{csSchema}{RGB}{230,214,240}
+  \setlength{\fboxsep}{1.5pt}
+  \newcommand{\ph}[1]{{\normalfont\itshape$\langle$#1$\rangle$}}
+  \newcommand{\csblock}[2]{\par\noindent\colorbox{#1}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{\raggedright\ttfamily\tiny #2}}\par\vspace{1pt}}
+  \newcommand{\csrole}[1]{\par\noindent{\sffamily\tiny\color{black!55}#1}\par\vspace{0.3pt}}
+  \newcommand{\cshead}[1]{\par\noindent{\sffamily\scriptsize\bfseries #1}\par\vspace{1.5pt}}
+  \newcommand{\cskey}[2]{\fcolorbox{black!40}{#1}{\rule{0pt}{1.1ex}\rule{1.1ex}{0pt}}\,{\sffamily\tiny #2}}
+  \cskey{csScaf}{framework scaffolding}\hspace{1em}%
+  \cskey{csTask}{task instruction}\hspace{1em}%
+  \cskey{csDesc}{parameter descriptions}\hspace{1em}%
+  \cskey{csVal}{argument values}\hspace{1em}%
+  \cskey{csSchema}{output schema}
+  \vspace{3pt}
+
+  \begin{minipage}[t]{0.31\textwidth}
+    \cshead{byLLM}
+    \csrole{system}
+    \csblock{csScaf}{This is a task you must complete by returning only the output. ...}
+    \csrole{user}
+    \csblock{csTask}{assess\_evidence(search\_results: str, question: str, claim: str, evidences: list[Evidence]) -> Finding --- \ph{sem}}
+    \csblock{csDesc}{search\_results: str ---- \ph{sem}\newline question: str ---- \ph{sem}\newline claim: str ---- \ph{sem}\newline evidences: list[Evidence] ---- \ph{sem}}
+    \csblock{csVal}{search\_results = \ph{value}\newline question = \ph{value}\newline claim = \ph{value}\newline evidences = \ph{value}}
+    \csblock{csSchema}{Schema requirements: \ph{Finding fields}}
+    \csrole{response\_format}
+    \csblock{csSchema}{\ph{Finding JSON schema}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.31\textwidth}
+    \cshead{DSPy}
+    \csrole{system}
+    \csblock{csDesc}{Your input fields are:\newline 1. `search\_results` (str): \ph{desc}\newline 2. `question` (str): \ph{desc}\newline 3. `claim` (str): \ph{desc}\newline 4. `evidences` (list[Evidence]): \ph{desc}\newline Your output fields are: 1. `finding` (Finding): \ph{desc}}
+    \csblock{csScaf}{All interactions will be structured ...\newline [[ \#\# search\_results \#\# ]] \{search\_results\}\newline ... [[ \#\# evidences \#\# ]] \{evidences\}}
+    \csblock{csSchema}{[[ \#\# finding \#\# ]] \{finding\} \# note: ... JSON schema: \ph{Finding JSON schema}}
+    \csblock{csScaf}{[[ \#\# completed \#\# ]]}
+    \csblock{csTask}{In adhering to this structure, your objective is: \ph{docstring}}
+    \csrole{user}
+    \csblock{csVal}{[[ \#\# search\_results \#\# ]] \ph{value}\newline [[ \#\# question \#\# ]] \ph{value}\newline [[ \#\# claim \#\# ]] \ph{value}\newline [[ \#\# evidences \#\# ]] \ph{value}}
+    \csblock{csScaf}{Respond with the corresponding output fields, starting with `[[ \#\# finding \#\# ]]` ...}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.31\textwidth}
+    \cshead{NVIDIA nooa}
+    \csrole{system}
+    \csblock{csScaf}{<strategy\_prompt> You are generating structured data matching the specified return type. ... </strategy\_prompt>}
+    \csrole{user}
+    \csblock{csScaf}{<sys tag="1"> Task(prompt='''\# Your task}
+    \csblock{csTask}{\ph{docstring}}
+    \csblock{csDesc}{Args:\newline \hspace*{1em}search\_results: \ph{arg doc}\newline \hspace*{1em}question: \ph{arg doc}\newline \hspace*{1em}claim: \ph{arg doc}\newline \hspace*{1em}evidences: \ph{arg doc}}
+    \csblock{csVal}{\#\# Input parameters:\newline search\_results = \ph{value}\newline question = \ph{value}\newline claim = \ph{value}\newline evidences = \ph{value}}
+    \csblock{csScaf}{Perform the task and return the result directly.''') </sys>}
+    \csrole{response\_format}
+    \csblock{csSchema}{\ph{Finding JSON schema}}
+  \end{minipage}
+  \par\smallskip
+  {\raggedright\sffamily\tiny
+  \ph{sem}, \ph{docstring}, \ph{desc} and \ph{arg doc} are the description strings each framework takes from the program (byLLM \texttt{sem} strings, DSPy Signature docstring and field \texttt{desc}, nooa function docstring and its \texttt{Args} entries); \ph{value} is the runtime argument.\par}
+  \caption{The prompt structure of LLM invocation function \texttt{assess\_evidence}, lowered by three frameworks. They have similar structures: Same five kinds of component, only relative position differs.}
+  \label{fig:common-structure}
+\end{figure*}

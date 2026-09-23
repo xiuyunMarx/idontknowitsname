@@ -14,62 +14,146 @@
 \citation{zheng2026pbkv}
 \@writefile{toc}{\contentsline {section}{Abstract}{1}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Heterogeneity within a HoVer-style \citep  {jiang2020hover} Fact Check Agent's generated prompt for the summary-making function. \texttt  {assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against the accumulated evidence and search results, then answers it.}}{1}{figure.caption.3}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:heterogeneity-sample}{{1}{1}{Heterogeneity within a HoVer-style \cite {jiang2020hover} Fact Check Agent's generated prompt for the summary-making function. \texttt {assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against the accumulated evidence and search results, then answers it}{figure.caption.3}{}}
+\citation{mars2023jaseci,dantanarayana2025mtp}
 \citation{zheng2024sglang}
 \citation{jiang2020hover}
 \citation{chen2021evaluating}
 \citation{patil2025bfcl}
+\citation{kwon2023pagedattention}
+\citation{zheng2024sglang}
+\citation{gim2024promptcache}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces The prompt structure of LLM invocation function \texttt  {assess\_evidence}, lowered by three frameworks. They have similar structures: Same five kinds of component, only relative position differs.}}{2}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:common-structure}{{2}{2}{The prompt structure of LLM invocation function \texttt {assess\_evidence}, lowered by three frameworks. They have similar structures: Same five kinds of component, only relative position differs}{figure.caption.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.2}\protected@file@percent }
 \newlabel{sec:background}{{2}{2}{Background}{section.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Serving systems for LLM agents}{2}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Agent frameworks with LLM calls as programming abstractions}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Motivation}{2}{section.3}\protected@file@percent }
-\newlabel{sec:motivation}{{3}{2}{Motivation}{section.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Design}{2}{section.4}\protected@file@percent }
-\newlabel{sec:design}{{4}{2}{Design}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Overview}{2}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Agent Descriptor for Heterogeneity Metadata}{2}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:template}{{4.2.1}{2}{Call-site Template}{subsubsection.4.2.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Call-site Template}{2}{subsubsection.4.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Heterogeneity annotation.}{2}{section*.4}\protected@file@percent }
-\newlabel{sec:TPFM}{{4.2.2}{3}{Workflow Automaton}{subsubsection.4.2.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Workflow Automaton}{3}{subsubsection.4.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Heterogeneity-aware KV-cache Arrangement}{3}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:relayout}{{4.3.1}{3}{Adaptive Prompt re-layout}{subsubsection.4.3.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Adaptive Prompt re-layout}{3}{subsubsection.4.3.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Example of adaptive re-layout, which increses prefix reuse by moving the more reusable components to the front, exposing shared prefix to the KV-cache. }}{3}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:relayout__sample}{{2}{3}{Example of adaptive re-layout, which increses prefix reuse by moving the more reusable components to the front, exposing shared prefix to the KV-cache}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {paragraph}{Transportable Components}{3}{section*.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Layout decision algorithm}{3}{section*.7}\protected@file@percent }
+\newlabel{sec:background-serving}{{2.1}{2}{Serving systems for LLM agents}{subsection.2.1}{}}
+\citation{zheng2024sglang}
+\citation{gao2024cachedattention}
+\citation{qin2025mooncake}
+\citation{sglang2026hicache}
+\citation{pan2025kvflow}
+\citation{li2025continuum}
+\citation{zhang2026cachescout}
+\citation{zheng2026pbkv}
+\citation{dantanarayana2025mtp}
+\citation{khattab2024dspy}
+\citation{furgale2026nooa}
+\citation{dantanarayana2026sigil}
+\citation{dantanarayana2025mtp}
+\citation{furgale2026nooa}
+\citation{dspy2026chatadapter}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Agent frameworks with LLM calls as programming abstractions}{3}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:background-frameworks}{{2.2}{3}{Agent frameworks with LLM calls as programming abstractions}{subsection.2.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Motivation}{3}{section.3}\protected@file@percent }
+\newlabel{sec:motivation}{{3}{3}{Motivation}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Runtime-lowered prompts have similar structures}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}The component order carries no intent}{3}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Prompt Components are heterogeous}{3}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:heterogeneity}{{3.3}{3}{Prompt Components are heterogeous}{subsection.3.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Design}{4}{section.4}\protected@file@percent }
+\newlabel{sec:design}{{4}{4}{Design}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Overview}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Agent Descriptor for Heterogeneity Metadata}{4}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:template}{{4.2.1}{4}{Call-site Template}{subsubsection.4.2.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Call-site Template}{4}{subsubsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Heterogeneity annotation.}{4}{section*.6}\protected@file@percent }
+\newlabel{sec:TPFM}{{4.2.2}{4}{Workflow Automaton}{subsubsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Workflow Automaton}{4}{subsubsection.4.2.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Architure overview of \textsc  {idontknowitsname}\xspace  . }}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:design_overview}{{3}{5}{Architure overview of \sysname }{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Heterogeneity-aware KV-cache Arrangement}{5}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:relayout}{{4.3.1}{5}{Adaptive Prompt re-layout}{subsubsection.4.3.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Adaptive Prompt re-layout}{5}{subsubsection.4.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of adaptive re-layout, which increses prefix reuse by moving the more reusable components to the front, exposing shared prefix to the KV-cache. }}{5}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:relayout__sample}{{4}{5}{Example of adaptive re-layout, which increses prefix reuse by moving the more reusable components to the front, exposing shared prefix to the KV-cache}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{Transportable Components}{5}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Layout decision algorithm}{6}{section*.9}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Layout decision Program}}{6}{algorithm.1}\protected@file@percent }
+\newlabel{alg:layout}{{1}{6}{Layout decision Program}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Proactive KV-cache Scheduling}{6}{subsubsection.4.3.2}\protected@file@percent }
+\newlabel{sec:identify_reusable_kv}{{4.3.2}{6}{Identify Reusable KV-cache}{section*.10}{}}
+\@writefile{toc}{\contentsline {paragraph}{Identify Reusable KV-cache}{6}{section*.10}\protected@file@percent }
 \citation{bourdoncle1993efficient}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Proactive KV-cache Scheduling}{4}{subsubsection.4.3.2}\protected@file@percent }
-\newlabel{sec:identify_reusable_kv}{{4.3.2}{4}{Identify Reusable KV-cache}{section*.8}{}}
-\@writefile{toc}{\contentsline {paragraph}{Identify Reusable KV-cache}{4}{section*.8}\protected@file@percent }
-\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Layout decision Program}}{4}{algorithm.1}\protected@file@percent }
-\newlabel{alg:layout}{{1}{4}{Layout decision Program}{algorithm.1}{}}
-\@writefile{toc}{\contentsline {paragraph}{Predict Future Reuse}{4}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Lifecycle aware KV-cache scheduling}{5}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Predict Future Reuse}{7}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Lifecycle aware KV-cache scheduling}{7}{section*.12}\protected@file@percent }
+\citation{mars2023jaseci}
+\citation{zheng2024sglang}
+\citation{zhang2026cachescout}
+\citation{li2025continuum}
+\citation{dantanarayana2025mtp}
+\citation{jiang2020hover}
+\citation{chen2021evaluating}
+\citation{patil2025bfcl}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Implementation}{8}{section.5}\protected@file@percent }
+\newlabel{sec:implementation}{{5}{8}{Implementation}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Evaluation}{8}{section.6}\protected@file@percent }
+\newlabel{sec:eval}{{6}{8}{Evaluation}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Environmental Settings}{8}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.1}Testbed and Model}{8}{subsubsection.6.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.2}Baselines}{8}{subsubsection.6.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.1.3}Workloads}{8}{subsubsection.6.1.3}\protected@file@percent }
+\citation{kwon2023pagedattention}
+\citation{zheng2024sglang}
+\citation{gao2024cachedattention,qin2025mooncake,sglang2026hicache}
+\citation{gim2024promptcache}
+\citation{yao2025cacheblend}
+\citation{pan2025kvflow}
+\citation{li2025continuum}
+\citation{zhang2026cachescout}
+\citation{zheng2026pbkv}
+\citation{yu2026pythia}
+\citation{dantanarayana2025mtp,khattab2024dspy,furgale2026nooa,dantanarayana2026sigil}
+\citation{lin2024parrot}
+\citation{zheng2024sglang}
 \bibstyle{ACM-Reference-Format}
 \bibdata{references}
 \bibcite{bourdoncle1993efficient}{{1}{1993}{{Bourdoncle}}{{}}}
 \bibcite{chen2021evaluating}{{2}{2021}{{Chen et~al\mbox  {.}}}{{}}}
 \bibcite{dantanarayana2025mtp}{{3}{2025}{{Dantanarayana et~al\mbox  {.}}}{{}}}
 \bibcite{dantanarayana2026sigil}{{4}{2026}{{Dantanarayana et~al\mbox  {.}}}{{}}}
-\bibcite{furgale2026nooa}{{5}{2026}{{Furgale et~al\mbox  {.}}}{{}}}
-\bibcite{jiang2020hover}{{6}{2020}{{Jiang et~al\mbox  {.}}}{{}}}
-\bibcite{khattab2024dspy}{{7}{2024}{{Khattab et~al\mbox  {.}}}{{}}}
-\bibcite{patil2025bfcl}{{8}{2025}{{Patil et~al\mbox  {.}}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Related Work}{6}{section.5}\protected@file@percent }
-\newlabel{sec:related-work}{{5}{6}{Related Work}{section.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion}{6}{section.6}\protected@file@percent }
-\newlabel{sec:conclusion}{{6}{6}{Conclusion}{section.6}{}}
-\@writefile{toc}{\contentsline {section}{References}{6}{section*.12}\protected@file@percent }
-\bibcite{yu2026pythia}{{9}{2026}{{Yu et~al\mbox  {.}}}{{}}}
-\bibcite{zhang2026cachescout}{{10}{2026}{{Zhang et~al\mbox  {.}}}{{}}}
-\bibcite{zheng2026pbkv}{{11}{2026}{{Zheng et~al\mbox  {.}}}{{}}}
-\bibcite{zheng2024sglang}{{12}{2024}{{Zheng et~al\mbox  {.}}}{{}}}
+\bibcite{dspy2026chatadapter}{{5}{2026}{{DSPy Contributors}}{{}}}
+\bibcite{furgale2026nooa}{{6}{2026}{{Furgale et~al\mbox  {.}}}{{}}}
+\bibcite{gao2024cachedattention}{{7}{2024}{{Gao et~al\mbox  {.}}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}End-to-End Performace of \textsc  {idontknowitsname}\xspace  }{9}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{JCT}{9}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{TTFT}{9}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Throughput}{9}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.2.1}performance over the mixed workload}{9}{subsubsection.6.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {6.2.2}Performance over each agent workload}{9}{subsubsection.6.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Fact Check Agent}{9}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Coding Agent}{9}{section*.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{BFCL tool-use agent}{9}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Performance Optimization Analysis}{9}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Abalation Studies}{9}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Related Work}{9}{section.7}\protected@file@percent }
+\newlabel{sec:related-work}{{7}{9}{Related Work}{section.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{KV-cache reuse}{9}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Existing agent serving systems}{9}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Existing Exploitation of prompt structure}{9}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{9}{section.8}\protected@file@percent }
+\newlabel{sec:conclusion}{{8}{9}{Conclusion}{section.8}{}}
+\@writefile{toc}{\contentsline {section}{References}{9}{section*.23}\protected@file@percent }
+\bibcite{gim2024promptcache}{{8}{2024}{{Gim et~al\mbox  {.}}}{{}}}
+\bibcite{jiang2020hover}{{9}{2020}{{Jiang et~al\mbox  {.}}}{{}}}
+\bibcite{khattab2024dspy}{{10}{2024}{{Khattab et~al\mbox  {.}}}{{}}}
+\bibcite{kwon2023pagedattention}{{11}{2023}{{Kwon et~al\mbox  {.}}}{{}}}
+\bibcite{li2025continuum}{{12}{2025}{{Li et~al\mbox  {.}}}{{}}}
+\bibcite{lin2024parrot}{{13}{2024}{{Lin et~al\mbox  {.}}}{{}}}
+\bibcite{mars2023jaseci}{{14}{2023}{{Mars et~al\mbox  {.}}}{{}}}
+\bibcite{pan2025kvflow}{{15}{2025}{{Pan et~al\mbox  {.}}}{{}}}
+\bibcite{patil2025bfcl}{{16}{2025}{{Patil et~al\mbox  {.}}}{{}}}
+\bibcite{qin2025mooncake}{{17}{2025}{{Qin et~al\mbox  {.}}}{{}}}
+\bibcite{sglang2026hicache}{{18}{2026}{{SGLang Contributors}}{{}}}
+\bibcite{yao2025cacheblend}{{19}{2025}{{Yao et~al\mbox  {.}}}{{}}}
+\bibcite{yu2026pythia}{{20}{2026}{{Yu et~al\mbox  {.}}}{{}}}
+\bibcite{zhang2026cachescout}{{21}{2026}{{Zhang et~al\mbox  {.}}}{{}}}
+\bibcite{zheng2026pbkv}{{22}{2026}{{Zheng et~al\mbox  {.}}}{{}}}
+\bibcite{zheng2024sglang}{{23}{2024}{{Zheng et~al\mbox  {.}}}{{}}}
 \newlabel{tocindent-1}{0pt}
 \newlabel{tocindent0}{0pt}
 \newlabel{tocindent1}{4.65pt}
@@ -77,5 +161,5 @@
 \newlabel{tocindent3}{18.34998pt}
 \newlabel{tocindent4}{0pt}
 \newlabel{tocindent5}{0pt}
-\newlabel{TotPages}{{7}{7}{}{page.7}{}}
-\gdef \@abspage@last{7}
+\newlabel{TotPages}{{10}{10}{}{page.10}{}}
+\gdef \@abspage@last{10}

@@ -255,7 +255,8 @@ class Engine:
                        priority: int = PRIORITY_REAL,
                        progress: Optional[Callable[[float, int], None]] = None,
                        ids: Optional[List[int]] = None,
-                       host_admit_len: Optional[int] = None) -> str:
+                       host_admit_len: Optional[int] = None,
+                       sched_priority: Optional[int] = None) -> str:
         """A real request: prefill until its first token, then decode. Higher `priority`
         is scheduled first. `progress(first_token_at, out_tokens)` is called on every
         output. `ids` is the prompt's tokenization when the caller already has it."""
@@ -270,7 +271,8 @@ class Engine:
             async for out in await self.engine.async_generate(  #type: ignore
                     prompt=prompt, sampling_params=sampling_params or self.sp,
                     rid=request_id, priority=priority, stream=True,
-                    host_admit_len=host_admit_len):   # KV past this prompt offset never enters the host tier
+                    host_admit_len=host_admit_len,   # KV past this prompt offset never enters the host tier
+                    sched_priority=sched_priority):   # queue rank; None keeps `priority` as the rank
                 meta = out.get("meta_info") or {}
                 if first_token:
                     first_token = False

@@ -216,6 +216,8 @@ class GenerateReqInput(BaseReq):
     # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
     # and is not admitted to the host tier (None: admit everything)
     host_admit_len: Optional[int] = None
+    # Scheduling rank (higher first) decoupled from `priority`, which also names the KV band
+    sched_priority: Optional[int] = None
 
     # Extra key for classifying the request (e.g. cache_salt)
     extra_key: Optional[Union[List[str], str]] = None
@@ -661,6 +663,7 @@ class GenerateReqInput(BaseReq):
             conversation_id=self.conversation_id,
             priority=self.priority,
             host_admit_len=self.host_admit_len,
+            sched_priority=self.sched_priority,
             extra_key=self.extra_key,
             no_logs=self.no_logs,
             custom_labels=self.custom_labels,
@@ -736,6 +739,8 @@ class TokenizedGenerateReqInput(BaseReq):
     # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
     # and is not admitted to the host tier (None: admit everything)
     host_admit_len: Optional[int] = None
+    # Scheduling rank (higher first) decoupled from `priority`, which also names the KV band
+    sched_priority: Optional[int] = None
 
     # Extra key for classifying the request (e.g. cache_salt)
     extra_key: Optional[str] = None
@@ -809,6 +814,8 @@ class EmbeddingReqInput(BaseReq):
     # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
     # and is not admitted to the host tier (None: admit everything)
     host_admit_len: Optional[int] = None
+    # Scheduling rank (higher first) decoupled from `priority`, which also names the KV band
+    sched_priority: Optional[int] = None
     # Routing key for routing-key schedule policy
     routing_key: Optional[str] = None
 
@@ -951,6 +958,8 @@ class TokenizedEmbeddingReqInput(BaseReq):
     # Prompt head length (tokens) the planner rules reusable; KV past it is volatile
     # and is not admitted to the host tier (None: admit everything)
     host_admit_len: Optional[int] = None
+    # Scheduling rank (higher first) decoupled from `priority`, which also names the KV band
+    sched_priority: Optional[int] = None
     # The number of dimensions the resulting output embeddings should have. It is applicable for Matryoshka Embeddings.
     dimensions: Optional[int] = None
     # LoRA related

@@ -184,7 +184,7 @@ node Agent {
 }
 
 sem Agent = "Decides the next tool call from the question and the history.";
-sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the result of the previous step; `history` lists every step so far with its result. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
+sem Agent.step = "Answer `question` by searching and reading pages. `observation` is the result of the previous step; `history` lists every step so far with its result. Choose the next tool from `tools`; each step should resolve one hop of the question. Call `answer` as soon as the answer is established, with the answer alone as the argument, in the format the question asks for. Never repeat a tool call whose tool and argument already appear in `history`: if the previous observation did not resolve the hop, change the query or open a different page. If three steps in a row add nothing new, call `answer` with the best answer so far. Reply with a single JSON object that matches the response schema exactly, and nothing else: no prose, no markdown fences.";
 sem Agent.step.observation = "The result of the latest tool call; empty on the first step.";
 sem Agent.step.tools = "The tools available, one per line.";
 sem Agent.step.question = "The question to answer.";
@@ -199,7 +199,14 @@ node Executor {
         if step.tool == "answer" {
             visitor.answer = step.argument;
         } else {
-            visitor.observation = self.tools.call(step.tool, step.argument);
+            prior = [i for (i, s) in enumerate(visitor.history[:-1]) if s.tool == step.tool and s.argument == step.argument];
+            if prior {
+                # a repeated call is not executed: the model gets a distinct hint instead of the same result again
+                time.sleep(self.tools.delay_for(step.tool, step.argument));
+                visitor.observation = f"Repeated call (attempt {len(prior) + 1}): {step.tool} with the same argument was already made at step {prior[0] + 1} and its result is in `history`. Do not repeat it: choose a different query, fetch a different page, or call `answer`.";
+            } else {
+                visitor.observation = self.tools.call(step.tool, step.argument);
+            }
             step.observation = visitor.observation if EXCERPT_CHARS <= 0 else visitor.observation[:EXCERPT_CHARS];
             if visitor.steps < MAX_STEPS{
                 visit [self-->][?:Agent];

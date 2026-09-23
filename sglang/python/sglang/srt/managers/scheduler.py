@@ -1769,6 +1769,7 @@ class Scheduler(
                 vocab_size=self.model_config.vocab_size,
                 priority=recv_req.priority,
                 host_admit_len=getattr(recv_req, "host_admit_len", None),
+                sched_priority=getattr(recv_req, "sched_priority", None),
                 metrics_collector=(
                     self.metrics_collector if self.enable_metrics else None
                 ),

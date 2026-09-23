@@ -1,5 +1,5 @@
 \section{Introduction}
-
+\label{sec:intro}
 Agent frameworks increasingly expose LLM calls as programming abstractions rather than manual prompt construction. Systems such as ByLLM~\cite{dantanarayana2025mtp}, NVIDIA Object-Oriented Agents (NOOA)~\cite{furgale2026nooa}, and DSPy~\cite{khattab2024dspy} allow developers to describe model behavior using functions, objects, signatures, and modules, which framework runtimes lower into concrete prompts. This approach also appears in systems such as SIGIL~\cite{dantanarayana2026sigil}, which compiles natural-language skill documents into programs containing typed LLM calls. LLM requests from these frameworks are generated programmatically: they are the serializations of program state rather than free text. 
 
 We observed that these programmatically generated LLM requests are inherently heterogeneous. The heterogeneity arises from three dimensions:
@@ -24,6 +24,9 @@ Figure ~\ref{fig:heterogeneity-sample} illustrates this heterogeneity in a HoVer
     \label{fig:heterogeneity-sample}
 \end{figure}
 
+
+\input{figures/common_structure}
+
 This distinction matters because main-stream KV-cache serving backbones are prefix-based. In the
 example, placing the accumulating \texttt{evidences} binding after the short-lived \texttt{search\_results} binding prevents the model from reusing the evidence prefix whenever the search result changes. The model must therefore recompute KV states for tokens whose contents remain unchanged. Moreover, without knowing which components persist or evolve, the serving system cannot accurately determine which cached tokens should be retained, evicted, or prefetched.
 
@@ -34,9 +37,10 @@ To close the gap, we present \sysname, a compiler-serving co-design that recover
 \textbf{First, heterogeneity is not always explicit in prompt.} The sharing scope and lifetime of bindings are closely bonded with the program-level structure and actual runtime assignment. Determining which layout best serves prefix caching is therefore not trivial. \sysname combines static analysis with runtime information to determine prompt layouts. The compiler derives a partial order over prompt components based on their sharing scopes and lifetimes. Then, \sysname uses the actual token lengths of bindings observed from log to order components left unconstrained by this partial order, producing a concrete layout that improves prefix cache efficiency.
 
 \textbf{Second, exploiting future reuse requires coordinating cache retention and prefetching.}
-Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would would lead to unnecessary recomputation. \sysname addresses this challenge through two coordinated planners: a protection planner prioritizes cached prefixes according to their expected reuse and benefit, while a prefetch planner schedules transfers based on predicted invocation deadlines and available device memory.
+Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would would lead to unnecessary recomputation. \sysname addressed this challenge by combining static analysis hints and runtime observation to instruct retention, eviction and prefetching. 
 
-We implemented \sysname on SGLang~\cite{zheng2024sglang}..... We evaluated \sysname with three representative agent workloads: HoVer-style ~\cite{jiang2020hover} fact check agent, HumanEval ~\cite{chen2021evaluating} code agent, and a BFCL ~\cite{patil2025bfcl} tool-use agent.....
+We implement \sysname in Jac ByLLM~\cite{mars2023jaseci,dantanarayana2025mtp} and use SGLang~\cite{zheng2024sglang} as the underlying model-serving engine. We evaluate \sysname on three representative agent workloads: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, and a BFCL~\cite{patil2025bfcl} tool-use agent. We further evaluate a mixed workload comprising all three agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. 
+
 Our evaluation shows that \sysname ...
 
 In summary, we make the following contributions.
@@ -45,4 +49,3 @@ In summary, we make the following contributions.
     \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management.... 
     \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to...
 \end{itemize}
-

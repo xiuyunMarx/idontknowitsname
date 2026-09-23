@@ -1,0 +1,39 @@
+\section{Evaluation}
+\label{sec:eval}
+In this section, we evaluate \sysname on multiple representative agent workloads, and ablate each components.
+\subsection{Environmental Settings}
+\subsubsection{Testbed and Model}
+We conduct all experiments on a single NVIDIA RTX 3090 GPU using Qwen3-14B-AWQ. We allocate 5.2\,GB of GPU memory to the device KV-cache pool and 10\,GB of CPU memory to the host KV-cache pool.
+
+\subsubsection{Baselines}
+We compare \sysname against the following serving systems and ablated variants.
+\begin{enumerate*}[label=(\roman*)]
+    \item \textbf{Vanilla SGLang}~\cite{zheng2024sglang} uses SGLang's
+    HiCache with LRU eviction. 
+    \item \textbf{CacheScout}~\cite{zhang2026cachescout} identifies agents from their request prefixes and learns inter-agent execution transitions online. It uses the learned transition patterns to prioritize cached KV entries and prefetch the prefixes of predicted successor agents.
+    \item \textbf{Continuum}~\cite{li2025continuum} retains each agent program's KV cache for an adaptively selected time-to-live (TTL). The TTL is derived from observed inter-invocation delays and expected cache reuse, allowing the system to preserve reusable context while the agent executes tools.
+    \item \textbf{\sysname-KV-only} enables proactive KV-cache scheduling but disables adaptive prompt re-layout. 
+    \item \textbf{\sysname-Relayout-only} enables adaptive prompt re-layout but replaces proactive KV-cache scheduling with LRU eviction.
+\end{enumerate*}
+
+\subsubsection{Workloads}
+We evaluate \sysname using three representative agentic workloads ported to ByLLM~\cite{dantanarayana2025mtp} in Jac: HoVer-style ~\cite{jiang2020hover} fact check agent, HumanEval ~\cite{chen2021evaluating} code agent, and a BFCL ~\cite{patil2025bfcl} tool-use agent. Additionally, we conducted a mixture of these workloads to comprehensively verify the performance of \sysname.
+
+\subsection{End-to-End Performace of \sysname}
+We tested \sysname under different number concurrent workflows, and a mixed workloads. Across these workloads, we compare average job completion time(JCT), average time-to-first-token(TTFT) and throughput(session/min) for the mixed workload.
+
+\paragraph{JCT}
+\paragraph{TTFT}
+\paragraph{Throughput}
+
+\subsubsection{performance over the mixed workload}
+The mixed workload is constructed with 4 lanes of fact check agent, 4 lanes of BFCL tool-use agent and 12 lanes coding agent. Whenever a lane completes it task, it picks another one and launch the new task immediately. The ratio of 1:1:4 is selected deliberately for balancing cache pressure so that three agent workloads have similar KV footprint.
+
+\subsubsection{Performance over each agent workload}
+\paragraph{Fact Check Agent}
+\paragraph{Coding Agent}
+\paragraph{BFCL tool-use agent}
+
+\subsection{Performance Optimization Analysis}
+The optimization comes from two sides. First, adaptive re-layout increses prefix sharing, which not only improves hit rate, but also exposing operation opportunities for heterogeneity-aware KV-cache scheduling. 
+\subsection{Abalation Studies}
