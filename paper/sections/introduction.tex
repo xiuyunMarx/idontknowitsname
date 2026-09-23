@@ -17,10 +17,9 @@ Figure ~\ref{fig:heterogeneity-sample} illustrates this heterogeneity in a HoVer
     \vspace{4pt}
     \begin{minipage}{\columnwidth}
     \ttfamily\footnotesize\raggedright
-    def assess\_evidence(search\_results: str, question: str,\\   
-    \hspace{12pt}claim: str, evidences: list[Evidence]) -> Finding by llm() \\
+    def assess\_evidence(search\_results: str, question: str, \hspace{12pt}claim: str, evidences: list[Evidence]) -> Finding by llm()
     \end{minipage}
-    \caption{Heterogeneity within a HoVer-style \cite{jiang2020hover} Fact Check Agent's generated prompt for the summary-making function. \texttt{assess\_evidence(search\_results, question, claim, evidences)} evaluates the sub-question against the accumulated evidence and search results, then answers it.}
+    \caption{Heterogeneity within a HoVer-style \cite{jiang2020hover} Fact Check Agent's generated prompt for the summary-making function. It evaluates the sub-question against the accumulated evidence and search results.}
     \label{fig:heterogeneity-sample}
 \end{figure}
 
@@ -37,15 +36,13 @@ To close the gap, we present \sysname, a compiler-serving co-design that recover
 \textbf{First, heterogeneity is not always explicit in prompt.} The sharing scope and lifetime of bindings are closely bonded with the program-level structure and actual runtime assignment. Determining which layout best serves prefix caching is therefore not trivial. \sysname combines static analysis with runtime information to determine prompt layouts. The compiler derives a partial order over prompt components based on their sharing scopes and lifetimes. Then, \sysname uses the actual token lengths of bindings observed from log to order components left unconstrained by this partial order, producing a concrete layout that improves prefix cache efficiency.
 
 \textbf{Second, exploiting future reuse requires coordinating cache retention and prefetching.}
-Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would would lead to unnecessary recomputation. \sysname addressed this challenge by combining static analysis hints and runtime observation to instruct retention, eviction and prefetching. 
+Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would lead to unnecessary recomputation. \sysname addressed this challenge by combining static analysis hints and runtime observation to instruct retention, eviction and prefetching. 
 
 We implement \sysname in Jac ByLLM~\cite{mars2023jaseci,dantanarayana2025mtp} and use SGLang~\cite{zheng2024sglang} as the underlying model-serving engine. We evaluate \sysname on three representative agent workloads: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, and a BFCL~\cite{patil2025bfcl} tool-use agent. We further evaluate a mixed workload comprising all three agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. 
 
-Our evaluation shows that \sysname ...
-
-In summary, we make the following contributions.
-\begin{itemize}
+In summary, we make the following contributions:
+\begin{enumerate*}[label=(\textbf{\arabic*})]
     \item We identify the inherent heterogeneity in programmatically generated prompts and its implications for serving.
-    \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management.... 
-    \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to...
-\end{itemize}
+    \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management.
+    \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to 48\% lower average JCT and 78\% lower average TTFT than Vanilla SGLang, and 1.44$\times$ throughput on a mixed agent workload.
+\end{enumerate*}

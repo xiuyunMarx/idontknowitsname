@@ -1,42 +1,58 @@
-\documentclass[sigplan,10pt,review,anonymous]{acmart}
+\documentclass{article}
+
+% mlsys2025.sty requires the old algorithmic package, which clashes with the
+% algpseudocode package our algorithms use; mark it as loaded so it is skipped.
+\makeatletter
+\@namedef{ver@algorithmic.sty}{}
+\makeatother
 
 % Shared packages and project-wide macros.
 \input{style/packages}
 \input{style/macros}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{xurl} % long reference URLs break instead of running into the margin
 
+% Blind submission; use \usepackage[accepted]{mlsys2025} for the camera-ready.
+% MLSys 2027 uses the MLSys 2025 style files.
+\usepackage{mlsys2025}
+\usepackage[varqu]{zi4}
 % Keep figures under figures/ and its subdirectories.
 \graphicspath{{figures/}{figures/evaluation/}}
 
-% Suppress ACM reference/copyright blocks for the anonymous review draft.
-% Adjust these settings if the EuroSys author kit requests otherwise.
-\setcopyright{none}
-\settopmatter{printacmref=false, printccs=false, printfolios=true}
-\renewcommand\footnotetextcopyrightpermission[1]{}
-\acmConference{EuroSys '27}{2027}{Anonymous Submission}
-
-\title{\sysname}
-
-% The anonymous class option hides author identities in review mode.
-\author{Anonymous Author(s)}
+\mlsystitlerunning{\sysname}
 
 \begin{document}
+
+\twocolumn[
+\mlsystitle{\sysname}
+
+% The style file removes author information from the blind version.
+\begin{mlsysauthorlist}
+\mlsysauthor{Anonymous Author(s)}{anon}
+\end{mlsysauthorlist}
+\mlsysaffiliation{anon}{Anonymous Institution}
+\mlsyscorrespondingauthor{Anonymous Author}{anon.email@domain.com}
+
+\vskip 0.3in
 
 \begin{abstract}
 \input{sections/abstract}
 \end{abstract}
+]
 
-\maketitle
+\printAffiliationsAndNotice{}
 
 \input{sections/introduction}
 \input{sections/background}
 \input{sections/motivation}
 \input{sections/design}
-\input{sections/implementation} 
+\input{sections/implementation}
 \input{sections/evaluation}
 \input{sections/related_work}
 \input{sections/conclusion}
 
-\bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
+\bibliographystyle{mlsys2025}
 
 \end{document}
