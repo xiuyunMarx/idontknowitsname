@@ -24,7 +24,6 @@ Figure ~\ref{fig:heterogeneity-sample} illustrates this heterogeneity in a HoVer
 \end{figure}
 
 
-\input{figures/common_structure}
 
 This distinction matters because main-stream KV-cache serving backbones are prefix-based. In the
 example, placing the accumulating \texttt{evidences} binding after the short-lived \texttt{search\_results} binding prevents the model from reusing the evidence prefix whenever the search result changes. The model must therefore recompute KV states for tokens whose contents remain unchanged. Moreover, without knowing which components persist or evolve, the serving system cannot accurately determine which cached tokens should be retained, evicted, or prefetched.

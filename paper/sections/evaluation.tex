@@ -19,7 +19,7 @@ We compare \sysname against the following serving systems and ablated variants.
 \subsubsection{Workloads}
 We evaluate \sysname using three representative agentic workloads ported to ByLLM~\cite{dantanarayana2025mtp} in Jac: HoVer-style ~\cite{jiang2020hover} fact check agent, HumanEval ~\cite{chen2021evaluating} code agent, and a BFCL ~\cite{patil2025bfcl} tool-use agent. 
 
-Additionally, we conducted a mixture of these workloads to comprehensively verify the performance of \sysname. The mixed workload is constructed with 4 lanes of fact check agent, 4 lanes of BFCL tool-use agent and 12 lanes coding agent. Whenever a lane completes it task, it picks another one and launch the new task immediately. The ratio of 1:1:4 is selected deliberately for balancing cache pressure so that three agent workloads have similar KV footprint.
+Additionally, we conducted a mixture of these workloads to comprehensively verify the performance of \sysname. The mixed workload is constructed with 4 lanes of fact check agent, 4 lanes of BFCL tool-use agent and 12 lanes coding agent. Whenever a lane completes it task, it picks another one and launch the new task immediately. The ratio of 1:1:3 is selected deliberately for balancing cache pressure so that three agent workloads have similar KV footprint.
 
 \subsection{End-to-End Performace of \sysname}
 \begin{figure*}
@@ -87,6 +87,29 @@ Except for an 8--13\% reduction on BFCL at $c=4$, Continuum and CacheScout perfo
 \paragraph{Average TTFT}
 Across the three workloads, \sysname reduces average TTFT by 12--78\% compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}), and by 34\% on the mixed workload (Table~\ref{tab:mixed-workload}). As with JCT, adaptive prompt re-layout accounts for nearly all of the gain at low concurrency, and proactive KV-cache scheduling carries it as concurrency grows. On fact check and BFCL, the TTFT reduction exceeds the JCT reduction, because a reused prefix skips its prefill, whereas JCT also includes decoding and tool execution which the KV-cache does not shorten. Continuum and CacheScout show the same limit as in JCT.
 
+\begin{table}[h]
+\centering
+\fontsize{8}{10}\selectfont
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.15}
+\caption{$p$-values of a paired test against Vanilla SGLang. }
+\label{tab:quality}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+System & Fact check & Coding & BFCL \\
+\midrule
+CacheScout             & 1.00 & 0.11 & 1.00 \\
+Continuum              & 1.00 & 0.23 & 1.00 \\
+\sysname-KV-only       & 1.00 & 0.95 & 1.00 \\
+\midrule
+\sysname-Relayout-only & 1.00 & 0.19 & 1.00 \\
+\sysname               & 1.00 & 0.51 & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Task Quality}
+Table~\ref{tab:quality} tests the task quality of each arm against Vanilla SGLang. $p > 0.05$ indicates no significant difference in task quality. None of the arms differs significantly. Performance gains of \sysname don't come at the cost of task quality. 
 \begin{table}[t]
 \centering
 \fontsize{8}{10}\selectfont
@@ -128,3 +151,5 @@ We ablate \sysname on the mixed workload by enabling its components one at a tim
 Adaptive prompt re-layout alone reduces JCT by 22\% compared with Vanilla SGLang and raises throughput to 1.18$\times$. Adding proactive KV-cache scheduling without prefetch reduces JCT by a further 12\% and raises throughput to 1.32$\times$. Prefetch reduces JCT by another 5\% and brings throughput to 1.44$\times$.
 
 The two mechanisms depend on each other. Applied to the original prompt order, proactive KV-cache scheduling reduces JCT by only 7\% (\sysname-KV-only); applied after re-layout, it reduces JCT by 16\% relative to \sysname-Relayout-only. The combined 34\% reduction is larger than the sum of the two individual reductions. Re-layout places the stable and shared bindings at the front, so a served prompt divides into a reusable head and a volatile tail, and scheduling gets a reusable head to protect.
+
+
