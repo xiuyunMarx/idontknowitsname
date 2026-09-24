@@ -15,13 +15,24 @@ WORKLOADS = [
     ("coding", "coding", "Coding", set()),
     ("BFCL", "bfcl", "BFCL", {32}),
 ]
-# Rows top to bottom: external baselines, then the ablated variants, then the full system.
-ARMS = ["vanilla", "continuum", "cachescout", "kvonly", "relayout", "ours"]
+# Rows top to bottom: external baselines, each followed by its re-laid variant,
+# then the ablated variants, then the full system.
+ARMS = [
+    "vanilla",
+    "continuum", "continuum_relayout",
+    "cachescout", "cachescout_relayout",
+    "kvflow", "kvflow_relayout",
+    "kvonly", "relayout", "ours",
+]
 # Same names as the legend of the speedup figure (draw_legend.py).
 DISPLAY_NAMES = {
     "vanilla": "Vanilla",
     "continuum": "Continuum",
     "cachescout": "CacheScout",
+    "continuum_relayout": "Continuum+Relayout",
+    "cachescout_relayout": "CacheScout+Relayout",
+    "kvflow": "KVFlow",
+    "kvflow_relayout": "KVFlow+Relayout",
     "kvonly": "KVOnly",
     "relayout": "Relayout",
     "ours": "Ours",
@@ -32,6 +43,8 @@ GROUP_GAP = 0.4  # blank columns between two workloads
 def read_hit_rate(file_path: Path, skip: set) -> Dict[int, float]:
     """Concurrency -> cache hit rate (%) of prompt tokens, device and host together."""
     hit_rate: Dict[int, float] = {}
+    if not file_path.exists():  # arm not run yet
+        return hit_rate
     with open(file_path, "r", newline="", encoding="utf-8") as csvfile:
         for row in csv.DictReader(csvfile):
             c = int(row["c"])
@@ -61,7 +74,8 @@ def draw_hit_rate(output_file: Path) -> Path:
     cmap = plt.cm.YlGnBu
 
     plt.rcParams.update({
-        "font.family": "sans-serif",
+        "font.family": "serif",
+        "font.serif": ["STIXGeneral"],
         "font.size": 7,
         "axes.labelsize": 7,
         "xtick.labelsize": 6.5,
@@ -70,10 +84,14 @@ def draw_hit_rate(output_file: Path) -> Path:
         "ps.fonttype": 42,
     })
 
-    fig, ax = plt.subplots(figsize=(3.3, 1.45), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(3.3, 2.2), constrained_layout=True)
     for x, title, c in columns:
         for row, arm in enumerate(ARMS):
-            value = records[title][arm][c]
+            value = records[title][arm].get(c)
+            if value is None:  # not measured yet
+                ax.add_patch(Rectangle((x - 0.5, row - 0.5), 1, 1, color="#F2F2F2", linewidth=0))
+                ax.text(x, row, "\u2013", ha="center", va="center", fontsize=6, color="#9A9A9A")
+                continue
             ax.add_patch(Rectangle((x - 0.5, row - 0.5), 1, 1, color=cmap(norm(value)), linewidth=0))
             ax.text(x, row, f"{value:.0f}", ha="center", va="center", fontsize=6,
                     color="white" if norm(value) > 0.55 else "black")

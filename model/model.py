@@ -1,7 +1,7 @@
 """SGLang Engine wrapped for serving: real generate/decode, a shadow KV ledger, and the
 two scheduler RPCs the planner steers HiCache with (promote, kv_priority).
 
-    engine = Engine("Qwen/Qwen3-8B")
+    engine = Engine("Qwen/Qwen3-14B-AWQ")
     text = await engine.generate(prompt, request_id)
     await engine.promote(token_ids, request_id)   # host-tier prefix back onto the device
 """
@@ -143,9 +143,7 @@ class Engine:
         if host_gb > 0:
             engine_kwargs.setdefault("enable_hierarchical_cache", True)
             engine_kwargs.setdefault("hicache_size", host_gb) 
-            # "kernel" (sglang default): one copy kernel per layer. "direct" ran torch
-            # gather/scatter per layer per K/V: ~0.75 GB/s host->device at c=4, 370 ms per
-            # 2k-token demand load, and it slowed decode 25% (measured 2026-09-02).
+            # "kernel" (sglang default): one copy kernel per layer. "direct" ran torch gather/scatter
             engine_kwargs.setdefault("hicache_io_backend", "kernel")
         self.name = model_name
         self.engine = SGLangEngine(model_path=model_name, **engine_kwargs)
@@ -171,14 +169,14 @@ class Engine:
 
     def _kv_bytes_per_token(self) -> int:
         """2 (K,V) × layers × kv heads × head_dim × dtype bytes, mirroring sglang's
-        host-pool sizing; falls back to Qwen3-8B's 147456."""
+        host-pool sizing; falls back to Qwen3-14B's 163840."""
         try:
             cfg = self.engine.tokenizer_manager.model_config.hf_config #type: ignore
             heads = getattr(cfg, "num_key_value_heads", None) or cfg.num_attention_heads
             head_dim = getattr(cfg, "head_dim", None) or cfg.hidden_size // cfg.num_attention_heads
             return 2 * cfg.num_hidden_layers * heads * head_dim * 2
         except Exception:
-            return 147456
+            return 163840
 
 
     @property

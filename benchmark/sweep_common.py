@@ -43,7 +43,7 @@ def run_level(program: str, tag: str, c: int, sessions: int, warmup: int, server
 
 def sweep(program: str, prefix: str, inputs: int, levels: str) -> int:
     ap = argparse.ArgumentParser(description=f"concurrency sweep of {program} on a running server")
-    ap.add_argument("arm", nargs="?", default="ours", choices=["ours", "relayout", "vanilla", "kvonly", "cachescout", "continuum"],
+    ap.add_argument("arm", nargs="?", default="ours", choices=["ours", "relayout", "vanilla", "kvonly", "cachescout", "continuum", "kvflow", "kvflow_relayout", "continuum_relayout", "cachescout_relayout"],
                     help="the arm the running server was started as; names the outputs")
     ap.add_argument("--c", default=levels, help="comma-separated concurrency levels")
     ap.add_argument("--sessions", default="auto",

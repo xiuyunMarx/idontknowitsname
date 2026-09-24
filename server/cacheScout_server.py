@@ -41,6 +41,8 @@ bookkeeping; its blocks age out under the recency factor like any other.
 Scheduling: standard FCFS, every request PRIORITY_REAL.
 
 python -m server.cacheScout_server [MODEL] [--kv N] [--host GB] [--r-min R] [--horizon H] [--tau T]
+python -m server.cacheScout_server --relayout ...   the same policy on the re-laid prompts of `ours`
+            (guard controller front: registration, callsite identification, re-layout; no host admission)
 python -m server.cacheScout_server --selftest
 """
 import argparse
@@ -56,7 +58,7 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from server.wire import is_continuation   # transcript-prefix test only: requests stay opaque
-from model.model import PRIORITY_REAL, Engine
+from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 
 BLOCK = 16           # fingerprint block size (vLLM's default block, CacheScout's substrate)
@@ -349,9 +351,111 @@ class CacheScoutController:
                     break
 
 
+# ---------------------------------------------------------------- --relayout: the policy behind the guard controller's re-layout
+class CacheScoutPolicy:
+    """CacheScout's fingerprint + chain + survival bands in the guard controller's
+    planner slot; the controller's intake calls are no-ops, the policy observes
+    requests and replies at the engine call (see continuum_server._relayout_controller)."""
+
+    promote_enabled = False
+
+    def __init__(self, engine, r_min: float = R_MIN, e_max: int = E_MAX, tau: float = TAU) -> None:
+        self.engine = engine
+        self.ctrl = None
+        self.r_min, self.e_max, self.tau = r_min, e_max, tau
+        self.fp = Fingerprint()
+        self.chain = Markov()
+        self.current: Dict[str, int] = {}
+        self.last_seen: Dict[str, float] = {}
+        self.served: Dict[str, List[Tuple[List[int], int]]] = defaultdict(list)
+        self.warmed: Dict[int, float] = {}
+        self._agent: Dict[str, Optional[int]] = {}         # rid -> agent of the request
+        self._push_lock = asyncio.Lock()
+        self._rpc_lock = asyncio.Lock()
+        self._push_pending = False
+        self._last_push = -math.inf
+
+    # the controller's planner interface: nothing to do for a request-level policy
+    def note_arrival(self, sid: str, site: str, t_arrive: float) -> None: ...
+    def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None: ...
+    def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None: ...
+    def void_session(self, sid: str, epoch: int) -> None: ...
+    def submit(self, sid: str, epoch: int, jobs: list, extend: bool = False) -> None: ...
+    def retire_session(self, sid: str) -> None: ...
+    def wake(self) -> None: ...
+
+    def drop_session(self, sid: str) -> None:
+        for d in (self.current, self.last_seen, self.served):
+            d.pop(sid, None)   # bookkeeping only: no termination signal in CacheScout
+        print(f"[close] {sid}", flush=True)
+
+    # what the engine call shows
+    def before(self, rid: str, ids: List[int], t_arrive: float, cont: bool = False) -> None:
+        sid = rid.split("-")[0]
+        agent, depth = self.fp.observe(sid, ids)
+        if not cont:
+            label = f"agent={agent & 0xffffffff:08x}" if agent is not None else "agent=?"
+            print(f"[scout] {rid} {label} anchor={depth}", flush=True)
+            prev = self.current.get(sid)
+            if agent is not None and prev is not None:
+                self.chain.observe(prev, agent)   # one dispatch = one transition
+            if agent is not None:
+                self.current[sid] = agent
+        self.last_seen[sid] = time.monotonic()
+        self._agent[rid] = agent
+
+    async def after(self, rid: str, ids: List[int], sp: dict, text: str, ttft_s: Optional[float], t_done: float) -> None:
+        sid = rid.split("-")[0]
+        agent = self._agent.pop(rid, None)
+        if agent is None:
+            await self._push()
+            return
+        kept = self.served[sid]
+        kept.append((ids + self.engine.tokenize(text), agent))   # blocks this agent produced
+        del kept[:-KEEP_PER_SESSION]
+        nxt, p = self.chain.predict(agent)    # Sec. 3.4: warm the predicted next agent's anchor
+        r = self.chain.predictability()
+        now = time.monotonic()
+        if (nxt is not None and r >= self.r_min and nxt in self.fp.anchor_ids
+                and now - self.warmed.get(nxt, -math.inf) >= WARMUP_MIN_S):
+            self.warmed[nxt] = now
+            anchor = self.fp.anchor_ids[nxt]
+            unc, host = self.engine.cost(anchor)
+            if host > 0:
+                async with self._rpc_lock:
+                    ok = await self.engine.promote(anchor, f"scout-{rid}")
+                print(f"[prefetch] {rid} next={nxt & 0xffffffff:08x} P={p:.2f} R={r:.2f} anchor={len(anchor)} "
+                      f"host={host} started={ok}", flush=True)
+        await self._push()
+
+    def _protect(self) -> List[Tuple[List[int], int]]:
+        return CacheScoutController._protect(self)   # type: ignore[arg-type]  # same score map, same fields
+
+    async def _push(self) -> None:
+        if self._push_lock.locked():
+            self._push_pending = True
+            return
+        async with self._push_lock:
+            while True:
+                wait = PUSH_MIN_S - (time.monotonic() - self._last_push)
+                if wait > 0:
+                    await asyncio.sleep(wait)
+                self._push_pending = False
+                prot = self._protect()
+                async with self._rpc_lock:
+                    await self.engine.set_kv_priority([], prot, f"scout-{uuid.uuid4().hex[:8]}")
+                self._last_push = time.monotonic()
+                if not self._push_pending:
+                    break
+
+    async def run(self) -> None:
+        while True:                 # everything is event-driven; the planner slot only needs a task
+            await asyncio.sleep(60)
+
+
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
                hicache_io: Optional[str], r_min: float, e_max: int, tau: float, sched: str = "fcfs",
-               engine_log: Optional[str] = None) -> None:
+               engine_log: Optional[str] = None, relayout: bool = False) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 32768, "radix_eviction_policy": "priority",
@@ -370,6 +474,13 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     elif sched == "risk":
         kwargs["schedule_policy"] = "cache-risk"
         kwargs["enable_priority_scheduling"] = False
+    if relayout:
+        from server.continuum_server import _relayout_controller
+        print("[cachescout] learned agent execution on re-laid prompts (guard controller front, no host admission)", flush=True)
+        ctrl = _relayout_controller(CacheScoutPolicy(None, r_min=r_min, e_max=e_max, tau=tau), model, server, **kwargs)
+        ctrl.planner.engine = ctrl.engine   # type: ignore[union-attr]
+        await ctrl.start_serving()
+        return
     ctrl = CacheScoutController(model, server, r_min=r_min, e_max=e_max, tau=tau, **kwargs)
     await ctrl.start_serving()
 
@@ -433,7 +544,7 @@ def _selftest() -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="CacheScout baseline server")
-    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
+    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-14B-AWQ")
     ap.add_argument("--port", type=int, default=8964)
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
@@ -444,10 +555,12 @@ if __name__ == "__main__":
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine queue order (fcfs is the paper's setting; the others exist for the sweep script)")
     ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None)
+    ap.add_argument("--relayout", action="store_true",
+                    help="the same policy on the re-laid prompts of `ours` (guard controller front)")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         _selftest()
     else:
         asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.tau, a.sched,
-                         engine_log=a.engine_log))
+                         engine_log=a.engine_log, relayout=a.relayout))

@@ -14,6 +14,10 @@ def draw_legend(output_file: str) -> Path:
         "relayout": "Relayout",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
+        "continuum_relayout": "Continuum+Relayout",
+        "cachescout_relayout": "CacheScout+Relayout",
+        "kvflow": "KVFlow",
+        "kvflow_relayout": "KVFlow+Relayout",
         "ours": "Ours",
     }
     colors = {
@@ -22,6 +26,10 @@ def draw_legend(output_file: str) -> Path:
         "relayout": "#009E73",
         "continuum": "#E69F00",
         "cachescout": "#CC79A7",
+        "continuum_relayout": "#E69F00",
+        "cachescout_relayout": "#CC79A7",
+        "kvflow": "#56B4E9",
+        "kvflow_relayout": "#56B4E9",
         "ours": "#D55E00",
     }
     markers = {
@@ -30,15 +38,26 @@ def draw_legend(output_file: str) -> Path:
         "relayout": "^",
         "continuum": "D",
         "cachescout": "v",
+        "continuum_relayout": "D",
+        "cachescout_relayout": "v",
+        "kvflow": "P",
+        "kvflow_relayout": "P",
         "ours": "*",
     }
+    # Two rows, filled column by column: each column pairs a system on the
+    # original layout (top) with the same system on the re-laid layout (bottom).
     preferred_order = [
-        "vanilla", "kvonly", "relayout", "continuum", "cachescout", "ours"
+        "vanilla", "relayout",
+        "continuum", "continuum_relayout",
+        "cachescout", "cachescout_relayout",
+        "kvflow", "kvflow_relayout",
+        "kvonly", "ours",
     ]
 
     plt.rcParams.update({
-        "font.family": "sans-serif",
-        "legend.fontsize": 7,
+        "font.family": "serif",
+        "font.serif": ["STIXGeneral"],
+        "legend.fontsize": 7.5,
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
     })
@@ -46,26 +65,29 @@ def draw_legend(output_file: str) -> Path:
     handles = []
     for arm in preferred_order:
         is_ours = arm == "ours"
+        is_variant = arm.endswith("_relayout")
         handles.append(Line2D(
             [],
             [],
             label=display_names[arm],
             color=colors[arm],
             marker=markers[arm],
-            markersize=4.5 if is_ours else 3.0,
-            markeredgewidth=0.7,
-            linewidth=1.5 if is_ours else 1.0,
-            linestyle="--" if arm == "vanilla" else "-",
+            markersize=4.0 if is_ours else 2.6,
+            markeredgewidth=0.5,
+            markerfacecolor="white" if is_variant else colors[arm],
+            linewidth=1.0 if is_ours else 0.7,
+            linestyle=(0, (3, 1.5)) if is_variant or arm == "vanilla" else "-",
         ))
 
-    fig = plt.figure(figsize=(7.0, 0.3))
+    fig = plt.figure(figsize=(7.0, 0.4))
     fig.legend(
         handles=handles,
-        ncol=len(handles),
+        ncol=len(handles) // 2,
         frameon=False,
         loc="center",
         columnspacing=1.6,
         handlelength=2.4,
+        labelspacing=0.35,
     )
 
     output_path = Path(output_file)

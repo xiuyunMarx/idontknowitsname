@@ -843,6 +843,7 @@ def program_to_dict(p: Program) -> Dict[str, Any]:
                    {n: _binding_to_dict(ob) for n, ob in e.overrides.items()},
                    sorted(e.invalidates)] for (a, b), e in p.edges.items()],
         "exits": [site_to_dict(k) for k in p.exits],
+        # "exits": [site_to_dict(k) for k in sorted(p.exits, key=lambda k: (k.signature, k.lineno, k.file))],
     }
 
 

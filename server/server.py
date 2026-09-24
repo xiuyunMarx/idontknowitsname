@@ -834,7 +834,7 @@ class Controller:
         return True
 
 
-async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True,
+async def main(model: str = "Qwen/Qwen3-14B-AWQ", port: int = 8964, plan: bool = True,
                kv_tokens: Optional[int] = None,
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
                enable_relayout: bool = True, sched: str = "fcfs", risk_aging_s: float = 10.0,
@@ -868,7 +868,7 @@ async def main(model: str = "Qwen/Qwen3-8B", port: int = 8964, plan: bool = True
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Start the server")
-    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
+    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-14B-AWQ")
     ap.add_argument("--lru", action="store_true",
                     help="baseline: no planner, sglang's own LRU eviction (re-layout stays on)")
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")

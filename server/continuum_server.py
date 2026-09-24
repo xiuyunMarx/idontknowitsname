@@ -38,6 +38,9 @@ Scheduling  plain FCFS by default. --program-fcfs turns on Continuum's program-l
           this can starve late programs, which is why it is off by default.
 
 python -m server.continuum_server [MODEL] [--kv N] [--host GB] [--ttl-default S] [--no-pin] [--program-fcfs]
+python -m server.continuum_server --relayout ...   the same TTL policy on the re-laid prompts of `ours`
+            (the guard controller does registration, callsite identification and re-layout; the
+            policy observes each request and reply at the engine call; no host admission)
 python -m server.continuum_server --selftest
 """
 import argparse
@@ -55,7 +58,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 from model.device_profiler import profile_device
-from model.model import PRIORITY_REAL, Engine
+from model.model import PRIORITY_CONT, PRIORITY_REAL, Engine
 from server.http_server import HttpServer, PendingRequest
 from server.wire import is_continuation   # only to count turns in the log, as server.server does
 
@@ -397,10 +400,153 @@ class ContinuumController:
                 await self._push()
 
 
+# ---------------------------------------------------------------- --relayout: the policy behind the guard controller's re-layout
+def reply_key_sp(sp: dict, text: str) -> str:
+    """reply_key from what the engine call carries: the tool the reply called, else the
+    schema the request asked for (hashed), else the shared key."""
+    m = _TOOL_CALL.search(text)
+    if m:
+        try:
+            name = json.loads(m.group(1)).get("name")
+            if name:
+                return f"tool:{name}"
+        except json.JSONDecodeError:
+            pass
+    schema = (sp or {}).get("json_schema")
+    if schema:
+        return f"schema:{hashlib.sha1(schema.encode()).hexdigest()[:8]}"
+    return GLOBAL
+
+
+class ContinuumPolicy:
+    """TTL pinning in the guard controller's planner slot: the controller's intake
+    calls are no-ops; the policy observes requests and replies at the engine call."""
+
+    promote_enabled = False
+
+    def __init__(self, engine, ttl_default: Optional[float] = None, pin: bool = True) -> None:
+        self.engine = engine
+        self.ctrl = None
+        self.pin_enabled = pin
+        self.pinner = TTLPinner(
+            prefill_tps=lambda: (self.engine.device_profile.prefill_tps_idle
+                                 if self.engine.device_profile else 2000.0),
+            default_s=ttl_default)
+        self._open: Dict[str, Tuple[bool, List[Pin]]] = {}   # rid -> (hit, closed pins)
+        self._push_lock = asyncio.Lock()
+        self._rpc_lock = asyncio.Lock()
+        self._push_pending = False
+
+    # the controller's planner interface: nothing to do for a request-level policy
+    def note_arrival(self, sid: str, site: str, t_arrive: float) -> None: ...
+    def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None: ...
+    def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None: ...
+    def void_session(self, sid: str, epoch: int) -> None: ...
+    def submit(self, sid: str, epoch: int, jobs: list, extend: bool = False) -> None: ...
+    def retire_session(self, sid: str) -> None: ...
+    def wake(self) -> None: ...
+
+    def drop_session(self, sid: str) -> None:
+        self.pinner.note_finished(sid)
+        held = self.pinner.forget(sid)
+        print(f"[close] {sid} eta={self.pinner.eta():.2f}", flush=True)
+        if held:
+            asyncio.create_task(self._push())
+
+    def _inflight(self, sid: str) -> int:
+        sess = self.ctrl.sessions.get(sid) if self.ctrl is not None else None
+        return sess.inflight if sess is not None else 0
+
+    # what the engine call shows
+    def before(self, rid: str, ids: List[int], t_arrive: float, cont: bool = False) -> None:
+        sid = rid.split("-")[0]
+        hit, closed = self.pinner.note_arrival(sid, t_arrive)
+        reused = self.pinner.note_reuse(closed, ids)
+        if closed:
+            waits = ",".join(f"{t_arrive - p.t_done:.2f}" for p in closed)
+            print(f"[call] {rid} closes={len(closed)} wait_s={waits} reused={reused}/{len(ids)} hit={int(hit)}", flush=True)
+            if any(p.kept for p in closed):
+                asyncio.create_task(self._push())   # the closed pins leave the eviction map
+        self._open[rid] = (hit, closed)
+
+    async def after(self, rid: str, ids: List[int], sp: dict, text: str, ttft_s: Optional[float], t_done: float) -> None:
+        sid = rid.split("-")[0]
+        hit, closed = self._open.pop(rid, (False, []))
+        if ttft_s is not None and closed and not hit:
+            self.pinner.note_queue(ttft_s - len(ids) / self.pinner.prefill_tps())
+        key = reply_key_sp(sp, text)
+        p = self.pinner.pin(rid, sid, ids, key, t_done)
+        print(f"[pin] {rid} key={key} prompt={len(ids)} kept={len(p.kept)} ttl_s={p.expiry - p.t_done:.2f} "
+              f"waits={len(self.pinner.waits[key])} reuse={len(self.pinner.reuse[key])} "
+              f"T={self.pinner.T():.2f} pins={len(self.pinner.protect())}", flush=True)
+        if p.kept:
+            await self._push()
+
+    async def _push(self) -> None:
+        if not self.pin_enabled:
+            return
+        if self._push_lock.locked():
+            self._push_pending = True
+            return
+        async with self._push_lock:
+            while True:
+                self._push_pending = False
+                prot = self.pinner.protect()
+                async with self._rpc_lock:
+                    await self.engine.set_kv_priority([], prot, f"ttl-{uuid.uuid4().hex[:8]}")
+                if not self._push_pending:
+                    break
+
+    async def run(self) -> None:
+        """The expire loop: a lapsed pin stops holding the device once its program has nothing running."""
+        while True:
+            await asyncio.sleep(TICK_S)
+            if self.pinner.expire(time.monotonic(), self._inflight):
+                await self._push()
+
+
+def _relayout_controller(policy, model: str, server: HttpServer, **engine_kwargs):
+    """The guard controller (registration, callsite identification, re-layout) without
+    its planner, host admission off, the policy in the planner slot, and the engine
+    call observed so the policy sees every request and reply."""
+    from server.server import Controller
+
+    class RelayoutController(Controller):
+        def _served_head(self, sess, inst) -> int:
+            return 1 << 30      # admit the whole prompt to the host tier: no admission
+
+    ctrl = RelayoutController(model, server, plan=False, enable_relayout=True, **engine_kwargs)
+    policy.ctrl = ctrl
+    ctrl.planner = policy
+    inner = ctrl.engine.generate
+
+    async def observed(prompt, request_id, sampling_params=None, priority=PRIORITY_REAL,
+                       progress=None, ids=None, host_admit_len=None):
+        toks = ids if ids is not None else ctrl.engine.tokenize(prompt)
+        t0 = time.perf_counter()
+        policy.before(request_id, toks, time.monotonic(), priority == PRIORITY_CONT)
+        first: List[float] = []
+
+        def prog(t_first: float, n: int) -> None:
+            if not first:
+                first.append(t_first)
+            if progress is not None:
+                progress(t_first, n)
+
+        text = await inner(prompt, request_id, sampling_params, priority=priority, progress=prog,
+                           ids=toks, host_admit_len=host_admit_len)
+        await policy.after(request_id, toks, sampling_params or {}, text,
+                           (first[0] - t0) if first else None, time.monotonic())
+        return text
+
+    ctrl.engine.generate = observed   # type: ignore[method-assign]
+    return ctrl
+
+
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
                hicache_io: Optional[str], ttl_default: Optional[float], sched: str = "fcfs",
                pin: bool = True, eviction: str = "priority",
-               engine_log: Optional[str] = None, program_fcfs: bool = False) -> None:
+               engine_log: Optional[str] = None, program_fcfs: bool = False, relayout: bool = False) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 32768,
@@ -420,6 +566,12 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     elif sched == "risk":
         kwargs["schedule_policy"] = "cache-risk"
         kwargs["enable_priority_scheduling"] = False
+    if relayout:
+        print("[continuum] TTL pinning on re-laid prompts (guard controller front, no host admission)", flush=True)
+        ctrl = _relayout_controller(ContinuumPolicy(None, ttl_default, pin=pin), model, server, **kwargs)
+        ctrl.planner.engine = ctrl.engine   # type: ignore[union-attr]
+        await ctrl.start_serving()
+        return
     ctrl = ContinuumController(model, server, ttl_default, pin=pin, program_fcfs=program_fcfs, **kwargs)
     await ctrl.start_serving()
 
@@ -489,7 +641,7 @@ def _selftest() -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Continuum TTL baseline server")
-    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-8B")
+    ap.add_argument("model", nargs="?", default="Qwen/Qwen3-14B-AWQ")
     ap.add_argument("--port", type=int, default=8964)
     ap.add_argument("--kv", type=int, default=None, metavar="N", help="device KV pool cap in tokens")
     ap.add_argument("--host", type=int, default=None, metavar="GB", help="host KV tier size in GB")
@@ -498,6 +650,8 @@ if __name__ == "__main__":
                     help="fixed TTL while fewer than K records exist (default: the paper's ln(T + reload))")
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
                     help="engine queue order (fcfs is this baseline's setting)")
+    ap.add_argument("--relayout", action="store_true",
+                    help="the same policy on the re-laid prompts of `ours` (guard controller front)")
     ap.add_argument("--program-fcfs", action="store_true",
                     help="Continuum's program-level scheduling: programs are served in order of first arrival")
     ap.add_argument("--no-pin", action="store_true",
@@ -514,4 +668,4 @@ if __name__ == "__main__":
             ap.error("pins need --eviction priority")
         asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.ttl_default, a.sched,
                          pin=not a.no_pin, eviction=a.eviction, engine_log=a.engine_log,
-                         program_fcfs=a.program_fcfs))
+                         program_fcfs=a.program_fcfs, relayout=a.relayout))

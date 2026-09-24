@@ -74,7 +74,7 @@ Static analysis fixes the shape of this automaton, while its weights comes from 
 \subsection{Heterogeneity-aware KV-cache Arrangement}
 \subsubsection{Adaptive Prompt re-layout}
 \label{sec:relayout}
-Because prefix cache reuse stops at the first byte that differs. The message a framework emits for a call site follows the declaration order of the function, therefore may disable the potential of prefix reuse. \sysname's adaptive re-layout permutes the components of each call message so that the bytes most likely to be resident already come first, which enables an improved prefix reuse. The layout permutation's basic is the compiler derives a partial order over components, as digested in template $\mathcal{T}_c$~\ref{sec:template}, server then freezes the re-layout verdict with observed token length from runtime.
+Because prefix cache reuse stops at the first byte that differs. The message a framework emits for a call site follows the declaration order of the function, therefore may disable the potential of prefix reuse. \sysname's adaptive re-layout permutes the components of each call message so that the bytes most likely to be resident already come first, which enables an improved prefix reuse. The layout permutation's basis is the compiler derives a partial order over components, as digested in template $\mathcal{T}_c$~\ref{sec:template}, server then freezes the re-layout verdict with observed token length from runtime.
 \begin{figure}
     \centering
     \includegraphics[width=1.0\linewidth]{figures/Relayout_illustrate.pdf}
@@ -101,14 +101,14 @@ whose components are defined as follows:
     \item \textit{depth}: the number of transitions in $\mathcal{A}$ (\S\ref{sec:TPFM}) from $q_0$ to the call site at which the value of $b$ first appears, so values that enter a session earlier lead and the prompt of an upstream call site becomes a prefix of those downstream.
     \item \textit{length}: the token length of the value of $b$, observed by the server; negated so that longer bindings stay in front and a change in a shorter binding invalidates fewer cached tokens.
 \end{itemize}
-The first four components are fixed by the program and constitute the compiler's partial order; only \textit{length} is observed in at runtime. For a binding shared by several call-sites, the value of \textit{scoped} and $\rho$ will be evaluated among all call-sites that carry it to make sure consistency of ordering across call-site. Specifically, the value is marked as \textit{scoped} if any of the call-sites bounds its lifetime, and its stability ranking is \textbf{EXTEND} if any of them appends to it and \textbf{COPY} otherwise.
+The first four components are fixed by the program and constitute the compiler's partial order; only \textit{length} is observed at runtime. For a binding shared by several call-sites, the value of \textit{scoped} and $\rho$ will be evaluated among all call-sites that carry it to make sure consistency of ordering across call-site. Specifically, the value is marked as \textit{scoped} if any of the call-sites bounds its lifetime, and its stability ranking is \textbf{EXTEND} if any of them appends to it and \textbf{COPY} otherwise.
 
 \emph{specification placement.} The \emph{instruction specification} is lowered from code by compiler, which is unique for each call-site. Consequently, emitting it first would prevents prefix sharing among different call-sites, however many values they have in common. After sorting, \sysname moves the specification behind the bindings whenever the leading binding is shared, so that sibling call sites can share large blocks of common bindings. A per-program switch is additionally designed to keeps the specification in front when moving it is suspected of changing the model's behavior.
 
 As shown in Algorithm~\ref{alg:layout}, \sysname first computes the sorting tuple of every binding, then performs a per call-site sort to obtain its final layout.
 
 \begin{algorithm}[t]
-\caption{Layout decision Program}
+\caption{Layout decision algorithm}
 \label{alg:layout}
 \begin{algorithmic}[1]
 \Require Per call-site templates $\{\mathcal{T}_c\}$; 
@@ -219,7 +219,7 @@ Based on prediction, kv-planner of \sysname conducts protection. The duty of it 
 \[
 \textit{Prediction}=\left(\pi_{q'},\ \mathcal{P}(q'\mid q,\zeta),\ t_{\mathrm{reply}}+\hat{g}\right)
 \]
-where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or pass their deadline. Protection acts on this tuple in two ways. \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
+where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or expires. Protection acts on this tuple in two ways. \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
 
 \emph{Retention. }
 The planner ranks the predicted reusable KV-cache entries by the value of keeping $\pi_{q'}$ resident at every refresh:

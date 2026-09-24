@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start one serving arm in the background and wait for model warmup.
 #
-#   ./start_server.bash [ours|kvonly|relayout|vanilla|continuum|cachescout] [server flags]
+#   ./start_server.bash [ours|kvonly|relayout|vanilla|continuum|cachescout|kvflow|kvflow_relayout|continuum_relayout|cachescout_relayout] [server flags]
 #   relayout = re-layout only (no planner), vanilla = vanilla SGLang (no re-layout, no planner)
 #
 # Environment: MODEL, HOST, KV, SCHED, CLIP, LOG
@@ -23,11 +23,15 @@ case "$ARM" in
   relayout)         MODULE=server.server;            ARM_FLAGS=(--lru) ;;
   vanilla)          MODULE=server.server;            ARM_FLAGS=(--lru --no-relayout) ;;
   continuum)        MODULE=server.continuum_server;  ARM_FLAGS=() ;;
+  kvflow)           MODULE=server.KVFlow_server;     ARM_FLAGS=() ;;
+  kvflow_relayout)  MODULE=server.KVFlow_server;     ARM_FLAGS=(--relayout) ;;
+  continuum_relayout)  MODULE=server.continuum_server;  ARM_FLAGS=(--relayout) ;;
+  cachescout_relayout) MODULE=server.cacheScout_server; ARM_FLAGS=(--relayout) ;;
   cachescout)       MODULE=server.cacheScout_server; ARM_FLAGS=() ;;
   *) echo "unknown arm: $ARM" >&2; exit 2 ;;
 esac
 
-MODEL=${MODEL:-Qwen/Qwen3-8B}
+MODEL=${MODEL:-Qwen/Qwen3-14B-AWQ}
 HOST=${HOST:-16}
 KV=${KV:-}
 SCHED=${SCHED:-fcfs}
@@ -38,7 +42,7 @@ if [[ -n "$CLIP" ]]; then
   export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION="$CLIP"
 fi
 
-SERVER_PATTERN='[s]erver\.(server|continuum_server|cacheScout_server)'
+SERVER_PATTERN='[s]erver\.(server|continuum_server|cacheScout_server|KVFlow_server)'
 if pgrep -f "$SERVER_PATTERN" >/dev/null; then
   pkill -9 -f "$SERVER_PATTERN|[s]glang::"
   sleep 5

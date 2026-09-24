@@ -42,8 +42,13 @@ import from primitives {
 }
 
 glob ENTRY_GUARD = "__static_analysis__";
-glob EXTEND_METHODS = {"append", "extend", "insert", "update", "add"};
-glob RESET_METHODS = {"clear", "pop", "remove", "sort", "reverse", "popitem", "discard"};
+# in-place writes that only add at the end, so the old value stays a prefix
+glob EXTEND_METHODS = {"append", "extend"};
+# every other in-place write: `insert` and `update` can change the middle, a set
+# renders in hash order, the rest remove or reorder
+glob RESET_METHODS = {"clear", "pop", "remove", "sort", "reverse", "popitem", "discard", "insert", "update", "add"};
+# str methods that drop characters only at the ends of the string
+glob EDGE_TRIM_METHODS = {"strip", "lstrip", "rstrip"};
 glob GROWABLE_TYPES = ("list", "str", "dict", "set");
 
 
@@ -104,6 +109,37 @@ def literal_value(e: object) -> object {
         return {};
     }
     raise ValueError("not a literal");
+}
+
+"""Whether expression `e` is the old value of walker field `f` with content added
+at its end, so that the old value stays a prefix of the new one: the field
+leftmost in a `+` chain, seen through parentheses, a conditional whose branches
+all do so, and the edge-trimming str methods (they drop boundary characters
+only, the same slack a container's closing delimiter already gets). Any other
+expression that reads the field (a filter, a slice, a sort, a prepend) builds a
+new value."""
+def appends_to(e: object, f: str) -> bool {
+    e = unwrap(e);
+    if walker_field(e) == f {
+        return True;
+    }
+    if isinstance(e, uni.AtomUnit) {
+        return appends_to(e.value, f);
+    }
+    if isinstance(e, uni.BinaryExpr) and e.op.value == "+" {
+        return appends_to(e.left, f);
+    }
+    if isinstance(e, uni.IfElseExpr) {
+        return appends_to(e.value, f) and appends_to(e.else_value, f);
+    }
+    if isinstance(e, uni.FuncCall) {
+        t = unwrap(e.target);
+        if isinstance(t, uni.AtomTrailer) and t.is_attr and isinstance(t.right, uni.Name)
+            and t.right.value in EDGE_TRIM_METHODS {
+            return appends_to(t.target, f);
+        }
+    }
+    return False;
 }
 
 """Whether an expression resets a container: `[]`, `{}`, `""`, `set()`."""
@@ -296,7 +332,7 @@ obj Def {
     """One write to a walker field."""
     has ability: str,        # qualified ability, e.g. "Planner.start"
         lineno: int,
-        kind: str,           # "extend" (append / += / x = x + ...), "reset" (emptied) or "assign"
+        kind: str,           # "extend" (append / += / x = x + ..., the old value a prefix), "reset" (emptied) or "assign"
         rhs: object,         # the assigned expression for "assign", else None
         in_except: bool,
         ast_node: object = None; # the Assignment / FuncCall node, for path sensitivity
@@ -476,11 +512,11 @@ obj Analysis {
                     growable = self.field_types.get(f, "").startswith(GROWABLE_TYPES);
                     in_exc = a.find_parent_of_type(uni.Except) is not None or is_empty_guard(a, f);
                     if a.aug_op is not None {
-                        kind = "extend" if growable else "assign";
+                        kind = "extend" if (growable and a.aug_op.value == "+=") else "assign";
                         self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, None, in_exc, a));
                     } else {
-                        self_ref = any([walker_field(x) == f for x in a.value.get_all_sub_nodes(uni.AtomTrailer)]) if a.value is not None else False;
-                        kind = "extend" if (growable and self_ref) else ("reset" if (growable and a.value is not None and is_empty_literal(a.value)) else "assign");
+                        appends = appends_to(a.value, f) if a.value is not None else False;
+                        kind = "extend" if (growable and appends) else ("reset" if (growable and a.value is not None and is_empty_literal(a.value)) else "assign");
                         self.defs.setdefault(f, []).append(Def(name, a.loc.first_line, kind, a.value, in_exc, a));
                     }
                 }
@@ -816,7 +852,11 @@ obj Analysis {
 
     # -- binding classification -------------------------------------------
 
-    """Reaching definitions of field `f` at line `line` of `ability`."""
+    """Reaching definitions of field `f` at line `line` of `ability`. A write
+    earlier in the ability shadows all others; otherwise the value enters at the
+    ability's head, from the writes of the nearest predecessors. `ability` is one
+    of them when a loop leads back to it: its writes, all after `line` here,
+    reach the call around that loop."""
     def reaching(f: str, ability: str, line: int) -> list {
         all_defs = self.defs.get(f, []);
         local = [d for d in all_defs if d.ability == ability and d.lineno < line];
@@ -824,7 +864,7 @@ obj Analysis {
             return self._prefer_main(local);
         }
         out: list = [];
-        seen: set = {ability};
+        seen: set = set();
         frontier = self.preds(ability);
         while frontier {
             nxt: list = [];
@@ -855,21 +895,25 @@ obj Analysis {
         return main if main else ds;
     }
     
-    """The first site after definition `d` (before `upto` when in the same
-    ability) that carries field `f`, searching forward through the visit graph
-    and stopping at abilities that redefine `f`."""
+    """The first site after definition `d` that carries field `f` on the way to
+    `upto`, or None when `d` reaches `upto` without passing one: later in d's
+    own ability, then forward through the visit graph, entering each ability at
+    its head and scanning its sites up to `upto` or to the ability's first write
+    of `f`. The walk follows loops, so a write after `upto` in upto's own ability
+    finds the sites its value passes on the way back to `upto`."""
     def carrier_after(d: Def, f: str, upto: Site) -> Site | None {
-        same = [s for s in self.sites_in(d.ability) if s.call.loc.first_line > d.lineno
-                and not (s.ability == upto.ability and s.call.loc.first_line >= upto.call.loc.first_line)];
-        for s in same {
-            if self.carries(s, f) and s is not upto {
+        for s in self.sites_in(d.ability) {
+            if s.call.loc.first_line <= d.lineno {
+                continue;
+            }
+            if s is upto {
+                return None;
+            }
+            if self.carries(s, f) {
                 return s;
             }
         }
-        if any([s.ability == upto.ability and s is upto for s in same]) or d.ability == upto.ability {
-            return None;
-        }
-        seen: set = {d.ability};
+        seen: set = set();
         frontier = self.succ(d.ability);
         while frontier {
             nxt: list = [];
@@ -878,16 +922,22 @@ obj Analysis {
                     continue;
                 }
                 seen.add(a);
+                writes = [x.lineno for x in self.defs.get(f, []) if x.ability == a];
+                first_write = min(writes) if writes else None;
+                reached = False;
                 for s in self.sites_in(a) {
-                    if s is not upto and self.carries(s, f) {
-                        return s;
-                    }
                     if s is upto {
+                        reached = True;
                         break;
                     }
+                    if first_write is not None and s.call.loc.first_line > first_write {
+                        break;
+                    }
+                    if self.carries(s, f) {
+                        return s;
+                    }
                 }
-                redefines = any([x.ability == a for x in self.defs.get(f, [])]);
-                if a != upto.ability and not redefines {
+                if not reached and first_write is None {
                     nxt.extend(self.succ(a));
                 }
             }
@@ -897,13 +947,16 @@ obj Analysis {
     }
 
     """Nearest upstream site other than `s` carrying `f` (session constants and
-    append-only fields: the bytes an earlier prompt already holds)."""
+    append-only fields: the bytes an earlier prompt already holds): earlier in
+    s's own ability, then backward through the visit graph. s's ability is one
+    of the predecessors when a loop leads back to it; its sites after `s` ran
+    in the previous iteration."""
     def upstream_carrier(s: Site, f: str) -> Site | None {
         earlier = [x for x in self.sites_in(s.ability) if x.call.loc.first_line < s.call.loc.first_line and self.carries(x, f)];
         if earlier {
             return earlier[-1];
         }
-        seen: set = {s.ability};
+        seen: set = set();
         frontier = self.preds(s.ability);
         while frontier {
             nxt: list = [];
@@ -913,7 +966,8 @@ obj Analysis {
                 }
                 seen.add(p);
                 for x in self.sites_in(p) {
-                    if x is not s and self.carries(x, f) {
+                    if x is not s and self.carries(x, f)
+                        and (p != s.ability or x.call.loc.first_line > s.call.loc.first_line) {
                         return x;
                     }
                 }

@@ -11,7 +11,7 @@ import time;
 import requests;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B", extra_body={"no_header_last": True});
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-14B-AWQ", extra_body={"no_header_last": True});
 glob MAX_SCOUTS: int = int(os.environ.get("FC_SCOUTS") or "2");
 glob MAX_ROUNDS: int = int(os.environ.get("FC_ROUNDS") or "6");
 glob MIN_ROUNDS: int = int(os.environ.get("FC_MIN_ROUNDS") or "6");

@@ -24,7 +24,7 @@ import tempfile;
 import subprocess;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-8B");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-14B-AWQ");
 glob HERE: str = os.path.dirname(os.path.abspath(__file__));
 glob DATA: str = os.environ.get("CA_DATA") or os.path.join(HERE, "bench_data", "HumanEval", "HumanEval.jsonl");
 glob MAX_ATTEMPTS: int = int(os.environ.get("CA_MAX_ATTEMPTS") or "3");

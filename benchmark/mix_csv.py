@@ -29,7 +29,7 @@ import os
 HERE = os.path.dirname(os.path.abspath(__file__))
 DIRS = [os.path.join(HERE, "mixed_results", "mix"), os.path.join(HERE, "mixed_results", "cache")]
 SHORT = {"fact_check": "fact", "BFCL_agent": "bfcl", "coding_agent": "coding"}
-ARM_ORDER = ["vanilla", "kvonly", "relayout", "ours", "continuum", "cachescout"]
+ARM_ORDER = ["vanilla", "kvonly", "relayout", "ours", "continuum", "cachescout", "kvflow", "kvflow_relayout", "continuum_relayout", "cachescout_relayout"]
 
 
 def load(prefix: str) -> dict:
