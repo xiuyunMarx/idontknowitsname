@@ -40,6 +40,8 @@ ENV_DEFAULTS = {
     "BF_TOOL_DELAY_S": "2",
     "FC_CACHE_DIR": os.path.join(DATA, "HoVer", "wiki_cache"),
     "BF_CACHE_DIR": os.path.join(DATA, "BFCL", "web_cache"),
+    "DR_TOOL_DELAY_S": "2",
+    "DR_CACHE_DIR": os.path.join(DATA, "DeepResearchBench", "web_cache"),
 }
 
 SERVE_RE = re.compile(r"^\[serve\] (\d+)-\d+t(\d+)-\w+ (.*)$")
@@ -88,6 +90,11 @@ PROGRAMS = {
         "env": "BF_TASK",
         "no_header_last": False,
         "tasks": lambda: read_jsonl_ids(os.path.join(DATA, "BFCL", "BFCL_v4_web_search.json"), "id"),
+    },
+    "deep_research": {
+        "env": "DR_TASK",
+        "no_header_last": False,
+        "tasks": lambda: read_jsonl_ids(os.path.join(DATA, "DeepResearchBench", "query.jsonl"), "id"),
     },
 }
 

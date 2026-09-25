@@ -74,7 +74,7 @@ Static analysis fixes the shape of this automaton, while its weights comes from 
 \subsection{Heterogeneity-aware KV-cache Arrangement}
 \subsubsection{Adaptive Prompt re-layout}
 \label{sec:relayout}
-Because prefix cache reuse stops at the first byte that differs. The message a framework emits for a call site follows the declaration order of the function, therefore may disable the potential of prefix reuse. \sysname's adaptive re-layout permutes the components of each call message so that the bytes most likely to be resident already come first, which enables an improved prefix reuse. The layout permutation's basis is the compiler derives a partial order over components, as digested in template $\mathcal{T}_c$~\ref{sec:template}, server then freezes the re-layout verdict with observed token length from runtime.
+Prefix reuse stops at the first byte that differs from a cached prompt. The message a framework emits for a call site follows the declaration order of the function, which may place a changing value ahead of values that later calls could reuse. \sysname's adaptive re-layout permutes the components of each call message so that the bytes most likely to be resident already come first. The descriptor $\mathcal{T}_c$ (\S\ref{sec:template}) and $\mathcal{A}$ (\S\ref{sec:TPFM}) determine a partial order over the components, and the server completes it into a layout with the token lengths it observes at runtime.
 \begin{figure}
     \centering
     \includegraphics[width=1.0\linewidth]{figures/Relayout_illustrate.pdf}
@@ -89,47 +89,73 @@ Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. 
 \sysname therefore operates on the order of bindings and the placement of instruction specification. The following paragraphs describe how \sysname chooses a layout within this space.
 
 \paragraph{Layout decision algorithm}
-The layout of a call site is a program-wide decision made from the compiler-derived template $\mathcal{T}_c$. The template alone yields only a partial order, so the server observes the token length of each binding's value at runtime to break the ties within each band. Concretely, the bindings of a call site are sorted in ascending lexicographic order of the tuple
+Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front. Then the bindings carried by a single call site. 
+
+\emph{Sorting private bindings.} The bindings carried by a single call site are sorted in ascending lexicographic order of
 \[
-K(b)=\big(\textit{shared},\ \textit{scoped},\ \rho,\ \textit{depth},\ -\textit{length}\big),
+K(b)=\big(\textit{scoped},\ \rho,\ \textit{depth},\ -\textit{length}\big),
 \]
 whose components are defined as follows:
 \begin{itemize}
-    \item \textit{shared}: whether the value of $b$ is carried by more than one call site; 0 if shared and 1 otherwise, so shared bindings lead.
     \item \textit{scoped}: the lifetime of $b$; 0 if it is session-wide ($\mathcal{S}=\emptyset$) and 1 otherwise, so bindings that survive scope boundaries precede those reset by them.
     \item $\rho$: the stability rank defined in \S\ref{sec:template}, from 1 for CONST to 5 for VOLATILE, so the more reusable class leads.
-    \item \textit{depth}: the number of transitions in $\mathcal{A}$ (\S\ref{sec:TPFM}) from $q_0$ to the call site at which the value of $b$ first appears, so values that enter a session earlier lead and the prompt of an upstream call site becomes a prefix of those downstream.
-    \item \textit{length}: the token length of the value of $b$, observed by the server; negated so that longer bindings stay in front and a change in a shorter binding invalidates fewer cached tokens.
+    \item \textit{depth}: The number of transitions to the first call site that carries it from entrance, so values that enter a session earlier lead.
+    \item \textit{length}: the token length of the value of $b$, observed by the server; negated so longer bindings precede.
 \end{itemize}
-The first four components are fixed by the program and constitute the compiler's partial order; only \textit{length} is observed at runtime. For a binding shared by several call-sites, the value of \textit{scoped} and $\rho$ will be evaluated among all call-sites that carry it to make sure consistency of ordering across call-site. Specifically, the value is marked as \textit{scoped} if any of the call-sites bounds its lifetime, and its stability ranking is \textbf{EXTEND} if any of them appends to it and \textbf{COPY} otherwise.
 
-\emph{specification placement.} The \emph{instruction specification} is lowered from code by compiler, which is unique for each call-site. Consequently, emitting it first would prevents prefix sharing among different call-sites, however many values they have in common. After sorting, \sysname moves the specification behind the bindings whenever the leading binding is shared, so that sibling call sites can share large blocks of common bindings. A per-program switch is additionally designed to keeps the specification in front when moving it is suspected of changing the model's behavior.
+\emph{Ordering shared bindings.} The ordering of shared bindings is derived from program-level structures. For every transition from $q$ to $q'$, \staticAnalysis identifies how each shared binding of the two call sites evolves. We categorize these patterns into three groups and ordered in following sequence:
+\begin{enumerate*}[label=(\textbf{\roman*})]
+    \item Both call sites carry it and its value does not change between the two calls.
+    \item Both call sites carry it and the program only appends to its value.
+    \item Program rewrites it between the two calls, or only one of the two call sites carries it.
+\end{enumerate*}
 
-As shown in Algorithm~\ref{alg:layout}, \sysname first computes the sorting tuple of every binding, then performs a per call-site sort to obtain its final layout.
+\sysname collects these requirements over all transitions and orders the shared bindings to satisfy them; when several bindings can go next, the one with the smallest $\textbf{(-\textit{length}, \textit{depth})}$ is placed first. Bindings with conflicting requirements are clustered and sorted by the same key.
+
+\emph{Specification placement.} The \emph{instruction specification} is lowered from code by the compiler and is unique to each call site. Emitting it first would therefore prevent prefix sharing among different call sites, however many values they have in common. After sorting, \sysname moves the specification behind the bindings whenever the leading binding is shared, so that sibling call sites can share large blocks of common bindings. A per-program switch keeps the specification in front when moving it is suspected of changing the model's behavior.
+
+Algorithm~\ref{alg:layout} summarizes the procedure.
 
 \begin{algorithm}[t]
 \caption{Layout decision algorithm}
 \label{alg:layout}
 \begin{algorithmic}[1]
-\Require Per call-site templates $\{\mathcal{T}_c\}$; 
-\Statex \hspace{\algorithmicindent} observed lengths $\ell$;
-\Statex \hspace{\algorithmicindent} specification-pinning switch $\textit{pin}$;
-
-\Ensure Layout $L_c$ for each call site $c$
-\ForAll{$b \in \bigcup_c \mathcal{B}_c$}
-  \State $K(b) \gets (\textit{shared},\textit{scoped},\rho,\textit{depth},-\ell(b))$
-  \Statex \Comment{Assign sorting tuple for each binding}
+\Require Descriptor $(\{\mathcal{T}_c\}_{c\in C},\mathcal{A})$, lengths $\ell$, switch $\textit{pin}$
+\Ensure Layouts $\{L_c\}_{c\in C}$
+\State $J(b) \gets (-\ell(b),\textit{depth}(b))$
+\State $B_{\mathrm{sh}} \gets \{b : |\{c\in C : b\in\mathcal{B}_c\}| > 1\}$
+\State $R \gets \emptyset$
+\ForAll{$e=(q,q')\in\Call{Edges}{\mathcal{A}}$}
+  \State $B_e \gets B_{\mathrm{sh}}\cap(\mathcal{B}_q\cup\mathcal{B}_{q'})$
+  \State $U_e \gets \Call{UnchangedBindings}{e,\mathcal{B}_q\cap\mathcal{B}_{q'}}$
+  \State $A_e \gets \Call{AppendOnlyBindings}{e,\mathcal{B}_q\cap\mathcal{B}_{q'}}$
+  \ForAll{$b\in B_e$}
+    \State $t_e(b) \gets \begin{cases}
+      1 & b\in U_e\\
+      2 & b\in A_e\\
+      3 & \text{otherwise}
+    \end{cases}$
+  \EndFor
+  \State $R \gets R\cup\{(b,b')\in B_e^2 : t_e(b)<t_e(b')\}$
 \EndFor
-\ForAll{call sites $c$}
-  \State $\pi_c \gets$ \Call{Sort}{$\mathcal{B}_c, K$} \Comment{ascending lexicographic}
-  \State $s_c \gets \textit{instruction specification}$ from $\mathcal{I}_c \in \mathcal{T}_c$
-  \If{$\neg\,\textit{pin} \land (\exists\, b \in \mathcal{B}_c: K(b)[shared]=0)$}
-    \State $L_c \gets \pi_c \Vert \langle s_c\rangle$ \Comment{Expose the shared prefix}
+\State $D \gets \Call{ClusterConflicts}{(B_{\mathrm{sh}},R)}$
+\State $J_{\min}(S) \gets \min_{b\in S}J(b)$
+\State $\sigma \gets \Call{TopoSort}{D,J_{\min}}$ \Comment{Min-key first}
+\State $\pi_{\mathrm{sh}} \gets \langle\,\rangle$
+\ForAll{$S\in\sigma$}
+  \State $\pi_{\mathrm{sh}} \gets \pi_{\mathrm{sh}}\Vert\Call{Sort}{S,J}$
+\EndFor
+\ForAll{$c\in C$}
+  \State $\pi_c \gets \langle b\in\pi_{\mathrm{sh}} : b\in\mathcal{B}_c\rangle$
+  \State $\pi_c \gets \pi_c\Vert\Call{Sort}{\mathcal{B}_c\setminus B_{\mathrm{sh}},K}$
+  \State $s_c \gets \Call{InstructionSpec}{\mathcal{I}_c}$
+  \If{$\neg\,\textit{pin}\land(\mathcal{B}_c\cap B_{\mathrm{sh}}\ne\emptyset)$}
+    \State $L_c \gets \pi_c \Vert \langle s_c\rangle$
   \Else
-    \State $L_c \gets \langle s_c\rangle \Vert \pi_c$ \Comment{Keep the specification first}
+    \State $L_c \gets \langle s_c\rangle \Vert \pi_c$
   \EndIf
 \EndFor
-\State \Return $\{L_c\}_c$
+\State \Return $\{L_c\}_{c\in C}$
 \end{algorithmic}
 \end{algorithm}
 
@@ -238,4 +264,3 @@ where $B_{\mathrm{h2d}}$ and $B_{\mathrm{prefill}}$ are the measured host-to-dev
 \textit{Saving}=\mathcal{P}(q'\mid q,\zeta)\cdot|\pi_{q'}|_{\mathrm{cached}}
 \]
 A prefetch takes only free device space after reclaiming \emph{RETIRED} and \emph{TRANSIENT} entries, so it never interferes with real requests; when no space is free, prefetching pauses briefly but still prevent predicted KV-cache entries from being completely evicted. A prefetch is released when the engine is idle or its deadline $t_{\mathrm{release}}$ approaches.
-

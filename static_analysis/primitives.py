@@ -15,8 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from statistics import median
 from typing import Any, Dict, FrozenSet, List, Optional, Tuple
-
-
+INF:int = 10**18
 def _quantile(xs: List[float], q: float) -> float:
     """Empirical quantile of raw samples; 0.0 when empty."""
     if not xs:
@@ -108,7 +107,7 @@ class Binding:
     kind: BindingKind = BindingKind.PARAM
     source: Optional[Tuple[CallSiteID, str]] = None   # COPY/TAKE: (site, binding name); RESP: (site, json path)
     literal: Optional[str] = None              # the bytes dumped into the prompt for this binding (If heterogeneity is CONST)
-    field: str = ""                            # the walker field thatthis value comes from; "f[]" = one element of field f; "" = not from a field
+    field: str = ""                            # the walker field that this value comes from; "f[]" = one element of field f; "" = not from a field
     scope: str = ""                            # CFG scope where the value expires ("" = session)
     label: str = ""                            # parameter name, e.g. "spec = "
     tail: str = ""                             # constant bytes written after the value, e.g. self's member rows
@@ -345,7 +344,7 @@ class Program:
     # observation is written at every backoff level of its context (see context_levels)
     ctx_counts: Dict[Tuple[CallSiteID, Tuple[int, ...]], Dict[Optional[CallSiteID], int]] = field(default_factory=dict)
     # walker field -> token count of its value the first time the server saw one;
-    # breaks the ties the static classes leave (see decide_layouts)
+    # breaks the ties the call edges leave (see shared_order)
     field_tokens: Dict[str, int] = field(default_factory=dict)
     layout_policy: Optional[bool] = None       # header_last given to decide_layouts; None = not decided
 
@@ -384,46 +383,109 @@ class Program:
         Order prompt fields to maximize shared prefix reuse.
 
         - A field is shared if two or more sites carry it, including its producer.
-        - Put shared fields first, using this program-wide priority:
-            1. Session-scoped fields before fields reset by a scope or loop iteration.
-            2. Constants before copies before append-only histories.
-            3. Fields first seen at an earlier site before those first seen later.
-            4. For fields first seen together, longer values first, using token counts from observe_sizes.
-
+        - Put shared fields first, in one order for all sites, derived from the call
+          edges (see shared_order).
         - Put unshared fields afterward, most stable first.
         - Keep the header first unless the leading field is shared; then move the header after the values.
             """
         self.layout_policy = header_last
         depth = self.site_depth()
-        first: Dict[str, int] = {}
-        carriers: Dict[str, set] = {}
-        scoped: Dict[str, bool] = {}
-        kind: Dict[str, int] = {}
-        for t in self.sites.values():
-            for b in t.params:
-                if not b.field:
-                    continue
-                carriers.setdefault(b.field, set()).add(t.key)
-                first[b.field] = min(first.get(b.field, depth[t.key]), depth[t.key])
-                scoped[b.field] = scoped.get(b.field, False) or b.scope != ""
-                # the field's own kind: append-only if any site sees it extend, else a copy; a producer's VOLATILE or a reset's CONST view does not
-                # describe the field
-                k = 3 if b.heterogeneity is Heterogeneity.EXTEND else 1
-                kind[b.field] = max(kind.get(b.field, 1), k)
+        first: Dict[str, int] = {} # first occurrence depth of a binding
+        carriers: Dict[str, set] = {} # call sites that use the walker.field
+        for template in self.sites.values():
+            for binding in template.params:
+                if len(binding.field) == 0:
+                    continue # the binding doesn't come from walker field
+                carriers.setdefault(binding.field, set()).add(template.key)
+                if binding.field not in first:
+                    first[binding.field] = depth[template.key]
+                else:
+                    first[binding.field] = min(first[binding.field], depth[template.key])
+        shared = [f for f, ks in carriers.items() if len(ks) >= 2]
+        pos = {f: i for i, f in enumerate(self.shared_order(shared, first))}
 
         for t in self.sites.values():
-            def key(n: str, t: PromptTemplate = t) -> Tuple[int, int, int, int, int]:
+            def key(n: str, t: PromptTemplate = t) -> Tuple[int, ...]:
                 b = t.binding(n)
                 f = b.field
+                if f in pos:
+                    return (0, pos[f])
                 size = -self.field_tokens.get(f, 0) if f else 0
-                if f and len(carriers.get(f, ())) >= 2:
-                    return (0, 1 if scoped[f] else 0, kind[f], first[f], size)
                 return (1, 1 if b.scope else 0, LAYOUT_RANK[b.heterogeneity], first.get(f, depth[t.key]), size)
             names = [b.name for b in t.params]
             t.order = sorted(names, key=key)
             lead = t.binding(t.order[0]) if t.order else None
             t.header_last = (header_last and lead is not None and bool(lead.field)
                              and len(carriers.get(lead.field, ())) >= 2 and not t.no_header_last)
+
+    def shared_order(self, shared: List[str], first: Dict[str, int]) -> List[str]:
+        """Return one order of the shared fields, used by every site.
+        @params shared: shared bindings; first: where the bindings are first used.
+
+        On every edge, fields both calls carry unchanged precede fields appended
+        to, which precede the rest. Fields with conflicting requirements are kept
+        together; ties go longer first, then earlier first, then by name."""
+        rank = sorted(shared, key=lambda f: (-self.field_tokens.get(f, 0), first[f], f))
+        before: Dict[str, set] = {f: set() for f in shared}      # f -> fields that must follow f
+        for (src, dst), e in self.edges.items():
+            fs = {b.field for b in self.sites[src].params if b.field in before}
+            fd = {b.field for b in self.sites[dst].params if b.field in before}
+            both = {f for f in fs & fd if not f.endswith("[]")}   # `f[]` is a different element at each call
+            kept = {f for f in both if f not in e.writes}
+            appended = {f for f in both if f in e.writes and f not in e.invalidates}
+            rest = (fs | fd) - kept - appended
+            for f in kept:
+                before[f] |= appended | rest
+            for f in appended:
+                before[f] |= rest
+
+        # Tarjan's algorithm: fields on a cycle of requirements form one component
+        index: Dict[str, int] = {}
+        low: Dict[str, int] = {}
+        group: Dict[str, str] = {}
+        stack: List[str] = []
+
+        def visit(v: str) -> None:
+            index[v] = low[v] = len(index)
+            stack.append(v)
+            for w in sorted(before[v], key=rank.index):
+                if w not in index:
+                    visit(w)
+                    low[v] = min(low[v], low[w])
+                elif w not in group:              # still on the stack
+                    low[v] = min(low[v], index[w])
+            if low[v] == index[v]:
+                while True:
+                    w = stack.pop()
+                    group[w] = v
+                    if w == v:
+                        break
+
+        for f in rank:
+            if f not in index:
+                visit(f)
+
+        # order the components topologically; among the ready ones, take the one
+        # whose best-ranked field comes first
+        members: Dict[str, List[str]] = {}
+        for f in rank:
+            members.setdefault(group[f], []).append(f)
+        succ = {g: {group[w] for f in fs for w in before[f]} - {g} for g, fs in members.items()}
+        indeg = {g: 0 for g in members}
+        for g in members:
+            for h in succ[g]:
+                indeg[h] += 1
+        order: List[str] = []
+        ready = [g for g in members if indeg[g] == 0]
+        while ready:
+            g = min(ready, key=lambda g: rank.index(members[g][0]))
+            ready.remove(g)
+            order += members[g]
+            for h in succ[g]:
+                indeg[h] -= 1
+                if indeg[h] == 0:
+                    ready.append(h)
+        return order
 
     # Static shape
     def add_site(self, t: PromptTemplate) -> PromptTemplate:
@@ -445,9 +507,7 @@ class Program:
             if fresh:
                 e.overrides = dict(overrides)
             else:
-                # Several CFG paths can collapse into the same callsite edge.  An
-                # override is usable only when every path agrees on its origin;
-                # last-writer-wins here would let one branch describe another.
+                # Several CFG paths can collapse into the same callsite edge. An override is usable only when every path agrees on its origin;
                 e.overrides = {
                     name: old for name, old in e.overrides.items()
                     if name in overrides
