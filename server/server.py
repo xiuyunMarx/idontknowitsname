@@ -243,6 +243,8 @@ class Controller:
                 sp["json_schema"] = schema         # constrained decoding
             turn = len(inst.engine_time) if inst is not None else 0
             rid = f"{sess.id}-{sess.epoch}t{turn}-{uuid.uuid4().hex[:8]}"
+            self.engine.request_trace.emit("request_admitted", rid, session_id=sess.id,
+                                           arrival_monotonic_ns=int(req.t_arrive * 1e9))
             ids = self.engine.tokenize(prompt)
             t0 = time.perf_counter()
             admit = self._served_head(sess, inst) if (self.planner is not None and inst is not None) else None

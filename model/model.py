@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from sglang.srt.entrypoints.engine import Engine as SGLangEngine #type: ignore
 
 from model.device_profiler import DeviceProfile
+from model.request_trace import RequestTrace
 import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
 
 # Host-DRAM KV tier (HiCache L2): GPU evictions demote here, prefetch promotes back.
@@ -166,6 +167,7 @@ class Engine:
         # stats of the last real request: ttft_ms, prompt_tokens, and the cached total split
         # by tier (cached_device / cached_host) — a host hit is a promotion, not a recompute.
         self.last: Dict[str, float] = {}
+        self.request_trace = RequestTrace()
 
     def _kv_bytes_per_token(self) -> int:
         """2 (K,V) × layers × kv heads × head_dim × dtype bytes, mirroring sglang's
@@ -186,6 +188,7 @@ class Engine:
 
     def shutdown(self) -> None:
         self.engine.shutdown()
+        self.request_trace.close()
 
     # ---- tokenizer helpers ---------------------------------------------------
 
@@ -264,6 +267,10 @@ class Engine:
         started = time.perf_counter()
         first_token_at = started
         first_token = True
+        completed = False
+        error = None
+        self.request_trace.emit("request_start", request_id, input_tokens=len(ids),
+                                sampling_params=sampling_params or self.sp)
         self._inflight_prefill += 1
         try:
             async for out in await self.engine.async_generate(  #type: ignore
@@ -283,13 +290,22 @@ class Engine:
                     self.last["ttft_ms"] = (first_token_at - started) * 1000
                     self.last["inflight_prefill"] = self._inflight_prefill   # controller's view at first token
                     self.last["inflight_decode"] = self._inflight_decode
+                    self.request_trace.emit("first_token", request_id, **dict(self.last))
                     print(f"[serve] {request_id} " + " ".join(f"{k}={v:.2f}" if isinstance(v, float) else f"{k}={v}"
                                                             for k, v in self.last.items()), flush=True)
                 text = out.get("text") or ""          # cumulative: incremental_streaming_output is off
                 out_tokens = len(out.get("output_ids") or ())
                 if progress is not None:
                     progress(first_token_at, out_tokens)
+            completed = True
+        except BaseException as exc:
+            error = type(exc).__name__ + ": " + str(exc)
+            raise
         finally:
+            self.request_trace.emit("request_end", request_id, completed=completed,
+                                    error=error, received_first_token=not first_token,
+                                    output_tokens=out_tokens,
+                                    duration_ms=(time.perf_counter() - started) * 1000)
             # exactly one decrement per increment, whichever phase we ended in
             if first_token:
                 self._inflight_prefill -= 1

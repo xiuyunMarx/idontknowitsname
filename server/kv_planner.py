@@ -36,7 +36,7 @@ class KVPlanner:
     SCORE_SCALE = 1000          # score -> integer priority step (see model.promote.kv_priority)
     RELEASE_SLACK_S = 0.5       # release ahead of the latest start
     NO_ROOM_COOLDOWN_CYCLES = 5 # cycles every promotion job sits out after one is refused for space
-    PROMOTE_MAX_USAGE = 1.2      # no load-backs while the device pool is fuller than this. Closed for CLIP=4096
+    PROMOTE_MAX_USAGE = 0.6    # no load-backs while the device pool is fuller than this. Closed for CLIP=4096
 
     def __init__(self, engine) -> None:
         self.engine = engine

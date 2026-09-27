@@ -254,6 +254,8 @@ class CacheScoutController:
                 self.seq[sid] += 1
                 self.turn[sid] = 1
             rid = f"{sid}-{self.seq[sid]}t{self.turn[sid]}-{uuid.uuid4().hex[:8]}"
+            self.engine.request_trace.emit("request_admitted", rid, session_id=sid,
+                                           arrival_monotonic_ns=int(req.t_arrive * 1e9))
             prompt = self.engine.render(body["messages"], tools=body.get("tools"))
             sp = {"temperature": 0.7 if body.get("temperature") is None else body.get("temperature"),
                   "max_new_tokens": body.get("max_tokens") or MAX_TOKENS,

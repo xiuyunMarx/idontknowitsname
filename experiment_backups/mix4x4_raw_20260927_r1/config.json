@@ -1,0 +1,98 @@
+{
+  "arms": [
+    [
+      "ours",
+      "server.server",
+      []
+    ],
+    [
+      "relayout",
+      "server.server",
+      [
+        "--lru"
+      ]
+    ],
+    [
+      "vanilla",
+      "server.server",
+      [
+        "--lru",
+        "--no-relayout"
+      ]
+    ],
+    [
+      "kvonly",
+      "server.server",
+      [
+        "--no-relayout"
+      ]
+    ],
+    [
+      "ours_noprefetch",
+      "server.server",
+      [
+        "--no-promote"
+      ]
+    ],
+    [
+      "continuum",
+      "server.continuum_server",
+      []
+    ],
+    [
+      "cachescout",
+      "server.cacheScout_server",
+      []
+    ],
+    [
+      "kvflow",
+      "server.KVFlow_server",
+      []
+    ],
+    [
+      "continuum_relayout",
+      "server.continuum_server",
+      [
+        "--relayout"
+      ]
+    ],
+    [
+      "cachescout_relayout",
+      "server.cacheScout_server",
+      [
+        "--relayout"
+      ]
+    ],
+    [
+      "kvflow_relayout",
+      "server.KVFlow_server",
+      [
+        "--relayout"
+      ]
+    ]
+  ],
+  "lanes": "fact_check=4,BFCL_agent=4,coding_agent=4,doc_analysis=4",
+  "sessions": "coding_agent=6,fact_check=0,BFCL_agent=0,doc_analysis=0",
+  "warmup_sessions_per_program": 1,
+  "session_timeout_s": 1800,
+  "environment": {
+    "MODEL": "Qwen/Qwen3-14B-AWQ",
+    "HOST": "10",
+    "KV": "31830",
+    "SCHED": "fcfs",
+    "GRAMMAR_BACKEND": "xgrammar",
+    "SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION": "4096",
+    "FC_MIN_ROUNDS": "2",
+    "FC_TOOL_DELAY_S": "2",
+    "BF_TOOL_DELAY_S": "2",
+    "CA_TOOL_DELAY_S": "2",
+    "DA_DOC_CHARS": "40000",
+    "DA_PAGE_WINDOW": "4"
+  },
+  "python": "/home/xiaoyu/miniconda3/envs/sglang/bin/python",
+  "batch_dir": "/home/xiaoyu/idontknowitsname/benchmark/mixed_results/mix4x4_raw_20260927_r1",
+  "backup_dir": "/home/xiaoyu/idontknowitsname/experiment_backups/mix4x4_raw_20260927_r1",
+  "analysis_window": null,
+  "fresh_server_per_arm": true,
+  "tool_cache_policy": "independent copies of the same initial caches"
+}

@@ -333,6 +333,8 @@ class ContinuumController:
                 self.seq[sid] += 1
                 self.turn[sid] = 1
             rid = f"{sid}-{self.seq[sid]}t{self.turn[sid]}-{uuid.uuid4().hex[:8]}"
+            self.engine.request_trace.emit("request_admitted", rid, session_id=sid,
+                                           arrival_monotonic_ns=int(req.t_arrive * 1e9))
             prompt = self.engine.render(body["messages"], tools=body.get("tools"))
             ids = self.engine.tokenize(prompt)
             reused = self.pinner.note_reuse(closed, ids)

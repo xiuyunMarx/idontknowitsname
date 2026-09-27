@@ -100,10 +100,10 @@ PROGRAMS = {
 
 
 class Runner:
-    def __init__(self, tag: str, timeout_s: float):
-        self.out_dir = os.path.join(RESULTS, tag)
+    def __init__(self, tag: str, timeout_s: float, out_dir: Optional[str] = None):
+        self.out_dir = out_dir or os.path.join(RESULTS, tag)
         self.log_dir = os.path.join(self.out_dir, "logs")
-        os.makedirs(self.log_dir, exist_ok=True)
+        os.makedirs(self.log_dir, exist_ok=out_dir is None)
         self.timeout_s = timeout_s
         self.records: List[dict] = []
         self.lock = threading.Lock()
@@ -112,6 +112,13 @@ class Runner:
         self.env = dict(os.environ)
         for k, v in ENV_DEFAULTS.items():
             self.env.setdefault(k, v)
+        self.records_file = open(os.path.join(self.out_dir, "sessions.jsonl"), "w", buffering=1)
+        self.events_file = open(os.path.join(self.out_dir, "session_events.jsonl"), "w", buffering=1)
+
+    def event(self, event: str, **fields) -> None:
+        with self.lock:
+            self.events_file.write(json.dumps({"event": event, "time_ns": time.time_ns(),
+                                               "monotonic_ns": time.monotonic_ns(), **fields}) + "\n")
 
     def take(self, program: str, tasks: List[dict], wrap: bool) -> Optional[dict]:
         with self.lock:
@@ -131,10 +138,14 @@ class Runner:
         with open(log, "w") as out:
             proc = subprocess.Popen([JAC, "run", os.path.join(APPS, f"{program}.jac")],
                                     cwd=REPO, env=env, stdout=out, stderr=subprocess.STDOUT)
+            self.event("session_start", program=program, phase=phase, idx=task["idx"],
+                       pid=proc.pid, lane=lane, fixed=fixed, t0=t0,
+                       input=task["input"], expected=task["expected"])
             try:
                 rc = proc.wait(timeout=self.timeout_s)
             except subprocess.TimeoutExpired:
                 proc.kill()
+                proc.wait()
                 rc = -9
         t1 = time.time()
         verdict, rounds, calls = "", 0, 0
@@ -151,6 +162,8 @@ class Runner:
                "rc": rc, "t0": t0, "t1": t1, "wall": round(t1 - t0, 3), "lane": lane, "fixed": fixed}
         with self.lock:
             self.records.append(rec)
+            self.records_file.write(json.dumps(rec) + "\n")
+        self.event("session_end", **rec)
         print(f"[{program}] {phase} {task['idx']} rc={rc} wall={rec['wall']}s rounds={rounds} "
               f"verdict={verdict}/{task['expected']}", flush=True)
         return rec
@@ -253,6 +266,7 @@ def main() -> int:
     ap.add_argument("--warmup", type=int, default=1, help="sequential sessions per program before measuring")
     ap.add_argument("--server", default="localhost:8964")
     ap.add_argument("--server-log", default="", help="the server's stdout, for cache and prediction stats")
+    ap.add_argument("--out-dir", help="fresh directory for this run's raw data and summaries")
     ap.add_argument("--no-register", action="store_true")
     ap.add_argument("--windows", default="600,900,1200", help="fixed windows (s) for completion counts")
     ap.add_argument("--timeout", type=float, default=1800.0, help="per session (s)")
@@ -273,7 +287,13 @@ def main() -> int:
 
     if not a.no_register:
         register_programs(a.server, list(lanes))
-    runner = Runner(a.tag, a.timeout)
+    runner = Runner(a.tag, a.timeout, a.out_dir)
+    with open(os.path.join(runner.out_dir, "run_config.json"), "w") as f:
+        json.dump({"arguments": vars(a), "lanes": lanes, "sessions": sessions,
+                   "task_counts": {p: len(t) for p, t in tasks.items()},
+                   "jac": JAC, "created_time_ns": time.time_ns(),
+                   "environment": {k: v for k, v in runner.env.items()
+                                   if k.startswith(("FC_", "BF_", "CA_", "DA_"))}}, f, indent=2)
 
     for p in lanes:
         for _ in range(a.warmup):
@@ -290,6 +310,7 @@ def main() -> int:
             t = threading.Thread(target=runner.lane, args=(p, tasks[p], sessions.get(p, 0)), name=f"{p}-{i}")
             threads.append(t)
     t_start = time.time()
+    runner.event("measurement_start", t_start=t_start, lanes=lanes, sessions=sessions)
     for t in threads:
         t.start()
     fixed = [t for t in threads if sessions.get(t.name.rsplit("-", 1)[0], 0) > 0]
@@ -299,9 +320,9 @@ def main() -> int:
     for t in threads:
         t.join()
 
-    with open(os.path.join(runner.out_dir, "sessions.jsonl"), "w") as f:
-        for r in runner.records:
-            f.write(json.dumps(r) + "\n")
+    runner.event("measurement_end")
+    runner.records_file.close()
+    runner.events_file.close()
 
     pids = {r["pid"]: r["program"] for r in runner.records if r["phase"] == "measured"}
     server = parse_server_log(a.server_log, pids) if a.server_log else {}
@@ -316,7 +337,7 @@ def main() -> int:
     for p, row in summary["programs"].items():
         print(f"[{a.tag}/{p}] " + " ".join(f"{k}={v}" for k, v in row.items()), flush=True)
 
-    csv_path = os.path.join(RESULTS, "summary.csv")
+    csv_path = os.path.join(runner.out_dir if a.out_dir else RESULTS, "summary.csv")
     rows = [dict(tag=a.tag, program=p, **row) for p, row in summary["programs"].items()]
     fields = ["tag", "program"] + sorted({k for r in rows for k in r} - {"tag", "program"})
     new = not os.path.exists(csv_path)
