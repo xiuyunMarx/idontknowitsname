@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # draw.py reads the CSVs and writes the PDFs of its own directory.
-for workload in fact_check coding BFCL; do
+for workload in fact_check coding BFCL finance; do
     (cd "$workload" && python draw.py)
 done
 python draw_legend.py

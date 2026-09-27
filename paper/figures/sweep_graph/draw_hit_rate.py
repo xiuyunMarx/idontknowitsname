@@ -14,6 +14,7 @@ WORKLOADS = [
     ("fact_check", "fact", "Fact check", set()),
     ("coding", "coding", "Coding", set()),
     ("BFCL", "bfcl", "BFCL", {32}),
+    ("finance", "finance", "Finance", set()),
 ]
 # Rows top to bottom: external baselines, each followed by its re-laid variant,
 # then the ablated variants, then the full system.

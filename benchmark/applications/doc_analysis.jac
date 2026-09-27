@@ -18,9 +18,9 @@ obj Fact {
     has page: int = 0;
 }
 
-sem Fact.statement = "One fact needed to answer the question: the figure, its unit and fiscal period.";
-sem Fact.quote = "The sentence or table row of the document the fact comes from, verbatim.";
-sem Fact.page = "The page number of the quote, from the page markers in the document.";
+sem Fact.statement = "One fact the question needs; for a figure, include its unit and fiscal period.";
+sem Fact.quote = "The sentence or table row the fact comes from, copied from the document.";
+sem Fact.page = "The page of the quote, from the [page N] marker above it.";
 
 
 obj Analysis {
@@ -28,8 +28,8 @@ obj Analysis {
     has result: str = "";
 }
 
-sem Analysis.reasoning = "The computation or comparison performed on the facts, step by step.";
-sem Analysis.result = "The resulting value or conclusion, with its unit.";
+sem Analysis.reasoning = "The steps from the facts to the result, each with its figures.";
+sem Analysis.result = "The value or conclusion the steps reach, with its unit.";
 
 
 obj Audit {
@@ -37,8 +37,8 @@ obj Audit {
     has issues: list[str] = [];
 }
 
-sem Audit.passed = "Whether every fact is faithful to the document and the analysis follows from the facts.";
-sem Audit.issues = "Each discrepancy found, or empty when the analysis holds.";
+sem Audit.passed = "True if every fact matches the document and the analysis is correct.";
+sem Audit.issues = "Each error found in the facts or the analysis; empty if none.";
 
 
 obj Answer {
@@ -46,8 +46,8 @@ obj Answer {
     has rationale: str = "";
 }
 
-sem Answer.answer = "The final answer: a number with its unit, or a short phrase.";
-sem Answer.rationale = "One paragraph justifying the answer from the facts.";
+sem Answer.answer = "The answer to the question: a figure with its unit, or a short phrase.";
+sem Answer.rationale = "One paragraph explaining how the facts support the answer.";
 
 
 walker DocTask {
@@ -77,10 +77,10 @@ node Extractor {
     }
 }
 
-sem Extractor = "Reads the filing pages and pulls out the facts the question needs.";
-sem Extractor.extract = "List every fact from `document` needed to answer `question`: the figures with their units and fiscal periods, each quoted from the document with its page. Do not compute and do not answer.";
-sem Extractor.extract.document = "The relevant pages of the filing.";
-sem Extractor.extract.question = "The question to be answered.";
+sem Extractor = "Finds in the filing the facts a question needs.";
+sem Extractor.extract = "List every fact in the document that the question needs. For each, give its figure with unit and fiscal period, quote the sentence or table row it comes from, and give its page. Do not compute or answer.";
+sem Extractor.extract.document = "Pages of the filing, each after a [page N] marker.";
+sem Extractor.extract.question = "A question about the filing.";
 
 
 node Analyst {
@@ -97,11 +97,11 @@ node Analyst {
     }
 }
 
-sem Analyst = "Derives the answer from the extracted facts.";
-sem Analyst.compute = "Using `facts` and, where a fact is missing, `document`, perform the computation or comparison `question` asks for. Show every step with its figures. State the result with its unit.";
-sem Analyst.compute.document = "The relevant pages of the filing.";
-sem Analyst.compute.question = "The question to be answered.";
-sem Analyst.compute.facts = "The facts the extractor found, in document order.";
+sem Analyst = "Computes the answer from the extracted facts.";
+sem Analyst.compute = "Work out the answer to the question from the facts, taking any missing fact from the document. Show each step with its figures and give the result with its unit.";
+sem Analyst.compute.document = "Pages of the filing, each after a [page N] marker.";
+sem Analyst.compute.question = "A question about the filing.";
+sem Analyst.compute.facts = "The facts the extractor found.";
 
 
 node Auditor {
@@ -119,12 +119,12 @@ node Auditor {
     }
 }
 
-sem Auditor = "Checks the facts against the filing and the analysis against the facts.";
-sem Auditor.check = "Verify each of `facts` against `document` and verify that `analysis` answers `question` from those facts without arithmetic or unit errors. Report every discrepancy.";
-sem Auditor.check.document = "The relevant pages of the filing.";
-sem Auditor.check.question = "The question to be answered.";
+sem Auditor = "Checks the extracted facts and the analysis for errors.";
+sem Auditor.check = "Check each fact against the document, and check that the analysis answers the question from those facts with no arithmetic or unit errors. Report every error.";
+sem Auditor.check.document = "Pages of the filing, each after a [page N] marker.";
+sem Auditor.check.question = "A question about the filing.";
 sem Auditor.check.facts = "The facts the extractor found.";
-sem Auditor.check.analysis = "The analyst's computation and result.";
+sem Auditor.check.analysis = "The analyst's steps and result.";
 
 
 node Writer {
@@ -154,11 +154,11 @@ node Writer {
 }
 
 sem Writer = "Writes the final answer.";
-sem Writer.answer = "Answer `question` from `facts` and `analysis`. If `audit` reports issues, correct the answer accordingly. Give the number with its unit, or the phrase the question asks for.";
-sem Writer.answer.question = "The question to be answered.";
+sem Writer.answer = "Answer the question from the facts and the analysis, fixing any error the audit reports. Give a figure with its unit, or the phrase the question asks for.";
+sem Writer.answer.question = "A question about the filing.";
 sem Writer.answer.facts = "The facts the extractor found.";
-sem Writer.answer.analysis = "The analyst's computation and result.";
-sem Writer.answer.audit = "The auditor's verdict and issues.";
+sem Writer.answer.analysis = "The analyst's steps and result.";
+sem Writer.answer.audit = "The auditor's verdict and the errors it found.";
 
 
 def numbers(text: str) -> list[float] {
