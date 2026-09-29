@@ -18,7 +18,7 @@ We compare \sysname against the following serving systems, together with two abl
 
 
 \subsubsection{Workloads}
-We evaluate \sysname on four representative agent workloads, written with ByLLM~\cite{dantanarayana2025mtp} in Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 20 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.
+We evaluate \sysname on four representative agent workloads, written with ByLLM~\cite{dantanarayana2025mtp} in Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 16 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.
 
 \subsection{End-to-End Performace of \sysname}
 \begin{figure*}
@@ -89,7 +89,7 @@ We evaluate \sysname on four representative agent workloads, written with ByLLM~
 We tested \sysname under different number concurrent workflows, and a mixed workloads. Across these workloads, we compare average job completion time(JCT), average time-to-first-token(TTFT) and throughput(prompt tokens served per minute) for the mixed workload.
 
 \paragraph{Performance on mixed workload}
-As shown in Table~\ref{tab:mixed-workload}, \sysname raises throughput to 1.46$\times$ that of Vanilla SGLang and reduces average TTFT by 25\%. Continuum and CacheScout perform close to Vanilla SGLang on all three metrics. The gain of \sysname comes from a higher cache hit rate in both device and host memory.
+As shown in Table~\ref{tab:mixed-workload}, \sysname raises throughput to 1.46$\times$ that of Vanilla SGLang and reduces average TTFT by 30\%. Continuum and CacheScout perform close to Vanilla SGLang on all three metrics. The gain of \sysname comes from a higher cache hit rate in both device and host memory.
 
 \begin{table}[h]
 \centering
@@ -123,14 +123,10 @@ KVFlow                  & 116.0 & 34.1 & 10.8 & 10.1 & 20.9 \\
 \end{table}
 
 
-\paragraph{Average JCT}
-Across the four workloads, \sysname reduces average JCT by 6--48\% compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}), and by 34\% on the mixed workload (Table~\ref{tab:mixed-workload}). When concurrency is low, adaptive prompt re-layout accounts for nearly all of the gain. As concurrency grows, the gain of re-layout alone shrinks; proactive KV-cache scheduling carries the gain: it evicts volatile tails first and protects the reusable heads that predicted calls will need. On fact check, scheduling contributes from the lowest concurrency.
+\paragraph{Per-workload sweeps}
+Across the four workloads, \sysname reduces average JCT by 6--48\% and average TTFT by 12--78\% compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}). When concurrency is low, adaptive prompt re-layout accounts for nearly all of the gain. As concurrency grows, the gain of re-layout alone shrinks and proactive KV-cache scheduling carries it: it evicts volatile tails first and protects the reusable heads that predicted calls will need. On fact check, scheduling contributes from the lowest concurrency. On fact check and BFCL, and on finance at low concurrency, the TTFT reduction exceeds the JCT reduction, because a reused prefix skips its prefill, whereas JCT also includes decoding and tool execution, which the KV-cache does not shorten.
 
-Except for an 8--13\% reduction on BFCL at $c=4$, Continuum and CacheScout perform close to Vanilla SGLang. Both exploit predictability between invocations but treat each prompt as an opaque token sequence. In the original prompt order, volatile bindings often precede reusable ones, making prefixes hold little that later calls can reuse. \sysname-KV-only, which schedules on the original prompt order, shows the same limit.
-
-
-\paragraph{Average TTFT}
-Across the four workloads, \sysname reduces average TTFT by 12--78\% compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}), and by 25\% on the mixed workload (Table~\ref{tab:mixed-workload}). As with JCT, adaptive prompt re-layout accounts for nearly all of the gain at low concurrency, and proactive KV-cache scheduling carries it as concurrency grows. On fact check and BFCL, and on finance at low concurrency, the TTFT reduction exceeds the JCT reduction, because a reused prefix skips its prefill, whereas JCT also includes decoding and tool execution which the KV-cache does not shorten. Continuum and CacheScout show the same limit as in JCT.
+Except for an 8--13\% reduction on BFCL at $c=4$, Continuum, CacheScout and KVFlow perform close to Vanilla SGLang on both metrics. They exploit predictability between invocations but treat each prompt as an opaque token sequence. In the original prompt order, volatile bindings often precede reusable ones, making prefixes hold little that later calls can reuse. \sysname-KV-only, which schedules on the original prompt order, shows the same limit.
 
 \begin{table}[tb]
 \centering
