@@ -32,10 +32,13 @@ SHORT = {"fact_check": "fact", "BFCL_agent": "bfcl", "coding_agent": "coding"}
 ARM_ORDER = ["vanilla", "kvonly", "relayout", "ours", "continuum", "cachescout", "kvflow", "kvflow_relayout", "continuum_relayout", "cachescout_relayout"]
 
 
-def load(prefix: str) -> dict:
+def load(prefix: str, dirs=DIRS) -> dict:
+    """Driver dirs named <prefix>_<arm>; under an explicit --dir, a bare <arm>/ name works too."""
     arms = {}
-    for d in sorted(d for base in DIRS for d in glob.glob(os.path.join(base, f"{prefix}_*")) if os.path.isdir(d)):
-        arm = os.path.basename(d)[len(prefix) + 1:]
+    pattern = f"{prefix}_*" if dirs is DIRS else "*"
+    for d in sorted(d for base in dirs for d in glob.glob(os.path.join(base, pattern)) if os.path.isdir(d)):
+        base = os.path.basename(d)
+        arm = base[len(prefix) + 1:] if base.startswith(prefix + "_") else base
         if arm in arms:
             continue
         try:
@@ -51,10 +54,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--prefix", default="mix20h10")
     ap.add_argument("--out", default=os.path.join(HERE, "mixed_results", "mix", "mix_h10.csv"))
+    ap.add_argument("--dir", action="append", help="directory holding the <prefix>_<arm> driver dirs (default: mix/ and cache/)")
     a = ap.parse_args()
-    arms = load(a.prefix)
+    dirs = a.dir or DIRS
+    arms = load(a.prefix, dirs)
     if not arms:
-        print(f"no {a.prefix}_* dirs under {DIRS}")
+        print(f"no {a.prefix}_* dirs under {dirs}")
         return 1
     window = min(s["full_load_s"] for s, _ in arms.values())
     ref = "vanilla" if "vanilla" in arms else ("relayout" if "relayout" in arms else None)
