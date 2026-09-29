@@ -34,9 +34,9 @@ DISPLAY_NAMES = {
     "cachescout_relayout": "CacheScout+Relayout",
     "kvflow": "KVFlow",
     "kvflow_relayout": "KVFlow+Relayout",
-    "kvonly": "KVOnly",
-    "relayout": "Relayout",
-    "ours": "Ours",
+    "kvonly": "ANON-KV-only",
+    "relayout": "ANON-Relayout-only",
+    "ours": "ANON",
 }
 GROUP_GAP = 0.4  # blank columns between two workloads
 

@@ -37,15 +37,15 @@ def draw_line_chart(records: dict):
     # Fixed styles keep the two figures visually consistent.
     display_names = {
         "vanilla": "Vanilla",
-        "kvonly": "KVOnly",
-        "relayout": "Relayout",
+        "kvonly": "ANON-KV-only",
+        "relayout": "ANON-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
         "continuum_relayout": "Continuum+Relayout",
         "cachescout_relayout": "CacheScout+Relayout",
         "kvflow": "KVFlow",
         "kvflow_relayout": "KVFlow+Relayout",
-        "ours": "Ours",
+        "ours": "ANON",
     }
     # A *_relayout arm reuses its base arm's color and marker; it is drawn
     # dashed with a hollow marker.

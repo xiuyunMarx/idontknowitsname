@@ -10,15 +10,15 @@ def draw_legend(output_file: str) -> Path:
     # Styles must match the ones in */draw.py.
     display_names = {
         "vanilla": "Vanilla",
-        "kvonly": "KVOnly",
-        "relayout": "Relayout",
+        "kvonly": "ANON-KV-only",
+        "relayout": "ANON-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
         "continuum_relayout": "Continuum+Relayout",
         "cachescout_relayout": "CacheScout+Relayout",
         "kvflow": "KVFlow",
         "kvflow_relayout": "KVFlow+Relayout",
-        "ours": "Ours",
+        "ours": "ANON",
     }
     colors = {
         "vanilla": "#4D4D4D",
