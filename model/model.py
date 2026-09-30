@@ -60,6 +60,10 @@ class KVLedger:
     def tier(self, h: int) -> str:
         return "device" if h in self._device else ("host" if h in self._host else "gone")
 
+    def clear(self) -> None:
+        self._device.clear()
+        self._host.clear()
+
     def land(self, toks: List[int], now: float) -> None:
         """Record that every prefix block of `toks` was just computed on the device."""
         for h in self.hashes(toks):
@@ -342,6 +346,19 @@ class Engine:
                 "cached_host": detail.get("host") or 0}
 
     # ---- scheduler RPCs ------------------------------------------------------
+
+    async def flush(self) -> bool:
+        """Drop every cached KV entry, device and host tiers, and the ledger with it.
+        sglang refuses unless the engine is idle, so call it between runs."""
+        out = await self.engine.tokenizer_manager.flush_cache()
+        if isinstance(out, list):
+            out = out[0] if out else None
+        ok = bool(getattr(out, "success", out))
+        if ok:
+            self.ledger.clear()
+            self.last = {}
+        print(f"[flush] ok={ok}", flush=True)
+        return ok
 
     async def promote(self, toks: List[int], request_id: str, wait: bool = False) -> Optional[bool]:
         """Host→device promotion (and LRU touch) of `toks`' cached prefix with no

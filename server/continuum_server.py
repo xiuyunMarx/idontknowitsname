@@ -507,17 +507,18 @@ class ContinuumPolicy:
                 await self._push()
 
 
-def _relayout_controller(policy, model: str, server: HttpServer, **engine_kwargs):
-    """The guard controller (registration, callsite identification, re-layout) without
-    its planner, host admission off, the policy in the planner slot, and the engine
-    call observed so the policy sees every request and reply."""
+def _relayout_controller(policy, model: str, server: HttpServer, enable_relayout: bool = True, **engine_kwargs):
+    """The guard controller (registration, callsite identification, re-layout unless
+    enable_relayout is off) without its planner, host admission off, the policy in
+    the planner slot, and the engine call observed so the policy sees every request
+    and reply."""
     from server.server import Controller
 
     class RelayoutController(Controller):
         def _served_head(self, sess, inst) -> int:
             return 1 << 30      # admit the whole prompt to the host tier: no admission
 
-    ctrl = RelayoutController(model, server, plan=False, enable_relayout=True, **engine_kwargs)
+    ctrl = RelayoutController(model, server, plan=False, enable_relayout=enable_relayout, **engine_kwargs)
     policy.ctrl = ctrl
     ctrl.planner = policy
     inner = ctrl.engine.generate

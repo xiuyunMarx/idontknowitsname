@@ -121,6 +121,11 @@ class Controller:
             while True:
                 if req.kind == "close":
                     req.reply(self._finalize(req.session))
+                elif req.kind == "flush":
+                    try:
+                        req.reply(await self.engine.flush())
+                    except Exception as e:
+                        req.fail(e)
                 elif req.kind == "register":
                     try:
                         req.reply(self.register(req.body))

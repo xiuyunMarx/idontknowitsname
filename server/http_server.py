@@ -41,7 +41,7 @@ REPLY_TIMEOUT_S = 600.0            # no reply by then: the client gets a 504
 @dataclass
 class PendingRequest:
     """One accepted HTTP request, parked in the pool until the controller replies."""
-    kind: str                      # "completion" | "close"
+    kind: str                      # "completion" | "close" | "register" | "flush"
     body: Dict[str, Any]           # parsed JSON body, as sent
     peer: str                      # remote address
     session: str                   # body["user"], or "anon:<peer>" when absent
@@ -92,6 +92,7 @@ class HttpServer:
         app.router.add_post("/v1/chat/completions", self._completions)
         app.router.add_post("/v1/sessions/close", self._close)
         app.router.add_post("/v1/programs/register", self._register)
+        app.router.add_post("/v1/cache/flush", self._flush)
         app.router.add_get("/health", self._health)
         self._runner = web.AppRunner(app)
         await self._runner.setup()
@@ -159,6 +160,16 @@ class HttpServer:
         except Exception as e:
             return _error(500, f"{type(e).__name__}: {e}")
         return web.json_response(result if isinstance(result, dict) else {"ok": bool(result)})
+
+    async def _flush(self, request: web.Request) -> web.Response:
+        """Drop the KV cache between benchmark runs on one server (guard controller only)."""
+        try:
+            flushed = await self._submit("flush", {}, request.remote or "")
+        except asyncio.TimeoutError:
+            return _error(504, f"no reply within {self.reply_timeout_s:.0f}s")
+        except Exception as e:
+            return _error(500, f"{type(e).__name__}: {e}")
+        return web.json_response({"flushed": bool(flushed)})
 
     async def _health(self, request: web.Request) -> web.Response:
         return web.json_response({"ok": True, "pooled": self.pool.qsize()})

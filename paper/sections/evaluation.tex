@@ -14,8 +14,10 @@ We compare \sysname against the following serving systems, together with two abl
     \item \textbf{KVFlow}~\cite{pan2025kvflow} uses an Agent Step Graph to build a workflow-aware KV cache management framework for agentic workloads.
     \item \textbf{\sysname-KV-only} enables proactive KV-cache scheduling but disables adaptive prompt re-layout.
     \item \textbf{\sysname-Relayout-only} enables adaptive prompt re-layout but replaces proactive KV-cache scheduling with LRU eviction.
-\end{enumerate*}
+\end{enumerate*} 
 
+All baselines are reimplemented on \sysname's SGLang fork with their original scheduling algorithms. Under re-layout, CacheScout identifies call sites by the call-site ID from the framework rather than by request
+prefix, since the specification no longer sits in the prefix.
 
 \subsubsection{Workloads}
 We evaluate \sysname on four representative agent workloads, written with ByLLM~\cite{dantanarayana2025mtp} in Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 16 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.

@@ -2,7 +2,8 @@
 \section{Design}
 \label{sec:design}
 \subsection{Overview}
-In this section, We present the design of \sysname, an effcient serving engine for program-integrated LLM agents. \sysname adopts a two-tier compiler-server co-design. On compiler side, \sysname performs static analysis to gather heterogeneity metadata, and on the server side, \sysname leverages this metadata to optimize KV-cache scheduling. We first introduce an interface \emph{Agent Descriptor} to bridge the compiler and server, together with the methodology of their construction. Second, we present a heterogeneity-aware KV-cache scheduling strategy that leverages the agent descriptor to enhance serving performance.
+In this section, We present the design of \sysname. \sysname adopts a two-tier compiler-server co-design. On compiler side, \sysname performs static analysis to gather heterogeneity metadata, and on the server side, \sysname leverages this metadata to optimize KV-cache scheduling. 
+We first introduce an interface \emph{Agent Descriptor} to bridge the compiler and server. Second, we present a heterogeneity-aware KV-cache scheduling strategy that leverages the agent descriptor to enhance serving performance. 
 
 \begin{figure*}[t]
     \centering
@@ -19,12 +20,11 @@ In this section, We present the design of \sysname, an effcient serving engine f
 % \end{figure}
 
 \subsection{Agent Descriptor}
-Here we define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. An agent descriptor contains two parts: 
+Here we define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where the \staticAnalysis to provide a skeleton, while the server refines the weight with runtime observations. An agent descriptor contains two parts: 
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Call-site Template:} It provides a heuristic of the components' lifetime, sharing scope and evolution pattern.
     \item \textbf{Workflow Automaton:} It contains the program-level structure of an agent, including workflow dependencies, execution time estimation and transition probabilities.
 \end{enumerate*} 
-\sysname's two-tier design let the compiler to provide a skeleton, while the server refines the weight with runtime observations. Two sides are therefore connected by this agent descriptor, and jointly serve a more effcient KV-cache scheduling strategy. 
 
 \subsubsection{Call-site Template}
 \label{sec:template}
@@ -64,17 +64,13 @@ An agent typically consists of a sequence of dependent LLM calls whose workflow 
 \mathcal{A} = (Q, P, q_0, F, \mathcal{T}),
 \]
 where:
-\begin{enumerate}
-    \item $Q$ is the set of states. Each state $q\in Q$ is labelled by an LLM callsite; 
-
+\begin{enumerate*}[label=(\roman*)]
+    \item $Q$ is the set of states. Each state $q\in Q$ is labelled by an LLM callsite;
     \item $P$ denotes the transition probabilities between states.
-
     \item $q_0 \in Q$ is the entrance callsite.
-
     \item $F$ specifies the termination probability of the agent at each state.
-
     \item $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ denotes the timing annotations associated with states and transitions, where $D^{\mathrm{exec}}_q$ is the execution-time distribution of the LLM callsite represented by state $q$, and $D^{\mathrm{gap}}_{q,q'}$ is the inter-call gap distribution between the completion of callsite $q$ and the invocation of its successor $q'$.
-\end{enumerate}
+\end{enumerate*}
 
 Static analysis fixes the shape of this automaton, while its weights comes from runtime logs. The states, the entry, the transitions among them, and final states are recovered from code. $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ and $P$ are often unknown at compile time and model dependent. The server observes these online and accumulates them across sessions, updating the statistical model of the agent consistently. Together the two halves give the server a forward-looking view of a session.
 
@@ -120,39 +116,24 @@ whose components are defined as follows:
 \caption{Layout decision algorithm}
 \label{alg:layout}
 \begin{algorithmic}[1]
+\algtext*{EndFor}\algtext*{EndIf}
 \Require Descriptor $(\{\mathcal{T}_c\}_{c\in C},\mathcal{A})$, lengths $\ell$, switch $\textit{pin}$
 \Ensure Layouts $\{L_c\}_{c\in C}$
-\State $J(b) \gets (-\ell(b),\textit{depth}(b))$
-\State $B_{\mathrm{sh}} \gets \{b : |\{c\in C : b\in\mathcal{B}_c\}| > 1\}$
-\State $R \gets \emptyset$
+\State $B_{\mathrm{sh}} \gets \{b : |\{c\in C : b\in\mathcal{B}_c\}| > 1\}$;\ \ $R \gets \emptyset$
 \ForAll{$e=(q,q')\in\Call{Edges}{\mathcal{A}}$}
   \State $B_e \gets B_{\mathrm{sh}}\cap(\mathcal{B}_q\cup\mathcal{B}_{q'})$
-  \State $U_e \gets \Call{UnchangedBindings}{e,\mathcal{B}_q\cap\mathcal{B}_{q'}}$
-  \State $A_e \gets \Call{AppendOnlyBindings}{e,\mathcal{B}_q\cap\mathcal{B}_{q'}}$
-  \ForAll{$b\in B_e$}
-    \State $t_e(b) \gets \begin{cases}
-      1 & b\in U_e\\
-      2 & b\in A_e\\
-      3 & \text{otherwise}
-    \end{cases}$
-  \EndFor
+  \State $t_e(b) \gets 1$ if \textit{unchanged}, $2$ if \textit{append-only}, else $3$
   \State $R \gets R\cup\{(b,b')\in B_e^2 : t_e(b)<t_e(b')\}$
 \EndFor
-\State $D \gets \Call{ClusterConflicts}{(B_{\mathrm{sh}},R)}$
-\State $J_{\min}(S) \gets \min_{b\in S}J(b)$
-\State $\sigma \gets \Call{TopoSort}{D,J_{\min}}$ \Comment{Min-key first}
-\State $\pi_{\mathrm{sh}} \gets \langle\,\rangle$
-\ForAll{$S\in\sigma$}
-  \State $\pi_{\mathrm{sh}} \gets \pi_{\mathrm{sh}}\Vert\Call{Sort}{S,J}$
-\EndFor
+\State $J(b) \gets (-\ell(b),\textit{depth}(b))$;\ \ $J_{\min}(S) \gets \min_{b\in S}J(b)$
+\State $D \gets \Call{ClusterConflicts}{B_{\mathrm{sh}},R}$
+\State $\langle S_1,\dots,S_k\rangle \gets \Call{TopoSort}{D,J_{\min}}$ \Comment{Min-key first}
+\State $\pi_{\mathrm{sh}} \gets \Call{Sort}{S_1,J}\Vert\cdots\Vert\Call{Sort}{S_k,J}$
 \ForAll{$c\in C$}
-  \State $\pi_c \gets \langle b\in\pi_{\mathrm{sh}} : b\in\mathcal{B}_c\rangle$
-  \State $\pi_c \gets \pi_c\Vert\Call{Sort}{\mathcal{B}_c\setminus B_{\mathrm{sh}},K}$
+  \State $\pi_c \gets \langle b\in\pi_{\mathrm{sh}} : b\in\mathcal{B}_c\rangle\Vert\Call{Sort}{\mathcal{B}_c\setminus B_{\mathrm{sh}},K}$
   \State $s_c \gets \Call{InstructionSpec}{\mathcal{I}_c}$
-  \If{$\neg\,\textit{pin}\land(\mathcal{B}_c\cap B_{\mathrm{sh}}\ne\emptyset)$}
-    \State $L_c \gets \pi_c \Vert \langle s_c\rangle$
-  \Else
-    \State $L_c \gets \langle s_c\rangle \Vert \pi_c$
+  \State $L_c \gets \langle s_c\rangle \Vert \pi_c$
+  \If{$\neg\,\textit{pin}\land(\mathcal{B}_c\cap B_{\mathrm{sh}}\ne\emptyset)$} $L_c \gets \pi_c \Vert \langle s_c\rangle$
   \EndIf
 \EndFor
 \State \Return $\{L_c\}_{c\in C}$
@@ -168,10 +149,10 @@ While adaptive prompt re-layout improves prefix reuse only by reshaping the requ
 Since re-layout already places the stable and shared bindings at the front, a served prompt naturally divides into two segments: a reusable head and a volatile tail. In a full prompt, what behind the reusable head are all classified into volatile tail.
 
 Reusable head consists two parts: a \emph{static prefix} and a \emph{session-shared extension}:
-\begin{itemize}
+\begin{enumerate*}[label=(\roman*)]
     \item \textbf{Static Prefix} is what the call site emits without runtime inputs, and its values outlives single session. It includes the invariant specifications $\mathcal{I}_c$ together with the CONST bindings that re-layout has placed right behind them.
     \item \textbf{Session-shared Extension} is the run of bindings behind the static prefix that a later call of the same session will emit again at the same position.
-\end{itemize}
+\end{enumerate*}
 The two parts are derived from agent program itself. $\mathcal{H}_c$ names the provenance of each binding, and the automaton $\mathcal{A}$ names the transitions between call sites. Additionally with the decided layout of each call-site, we determine the reusable head by jointly analyze them. 
 
 
@@ -220,12 +201,12 @@ As we discussed in \S\ref{sec:motivation}, different components have different l
 
 \paragraph{Bands.}
 We categorize KV-cache entries into four bands, from first evicted to last:
-\begin{enumerate}
+\begin{enumerate*}[label=(\arabic*)]
     \item \textbf{RETIRED:} the volatile tail of prompt belonging to completed sessions. 
     \item \textbf{TRANSIENT:} the volatile tail of a served prompt of a live session. The session that produced them will not present them again.
     \item \textbf{UNCLASSIFIED:} entries that analysis cannot categorize, such as the prompts of a program that was never registered. They keep the engine's default treatment.
     \item \textbf{PLANNED:} prefixes that a predicted call will reuse. Inside this band entries are ordered by the expected value of keeping them resident, defined next.
-\end{enumerate}
+\end{enumerate*}
 
 Eviction empties the lowest band first and falls back to recency only within a band, so KV-cache that will likely be reused left memory later. On the host tier, however, it keeps its recency order except that retired segments go first, so a head the device gave up under pressure remains reloadable while it may still be needed. Additionally, KV-cache entries marked as \emph{TRANSIENT} won't be admitted into host as they rival memory space with reusable KV-cache entries.  
 

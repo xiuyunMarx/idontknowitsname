@@ -1,19 +1,21 @@
 """CacheScout baseline (arXiv 2608.14624): learned agent execution for KV-cache management.
 
-Requests are opaque: no decompiler, no re-layout, no workflow graph. CacheScout
-identifies agents from the requests themselves and learns their execution order
-online; everything below is that paper's mechanism mapped onto this engine.
+CacheScout learns the agents' execution order online and schedules the KV cache
+by it; everything below is that paper's mechanism mapped onto this engine.
 
-Agent identity   prompt-prefix fingerprint over BLOCK-token block hashes (paper Sec. 4).
-                 The anchor is the agent's fixed context (Sec. 2.2.1: system prompt,
-                 tool definitions, few-shot): the block prefix every session running
-                 the agent shares. The trie keeps per-block session support and the
-                 anchor ends at the first block whose support falls below CLIFF of its
-                 parent's (or below 2 sessions). Session text that a few sessions
-                 happen to share (the same task) drops off that cliff once other
-                 sessions disagree, so anchors stay at the fixed context instead of
-                 growing into per-task prefixes. The agent id is the anchor's chain
-                 hash; unknown until a prefix has recurred across sessions.
+Agent identity   The paper identifies the agent "from the prompt-prefix fingerprint"
+                 (Sec. 1, 3.1) / "from its own prefix block hashes" (Sec. 4) and
+                 leaves AgentId(.) of Algorithm 1 undefined: its agents have distinct
+                 system prompts from the first block on, so no boundary rule is
+                 needed. Ours share a chat-template header and repeat session inputs
+                 (the same filing) across sessions, and any boundary rule would be
+                 our invention. The paper's arms therefore take the agent identity
+                 from the guard front: agent = the request's call site, the upper
+                 bound of what a fingerprint could recover. The anchor (Sec. 2.1:
+                 system prompt, tool definitions, few-shot) is the longest common
+                 prefix of the prompts the call site has sent so far. --opaque keeps
+                 the earlier prefix-fingerprint reading (block-hash trie, support
+                 cliff) for reference; it is not used in the paper.
 Transitions      first-order Markov chain over agents (Sec. 3.2), per session stream:
                  P_ij = (C_ij + EPS) / sum_k (C_ik + EPS), C_ij += 1 per dispatch.
 Survival         Sec. 3.3, Eq. 7-8: the edges (a, b) with P_ab >= TAU form a sparse
@@ -41,8 +43,10 @@ bookkeeping; its blocks age out under the recency factor like any other.
 Scheduling: standard FCFS, every request PRIORITY_REAL.
 
 python -m server.cacheScout_server [MODEL] [--kv N] [--host GB] [--r-min R] [--horizon H] [--tau T]
+            (guard controller front: registration, callsite identification; original prompt order,
+            no host admission)
 python -m server.cacheScout_server --relayout ...   the same policy on the re-laid prompts of `ours`
-            (guard controller front: registration, callsite identification, re-layout; no host admission)
+python -m server.cacheScout_server --opaque ...     no front: prefix-fingerprint agents on opaque requests
 python -m server.cacheScout_server --selftest
 """
 import argparse
@@ -54,6 +58,7 @@ import random
 import re
 import time
 import uuid
+import zlib
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -203,6 +208,15 @@ def _answer(body: dict, text: str) -> Any:
     return {"role": "assistant", "content": content or None, "tool_calls": calls}
 
 
+def _lcp(a: List[int], b: List[int]) -> List[int]:
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return a[:n]
+
+
 def _band(p: float) -> int:
     return min(BANDS, int(math.ceil(p * BANDS)))
 
@@ -215,6 +229,7 @@ class CacheScoutController:
         self.pool = server.pool
         self.r_min, self.e_max, self.tau = r_min, e_max, tau
         self.fp = Fingerprint()
+        self.anchor_ids = self.fp.anchor_ids                # agent -> anchor token ids
         self.chain = Markov()
         self.current: Dict[str, int] = {}                  # sid -> agent of its last dispatch
         self.last_seen: Dict[str, float] = {}              # sid -> monotonic time of last dispatch
@@ -321,8 +336,8 @@ class CacheScoutController:
         out: List[Tuple[List[int], int]] = []
         for a, p in surv.items():
             k = _band(p)
-            if k > 0 and a in self.fp.anchor_ids:
-                out.append((self.fp.anchor_ids[a], k))
+            if k > 0 and a in self.anchor_ids:
+                out.append((self.anchor_ids[a], k))
         for sid, kept in self.served.items():
             if now - self.last_seen.get(sid, 0.0) > IDLE_S:
                 continue
@@ -355,9 +370,10 @@ class CacheScoutController:
 
 # ---------------------------------------------------------------- --relayout: the policy behind the guard controller's re-layout
 class CacheScoutPolicy:
-    """CacheScout's fingerprint + chain + survival bands in the guard controller's
-    planner slot; the controller's intake calls are no-ops, the policy observes
-    requests and replies at the engine call (see continuum_server._relayout_controller)."""
+    """CacheScout's chain + survival bands in the guard controller's planner slot,
+    the agent being the call site the front identifies (see the module docstring).
+    The intake hands the policy the call site; the policy observes requests and
+    replies at the engine call (see continuum_server._relayout_controller)."""
 
     promote_enabled = False
 
@@ -365,7 +381,8 @@ class CacheScoutPolicy:
         self.engine = engine
         self.ctrl = None
         self.r_min, self.e_max, self.tau = r_min, e_max, tau
-        self.fp = Fingerprint()
+        self.anchor_ids: Dict[int, List[int]] = {}         # agent -> longest common prefix of its prompts
+        self._site: Dict[str, str] = {}                    # sid -> call site of its pending request
         self.chain = Markov()
         self.current: Dict[str, int] = {}
         self.last_seen: Dict[str, float] = {}
@@ -377,8 +394,10 @@ class CacheScoutPolicy:
         self._push_pending = False
         self._last_push = -math.inf
 
-    # the controller's planner interface: nothing to do for a request-level policy
-    def note_arrival(self, sid: str, site: str, t_arrive: float) -> None: ...
+    # the controller's planner interface: the intake names the call site, the rest is unused
+    def note_arrival(self, sid: str, site: str, t_arrive: float) -> None:
+        self._site[sid] = site
+
     def note_served(self, sid: str, ids: List[int], fixed_len: int, *, static_len: int) -> None: ...
     def invalidate(self, sid: str, ids: List[int], keep_len: int) -> None: ...
     def void_session(self, sid: str, epoch: int) -> None: ...
@@ -387,16 +406,22 @@ class CacheScoutPolicy:
     def wake(self) -> None: ...
 
     def drop_session(self, sid: str) -> None:
-        for d in (self.current, self.last_seen, self.served):
+        for d in (self.current, self.last_seen, self.served, self._site):
             d.pop(sid, None)   # bookkeeping only: no termination signal in CacheScout
         print(f"[close] {sid}", flush=True)
 
     # what the engine call shows
     def before(self, rid: str, ids: List[int], t_arrive: float, cont: bool = False) -> None:
         sid = rid.split("-")[0]
-        agent, depth = self.fp.observe(sid, ids)
+        site = self._site.get(sid)
+        agent = zlib.crc32(site.encode()) if site is not None else None   # unregistered program: no agent
+        depth = 0
+        if agent is not None and not cont:
+            cur = self.anchor_ids.get(agent)
+            self.anchor_ids[agent] = ids[:MAX_ANCHOR_BLOCKS * BLOCK] if cur is None else _lcp(cur, ids)
+            depth = len(self.anchor_ids[agent])
         if not cont:
-            label = f"agent={agent & 0xffffffff:08x}" if agent is not None else "agent=?"
+            label = f"agent={agent:08x}" if agent is not None else "agent=?"
             print(f"[scout] {rid} {label} anchor={depth}", flush=True)
             prev = self.current.get(sid)
             if agent is not None and prev is not None:
@@ -418,15 +443,15 @@ class CacheScoutPolicy:
         nxt, p = self.chain.predict(agent)    # Sec. 3.4: warm the predicted next agent's anchor
         r = self.chain.predictability()
         now = time.monotonic()
-        if (nxt is not None and r >= self.r_min and nxt in self.fp.anchor_ids
+        if (nxt is not None and r >= self.r_min and nxt in self.anchor_ids
                 and now - self.warmed.get(nxt, -math.inf) >= WARMUP_MIN_S):
             self.warmed[nxt] = now
-            anchor = self.fp.anchor_ids[nxt]
+            anchor = self.anchor_ids[nxt]
             unc, host = self.engine.cost(anchor)
             if host > 0:
                 async with self._rpc_lock:
                     ok = await self.engine.promote(anchor, f"scout-{rid}")
-                print(f"[prefetch] {rid} next={nxt & 0xffffffff:08x} P={p:.2f} R={r:.2f} anchor={len(anchor)} "
+                print(f"[prefetch] {rid} next={nxt:08x} P={p:.2f} R={r:.2f} anchor={len(anchor)} "
                       f"host={host} started={ok}", flush=True)
         await self._push()
 
@@ -457,7 +482,7 @@ class CacheScoutPolicy:
 
 async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optional[int],
                hicache_io: Optional[str], r_min: float, e_max: int, tau: float, sched: str = "fcfs",
-               engine_log: Optional[str] = None, relayout: bool = False) -> None:
+               engine_log: Optional[str] = None, relayout: bool = False, opaque: bool = False) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 32768, "radix_eviction_policy": "priority",
@@ -476,14 +501,17 @@ async def main(model: str, port: int, kv_tokens: Optional[int], host_gb: Optiona
     elif sched == "risk":
         kwargs["schedule_policy"] = "cache-risk"
         kwargs["enable_priority_scheduling"] = False
-    if relayout:
-        from server.continuum_server import _relayout_controller
-        print("[cachescout] learned agent execution on re-laid prompts (guard controller front, no host admission)", flush=True)
-        ctrl = _relayout_controller(CacheScoutPolicy(None, r_min=r_min, e_max=e_max, tau=tau), model, server, **kwargs)
-        ctrl.planner.engine = ctrl.engine   # type: ignore[union-attr]
+    if opaque:
+        print("[cachescout] prefix-fingerprint agents on opaque requests (no front)", flush=True)
+        ctrl = CacheScoutController(model, server, r_min=r_min, e_max=e_max, tau=tau, **kwargs)
         await ctrl.start_serving()
         return
-    ctrl = CacheScoutController(model, server, r_min=r_min, e_max=e_max, tau=tau, **kwargs)
+    from server.continuum_server import _relayout_controller
+    print(f"[cachescout] call-site agents on {'re-laid' if relayout else 'original-order'} prompts "
+          "(guard controller front, no host admission)", flush=True)
+    ctrl = _relayout_controller(CacheScoutPolicy(None, r_min=r_min, e_max=e_max, tau=tau), model, server,
+                                enable_relayout=relayout, **kwargs)
+    ctrl.planner.engine = ctrl.engine   # type: ignore[union-attr]
     await ctrl.start_serving()
 
 
@@ -541,6 +569,9 @@ def _selftest() -> None:
     assert dt < 0.5, f"40 BFS + R over 2000 agents took {dt:.2f}s"
     assert _survival(0, 3) == 1.0 and _survival(3, 3) == 0.0 and _survival(9, 3) == 0.0
     assert _band(0.0) == 0 and _band(0.01) == 1 and _band(1.0) == BANDS
+    # call-site anchor: the longest common prefix of the site's prompts, shrinking only
+    assert _lcp(sysp + hdr_a + [1, 2], sysp + hdr_a + [3, 4]) == sysp + hdr_a
+    assert _lcp(sysp + hdr_a, sysp + hdr_a + [5]) == sysp + hdr_a and _lcp([9], [8]) == []
     print("cachescout selftest ok")
 
 
@@ -558,11 +589,13 @@ if __name__ == "__main__":
                     help="engine queue order (fcfs is the paper's setting; the others exist for the sweep script)")
     ap.add_argument("--engine-log", choices=["info", "warning", "error"], default=None)
     ap.add_argument("--relayout", action="store_true",
-                    help="the same policy on the re-laid prompts of `ours` (guard controller front)")
+                    help="the same policy on the re-laid prompts of `ours`")
+    ap.add_argument("--opaque", action="store_true",
+                    help="no guard front: prefix-fingerprint agents on opaque requests (not used in the paper)")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         _selftest()
     else:
         asyncio.run(main(a.model, a.port, a.kv, a.host, a.hicache_io, a.r_min, a.horizon, a.tau, a.sched,
-                         engine_log=a.engine_log, relayout=a.relayout))
+                         engine_log=a.engine_log, relayout=a.relayout, opaque=a.opaque))

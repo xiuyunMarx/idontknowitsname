@@ -107,7 +107,11 @@ def main():
         if a.lo is not None:
             lo, hi = a.lo, a.hi
         else:
-            lo, hi = progress_window(sess, a.start_idx, t0)
+            try:
+                lo, hi = progress_window(sess, a.start_idx, t0)
+            except (SystemExit, ValueError, StopIteration) as e:   # arm still running or incomplete
+                print(f"skip {arm}: {e}")
+                continue
         rows.append(row(arm, "all", sess, calls, lo, hi, t0))
         for p in sorted({r["program"] for r in sess}):
             prows.append(row(arm, p, [r for r in sess if r["program"] == p],
