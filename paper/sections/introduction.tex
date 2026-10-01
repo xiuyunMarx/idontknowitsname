@@ -2,54 +2,34 @@
 \label{sec:intro}
 LLM agents invoke a series of dependent model calls with share context. Reusing the key-value (KV) cache across these calls avoids redundant prefill computation, making prompt reuse an important opportunity for efficient agent serving. Existing agent serving systems primarily optimize at the level of requests or LLM invocation sequences. Pythia~\cite{yu2026pythia} profiles agent workflows to guide cache management, request scheduling, and autoscaling. CacheScout~\cite{zhang2026cachescout} learns execution transitions online to guide eviction and prefetching, while PBKV~\cite{zheng2026pbkv} predicts future invocations and estimates the reuse potential of cached requests. These systems exploit predictability between invocations, but treat the contents of each prompt as an opaque token sequence. 
 
-However, we observed that prompts in agent LLM invocations are not monolithic, they differ in three dimensions: 
+However, we observe that prompts in agent LLM invocations are not monolithic: their components differ along three dimensions.
 \begin{enumerate*}[label=(\textbf{\arabic*})]
-    \item Sharing scope: one value can be shared across multiple invocations, or only within a single invocation.
-    \item Lifetime: Different bindings have different lifetimes. Some bindings are single-shot volatile inputs, while others may be reuse across the whole session.
-    \item Evolution pattern: context for LLM calls can evolve differently overtime, such as stay fixed, being replaced, or accumulating across invocations. 
+    \item \textit{Sharing scope}: some components appear in the prompts of many different agent steps, while others are specific to a single step.
+    \item \textit{Lifetime}: some components stay valid for the whole session, while others become stale once a stage or loop iteration ends.
+    \item \textit{Evolution pattern}: across invocations, a component may stay fixed, be replaced, or grow by appending.
 \end{enumerate*}
 We name this as \textbf{intra-prompt heterogeneity}.
 
-\begin{figure}[t]
+Neglecting this intra-prompt heterogeneity can lead to suboptimal KV-cache management. Because mainstream serving engines reuse KV cache by prefix matching, a change in an earlier component prevents the reuse of every token after it, even if those tokens are unchanged. Moreover, without knowing which components persist or evolve, the serving system cannot accurately determine which cached tokens should be retained, evicted, or prefetched. Figure~\ref{fig:intra-prompt} shows both problems in a four-stage financial-analysis agent: the stage-specific task instructions block the reuse of everything after them, and the serving engine cannot proactively release the KV cache of the \textit{documents} after Audit. It is hard for a system that sees only the token sequence to identify and exploit this intra-prompt heterogeneity, because semantic boundaries and reuse patterns are not represented in the tokens.
+
+\begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{figures/Intra_prompt.pdf}
-
-    % Font, size (4.24pt), colours and left/right edges (13.3pt/17.3pt in) match the boxes in Intra_prompt.pdf at \columnwidth.
-    {\fontsize{4.24}{6.5}\selectfont\sffamily
-    \makebox[\columnwidth][l]{\hspace{13.3pt}%
-    \begin{tabularx}{\dimexpr\columnwidth-30.6pt\relax}{|l|X|}
-        \hline
-        \cellcolor{exgrayF}System Prompt      & You are an expert financial analyst. Answer only from the filing provided \ldots \\ \hline
-        \cellcolor{exblueF}Extract task       & List every fact the question needs, with its unit, fiscal period and page \ldots \\ \hline
-        \cellcolor{exblueF}Analyze task       & Work out the answer from the facts. Show each step with its figures \ldots \\ \hline
-        \cellcolor{exblueF}Audit task         & Check each fact against the document. Report arithmetic or unit errors \ldots \\ \hline
-        \cellcolor{exblueF}Write task         & Answer the question from the facts, fixing any error the audit reports \ldots \\ \hline
-        \cellcolor{exorangeF}question         & What is the year-end FY2018 net PP\&E for 3M? Answer in USD billions. \\ \hline
-        \cellcolor{exorangeF}documents       & [page 57] 3M Balance Sheet (Dollars in millions) \ldots{} PP\&E -- net: 8,738 \ldots \\ \hline
-        \cellcolor{exorangeF}extracted facts  & [1] Net PP\&E, FY2018: 8,738 (p.~57); [2] Net PP\&E, FY2017: 8,866 (p.~57) \\ \hline
-        \cellcolor{exorangeF}analysis summary & Read FY2018 net PP\&E from the balance sheet. Result: \$8,738 billion. \\ \hline
-        \cellcolor{expurpleF}audit report     & passed: False, issues: [Unit error: 8,738 is in millions, i.e., \$8.74 billion] \\ \hline
-    \end{tabularx}}}
-    \caption{An example of intra-prompt heterogeneity in a financial analysis agent.}
+    \caption{Recompute and KV-cache status demonstration in a four-stages financial-analysis agent. It answers the question using the given documents. The the stage-specific task instructions block KV-cache reuse, and serving engine cannot proactively release the stale KV cache (\textit{documents} after Audit here) without knowing the intra-prompt heterogeneity. }
     \label{fig:intra-prompt}
 \end{figure}
 
-Neglecting this intra-prompt heterogeneity can lead to suboptimal KV-cache management. Consider a financial analysis agent that answers a question about a company's filings in four stages: Extract, Analyze, Audit, and Write (Figure~\ref{fig:intra-prompt}). The prompt of each stage consists of a system prompt, a task description, the question, the documents, and the outputs of earlier stages. The system prompt is shared by every invocation, whereas the task description is replaced at every stage. The question and the documents remain fixed, but only the first three stages read the documents. The outputs of earlier stages accumulate as the session proceeds. Mainstream KV-cache serving engines are prefix-based: reuse stops at the first token that differs. Because the task description precedes everything else, these stages only shares system prompt, and Analyze and Audit recompute the KV states of the documents although their contents remain unchanged. Moreover, without knowing which components persist or evolve, the serving system cannot accurately determine which cached tokens should be retained, evicted, or prefetched. In this example, it cannot tell that the documents can be released after Audit. Neither problem is easy to solve in the serving system alone, because the semantic boundaries and reuse patterns are hard to identify from token sequences.
+\textbf{Our key insight is that this information is available when the prompt is programmatically generated.} Agent frameworks increasingly expose LLM invocations through structured programming abstractions, such as byLLM~\cite{dantanarayana2025mtp}, DSPy~\cite{khattab2024dspy}, and NOOA~\cite{furgale2026nooa}. These frameworks let developers declare each LLM invocation as a function with typed parameters, and the framework runtime generates the prompt from this declaration and the argument values. The sharing scope, lifetime, and evolution pattern of each component are therefore encoded in code, which can be systematically analyzed. This provides an opportunity to identify and exploit intra-prompt heterogeneity.
 
-This information, however, is available when the prompt is programmatically generated. Agent frameworks increasingly expose LLM invocations through structured programming abstractions, such as byLLM~\cite{dantanarayana2025mtp}, DSPy~\cite{khattab2024dspy}, and NOOA~\cite{furgale2026nooa}. These frameworks let developers declare each LLM invocation as a function with typed parameters, and the framework runtime generates the prompt from this declaration and the argument values. The sharing scope, lifetime, and evolution pattern of each component are therefore largely determined by the program, which can be systematically analyzed. This provides an opportunity to identify and exploit intra-prompt heterogeneity.
-
-We present \sysname, a compiler-serving co-design that recovers intra-prompt heterogeneity from the agent program and exploits it for efficient KV-cache management. The compiler analyzes the program and passes the recovered heterogeneity to the serving system, which addresses both problems above: it determines prompt layouts that expose additional prefix reuse, and keeps the resulting KV states resident when they are likely to be needed. Identifying and exploiting intra-prompt heterogeneity introduces two challenges:
-
-\textbf{First, heterogeneity is not always explicit in prompt.} The sharing scope and lifetime of bindings are closely bonded with the program-level structure and actual runtime assignment. Determining which layout best serves prefix caching is therefore not trivial. \sysname combines static analysis with runtime information to determine prompt layouts. The compiler derives a partial order over prompt components based on their sharing scopes and lifetimes. Then, \sysname uses the actual token lengths of bindings observed from log to order components left unconstrained by this partial order, producing a concrete layout that improves prefix cache efficiency.
-
-\textbf{Second, exploiting future reuse requires coordinating cache retention and prefetching.}
-Prompt components differ in when they will be reused and how much recomputation their cached prefixes can avoid. Retaining these prefixes consumes capacity needed by other requests, while prefetching too early occupies device memory and prefetching too late fails to hide transfer latency. Inappropriate KV-cache eviction would lead to unnecessary recomputation. \sysname addressed this challenge by combining static analysis hints and runtime observation to instruct retention, eviction and prefetching. 
+We present \sysname, a compiler-serving co-design that recovers intra-prompt heterogeneity from the agent program and exploits it for efficient KV-cache management. The compiler analyzes the program and passes the recovered heterogeneity to the serving system, which addresses both problems above: it determines prompt layouts that expose additional prefix reuse, and keeps the resulting KV states resident when they are likely to be needed. Identifying and exploiting intra-prompt heterogeneity introduces two challenges. 
+\textbf{First, intra-prompt heterogeneity is buried in the interplay between program code and runtime values.} \sysname recovers the sharing scope, lifetime, and evolution pattern of each prompt component through static analysis, and complements it with runtime observation of what the code cannot determine.
+\textbf{Second, KV-cache scheduling requires coordinating components with different heterogeneity characteristics.} To tackle this, \sysname employs a heterogeneity-aware scheduling strategy that chooses prompt layouts for prefix cache reuse and guides KV-cache retention, eviction, and prefetching.
 
 We implement \sysname in Jac ByLLM~\cite{mars2023jaseci,dantanarayana2025mtp} and use SGLang~\cite{zheng2024sglang}  as the underlying model-serving engine. We evaluate \sysname on four representative agent workloads implemented in ByLLM Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand.
 
 In summary, we make the following contributions:
-\begin{enumerate}[label=(\textbf{\arabic*})]
+\begin{enumerate*}[label=(\textbf{\roman*})]
     \item We identify the inherent heterogeneity in programmatically generated prompts and its implications for serving.
     \item We design and build \sysname, a compiler-serving co-design that recovers and exploits prompt heterogeneity for efficient KV-cache management.
     \item We conduct comprehensive evaluations of \sysname against multiple established serving systems, demonstrating that \sysname achieves up to 48\% lower average JCT and 78\% lower average TTFT than Vanilla SGLang, and 1.46$\times$ throughput on a mixed agent workload.
-\end{enumerate}
+\end{enumerate*}
