@@ -22,6 +22,56 @@ prefix, since the specification no longer sits in the prefix.
 \subsubsection{Workloads}
 We evaluate \sysname on four representative agent workloads, written with ByLLM~\cite{dantanarayana2025mtp} in Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 16 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.
 
+\begin{table}[t]
+\centering
+\fontsize{8}{10}\selectfont
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\arraystretch}{1.15}
+\caption{Performance on the mixed workload. Metrics are measured over each system's steady-state window.}
+\label{tab:mixed-workload}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+ & Throughput & TTFT & \multicolumn{3}{c@{}}{Hit rate (\%)} \\
+\cmidrule(l){4-6}
+System & (tokens(k)/min) & (s) & Device & Host & Total \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{Original prompt order}} \\
+Vanilla SGLang          & 90.8 & 41.6 & 6.2 & 0.9 & 7.1 \\
+CacheScout              & 92.3 & 41.7 & 6.4 & 0.2 & 6.6 \\
+Continuum               & 90.6 & 42.1 & 4.4 & 1.0 & 5.4 \\
+KVFlow                  & 92.6 & 41.2 & 7.5 & 0.6 & 8.1 \\
+\sysname-KV-only        & 105.7 & 35.3 & 7.6 & 6.9 & 14.5 \\
+\midrule
+\multicolumn{6}{@{}l}{\emph{With adaptive prompt re-layout}} \\
+\sysname-Relayout-only  & 108.8 & 35.6 & 5.0 & 7.5 & 12.6 \\
+CacheScout              & 113.2 & 34.4 & 9.4 & 5.3 & 14.7 \\
+Continuum               & 110.8 & 34.8 & 4.8 & 7.1 & 11.9 \\
+KVFlow                  & 116.0 & 34.1 & 10.8 & 10.1 & 20.9 \\
+\sysname w/o prefetch   & 129.3 & 29.7 & 9.3 & 20.9 & 30.2 \\
+\sysname                & \textbf{132.3} & \textbf{29.0} & 9.1 & 22.6 & \textbf{31.6} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{figures/mix_sweep/legend.pdf}
+
+    \begin{subfigure}[b]{0.48\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/mix_sweep/throughput_speedup.pdf}
+        \caption*{Throughput speedup}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/mix_sweep/ttft_speedup.pdf}
+        \caption*{TTFT speedup}
+    \end{subfigure}
+    \caption{Throughput and average TTFT speedup over Vanilla SGLang on different pressure of mixed workloads.}
+    \label{fig:lane_sweep}
+\end{figure}
+
 \subsection{End-to-End Performace of \sysname}
 \begin{figure*}
     \centering
@@ -91,44 +141,15 @@ We evaluate \sysname on four representative agent workloads, written with ByLLM~
 We tested \sysname under different number concurrent workflows, and a mixed workloads. Across these workloads, we compare average job completion time(JCT), average time-to-first-token(TTFT) and throughput(prompt tokens served per minute) for the mixed workload.
 
 \paragraph{Performance on mixed workload}
-As shown in Table~\ref{tab:mixed-workload}, \sysname raises throughput to 1.46$\times$ that of Vanilla SGLang and reduces average TTFT by 30\%. Continuum and CacheScout perform close to Vanilla SGLang on all three metrics. The gain of \sysname comes from a higher cache hit rate in both device and host memory.
+As shown in Table~\ref{tab:mixed-workload}, \sysname raises throughput to 1.46$\times$ that of Vanilla SGLang and reduces average TTFT by 1.43$\times$. Continuum and CacheScout perform close to Vanilla SGLang on all three metrics. The gain of \sysname comes from a higher cache hit rate in both device and host memory.
 
-\begin{table}[h]
-\centering
-\fontsize{8}{10}\selectfont
-\setlength{\tabcolsep}{3.5pt}
-\renewcommand{\arraystretch}{1.15}
-\caption{Performance on the mixed workload. Metrics are measured over each system's steady-state window.}
-\label{tab:mixed-workload}
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
- & Throughput & TTFT & \multicolumn{3}{c@{}}{Hit rate (\%)} \\
-\cmidrule(l){4-6}
-System & (tokens(k)/min) & (s) & Device & Host & Total \\
-\midrule
-\multicolumn{6}{@{}l}{\emph{Original prompt order}} \\
-Vanilla SGLang          & 90.8 & 41.6 & 6.2 & 0.9 & 7.1 \\
-CacheScout              & 92.3 & 41.7 & 6.4 & 0.2 & 6.6 \\
-Continuum               & 90.6 & 42.1 & 4.4 & 1.0 & 5.4 \\
-KVFlow                  & 92.6 & 41.2 & 7.5 & 0.6 & 8.1 \\
-\sysname-KV-only        & 105.7 & 35.3 & 7.6 & 6.9 & 14.5 \\
-\midrule
-\multicolumn{6}{@{}l}{\emph{With adaptive prompt re-layout}} \\
-\sysname-Relayout-only  & 108.8 & 35.6 & 5.0 & 7.5 & 12.6 \\
-CacheScout              & 113.2 & 34.4 & 9.4 & 5.3 & 14.7 \\
-Continuum               & 110.8 & 34.8 & 4.8 & 7.1 & 11.9 \\
-KVFlow                  & 116.0 & 34.1 & 10.8 & 10.1 & 20.9 \\
-\sysname w/o prefetch   & 129.3 & 29.7 & 9.3 & 20.9 & 30.2 \\
-\sysname                & \textbf{132.3} & \textbf{29.0} & 9.1 & 22.6 & \textbf{31.6} \\
-\bottomrule
-\end{tabular}
-\end{table}
+ We further evaluate \sysname under varying pressure on the mixed workload. Keeping all four agents at the same lane count, we vary the number of lanes each agent holds. As shown in Figure~\ref{fig:lane_sweep}, under low pressure adaptive prompt re-layout alone obtains nearly all of the gain, since device memory is still large enough to retain the reusable KV-cache. As pressure grows, the cache becomes contested and the gain of re-layout alone shrinks, while proactive KV-cache scheduling retains a clear advantage by protecting the reusable heads that LRU would evict. Under the heaviest pressure the two configurations converge toward the baseline, as the engine is completely saturated and there is no space to operate.
 
 
 \paragraph{Per-workload sweeps}
-Across the four workloads, \sysname reduces average JCT by 6--48\% and average TTFT by 12--78\% compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}). When concurrency is low, adaptive prompt re-layout accounts for nearly all of the gain. As concurrency grows, the gain of re-layout alone shrinks and proactive KV-cache scheduling carries it: it evicts volatile tails first and protects the reusable heads that predicted calls will need. On fact check, scheduling contributes from the lowest concurrency. On fact check and BFCL, and on finance at low concurrency, the TTFT reduction exceeds the JCT reduction, because a reused prefix skips its prefill, whereas JCT also includes decoding and tool execution, which the KV-cache does not shorten.
+Across the four workloads, \sysname reduces average JCT by 1.06--1.90$\times$ and average TTFT by 1.14--4.49$\times$ compared with Vanilla SGLang (Figure~\ref{fig:e2e_speedup}). When concurrency is low, adaptive prompt re-layout accounts for nearly all of the gain. As concurrency grows, the gain of re-layout alone shrinks and proactive KV-cache scheduling carries it: it evicts volatile tails first and protects the reusable heads that predicted calls will need. On fact check, scheduling contributes from the lowest concurrency. On fact check and BFCL, and on finance at low concurrency, the TTFT reduction exceeds the JCT reduction, because a reused prefix skips its prefill, whereas JCT also includes decoding and tool execution, which the KV-cache does not shorten.
 
-Except for an 8--13\% reduction on BFCL at $c=4$, Continuum, CacheScout and KVFlow perform close to Vanilla SGLang on both metrics. They exploit predictability between invocations but treat each prompt as an opaque token sequence. In the original prompt order, volatile bindings often precede reusable ones, making prefixes hold little that later calls can reuse. \sysname-KV-only, which schedules on the original prompt order, shows the same limit.
+Except for a 1.09--1.22$\times$ improvement on BFCL at $c=4$, Continuum, CacheScout and KVFlow perform close to Vanilla SGLang on both metrics. They exploit predictability between invocations but treat each prompt as an opaque token sequence. In the original prompt order, volatile bindings often precede reusable ones, making prefixes hold little that later calls can reuse. \sysname-KV-only, which schedules on the original prompt order, shows the same limit.
 
 \begin{table}[tb]
 \centering
@@ -151,8 +172,7 @@ Finance    & 34.6 & 35.4 & $+0.8$ & 0.82 \\
 
 
 \paragraph{Task Quality}
-We therefore compare task accuracy between the five systems that serve the original prompts and the that serve the re-laid prompts, using a paired permutation test over inputs (Table~\ref{tab:quality}). On all four workloads the difference is not significant ($p \geq 0.66$) and no consistent direction of change. The performance gains of \sysname therefore do not come at the cost of task quality.
-
+We compare task accuracy between the five systems that serve the original prompts and the five that serve the re-laid prompts, using a paired permutation test over inputs (Table~\ref{tab:quality}). Re-layout changes accuracy by at most 0.8 percentage points on any workload, with no consistent direction and no significant difference ($p \geq 0.66$). The performance gains of \sysname therefore do not come at the cost of task quality.
 
 \begin{figure}[tb]
     \centering
@@ -167,9 +187,9 @@ Figure~\ref{fig:hit_rate} shows the cache hit rate of prompt tokens at the same 
 \subsection{Ablation Studies}
 We ablate \sysname on the mixed workload by enabling its components one at a time (Table~\ref{tab:mixed-workload}).  \sysname w/o prefetch keeps adaptive prompt re-layout and proactive KV-cache scheduling but disables prefetch. Figures~\ref{fig:e2e_speedup} and~\ref{fig:hit_rate} show \sysname-KV-only and \sysname-Relayout-only across concurrency levels.
 
-Adaptive prompt re-layout alone raises throughput to 1.20$\times$ that of Vanilla SGLang and reduces average TTFT by 14\%. Adding proactive KV-cache scheduling brings throughput to 1.42$\times$ and the TTFT reduction to 29\%, and lifts the hit rate from 12.6\% to 30.2\%. Prefetch adds little on this workload (1.46$\times$, 30\%), since under this load the device pool is rarely free enough for a prefetch to take place.
+Adaptive prompt re-layout alone raises throughput to 1.20$\times$ that of Vanilla SGLang and reduces average TTFT by 1.17$\times$. Adding proactive KV-cache scheduling brings throughput to 1.42$\times$ and the TTFT reduction to 1.40$\times$, and lifts the hit rate from 12.6\% to 30.2\%. Prefetch adds little on this workload (1.46$\times$, 1.43$\times$), since under this load the device pool is rarely free enough for a prefetch to take place.
 
-The two mechanisms depend on each other. Applied to the original prompt order, proactive KV-cache scheduling raises throughput by only 16\% (\sysname-KV-only); applied after re-layout, it raises throughput by 22\% relative to \sysname-Relayout-only. The combined 46\% gain is larger than the sum of the two individual gains. Re-layout places the stable and shared bindings at the front, so a served prompt divides into a reusable head and a volatile tail, and scheduling gets opportunities to protect.
+The two mechanisms depend on each other. Applied to the original prompt order, proactive KV-cache scheduling raises throughput by only 1.16$\times$ (\sysname-KV-only); applied after re-layout, it raises throughput by 1.22$\times$ relative to \sysname-Relayout-only. The combined 1.46$\times$ gain is larger than the product of the two individual gains. Re-layout places the stable and shared bindings at the front, so a served prompt divides into a reusable head and a volatile tail, and scheduling gets opportunities to protect.
 
 Besides, KV-cache scheduling and adaptive prompt re-layout are complementary. Applied on the re-laid prompts, CacheScout, Continuum and KVFlow all improve on \sysname-Relayout-only (Table~\ref{tab:mixed-workload}), and on the per-workload sweeps the gap widens with concurrency (Figure~\ref{fig:e2e_speedup}). 
 

@@ -109,6 +109,12 @@ def draw_hit_rate(output_file: Path) -> Path:
         spine.set_visible(False)
     ax.tick_params(length=0)
 
+    # Temperature bar; the caption defines the unit.
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    cbar = fig.colorbar(sm, ax=ax, fraction=0.035, pad=0.02, aspect=30)
+    cbar.ax.tick_params(labelsize=6.5, length=2, width=0.4)
+    cbar.outline.set_linewidth(0.4)
+
     fig.savefig(output_file, format="pdf", bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
     return output_file

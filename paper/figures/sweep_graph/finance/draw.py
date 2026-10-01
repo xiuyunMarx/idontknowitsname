@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, ScalarFormatter
 from pathlib import Path
 from typing import Dict
 import re
@@ -28,6 +28,12 @@ def iterate_all(root: str) -> Iterator[tuple[str, dict]]:
         if path.is_file() and (match := pattern.fullmatch(path.name)):
             arm = match.group(1)
             yield arm, read_csv(path)
+
+class TimesFormatter(ScalarFormatter):
+    """Speedup tick labels: the default number followed by a times sign."""
+
+    def __call__(self, x, pos=None):
+        return super().__call__(x, pos) + r"$\times$"
 
 def draw_line_chart(records: dict):
     """Draw JCT and TTFT speedup curves and save them as vector PDFs."""
@@ -146,6 +152,7 @@ def draw_line_chart(records: dict):
         ax.set_xticks(all_concurrencies)
         # Flat panels get too few automatic y ticks; fix the count.
         ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 2.5, 5, 10], min_n_ticks=3))
+        ax.yaxis.set_major_formatter(TimesFormatter())
         ax.grid(axis="y", color="#DDDDDD", linewidth=0.4, linestyle=(0, (1, 1.5)))
         ax.set_axisbelow(True)
         # The legend is shared across all panels; see ../draw_legend.py.

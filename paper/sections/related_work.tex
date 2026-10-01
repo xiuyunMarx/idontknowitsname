@@ -1,0 +1,9 @@
+\section{Related Work}
+\label{sec:related_works}
+
+\textbf{Frameworks for serving LLM agents.} KVFlow~\cite{pan2025kvflow} schedules KV by distance to the next invocation on an application-supplied agent step graph. Continuum~\cite{li2025continuum}, CacheScout~\cite{zhang2026cachescout}, and PBKV~\cite{zheng2026pbkv} learn retention signals from execution history, and Pythia~\cite{yu2026pythia} reconstructs the workflow from traces to drive cache staging, scheduling, and autoscaling. All of them manage whole requests or agent steps. \sysname instead recovers structure that encoded in program, and manages at an intra-prompt granularity.
+
+\textbf{Prompt layout and reordering.} Existing systems treat prompt layout as a fixed convention or delegate it to a model. SGLang's frontend reorders prompt statements to lengthen the shared prefix, but relies on GPT-4 to choose the order, which its authors note is not yet reliable~\cite{zheng2024sglang}.
+DSPy's adapters emit components in one fixed order across all programs~\cite{dspy2026chatadapter}, and NOOA argues for a three-region layout that places static context first~\cite{furgale2026nooa}. These orders are chosen by convention or by an unsound rewrite. \sysname derives the layout by analyzing program itself systematically.
+
+\textbf{KV reuse beyond exact prefixes.} Prompt Cache fixes module positions in a schema~\cite{gim2024promptcache}, and CacheBlend selectively recomputes tokens when concatenating cached chunks~\cite{yao2025cacheblend}. Both relax positional exactness to gain reuse, at the cost of soundness or extran recomputation. \sysname keeps exact prefix matching and instead changes the prompt so that reusable components form the prefix.

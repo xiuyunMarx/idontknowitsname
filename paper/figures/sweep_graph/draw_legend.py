@@ -9,7 +9,7 @@ def draw_legend(output_file: str) -> Path:
     """Draw the legend shared by all sweep panels as a standalone vector PDF."""
     # Styles must match the ones in */draw.py.
     display_names = {
-        "vanilla": "Vanilla",
+        "vanilla": "Vanilla SGLang",
         "kvonly": "ANON-KV-only",
         "relayout": "ANON-Relayout-only",
         "continuum": "Continuum",

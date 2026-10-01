@@ -1,7 +1,6 @@
 
 \section{Design}
 \label{sec:design}
-\subsection{Overview}
 In this section, We present the design of \sysname. \sysname adopts a two-tier compiler-server co-design. On compiler side, \sysname performs static analysis to gather heterogeneity metadata, and on the server side, \sysname leverages this metadata to optimize KV-cache scheduling. 
 We first introduce an interface \emph{Agent Descriptor} to bridge the compiler and server. Second, we present a heterogeneity-aware KV-cache scheduling strategy that leverages the agent descriptor to enhance serving performance. 
 
@@ -20,7 +19,7 @@ We first introduce an interface \emph{Agent Descriptor} to bridge the compiler a
 % \end{figure}
 
 \subsection{Agent Descriptor}
-Here we define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where the \staticAnalysis to provide a skeleton, while the server refines the weight with runtime observations. An agent descriptor contains two parts: 
+We define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where the \staticAnalysis to provide a skeleton, while the server refines the weight with runtime observations. An agent descriptor contains two parts: 
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Call-site Template:} It provides a heuristic of the components' lifetime, sharing scope and evolution pattern.
     \item \textbf{Workflow Automaton:} It contains the program-level structure of an agent, including workflow dependencies, execution time estimation and transition probabilities.
