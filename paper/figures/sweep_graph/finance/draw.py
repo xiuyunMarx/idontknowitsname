@@ -43,6 +43,7 @@ def draw_line_chart(records: dict):
     # Fixed styles keep the two figures visually consistent.
     display_names = {
         "vanilla": "Vanilla",
+        "adapter": "Static-Adapter",
         "kvonly": "ANON-KV-only",
         "relayout": "ANON-Relayout-only",
         "continuum": "Continuum",
@@ -57,6 +58,7 @@ def draw_line_chart(records: dict):
     # dashed with a hollow marker.
     colors = {
         "vanilla": "#4D4D4D",
+        "adapter": "#A0522D",
         "kvonly": "#0072B2",
         "relayout": "#009E73",
         "continuum": "#E69F00",
@@ -69,6 +71,7 @@ def draw_line_chart(records: dict):
     }
     markers = {
         "vanilla": "o",
+        "adapter": "h",
         "kvonly": "s",
         "relayout": "^",
         "continuum": "D",
@@ -80,7 +83,7 @@ def draw_line_chart(records: dict):
         "ours": "*",
     }
     preferred_order = [
-        "vanilla", "kvonly", "relayout", "continuum", "continuum_relayout",
+        "vanilla", "adapter", "kvonly", "relayout", "continuum", "continuum_relayout",
         "cachescout", "cachescout_relayout", "kvflow", "kvflow_relayout", "ours",
     ]
     arm_order = [arm for arm in preferred_order if arm in records]

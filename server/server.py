@@ -47,6 +47,7 @@ GRAMMAR_BACKEND = os.environ.get("GRAMMAR_BACKEND", "xgrammar")   # sglang gramm
 MAX_TOKENS = 4096      # decode cap when the request does not set one
 MAX_BATCH = 32
 HEADER_LAST = True     # --no-header-last clears it: layouts never move the header behind the values
+LAYOUT_ADAPTER = False # --layout adapter: framework-adapter layout (native binding order, header behind the values), no analysis
 
 _TOOL_CALL = re.compile(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", re.S)
 
@@ -174,7 +175,7 @@ class Controller:
             for t in program.sites.values():
                 t.no_header_last = True
         if self.enable_relayout:
-            program.decide_layouts(header_last=HEADER_LAST)
+            program.decide_layouts(header_last=HEADER_LAST, adapter=LAYOUT_ADAPTER)
         program.decide_loops()
         for i, lp in enumerate(program.loops):
             print(f"[loop] {i}: head {lp.head!r} body {sorted(repr(k) for k in lp.body)}"
@@ -884,6 +885,10 @@ if __name__ == "__main__":
                     help="re-layout reorders bindings only; never move the call site header behind the values")
     ap.add_argument("--no-relayout", action="store_true",
                     help="serve call messages as they arrive (raw SGLang over the registered graph)")
+    ap.add_argument("--layout", choices=["analysis", "adapter"], default="analysis",
+                    help="re-layout policy: analysis (default; binding order and header placement from the static "
+                         "analysis) or adapter (the framework-adapter baseline: native binding order, call-site header "
+                         "behind the values at every site, no analysis; use with --lru)")
     ap.add_argument("--hicache-io", choices=["direct", "kernel"], default="kernel",
                     help="HiCache host<->device copy backend (default: kernel)")
     ap.add_argument("--sched", choices=["fcfs", "lpm", "risk"], default="fcfs",
@@ -900,6 +905,8 @@ if __name__ == "__main__":
     a = ap.parse_args()
     if a.no_header_last:
         HEADER_LAST = False
+    if a.layout == "adapter":
+        LAYOUT_ADAPTER = True
     asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
                      sched=a.sched, risk_aging_s=a.risk_aging_s, promote=not a.no_promote, eviction=a.eviction,

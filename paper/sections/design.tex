@@ -7,7 +7,7 @@ We first introduce an interface \emph{Agent Descriptor} to bridge the compiler a
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/Overview_Walkthrough.pdf}
-    \caption{Architecture overview of \sysname. \staticAnalysis derives agent descriptor, mark the intra-prompt heterogeneity. Server side then utilizes it for \sysname's effcient KV-cache scheduling.}
+    \caption{Architecture overview of \sysname. Static analysis derives the agent descriptor, marking intra-prompt heterogeneity. The server uses it for KV-cache scheduling.}
     \label{fig:design_overview}
 \end{figure*}
 
@@ -85,7 +85,7 @@ Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. 
 
 \subsubsection{Layout Decision}
 \label{sec:layout_decision}
-Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front. Then the bindings carried by a single call site. Algorithm~\ref{alg:layout} summarizes the procedure.
+Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front, following it are the bindings carried by a single call site. Algorithm~\ref{alg:layout} summarizes the procedure.
 
 \paragraph{Ordering private bindings.} The bindings carried by a single call site are sorted in ascending lexicographic order of
 \[

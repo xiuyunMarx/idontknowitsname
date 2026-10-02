@@ -25,7 +25,7 @@ import os
 import statistics
 from collections import defaultdict
 
-ARM_ORDER = ["vanilla", "continuum", "cachescout", "kvflow", "kvonly", "relayout", "continuum_relayout",
+ARM_ORDER = ["vanilla", "adapter", "continuum", "cachescout", "kvflow", "kvonly", "relayout", "continuum_relayout",
              "cachescout_relayout", "kvflow_relayout", "ours_noprefetch", "ours"]
 
 

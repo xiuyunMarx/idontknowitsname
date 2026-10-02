@@ -19,7 +19,7 @@ WORKLOADS = [
 # Rows top to bottom: external baselines, each followed by its re-laid variant,
 # then the ablated variants, then the full system.
 ARMS = [
-    "vanilla",
+    "vanilla", "adapter",
     "continuum", "continuum_relayout",
     "cachescout", "cachescout_relayout",
     "kvflow", "kvflow_relayout",
@@ -28,6 +28,7 @@ ARMS = [
 # Same names as the legend of the speedup figure (draw_legend.py).
 DISPLAY_NAMES = {
     "vanilla": "Vanilla",
+    "adapter": "Static-Adapter",
     "continuum": "Continuum",
     "cachescout": "CacheScout",
     "continuum_relayout": "Continuum+Relayout",

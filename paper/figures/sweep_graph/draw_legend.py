@@ -10,6 +10,7 @@ def draw_legend(output_file: str) -> Path:
     # Styles must match the ones in */draw.py.
     display_names = {
         "vanilla": "Vanilla SGLang",
+        "adapter": "Static-Adapter",
         "kvonly": "ANON-KV-only",
         "relayout": "ANON-Relayout-only",
         "continuum": "Continuum",
@@ -22,6 +23,7 @@ def draw_legend(output_file: str) -> Path:
     }
     colors = {
         "vanilla": "#4D4D4D",
+        "adapter": "#A0522D",
         "kvonly": "#0072B2",
         "relayout": "#009E73",
         "continuum": "#E69F00",
@@ -34,6 +36,7 @@ def draw_legend(output_file: str) -> Path:
     }
     markers = {
         "vanilla": "o",
+        "adapter": "h",
         "kvonly": "s",
         "relayout": "^",
         "continuum": "D",
@@ -44,14 +47,17 @@ def draw_legend(output_file: str) -> Path:
         "kvflow_relayout": "P",
         "ours": "*",
     }
-    # Two rows, filled column by column: each column pairs a system on the
-    # original layout (top) with the same system on the re-laid layout (bottom).
+    # Two rows, filled column by column: the two layouts without analysis, the two
+    # ablated variants, then each external system on the original layout (top) with
+    # the same system on the re-laid layout (bottom), then the full system; None
+    # leaves the slot blank.
     preferred_order = [
-        "vanilla", "relayout",
+        "vanilla", "adapter",
+        "relayout", "kvonly",
         "continuum", "continuum_relayout",
         "cachescout", "cachescout_relayout",
         "kvflow", "kvflow_relayout",
-        "kvonly", "ours",
+        "ours", None,
     ]
 
     plt.rcParams.update({
@@ -64,6 +70,9 @@ def draw_legend(output_file: str) -> Path:
 
     handles = []
     for arm in preferred_order:
+        if arm is None:
+            handles.append(Line2D([], [], linestyle="none", marker="none", label=" "))
+            continue
         is_ours = arm == "ours"
         is_variant = arm.endswith("_relayout")
         handles.append(Line2D(

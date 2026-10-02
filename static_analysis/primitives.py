@@ -347,6 +347,7 @@ class Program:
     # breaks the ties the call edges leave (see shared_order)
     field_tokens: Dict[str, int] = field(default_factory=dict)
     layout_policy: Optional[bool] = None       # header_last given to decide_layouts; None = not decided
+    layout_adapter: bool = False               # decide_layouts(adapter=True): the framework-adapter layout, no analysis
 
     # Layout
     def site_depth(self) -> Dict[CallSiteID, int]:
@@ -375,10 +376,10 @@ class Program:
             return []
         self.field_tokens.update(new)
         before = {k: (t.order, t.header_last) for k, t in self.sites.items()}
-        self.decide_layouts(header_last=self.layout_policy)
+        self.decide_layouts(header_last=self.layout_policy, adapter=self.layout_adapter)
         return [k for k, t in self.sites.items() if (t.order, t.header_last) != before[k]]
 
-    def decide_layouts(self, header_last: bool = True) -> None:
+    def decide_layouts(self, header_last: bool = True, adapter: bool = False) -> None:
         """
         Order prompt fields to maximize shared prefix reuse.
 
@@ -387,8 +388,19 @@ class Program:
           edges (see shared_order).
         - Put unshared fields afterward, most stable first.
         - Keep the header first unless the leading field is shared; then move the header after the values.
+
+        adapter=True is the framework-adapter baseline (the `adapter` arm): no program
+        analysis at all. Bindings keep their native order and the call-site header moves
+        behind the values at every site (the system prompt never moves, the hint is last
+        already), except where the program asked for no_header_last, as in every arm.
             """
         self.layout_policy = header_last
+        self.layout_adapter = adapter
+        if adapter:
+            for t in self.sites.values():
+                t.order = None
+                t.header_last = header_last and bool(t.header) and not t.no_header_last
+            return
         depth = self.site_depth()
         first: Dict[str, int] = {} # first occurrence depth of a binding
         carriers: Dict[str, set] = {} # call sites that use the walker.field

@@ -27,9 +27,10 @@ on_signal() { stop_server; exit 130; }
 trap stop_server EXIT
 trap on_signal INT TERM
 mkdir -p $MIX
-git rev-parse HEAD > $MIX/git_head.txt
-git diff HEAD -- server model static_analysis benchmark/mixed_workload.py benchmark/applications > $MIX/working_tree.patch
+[[ -s $MIX/git_head.txt ]] || git rev-parse HEAD > $MIX/git_head.txt       # first run's code; later arms log to provenance.log
+[[ -s $MIX/working_tree.patch ]] || git diff HEAD -- server model static_analysis benchmark/mixed_workload.py benchmark/applications > $MIX/working_tree.patch
 grep -n "PROMOTE_MAX_USAGE = " server/kv_planner.py | head -1 > $MIX/promote_max_usage.txt
+echo "$(date '+%m-%d %T') HEAD=$(git rev-parse --short HEAD) dirty=$(git diff HEAD --stat -- server model static_analysis benchmark/mixed_workload.py benchmark/applications | tail -1 | sed 's/^ *//') arms: $*" >> $MIX/provenance.log
 run_mix() {   # <arm name in the tag> <start_server arm> [server flags]
   local NAME=$1 ARM=$2; shift 2
   local TAG=mix4x${L}h${HOSTGB}_${NAME} OUT=$MIX/$NAME SLOG=$MIX/$NAME/server.log

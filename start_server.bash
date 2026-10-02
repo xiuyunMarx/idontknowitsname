@@ -1,8 +1,8 @@
 #!/bin/bash
 # Start one serving arm in the background and wait for model warmup.
 #
-#   ./start_server.bash [ours|kvonly|relayout|vanilla|continuum|cachescout|kvflow|kvflow_relayout|continuum_relayout|cachescout_relayout] [server flags]
-#   relayout = re-layout only (no planner), vanilla = vanilla SGLang (no re-layout, no planner)
+#   ./start_server.bash [ours|kvonly|relayout|adapter|vanilla|continuum|cachescout|kvflow|kvflow_relayout|continuum_relayout|cachescout_relayout] [server flags]
+#   relayout = re-layout only (no planner), adapter = framework-adapter layout only (header behind the values, native binding order, no planner), vanilla = vanilla SGLang (no re-layout, no planner)
 #
 # Environment: MODEL, HOST, KV, SCHED, CLIP, LOG
 set -euo pipefail
@@ -21,6 +21,7 @@ case "$ARM" in
   ours)             MODULE=server.server;            ARM_FLAGS=() ;;
   kvonly)           MODULE=server.server;            ARM_FLAGS=(--no-relayout) ;;
   relayout)         MODULE=server.server;            ARM_FLAGS=(--lru) ;;
+  adapter)          MODULE=server.server;            ARM_FLAGS=(--lru --layout adapter) ;;
   vanilla)          MODULE=server.server;            ARM_FLAGS=(--lru --no-relayout) ;;
   continuum)        MODULE=server.continuum_server;  ARM_FLAGS=() ;;
   kvflow)           MODULE=server.KVFlow_server;     ARM_FLAGS=() ;;
