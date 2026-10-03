@@ -33,7 +33,8 @@ class TimesFormatter(ScalarFormatter):
     """Speedup tick labels: the default number followed by a times sign."""
 
     def __call__(self, x, pos=None):
-        return super().__call__(x, pos) + r"$\times$"
+        # %g drops trailing zeros (1.5 instead of 1.50) so the panel keeps its width.
+        return f"{x:g}" + r"$\times$"
 
 def draw_line_chart(records: dict):
     """Draw JCT and TTFT speedup curves and save them as vector PDFs."""
@@ -44,15 +45,15 @@ def draw_line_chart(records: dict):
     display_names = {
         "vanilla": "Vanilla",
         "adapter": "Static-Adapter",
-        "kvonly": "ANON-KV-only",
-        "relayout": "ANON-Relayout-only",
+        "kvonly": r"\textsc{Mortis}-KV-only",
+        "relayout": r"\textsc{Mortis}-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
         "continuum_relayout": "Continuum+Relayout",
         "cachescout_relayout": "CacheScout+Relayout",
         "kvflow": "KVFlow",
         "kvflow_relayout": "KVFlow+Relayout",
-        "ours": "ANON",
+        "ours": r"\textsc{Mortis}",
     }
     # A *_relayout arm reuses its base arm's color and marker; it is drawn
     # dashed with a hollow marker.
@@ -95,16 +96,19 @@ def draw_line_chart(records: dict):
     # pgfplots-like styling: Times to match the paper body, boxed axes, inward
     # ticks on all four sides, thin strokes. Fonts are embedded in the PDFs.
     plt.rcParams.update({
+        # Text is typeset by LaTeX with the paper's Times font so that labels
+        # (including \textsc{Mortis}) match the body exactly.
+        "text.usetex": True,
+        "text.latex.preamble": r"\usepackage{times}",
         "font.family": "serif",
-        # STIX is a TrueType Times clone bundled with matplotlib (Type 42 safe).
-        "font.serif": ["STIXGeneral"],
-        "mathtext.fontset": "stix",
-        "font.size": 7.5,
-        "axes.labelsize": 7.5,
+        # Panels print at 0.24\textwidth, i.e. 0.73x this canvas; these sizes
+        # come out at ~7-7.5pt on the page, matching the shared legend.
+        "font.size": 10.2,
+        "axes.labelsize": 10.2,
         "axes.linewidth": 0.5,
-        "axes.labelpad": 2,
-        "xtick.labelsize": 7,
-        "ytick.labelsize": 7,
+        "axes.labelpad": 1.5,
+        "xtick.labelsize": 9.5,
+        "ytick.labelsize": 9.5,
         "xtick.direction": "in",
         "ytick.direction": "in",
         "xtick.top": True,
@@ -113,15 +117,15 @@ def draw_line_chart(records: dict):
         "ytick.major.size": 2.5,
         "xtick.major.width": 0.5,
         "ytick.major.width": 0.5,
-        "xtick.major.pad": 2.5,
-        "ytick.major.pad": 2.5,
+        "xtick.major.pad": 2,
+        "ytick.major.pad": 2,
         "legend.fontsize": 7,
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
     })
 
     def plot_metric(metric: str, output_file: str) -> Path:
-        fig, ax = plt.subplots(figsize=(2.25, 1.4), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(2.25, 1.55), constrained_layout=True)
 
         # A subtle reference line makes values above/below the baseline obvious.
         ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)

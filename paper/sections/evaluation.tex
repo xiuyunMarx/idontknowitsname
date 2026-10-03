@@ -1,7 +1,7 @@
 \section{Evaluation}
 \label{sec:eval}
-In this section, we evaluate \sysname on multiple representative agent workloads, and ablate each components.
-\subsection{Environmental Settings}
+In this section, we evaluate \sysname on multiple representative agent workloads, and ablate each component.
+\subsection{Experimental Setup}
 \subsubsection{Testbed and Model}
 We conduct all experiments on one NVIDIA RTX 3090 GPU using Qwen3-14B-AWQ. We allocate 5.2\,GB of GPU memory to the device KV-cache pool and 10\,GB of CPU memory to the host KV-cache pool.
 
@@ -10,8 +10,8 @@ We compare \sysname against the following serving systems, together with two abl
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Vanilla SGLang}~\cite{zheng2024sglang} uses SGLang's HiCache with LRU eviction. 
     \item \textbf{CacheScout}~\cite{zhang2026cachescout} identifies agents from their request prefixes and learns inter-agent execution transitions online. It uses the learned transition patterns to prioritize cached KV entries and prefetch the prefixes of predicted successor agents.
-    \item \textbf{Continuum}~\cite{li2025continuum} retains each agent program's KV cache for an adaptively selected time-to-live (TTL). The TTL is derived from observed inter-invocation delays and expected cache reuse, allowing the system to preserve reusable context while the agent executes tools.
-    \item \textbf{KVFlow}~\cite{pan2025kvflow} uses an Agent Step Graph to build a workflow-aware KV cache management framework for agentic workloads.
+    \item \textbf{Continuum}~\cite{li2025continuum} retains each agent program's KV-cache for an adaptively selected time-to-live (TTL). The TTL is derived from observed inter-invocation delays and expected cache reuse, allowing the system to preserve reusable context while the agent executes tools.
+    \item \textbf{KVFlow}~\cite{pan2025kvflow} uses an Agent Step Graph to build a workflow-aware KV-cache management framework for agentic workloads.
     \item \textbf{Static-Adapter} mirrors the adapter layer of DSPy~\cite{dspy2026chatadapter}, which applies a fixed, program-agnostic layout to every call, hoisting the invariant components to the front.
     \item \textbf{\sysname-KV-only} enables proactive KV-cache scheduling but disables adaptive prompt re-layout.
     \item \textbf{\sysname-Relayout-only} enables adaptive prompt re-layout but replaces proactive KV-cache scheduling with LRU eviction.
@@ -19,7 +19,7 @@ We compare \sysname against the following serving systems, together with two abl
 
 
 \subsubsection{Workloads}
-We evaluate \sysname on four representative agent workloads, written with ByLLM~\cite{dantanarayana2025mtp} in Jac: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 16 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.
+We evaluate \sysname on four representative agent workloads, written in Jac byLLM~\cite{dantanarayana2025mtp}: a HoVer-style~\cite{jiang2020hover} fact-checking agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. The mixed workload runs 16 concurrent lanes, four per agent type; when a lane finishes a session, it immediately starts the next one.
 
 \begin{table}[t]
 \centering
@@ -68,15 +68,15 @@ KVFlow                  & 116.0 & 34.1 & 10.8 & 10.1 & 20.9 \\
         \includegraphics[width=\linewidth]{figures/mix_sweep/ttft_speedup.pdf}
         \caption*{TTFT speedup}
     \end{subfigure}
-    \caption{Throughput and average TTFT speedup over Vanilla SGLang on different pressure of mixed workloads.}
+    \caption{Throughput and average TTFT speedup over Vanilla SGLang under varying load on the mixed workload.}
     \label{fig:lane_sweep}
 \end{figure}
 
-\subsection{End-to-End Performace of \sysname}
+\subsection{End-to-End Performance of \sysname}
 \begin{figure*}
     \centering
-    % Legend keeps the same size relative to the panels as in the 3-column layout (0.754 x 0.24/0.32).
-    \includegraphics[width=0.566\textwidth]{figures/sweep_graph/legend.pdf}
+    % Legend is drawn ~\textwidth wide so its labels print at (almost) native size.
+    \includegraphics[width=\textwidth]{figures/sweep_graph/legend.pdf}
 
     \begin{subfigure}[b]{0.24\textwidth}
         \centering
@@ -138,7 +138,7 @@ KVFlow                  & 116.0 & 34.1 & 10.8 & 10.1 & 20.9 \\
     \label{fig:e2e_speedup}
 \end{figure*}
 
-We tested \sysname under different number concurrent workflows, and a mixed workloads. Across these workloads, we compare average job completion time(JCT), average time-to-first-token(TTFT) and throughput(prompt tokens served per minute) for the mixed workload.
+We test \sysname under different numbers of concurrent workflows and on a mixed workload. Across these workloads, we compare average job completion time (JCT) and average time-to-first-token (TTFT), and throughput (prompt tokens served per minute) for the mixed workload.
 
 \paragraph{Performance on mixed workload}
 As shown in Table~\ref{tab:mixed-workload}, \sysname raises throughput to 1.46$\times$ that of Vanilla SGLang and reduces average TTFT by 1.43$\times$. Continuum and CacheScout perform close to Vanilla SGLang on all three metrics, and Static-Adapter stays within 1.14$\times$ of it. The gain of \sysname comes from a higher cache hit rate in both device and host memory.
@@ -195,5 +195,5 @@ Static-Adapter raises throughput by 1.14$\times$ and reduces average TTFT by 1.2
 Adding proactive KV-cache scheduling brings throughput to 1.42$\times$ and the TTFT reduction to 1.40$\times$, and lifts the hit rate from 12.6\% to 30.2\%. Prefetch adds little on this workload (1.46$\times$, 1.43$\times$), since under this load the device pool is rarely free enough for a prefetch to take place.
 
 \paragraph{Complementarity of Re-layout and Scheduling}
-Adaptive prompt re-layout and proactive KV-cache scheduling depend on each other. Applied to the original prompt order, proactive KV-cache scheduling raises throughput by only 1.16$\times$ (\sysname-KV-only); applied after re-layout, it raises throughput by 1.22$\times$ relative to \sysname-Relayout-only. The combined 1.46$\times$ gain is larger than the sum of the two individual gains. Re-layout places the stable and shared bindings at the front, so a served prompt divides into a reusable head and a volatile tail, and scheduling gets opportunities to protect. Besides, KV-cache scheduling and adaptive prompt re-layout are complementary. Applied on the re-laid prompts, CacheScout, Continuum and KVFlow all improve on \sysname-Relayout-only (Table~\ref{tab:mixed-workload}), and on the per-workload sweeps the gap widens with concurrency (Figure~\ref{fig:e2e_speedup}). 
+Adaptive prompt re-layout and proactive KV-cache scheduling depend on each other. Applied to the original prompt order, proactive KV-cache scheduling raises throughput by only 1.16$\times$ (\sysname-KV-only); applied after re-layout, it raises throughput by 1.22$\times$ relative to \sysname-Relayout-only. The combined 1.46$\times$ gain is larger than the sum of the two individual gains. Re-layout places the stable and shared bindings at the front, so a served prompt divides into a reusable head and a volatile tail, and scheduling gets opportunities to protect. Moreover, KV-cache scheduling and adaptive prompt re-layout are complementary. Applied on the re-laid prompts, CacheScout, Continuum and KVFlow all improve on \sysname-Relayout-only (Table~\ref{tab:mixed-workload}), and on the per-workload sweeps the gap widens with concurrency (Figure~\ref{fig:e2e_speedup}). 
 

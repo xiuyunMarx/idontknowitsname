@@ -35,9 +35,9 @@ DISPLAY_NAMES = {
     "cachescout_relayout": "CacheScout+Relayout",
     "kvflow": "KVFlow",
     "kvflow_relayout": "KVFlow+Relayout",
-    "kvonly": "ANON-KV-only",
-    "relayout": "ANON-Relayout-only",
-    "ours": "ANON",
+    "kvonly": r"\textsc{Mortis}-KV-only",
+    "relayout": r"\textsc{Mortis}-Relayout-only",
+    "ours": r"\textsc{Mortis}",
 }
 GROUP_GAP = 0.4  # blank columns between two workloads
 
@@ -76,8 +76,11 @@ def draw_hit_rate(output_file: Path) -> Path:
     cmap = plt.cm.YlGnBu
 
     plt.rcParams.update({
+        # Text is typeset by LaTeX with the paper's Times font so that labels
+        # (including \textsc{Mortis}) match the body exactly.
+        "text.usetex": True,
+        "text.latex.preamble": r"\usepackage{times}",
         "font.family": "serif",
-        "font.serif": ["STIXGeneral"],
         "font.size": 7,
         "axes.labelsize": 7,
         "xtick.labelsize": 6.5,
@@ -92,7 +95,7 @@ def draw_hit_rate(output_file: Path) -> Path:
             value = records[title][arm].get(c)
             if value is None:  # not measured yet
                 ax.add_patch(Rectangle((x - 0.5, row - 0.5), 1, 1, color="#F2F2F2", linewidth=0))
-                ax.text(x, row, "\u2013", ha="center", va="center", fontsize=6, color="#9A9A9A")
+                ax.text(x, row, "--", ha="center", va="center", fontsize=6, color="#9A9A9A")
                 continue
             ax.add_patch(Rectangle((x - 0.5, row - 0.5), 1, 1, color=cmap(norm(value)), linewidth=0))
             ax.text(x, row, f"{value:.0f}", ha="center", va="center", fontsize=6,

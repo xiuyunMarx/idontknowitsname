@@ -8,7 +8,7 @@ import csv
 
 FILE = "lane_sweep.csv"
 # Arms measured at every lane level; the rest exist only at L=4 (mix4x4_h10).
-ARMS = ["vanilla", "relayout", "ours"]
+ARMS = ["vanilla", "adapter", "relayout", "ours"]
 
 
 def read_csv(file_path) -> dict:
@@ -41,16 +41,19 @@ def draw_line_chart(records: dict):
     # Styles must match the ones in ../sweep_graph/*/draw.py.
     display_names = {
         "vanilla": "Vanilla SGLang",
-        "relayout": "ANON-Relayout-only",
-        "ours": "ANON",
+        "adapter": "Static-Adapter",
+        "relayout": r"\textsc{Mortis}-Relayout-only",
+        "ours": r"\textsc{Mortis}",
     }
     colors = {
         "vanilla": "#4D4D4D",
+        "adapter": "#A0522D",
         "relayout": "#009E73",
         "ours": "#D55E00",
     }
     markers = {
         "vanilla": "o",
+        "adapter": "h",
         "relayout": "^",
         "ours": "*",
     }
@@ -60,10 +63,11 @@ def draw_line_chart(records: dict):
     # pgfplots-like styling: Times to match the paper body, boxed axes, inward
     # ticks on all four sides, thin strokes. Fonts are embedded in the PDFs.
     plt.rcParams.update({
+        # Text is typeset by LaTeX with the paper's Times font so that labels
+        # (including \textsc{Mortis}) match the body exactly.
+        "text.usetex": True,
+        "text.latex.preamble": r"\usepackage{times}",
         "font.family": "serif",
-        # STIX is a TrueType Times clone bundled with matplotlib (Type 42 safe).
-        "font.serif": ["STIXGeneral"],
-        "mathtext.fontset": "stix",
         "font.size": 7.5,
         "axes.labelsize": 7.5,
         "axes.linewidth": 0.5,
@@ -140,8 +144,8 @@ def draw_line_chart(records: dict):
                label=display_names[a])
         for a in arm_order
     ]
-    fig = plt.figure(figsize=(3.2, 0.16))
-    fig.legend(handles=handles, loc="center", ncol=3, frameon=False,
+    fig = plt.figure(figsize=(3.4, 0.16))
+    fig.legend(handles=handles, loc="center", ncol=4, frameon=False,
                handlelength=1.7, columnspacing=1.0, handletextpad=0.4,
                borderpad=0, borderaxespad=0)
     legend_path = Path("legend.pdf")

@@ -1,8 +1,7 @@
 
 \section{Design}
 \label{sec:design}
-In this section, We present the design of \sysname. \sysname adopts a two-tier compiler-server co-design. On compiler side, \sysname performs static analysis to gather heterogeneity metadata, and on the server side, \sysname leverages this metadata to optimize KV-cache scheduling. 
-We first introduce an interface \emph{Agent Descriptor} to bridge the compiler and server. Second, we present a heterogeneity-aware KV-cache scheduling strategy that leverages the agent descriptor to enhance serving performance. 
+In this section, we present the design of \sysname. \sysname adopts a two-tier compiler-serving co-design. We define the \emph{Agent Descriptor} as the interface to bridge the compiler and the server, which combines compiler analysis and runtime observation and is leveraged by the server side to enhance serving performance. As shown in Figure~\ref{fig:design_overview}, \sysname first identifies and annotates each component, and then efficiently plans the scheduling of the KV-cache.
 
 \begin{figure*}[t]
     \centering
@@ -19,18 +18,19 @@ We first introduce an interface \emph{Agent Descriptor} to bridge the compiler a
 % \end{figure}
 
 \subsection{Agent Descriptor}
-We define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where the \staticAnalysis to provide a skeleton, while the server refines the weight with runtime observations. An agent descriptor contains two parts: 
+We define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where static analysis provides a skeleton and the server refines the weights with runtime observations. An agent descriptor contains two parts: 
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Call-site Template:} It provides a heuristic of the components' lifetime, sharing scope and evolution pattern.
     \item \textbf{Workflow Automaton:} It contains the program-level structure of an agent, including workflow dependencies, execution time estimation and transition probabilities.
 \end{enumerate*} 
 
+\sysname traverses the agents type-checked AST to identify LLM call sites and their relationships. It then classifies each parameter’s provenance and lifetime to construct the skeleton of the agent descriptor.
 \subsubsection{Call-site Template}
 \label{sec:template}
 As discussed in \S\ref{sec:motivation}, the components of a programmatically generated prompt can be classified into the following two categories:
 \begin{enumerate*}[label=(\roman*)]
-    \item \textbf{Invariant Specifications:} the components that are fixed once the program is compiled, such as the system prompt, response schema, and the tool declarations. They are rendered from the compiler's own intermediate representation and stays constant.
-    \item \textbf{Dynamic Bindings:} because LLM calls are declared as ordinary functions, the arguments of a call site are supplied in runtime. These runtime values are the dynamic bindings.
+    \item \textbf{Invariant Specifications:} the components that are fixed once the program is compiled, such as the system prompt, response schema, and the tool declarations. They are rendered from the compiler's own intermediate representation and stay constant.
+    \item \textbf{Dynamic Bindings:} because LLM calls are declared as ordinary functions, the arguments of a call site are supplied at runtime. These runtime values are the dynamic bindings.
 \end{enumerate*}
 
 We therefore define the call-site template as
@@ -64,28 +64,28 @@ An agent typically consists of a sequence of dependent LLM calls whose workflow 
 \]
 where:
 \begin{enumerate*}[label=(\roman*)]
-    \item $Q$ is the set of states. Each state $q\in Q$ is labelled by an LLM callsite;
+    \item $Q$ is the set of states. Each state $q\in Q$ is labeled by an LLM callsite;
     \item $P$ denotes the transition probabilities between states.
     \item $q_0 \in Q$ is the entrance callsite.
     \item $F$ specifies the termination probability of the agent at each state.
     \item $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ denotes the timing annotations associated with states and transitions, where $D^{\mathrm{exec}}_q$ is the execution-time distribution of the LLM callsite represented by state $q$, and $D^{\mathrm{gap}}_{q,q'}$ is the inter-call gap distribution between the completion of callsite $q$ and the invocation of its successor $q'$.
 \end{enumerate*}
 
-Static analysis fixes the shape of this automaton, while its weights comes from runtime logs. The states, the entry, the transitions among them, and final states are recovered from code. $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ and $P$ are often unknown at compile time and model dependent. The server observes these online and accumulates them across sessions, updating the statistical model of the agent consistently. Together the two halves give the server a forward-looking view of a session.
+Static analysis fixes the shape of this automaton, while its weights come from runtime logs. The states, the entry, the transitions among them, and final states are recovered from code. $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ and $P$ are often unknown at compile time and model-dependent. The server observes these online and accumulates them across sessions, updating the statistical model of the agent consistently. Together the two halves give the server a forward-looking view of a session.
 
 \subsection{Adaptive Prompt Re-layout}
 \label{sec:relayout}
 Prefix reuse stops at the first byte that differs from a cached prompt. The message a framework emits for a call site follows the declaration order of the function, which may place a changing value ahead of values that later calls could reuse. \sysname's adaptive re-layout permutes the components of each call message so that the bytes most likely to be resident already come first. The descriptor $\mathcal{T}_c$ (\S\ref{sec:template}) and $\mathcal{A}$ (\S\ref{sec:TPFM}) determine a partial order over the components, and the server completes it into a layout with the token lengths it observes at runtime.
 \subsubsection{Movable Components}
-First, the dynamic bindings $\mathcal{B}_c$ can be permuted freely. The compiler lowers each argument into a self-contained component labelled by its parameter name, and the framework places these components in declaration order only because that is the order of the argument list; Re-layout may therefore choose any order of the bindings.
+First, the dynamic bindings $\mathcal{B}_c$ can be permuted freely. The compiler lowers each argument into a self-contained component labeled by its parameter name, and the framework places these components in declaration order only because that is the order of the argument list; re-layout may therefore choose any order of the bindings.
 
-Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. $\mathcal{I}_c$ is a simplified abstraction. More precisely, it consists system prompt, reponse schema, tool schema and instruction specification(Task description and parameter description generated by compiler). Among them, system prompt stays universally constant, and two schemas are digested by model separately. Instruction header is movable. 
+Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. $\mathcal{I}_c$ is a simplified abstraction. More precisely, it consists of the system prompt, the response schema, the tool schema, and the instruction specification (the task description and parameter descriptions generated by the compiler). Among them, the system prompt stays universally constant, and the two schemas are consumed by the model separately. The instruction specification is movable. 
 
-\sysname therefore operates on the order of bindings and the placement of instruction specification. Section~\ref{sec:layout_decision} describes how \sysname chooses a layout within this space.
+\sysname therefore operates on the order of bindings and the placement of instruction specification. \S\ref{sec:layout_decision} describes how \sysname chooses a layout within this space.
 
 \subsubsection{Layout Decision}
 \label{sec:layout_decision}
-Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front, following it are the bindings carried by a single call site. Algorithm~\ref{alg:layout} summarizes the procedure.
+Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front, followed by the bindings carried by a single call site. Algorithm~\ref{alg:layout} summarizes the procedure.
 
 \paragraph{Ordering private bindings.} The bindings carried by a single call site are sorted in ascending lexicographic order of
 \[
@@ -99,7 +99,7 @@ whose components are defined as follows:
     \item \textit{length}: the token length of the value of $b$, observed by the server; negated so longer bindings precede.
 \end{enumerate*}
 
-\paragraph{Ordering shared bindings.} The ordering of shared bindings is derived from program-level structures. For every transition from $q$ to $q'$, \staticAnalysis identifies how each shared binding of the two call sites evolves. We categorize these patterns into three groups and ordered in following sequence:
+\paragraph{Ordering shared bindings.} The ordering of shared bindings is derived from program-level structures. For every transition from $q$ to $q'$, \staticAnalysis identifies how each shared binding of the two call sites evolves. We categorize these patterns into three groups, ordered as follows:
 \begin{enumerate*}[label=(\textbf{\roman*})]
     \item Both call sites carry it and its value does not change between the two calls.
     \item Both call sites carry it and the program only appends to its value.
@@ -141,26 +141,26 @@ whose components are defined as follows:
 
 
 \subsection{Proactive KV-Cache Scheduling}
-While adaptive prompt re-layout improves prefix reuse only by reshaping the request, \sysname's KV-cache scheduling proactively arrange the placement of KV cache entries. Using the agent descriptor, the server decides for every served KV-cache sequence what to keep, what to give up, and what to prefetch.
+While adaptive prompt re-layout improves prefix reuse only by reshaping the request, \sysname's KV-cache scheduling proactively arranges the placement of KV-cache entries. Using the agent descriptor, the server decides for every served KV-cache sequence what to keep, what to give up, and what to prefetch.
 
 \subsubsection{Reusable Head and Volatile Tail}
 \label{sec:identify_reusable_kv}
-Since re-layout already places the stable and shared bindings at the front, a served prompt naturally divides into two segments: a reusable head and a volatile tail. In a full prompt, what behind the reusable head are all classified into volatile tail.
+Since re-layout already places the stable and shared bindings at the front, a served prompt naturally divides into two segments: a reusable head and a volatile tail. In a full prompt, everything behind the reusable head belongs to the volatile tail.
 
-Reusable head consists two parts: a \emph{static prefix} and a \emph{session-shared extension}:
+The reusable head consists of two parts: a \emph{static prefix} and a \emph{session-shared extension}:
 \begin{enumerate*}[label=(\roman*)]
-    \item \textbf{Static Prefix} is what the call site emits without runtime inputs, and its values outlives single session. It includes the invariant specifications $\mathcal{I}_c$ together with the CONST bindings that re-layout has placed right behind them.
+    \item \textbf{Static Prefix} is what the call site emits without runtime inputs, and its value outlives a single session. It includes the invariant specifications $\mathcal{I}_c$ together with the CONST bindings that re-layout has placed right behind them.
     \item \textbf{Session-shared Extension} is the run of bindings behind the static prefix that a later call of the same session will emit again at the same position.
 \end{enumerate*}
-The two parts are derived from agent program itself. $\mathcal{H}_c$ names the provenance of each binding, and the automaton $\mathcal{A}$ names the transitions between call sites. Additionally with the decided layout of each call-site, we determine the reusable head by jointly analyze them. 
+The two parts are derived from the agent program itself. $\mathcal{H}_c$ names the provenance of each binding, and the automaton $\mathcal{A}$ names the transitions between call sites. Together with the decided layout of each call site, we determine the reusable head by analyzing them jointly. 
 
 
 \subsubsection{Next-Call Prediction}
-Because the workflow automaton $A$ already exposes all potential next calls, our prediction focus on the following three aspects:
+Because the workflow automaton $\mathcal{A}$ already exposes all potential next calls, our prediction focuses on the following three aspects:
 \begin{enumerate*}[label=(\roman*)]
     \item The probability of the arrival.
-    \item When will the call arrive.
-    \item Which prefix of its prompt is can be speculatively constructed.
+    \item When the call will arrive.
+    \item Which prefix of its prompt can be speculatively constructed.
 \end{enumerate*}
 
 \paragraph{Arrival probability.}
@@ -172,8 +172,9 @@ where $\zeta$ is the loop indices; $\mathcal{P}$ stands for the probability that
 
 The table is a frequency count that the server updates across sessions. When a call arrives, its call-site is counted as the outcome of the previous call-site under the previous call's $\zeta$, and termination is counted when the session closes. Each observation is also counted under every suffix of $\zeta$ down to the empty tuple, so that for the same $q$ the table holds one row per level of context, from the fully specified iteration to the pooled count over all iterations. After a call at $q$ lands, we compute the probability of each outcome $o$ by Witten--Bell interpolation from the empty context $\zeta_0$ to the full context $\zeta_m=\zeta$, where $o$ ranges over $\mathrm{succ}(q)$, the static successors of $q$ plus a virtual outcome $\mathrm{end}$ for session termination:
 \begin{align*}
-\hat{P}_k(o) &= \lambda_k\,\frac{c_k(o)}{n_k}+(1-\lambda_k)\,\hat{P}_{k-1}(o), \\
-\hat{P}_0(o) &= \frac{1}{|\mathrm{succ}(q)|},\qquad \lambda_k=\frac{n_k}{n_k+d_k},
+\hat{P}_k(o) &= \lambda_k\,\frac{c_k(o)}{n_k}+(1-\lambda_k)\,\hat{P}_{k-1}(o),\qquad k=0,\dots,m, \\
+\hat{P}_{-1}(o) &= \frac{1}{|\mathrm{succ}(q)|},\qquad
+\lambda_k=\begin{cases}\dfrac{n_k}{n_k+d_k} & n_k>0,\\[4pt] 0 & n_k=0,\end{cases}
 \end{align*}
 where $\zeta_k$ is the suffix of $\zeta$ that keeps only the innermost $k$ indices, and the three counts are read from the row $(q,\zeta_k)$ of the table: $c_k(o)$ is how many times outcome $o$ followed a call at $q$ in context $\zeta_k$, $n_k=\sum_o c_k(o)$ is the number of observations in that row, and $d_k$ is the number of distinct outcomes with $c_k(o)>0$.
 
@@ -184,30 +185,30 @@ Then,
 A level with no observation is skipped. The weight $\lambda_k$ grows with the support of a level, so a well-observed iteration dominates the prediction while a sparse one defers to the pooled behavior of $q$.
 
 \paragraph{Arrival time.}
-The time of arrival is conservatively approximated based on record statistics. The workflow automaton records $D^{\mathrm{gap}}_{q,q'}$ per transition: each time a call at $q'$ arrives, the server appends the interval between the reply of the preceding call at $q$ and this arrival. The interval is the agent's own time spent in its code between two calls. 
+The time of arrival is conservatively approximated based on recorded statistics. The workflow automaton records $D^{\mathrm{gap}}_{q,q'}$ per transition: each time a call at $q'$ arrives, the server appends the interval between the reply of the preceding call at $q$ and this arrival. The interval is the agent's own time spent in its code between two calls. 
 
 We estimate the gap before the next call as:
 \[
 \hat{g}= t_{50}-\tfrac{1}{2}(t_{90}-t_{50})
 \]
-where $t_{50}$ and $t_{90}$ are the 50th and 90th percentiles of the gap samples on the transition $(q,q')$; the predicted call is then expected $\hat{g}$ after the reply of the current call. We introduce the second term to make sure a transition with more sparse distribution of gap receives a tighter estimation. 
+where $t_{50}$ and $t_{90}$ are the 50th and 90th percentiles of the gap samples on the transition $(q,q')$; the predicted call is then expected $\hat{g}$ after the reply of the current call. The second term ensures that a transition with a more dispersed gap distribution receives a tighter estimate. 
 
 \paragraph{Prefix reconstruction.}
-As indicated in \S\ref{sec:identify_reusable_kv}, the prompt of the known successor $q'$ is reconstructible, or at least partial-reconstructible. \sysname builds it prompt in the layout $L_{q'}$, using the values that the session already carries. The construction processes bindings in the order of $L_{q'}$ while consulting their evolution class, deducing value accordingly. The construction stops at the first binding with no known origin. Then the matched prefix is sent to kv-planner for speculative preparation. 
+As indicated in \S\ref{sec:identify_reusable_kv}, the prompt of the known successor $q'$ is reconstructible, or at least partially reconstructible. \sysname builds its prompt in the layout $L_{q'}$, using the values that the session already carries. The construction processes bindings in the order of $L_{q'}$ while consulting their evolution class, deducing values accordingly. The construction stops at the first binding with no known origin. Then the matched prefix is sent to the kv-planner for speculative preparation. 
 
 \subsubsection{Lifecycle Bands}
-As we discussed in \S\ref{sec:motivation}, different components have different lifetime, sharing scope and evolution patterns. Therefore, relying on recency based LRU would lead to suboptimal performance. \sysname adopts a banded proirity and steers KV-cache upon it. 
+As we discussed in \S\ref{sec:motivation}, different components have different lifetimes, sharing scopes, and evolution patterns. Therefore, relying on recency-based LRU would lead to suboptimal performance. \sysname adopts a banded priority and steers KV-cache eviction with it. 
 
 \paragraph{Bands.}
 We categorize KV-cache entries into four bands, from first evicted to last:
 \begin{enumerate*}[label=(\arabic*)]
-    \item \textbf{RETIRED:} the volatile tail of prompt belonging to completed sessions. 
+    \item \textbf{RETIRED:} the volatile tails of prompts belonging to completed sessions. 
     \item \textbf{TRANSIENT:} the volatile tail of a served prompt of a live session. The session that produced them will not present them again.
     \item \textbf{UNCLASSIFIED:} entries that analysis cannot categorize, such as the prompts of a program that was never registered. They keep the engine's default treatment.
     \item \textbf{PLANNED:} prefixes that a predicted call will reuse. Inside this band entries are ordered by the expected value of keeping them resident, defined next.
 \end{enumerate*}
 
-Eviction empties the lowest band first and falls back to recency only within a band, so KV-cache that will likely be reused left memory later. On the host tier, however, it keeps its recency order except that retired segments go first, so a head the device gave up under pressure remains reloadable while it may still be needed. Additionally, KV-cache entries marked as \emph{TRANSIENT} won't be admitted into host as they rival memory space with reusable KV-cache entries.  
+Eviction empties the lowest band first and falls back to recency only within a band, so KV-cache that will likely be reused leaves memory later. On the host tier, however, it keeps its recency order except that retired segments go first, so a head the device gave up under pressure remains reloadable while it may still be needed. Additionally, KV-cache entries marked as \emph{TRANSIENT} are not admitted into the host tier, as they would compete for memory with reusable KV-cache entries.  
 
 \paragraph{Band transitions.}
 Bands are assigned at three moments of a session's lifecycle.
@@ -220,26 +221,26 @@ Bands are assigned at three moments of a session's lifecycle.
 These bands are mirrored directly into the radix tree's eviction order. The band is the primary key of the eviction heap and recency breaks ties.
 
 \subsubsection{Retention and Prefetch}
-Based on prediction, kv-planner of \sysname conducts protection. The duty of it is to ensure required prefix resides on the device, or at least on host. Each prediction is summarized into a tuple of reconstructed prefix, arrival probability and estimated deadline:
+Based on the prediction, the kv-planner of \sysname conducts protection. Its duty is to ensure that the required prefix resides on the device, or at least on the host. Each prediction is summarized into a tuple of reconstructed prefix, arrival probability and estimated deadline:
 \[
 \textit{Prediction}=\left(\pi_{q'},\ \mathcal{P}(q'\mid q,\zeta),\ t_{\mathrm{reply}}+\hat{g}\right)
 \]
-where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or expires. Protection acts on this tuple in two ways. \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
+where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or expire. Protection acts on this tuple in two ways. \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
 
 \paragraph{Retention.}
 The planner ranks the predicted reusable KV-cache entries by the value of keeping $\pi_{q'}$ resident at every refresh:
 \[
 \mathcal{D}(q')=\frac{\mathcal{P}(q'\mid q,\zeta)\cdot |\pi_{q'}|_{\mathrm{cached}}}{\max\!\left(t_{\mathrm{reply}}+\hat{g}-t_{\mathrm{now}},\ \tau_{\min}\right)}
 \]
-where $|\pi_{q'}|_{\mathrm{cached}}$ is the number of tokens of $\pi_{q'}$ cached(both on host and device) and $\tau_{\min}$ is a floor that keeps a call due now from dominating. \sysname's kv-planner sort all predictions by $\mathcal{D}$ in descending order, and admits them into \emph{PLANNED} until the band covers a fixed fraction of the device tier. Within the band, their $\mathcal{D}$ add up on every radix cache node, making shared head outranks a private one.
+where $|\pi_{q'}|_{\mathrm{cached}}$ is the number of tokens of $\pi_{q'}$ cached (on either host or device) and $\tau_{\min}$ is a floor that keeps a call due now from dominating. \sysname's kv-planner sorts all predictions by $\mathcal{D}$ in descending order, and admits them into \emph{PLANNED} until the band covers a fixed fraction of the device tier. Within the band, their $\mathcal{D}$ add up on every radix cache node, so that a shared head outranks a private one.
 
 \paragraph{Prefetch.}
-When part of $\pi_{q'}$ has been demoted to the host, the planner prefetches it back to the device ahead of the estimated arrive time. A prefetch release deadline is therefore defined as: 
+When part of $\pi_{q'}$ has been demoted to the host, the planner prefetches it back to the device ahead of the estimated arrival time. A prefetch release deadline is therefore defined as: 
 \[
 t_{\mathrm{release}}=t_{\mathrm{reply}}+\hat{g}-\frac{|\pi_{q'}|_{\mathrm{host}}}{B_{\mathrm{h2d}}}-\frac{|\pi_{q'}|_{\mathrm{uncached}}}{B_{\mathrm{prefill}}}
 \]
-where $B_{\mathrm{h2d}}$ and $B_{\mathrm{prefill}}$ are the measured host-to-device copy rate and prefill rate. Among released predictions the earliest deadline goes first, and break ties by expected saving:
+where $B_{\mathrm{h2d}}$ and $B_{\mathrm{prefill}}$ are the measured host-to-device copy rate and prefill rate. Among released predictions, the earliest deadline goes first, with ties broken by expected saving:
 \[
 \textit{Saving}=\mathcal{P}(q'\mid q,\zeta)\cdot|\pi_{q'}|_{\mathrm{cached}}
 \]
-A prefetch takes only free device space after reclaiming \emph{RETIRED} and \emph{TRANSIENT} entries, so it never interferes with real requests; when no space is free, prefetching pauses briefly but still prevent predicted KV-cache entries from being completely evicted. A prefetch is released when the engine is idle or its deadline $t_{\mathrm{release}}$ approaches.
+A prefetch takes only free device space after reclaiming \emph{RETIRED} and \emph{TRANSIENT} entries, so it never interferes with real requests; when no space is free, prefetching pauses briefly but still prevents predicted KV-cache entries from being completely evicted. A prefetch is released when the engine is idle or its deadline $t_{\mathrm{release}}$ approaches.

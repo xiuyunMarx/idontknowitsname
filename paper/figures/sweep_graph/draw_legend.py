@@ -11,15 +11,15 @@ def draw_legend(output_file: str) -> Path:
     display_names = {
         "vanilla": "Vanilla SGLang",
         "adapter": "Static-Adapter",
-        "kvonly": "ANON-KV-only",
-        "relayout": "ANON-Relayout-only",
+        "kvonly": r"\textsc{Mortis}-KV-only",
+        "relayout": r"\textsc{Mortis}-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
         "continuum_relayout": "Continuum+Relayout",
         "cachescout_relayout": "CacheScout+Relayout",
         "kvflow": "KVFlow",
         "kvflow_relayout": "KVFlow+Relayout",
-        "ours": "ANON",
+        "ours": r"\textsc{Mortis}",
     }
     colors = {
         "vanilla": "#4D4D4D",
@@ -61,8 +61,11 @@ def draw_legend(output_file: str) -> Path:
     ]
 
     plt.rcParams.update({
+        # Text is typeset by LaTeX with the paper's Times font so that labels
+        # (including \textsc{Mortis}) match the body exactly.
+        "text.usetex": True,
+        "text.latex.preamble": r"\usepackage{times}",
         "font.family": "serif",
-        "font.serif": ["STIXGeneral"],
         "legend.fontsize": 7.5,
         "pdf.fonttype": 42,
         "ps.fonttype": 42,
@@ -94,8 +97,8 @@ def draw_legend(output_file: str) -> Path:
         ncol=len(handles) // 2,
         frameon=False,
         loc="center",
-        columnspacing=1.6,
-        handlelength=2.4,
+        columnspacing=1.2,
+        handlelength=1.8,
         labelspacing=0.35,
     )
 
