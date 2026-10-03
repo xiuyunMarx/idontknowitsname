@@ -10,7 +10,7 @@
 # If latexmk is installed it is used instead of the manual pdflatex/bibtex
 # loop. Override the engine with `make LATEX=lualatex`.
 
-MAIN      := main
+MAIN      := mortis
 LATEX     := pdflatex
 BIBTEX    := bibtex
 LATEXMK   := $(shell command -v latexmk 2>/dev/null)

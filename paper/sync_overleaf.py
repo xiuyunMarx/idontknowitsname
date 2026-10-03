@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Sync the minimal compile closure of main.tex into the Overleaf submodule.
+"""Sync the minimal compile closure of mortis.tex into the Overleaf submodule.
 
-Resolves, starting from main.tex, every uncommented \\input, \\includegraphics,
+Resolves, starting from mortis.tex, every uncommented \\input, \\includegraphics,
 \\bibliography, \\bibliographystyle and locally present \\usepackage file, wipes
 the Overleaf directory (except .git) and copies exactly that closure, then
 commits and pushes.
@@ -52,7 +52,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="test-compile in the Overleaf dir before committing")
     args = ap.parse_args()
 
-    files = sorted(p.relative_to(ROOT) for p in closure(ROOT / "main.tex"))
+    files = sorted(p.relative_to(ROOT) for p in closure(ROOT / "mortis.tex"))
     if args.dry_run:
         print("\n".join(map(str, files)))
         return 0
@@ -66,10 +66,10 @@ def main() -> int:
         shutil.copy2(ROOT / rel, dst)
 
     if args.check:
-        subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "main.tex"],
+        subprocess.run(["latexmk", "-pdf", "-interaction=nonstopmode", "mortis.tex"],
                        cwd=OVERLEAF, check=True, capture_output=True)
         subprocess.run(["latexmk", "-C"], cwd=OVERLEAF, check=True, capture_output=True)
-        (OVERLEAF / "main.bbl").unlink(missing_ok=True)
+        (OVERLEAF / "mortis.bbl").unlink(missing_ok=True)
 
     git = ["git", "-C", str(OVERLEAF)]
     subprocess.run(git + ["add", "-A"], check=True)
