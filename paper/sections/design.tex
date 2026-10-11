@@ -1,30 +1,27 @@
 
 \section{Design}
 \label{sec:design}
-In this section, we present the design of \sysname. \sysname adopts a two-tier compiler-serving co-design. We define the \emph{Agent Descriptor} as the interface to bridge the compiler and the server, which combines compiler analysis and runtime observation and is leveraged by the server side to enhance serving performance. As shown in Figure~\ref{fig:design_overview}, \sysname first identifies and annotates each component, and then efficiently plans the scheduling of the KV-cache.
+In this section, we present the two-tier compiler-serving co-design of \sysname. As shown in Figure~\ref{fig:design_overview}, an \emph{Agent Descriptor} is defined as the interface to bridge the compiler and the server; the server side exploits the derived descriptor to schedule the KV-cache efficiently, using \emph{adaptive prompt re-layout} (\S\ref{sec:relayout}) and \emph{proactive KV-cache scheduling} (\S\ref{sec:Proactive KV-Cache Scheduling}).
+
+
+% We define the \emph{Agent Descriptor} as the interface to bridge the compiler and the server, which combines compiler analysis and runtime observation and is leveraged by the server side to enhance serving performance. 
+
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=\textwidth]{figures/Overview_Walkthrough.pdf}
-    \caption{Architecture overview of \sysname. Static analysis derives the agent descriptor, marking intra-prompt heterogeneity. The server uses it for KV-cache scheduling.}
+    \caption{Architecture overview of \sysname. Agent descriptor annotates intra-prompt heterogeneity. The server then uses it for KV-cache scheduling.}
     \label{fig:design_overview}
 \end{figure*}
 
-% \begin{figure}[t]
-%     \centering
-%     \includegraphics[width=\columnwidth]{figures/Overview_Interface.pdf}
-%     \caption{Components of \sysname and their orchestration.}
-%     \label{fig:design_components}
-% \end{figure}
-
 \subsection{Agent Descriptor}
-We define \emph{Agent Descriptor} to bridge static analysis and server-side scheduling. The agent descriptor serves as a bridge between the two tiers of \sysname, where static analysis provides a skeleton and the server refines the weights with runtime observations. An agent descriptor contains two parts: 
+The \emph{Agent Descriptor} serves as a bridge between the two tiers of \sysname, where static analysis provides a skeleton and the server refines the weights with runtime observations. An agent descriptor contains two parts: 
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Call-site Template:} It provides a heuristic of the components' lifetime, sharing scope and evolution pattern.
     \item \textbf{Workflow Automaton:} It contains the program-level structure of an agent, including workflow dependencies, execution time estimation and transition probabilities.
 \end{enumerate*} 
 
-\sysname traverses the agents type-checked AST to identify LLM call sites and their relationships. It then classifies each parameter’s provenance and lifetime to construct the skeleton of the agent descriptor.
+\sysname traverses the agents type-checked AST to identify LLM call sites and their relationships. It then classifies each parameter's provenance and lifetime to construct the skeleton of the agent descriptor.
 \subsubsection{Call-site Template}
 \label{sec:template}
 As discussed in \S\ref{sec:motivation}, the components of a programmatically generated prompt can be classified into the following two categories:
@@ -54,11 +51,13 @@ The evolution component $\mathcal{E}$ classifies a binding by its value provenan
 \end{enumerate*}
 We write $\rho$ for the rank of a class in the order above, which expresses how much of a binding's bytes an earlier call can already supply. 
 
-The lifetime component $\mathcal{S}$ names the program scope whose completion invalidates a binding's value ($\mathcal{S}=\emptyset$ meaning that the value survives for the whole session once produced). Lifetime is independent of evolution, and the server needs both. The evolution class governs which bytes a later prompt can reuse, while the lifetime governs when cached bytes can be given up.
+The lifetime component $\mathcal{S}$ names the program scope whose completion invalidates a binding's value ($\mathcal{S}=\emptyset$ meaning that the value survives for the whole session once produced). 
+
+The evolution component $\mathcal{E}$ governs which bytes a later prompt can reuse, while the lifetime component $\mathcal{S}$ governs when cached bytes can be given up.
 
 \subsubsection{Workflow Automaton}
 \label{sec:TPFM}
-An agent typically consists of a sequence of dependent LLM calls whose workflow structure is implicit in the program. Concretely, we abstract an agent as a time-annotated probabilistic finite-state machine (TPFM). We formulate the TPFM as: 
+An agent typically consists of a sequence of dependent LLM calls whose workflow structure is encoded in the program. Concretely, we abstract an agent as a time-annotated probabilistic finite-state machine (TPFM). We formulate the TPFM as: 
 \[
 \mathcal{A} = (Q, P, q_0, F, \mathcal{T}),
 \]
@@ -79,7 +78,7 @@ Prefix reuse stops at the first byte that differs from a cached prompt. The mess
 \subsubsection{Movable Components}
 First, the dynamic bindings $\mathcal{B}_c$ can be permuted freely. The compiler lowers each argument into a self-contained component labeled by its parameter name, and the framework places these components in declaration order only because that is the order of the argument list; re-layout may therefore choose any order of the bindings.
 
-Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. $\mathcal{I}_c$ is a simplified abstraction. More precisely, it consists of the system prompt, the response schema, the tool schema, and the instruction specification (the task description and parameter descriptions generated by the compiler). Among them, the system prompt stays universally constant, and the two schemas are consumed by the model separately. The instruction specification is movable. 
+Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. $\mathcal{I}_c$ is treated as one block abstraction in \S\ref{sec:template}, but it has internal structure. It consists of the system prompt, the response schema, the tool schema, and the instruction specification (the task description and parameter descriptions generated by the compiler). Among them, the system prompt stays universally constant, and the two schemas are consumed by the model separately. The instruction specification is movable. 
 
 \sysname therefore operates on the order of bindings and the placement of instruction specification. \S\ref{sec:layout_decision} describes how \sysname chooses a layout within this space.
 
@@ -87,7 +86,7 @@ Second, part of the invariant specification $\mathcal{I}_c$ is movable as well. 
 \label{sec:layout_decision}
 Each call site sorts the bindings it carries by a program-wide key. Generally, \emph{shared} bindings, which are carried by multiple call sites, are placed at the front, followed by the bindings carried by a single call site. Algorithm~\ref{alg:layout} summarizes the procedure.
 
-\paragraph{Ordering private bindings.} The bindings carried by a single call site are sorted in ascending lexicographic order of
+\paragraph{Sorting private bindings.} The bindings carried by a single call site are sorted in ascending lexicographic order of
 \[
 K(b)=\big(\textit{scoped},\ \rho,\ \textit{depth},\ -\textit{length}\big),
 \]
@@ -99,7 +98,7 @@ whose components are defined as follows:
     \item \textit{length}: the token length of the value of $b$, observed by the server; negated so longer bindings precede.
 \end{enumerate*}
 
-\paragraph{Ordering shared bindings.} The ordering of shared bindings is derived from program-level structures. For every transition from $q$ to $q'$, \staticAnalysis identifies how each shared binding of the two call sites evolves. We categorize these patterns into three groups, ordered as follows:
+\paragraph{Sorting shared bindings.} The order of shared bindings is derived from program-level structures. For every transition from $q$ to $q'$, \staticAnalysis identifies how each shared binding of the two call sites evolves. We categorize these patterns into three groups, ordered as follows:
 \begin{enumerate*}[label=(\textbf{\roman*})]
     \item Both call sites carry it and its value does not change between the two calls.
     \item Both call sites carry it and the program only appends to its value.
@@ -141,6 +140,7 @@ whose components are defined as follows:
 
 
 \subsection{Proactive KV-Cache Scheduling}
+\label{sec:Proactive KV-Cache Scheduling}
 While adaptive prompt re-layout improves prefix reuse only by reshaping the request, \sysname's KV-cache scheduling proactively arranges the placement of KV-cache entries. Using the agent descriptor, the server decides for every served KV-cache sequence what to keep, what to give up, and what to prefetch.
 
 \subsubsection{Reusable Head and Volatile Tail}
@@ -225,7 +225,7 @@ Based on the prediction, the kv-planner of \sysname conducts protection. Its dut
 \[
 \textit{Prediction}=\left(\pi_{q'},\ \mathcal{P}(q'\mid q,\zeta),\ t_{\mathrm{reply}}+\hat{g}\right)
 \]
-where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or expire. Protection acts on this tuple in two ways. \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
+where $\pi_{q'}$ is the prefix reconstructed for $q'$ and $t_{\mathrm{reply}}$ is the time the current call replied. Predictions are refreshed at every call, and are dropped when the predicted calls arrive or expire. Protection acts on this tuple in two ways: \emph{Retention} keeps $\pi_{q'}$ from leaving the device, and \emph{prefetch} restores the part of $\pi_{q'}$ that has already been demoted to the host.
 
 \paragraph{Retention.}
 The planner ranks the predicted reusable KV-cache entries by the value of keeping $\pi_{q'}$ resident at every refresh:
@@ -235,7 +235,7 @@ The planner ranks the predicted reusable KV-cache entries by the value of keepin
 where $|\pi_{q'}|_{\mathrm{cached}}$ is the number of tokens of $\pi_{q'}$ cached (on either host or device) and $\tau_{\min}$ is a floor that keeps a call due now from dominating. \sysname's kv-planner sorts all predictions by $\mathcal{D}$ in descending order, and admits them into \emph{PLANNED} until the band covers a fixed fraction of the device tier. Within the band, their $\mathcal{D}$ add up on every radix cache node, so that a shared head outranks a private one.
 
 \paragraph{Prefetch.}
-When part of $\pi_{q'}$ has been demoted to the host, the planner prefetches it back to the device ahead of the estimated arrival time. A prefetch release deadline is therefore defined as: 
+When part of $\pi_{q'}$ has been demoted to the host, the planner prefetches it back to the device ahead of the estimated arrival time. A prefetch release deadline is defined as: 
 \[
 t_{\mathrm{release}}=t_{\mathrm{reply}}+\hat{g}-\frac{|\pi_{q'}|_{\mathrm{host}}}{B_{\mathrm{h2d}}}-\frac{|\pi_{q'}|_{\mathrm{uncached}}}{B_{\mathrm{prefill}}}
 \]
@@ -243,4 +243,5 @@ where $B_{\mathrm{h2d}}$ and $B_{\mathrm{prefill}}$ are the measured host-to-dev
 \[
 \textit{Saving}=\mathcal{P}(q'\mid q,\zeta)\cdot|\pi_{q'}|_{\mathrm{cached}}
 \]
-A prefetch takes only free device space after reclaiming \emph{RETIRED} and \emph{TRANSIENT} entries, so it never interferes with real requests; when no space is free, prefetching pauses briefly but still prevents predicted KV-cache entries from being completely evicted. A prefetch is released when the engine is idle or its deadline $t_{\mathrm{release}}$ approaches.
+A prefetch is released when the engine is idle or its deadline $t_{\mathrm{release}}$ approaches. It takes only free device memory, after reclaiming \emph{RETIRED} and \emph{TRANSIENT} entries. When no space is free, prefetching pauses but keeps touching its entries on the host so they do not age out by recency. 
+

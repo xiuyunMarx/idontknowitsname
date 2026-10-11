@@ -26,10 +26,22 @@ REPO = os.path.dirname(HERE)
 RESULTS = os.environ.get("SWEEP_OUT") or os.path.join(HERE, "mixed_results", "sweeps")   # SWEEP_OUT: alternate output dir
 COLUMNS = ["c", "sessions", "failed", "jct_p50_s", "jct_p95_s", "jct_mean_s", "ttft_p50_ms", "ttft_p95_ms",
            "ttft_mean_ms", "device_pct", "host_pct", "miss_pct", "predicted_hit", "accuracy", "calls",
-           "prompt_tokens_per_call"]
+           "prompt_tokens_per_call", "elapsed_s", "sessions_per_min", "prompt_ktokens_per_min"]
+
+
+def server_alive(port: int = int(os.environ.get("GUARD_PORT", "8964"))) -> bool:
+    import urllib.request
+    try:
+        with urllib.request.urlopen(f"http://localhost:{port}/health", timeout=5) as r:
+            return r.status == 200
+    except Exception:
+        return False
 
 
 def run_level(program: str, tag: str, c: int, sessions: int, warmup: int, server_log: str) -> dict:
+    if not server_alive():
+        raise RuntimeError(f"guard server not reachable before level {tag}; aborting this sweep "
+                           f"(levels already in the CSV are kept)")
     cmd = [sys.executable, "-m", "benchmark.mixed_workload", "--tag", tag, "--lanes", f"{program}={c}",
            "--sessions", str(sessions), "--warmup", str(warmup), "--server-log", server_log]
     with open(os.path.join(RESULTS, "logs", f"{tag}.out"), "w") as out:

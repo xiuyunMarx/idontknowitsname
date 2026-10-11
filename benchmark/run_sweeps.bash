@@ -6,7 +6,7 @@
 # Environment: PYTHON (interpreter), HOST_GB (host KV tier; default 8).
 set -uo pipefail
 cd "$(dirname "$0")/.."
-P=${PYTHON:-/home/xiaoyu/miniconda3/envs/sglang/bin/python}
+P=${PYTHON:-/home/xiaoyu/miniconda3/envs/mortis/bin/python}
 HOST_GB=${HOST_GB:-8}
 ARMS=${*:-"ours relayout vanilla"}
 OUT=benchmark/mixed_results/sweeps

@@ -159,6 +159,7 @@ class Controller:
                 if now - sess.last_seen > t:
                     self._finalize(sid)
 
+    
     # ------------------------------------------------------------------ registration
     def register(self, body: dict) -> dict:
         """Adopt a program's static analysis. Registering the same analysis again

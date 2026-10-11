@@ -224,8 +224,11 @@ def summarize(records: List[dict], server: Dict[str, dict], windows: List[int]) 
         rs = [r for r in measured if r["program"] == p]
         ok = [r for r in rs if r["rc"] == 0]
         walls = [r["wall"] for r in ok]
+        elapsed = max(r["t1"] for r in rs) - start   # first measured start to this program's last finish
         row = {
             "sessions": len(rs), "failed": len(rs) - len(ok),
+            "elapsed_s": round(elapsed, 1),
+            "sessions_per_min": round(len(ok) / (elapsed / 60), 2) if elapsed > 0 else 0.0,
             "jct_p50_s": round(q(walls, 0.5), 1), "jct_p95_s": round(q(walls, 0.95), 1),
             "jct_mean_s": round(statistics.mean(walls), 1) if walls else 0.0,
             "rounds_mean": round(statistics.mean(r["rounds"] for r in ok), 2) if ok else 0.0,
@@ -240,6 +243,7 @@ def summarize(records: List[dict], server: Dict[str, dict], windows: List[int]) 
             row.update({
                 "calls": len(s),
                 "prompt_tokens_per_call": round(prompt / len(s)),
+                "prompt_ktokens_per_min": round(prompt / 1000 / (elapsed / 60), 1) if elapsed > 0 else 0.0,
                 "ttft_p50_ms": round(q([x["ttft_ms"] for x in s], 0.5)),
                 "ttft_p95_ms": round(q([x["ttft_ms"] for x in s], 0.95)),
                 "ttft_mean_ms": round(statistics.mean(x["ttft_ms"] for x in s)),

@@ -9,8 +9,17 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PYTHON=/home/xiaoyu/miniconda3/envs/sglang/bin/python
+PYTHON=${PYTHON:-/home/xiaoyu/miniconda3/envs/mortis/bin/python}
 export PATH="$(dirname "$PYTHON"):$PATH"
+# CUDA toolkit for sglang's JIT kernels (tvm-ffi resolves nvcc from CUDA_HOME, then PATH); the
+# system /usr/bin/nvcc is CUDA 10.1 and cannot build them.
+export CUDA_HOME=${CUDA_HOME:-/usr/local/cuda-12.8}
+export PATH="$CUDA_HOME/bin:$PATH"
+# Host C++ compiler for nvcc and the JIT's .cpp units: the kernels need C++20 (<concepts>), which the
+# system gcc 9 lacks; GCC 12 is installed in the serving env (conda-forge gcc=12 gxx=12).
+export CC=${CC:-$(dirname "$PYTHON")/gcc}
+export CXX=${CXX:-$(dirname "$PYTHON")/g++}
+export NVCC_PREPEND_FLAGS="${NVCC_PREPEND_FLAGS:-} -ccbin $CXX"
 
 ARM=${1:-ours}
 if (( $# > 0 )); then
@@ -50,6 +59,7 @@ if pgrep -f "$SERVER_PATTERN" >/dev/null; then
 fi
 
 mkdir -p "$(dirname "$LOG")"
+: >"$LOG"   # truncate before launching: a stale log from an earlier run already contains "engine ready"
 
 COMMAND=("$PYTHON" -m "$MODULE" "$MODEL" "${ARM_FLAGS[@]}" --sched "$SCHED" --host "$HOST")
 if [[ -n "$KV" ]]; then

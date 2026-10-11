@@ -14,9 +14,11 @@ def read_csv(file_path) -> dict:
     with open(file_path, "r", newline="", encoding="utf-8") as csvfile:
         for row in csv.DictReader(csvfile):
             c = int(row['c'])
+            tp = row.get("prompt_ktokens_per_min")   # exact level throughput; only sweeps run since 2026-10 record it
             metrics[c] = {
                 "mean_jct": float(row['jct_mean_s']),
-                "mean_TTFT": float(row["ttft_mean_ms"])
+                "mean_TTFT": float(row["ttft_mean_ms"]),
+                "throughput": float(tp) if tp not in (None, "", "None") else None,
             }
     return metrics
             
@@ -28,6 +30,26 @@ def iterate_all(root: str) -> Iterator[tuple[str, dict]]:
         if path.is_file() and (match := pattern.fullmatch(path.name)):
             arm = match.group(1)
             yield arm, read_csv(path)
+
+RERUN_DIR = "rerun_20261008"   # per-arm CSVs of the 2026-10 rerun (exact throughput columns)
+
+
+def add_speedups(full_records: dict, baseline: str = "vanilla") -> dict:
+    for arm, data in full_records.items():
+        for c, metrics in data.items():
+            if c not in full_records[baseline]:
+                continue
+            b = full_records[baseline][c]
+            metrics["jct_speedup"] = b["mean_jct"] / metrics["mean_jct"]
+            metrics["ttft_speedup"] = b["mean_TTFT"] / metrics["mean_TTFT"]
+            if metrics["throughput"] is not None and b["throughput"] is not None:
+                metrics["tp_speedup"] = metrics["throughput"] / b["throughput"]
+    return full_records
+
+
+def read_rerun() -> dict:
+    return add_speedups({arm: data for arm, data in iterate_all(RERUN_DIR)})
+
 
 class TimesFormatter(ScalarFormatter):
     """Speedup tick labels: the default number followed by a times sign."""
@@ -124,14 +146,14 @@ def draw_line_chart(records: dict):
         "ps.fonttype": 42,
     })
 
-    def plot_metric(metric: str, output_file: str) -> Path:
+    def plot_metric(metric: str, output_file: str, recs: dict = records) -> Path:
         fig, ax = plt.subplots(figsize=(2.25, 1.55), constrained_layout=True)
 
         # A subtle reference line makes values above/below the baseline obvious.
         ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)
 
-        for arm in arm_order:
-            points = sorted(records[arm].items())
+        for arm in [a for a in arm_order if a in recs]:
+            points = sorted(recs[arm].items())
             x = [concurrency for concurrency, _ in points]
             try:
                 y = [values[metric] for _, values in points]
@@ -171,7 +193,17 @@ def draw_line_chart(records: dict):
 
     jct_path = plot_metric("jct_speedup", "jct_speedup.pdf")
     ttft_path = plot_metric("ttft_speedup", "ttft_speedup.pdf")
-    return jct_path, ttft_path
+    # Throughput (prompt ktokens/min) speedup over vanilla, from the measured per-level elapsed time.
+    # Read from RERUN_DIR (the 2026-10 rerun that records it) when present, so the JCT/TTFT panels above
+    # stay on the September data that all eleven arms were measured in. Arms without the column are
+    # left out rather than estimated.
+    tp_source = read_rerun() if Path(RERUN_DIR).is_dir() else records
+    tp_records = {arm: {c: m for c, m in data.items()
+                        if m.get("tp_speedup") is not None and c in all_concurrencies}   # same x-axis as the panels above
+                  for arm, data in tp_source.items()}
+    tp_records = {arm: data for arm, data in tp_records.items() if data}
+    tp_path = plot_metric("tp_speedup", "throughput_speedup.pdf", tp_records) if len(tp_records) > 1 else None
+    return jct_path, ttft_path, tp_path
 
 
 if __name__ == "__main__":
@@ -187,5 +219,7 @@ if __name__ == "__main__":
             baseline_metrics = full_records[baseline][c]
             metrics["jct_speedup"] = baseline_metrics["mean_jct"] / metrics["mean_jct"]
             metrics["ttft_speedup"] = baseline_metrics['mean_TTFT']/metrics["mean_TTFT"]
-    jct_pdf, ttft_pdf = draw_line_chart(full_records)
-    print(f"Saved {jct_pdf} and {ttft_pdf}")
+            if metrics["throughput"] is not None and baseline_metrics["throughput"] is not None:
+                metrics["tp_speedup"] = metrics["throughput"] / baseline_metrics["throughput"]
+    jct_pdf, ttft_pdf, tp_pdf = draw_line_chart(full_records)
+    print(f"Saved {jct_pdf}, {ttft_pdf}" + (f" and {tp_pdf}" if tp_pdf else " (no throughput column in these CSVs)"))

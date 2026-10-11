@@ -1,0 +1,22 @@
+runs: ['mixed_results/mix4x1_h10/vanilla']
+program / site                         calls  P/call    LCP  blocked    new | blocked/P  blocked/(P-LCP)
+  Extractor.extract                       90    8245    143        0   8102 |    0.0%      0.0%
+  Analyst.compute                         90    8653    216     8102    335 |   93.6%     96.0%
+  Auditor.check                           90    8907    266     8437    204 |   94.7%     97.6%
+  Writer.answer                           90    1053    303      578    172 |   54.9%     77.1%
+doc_analysis                             360    6715    232     4279   2203 |   63.7%     66.0%   (sessions=90)
+
+  Agent.step                             588    4863    489     2540   1834 |   52.2%     58.1%
+BFCL_agent                               588    4863    489     2540   1834 |   52.2%     58.1%   (sessions=92)
+
+  ClaimAnalyzer.decompose_claim          196    3810   2532     1261     17 |   33.1%     98.6%
+  EvidenceScout.assess_evidence          378    5721   2324     2474    923 |   43.2%     72.8%
+  EvidenceAnalyzer.verify_claim          196    5435   3785        0   1650 |    0.0%      0.0%
+fact_check                               770    5162   2749     1535    878 |   29.7%     63.6%   (sessions=45)
+
+  Planner.plan                           192    1188    255      615    318 |   51.8%     65.9%
+  Coder.implement                        229    1526    344      999    183 |   65.5%     84.5%
+  Committer.commit                        24    4792    214     1480   3098 |   30.9%     32.3%
+  Analyzer.diagnose                       37    2024    255     1282    487 |   63.3%     72.5%
+coding_agent                             482    1592    295      892    405 |   56.0%     68.8%   (sessions=24)
+
