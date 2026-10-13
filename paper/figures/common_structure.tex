@@ -1,34 +1,31 @@
-\begin{figure*}[!t]
+\begin{figure}[t]
   \centering
-  % Each message is one card; a bar in the left margin marks the component.
+  \setlength{\abovecaptionskip}{6pt}
+  % Single column: byLLM over nooa on the left; DSPy, the color key and
+  % the placeholder note on the right. Each message is a card with its role
+  % on a tab; each component is a tinted band with a bar in its color.
   \definecolor{csTask}{HTML}{0072B2}
   \definecolor{csDesc}{HTML}{009E73}
   \definecolor{csVal}{HTML}{E69F00}
   \definecolor{csSchema}{HTML}{CC79A7}
-  \definecolor{csScaf}{gray}{0.62}
-  \setlength{\fboxsep}{2.5pt}
-  \newlength{\csbar}\setlength{\csbar}{1.4pt}
+  \definecolor{csScaf}{gray}{0.55}
+  \newlength{\csbar}\setlength{\csbar}{1.2pt}
+  \newcommand{\csfont}{\fontsize{5}{5.8}\selectfont}
   \newcommand{\ph}[1]{{\normalfont\itshape$\langle$#1$\rangle$}}
-  % \csseg{color}{text}: one component, a bar in its color down the left edge.
+  % \csseg{color}{text}: one component, a tinted band with a bar in its color.
   \newcommand{\csseg}[2]{\par\noindent
-    \sbox0{\parbox{\dimexpr\linewidth-\csbar-2.5pt\relax}{\raggedright\hyphenpenalty=10000\strut#2\strut}}%
-    \hspace*{-\fboxsep}%
-    {\color{#1}\rule[\dimexpr0.5pt-\dp0\relax]{\csbar}{\dimexpr\ht0+\dp0-1pt\relax}}%
-    \hspace*{\dimexpr\fboxsep+2.5pt-\csbar\relax}\usebox0\par}
+    \sbox0{\parbox{\dimexpr\linewidth-\csbar-3pt\relax}{\raggedright\hyphenpenalty=10000\strut#2\strut}}%
+    {\fboxsep=0pt\colorbox{#1!13}{{\color{#1}\vrule width\csbar height\ht0 depth\dp0}\hspace{1.6pt}\usebox0\hspace{1.4pt}}}\par}
   \newcommand{\csscaf}[1]{\csseg{csScaf}{#1}}
-  % \csmsg{role}{segments}: one message as a single card.
-  \newcommand{\csmsg}[2]{\par\noindent{\sffamily\tiny\color{black!55}#1}\par\vspace{0.5pt}%
-    \noindent\fcolorbox{black}{white}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{\ttfamily\tiny\offinterlineskip#2}}\par\vspace{2pt}}
-  \newcommand{\cshead}[1]{\par\noindent{\sffamily\scriptsize\bfseries #1}\par\vspace{1.5pt}}
-  \newcommand{\cskey}[2]{{\color{#1}\rule[-0.3ex]{\csbar}{1.6ex}}\,{\sffamily\tiny #2}}
-  \cskey{csScaf}{framework scaffolding}\hspace{1.2em}%
-  \cskey{csTask}{task instruction}\hspace{1.2em}%
-  \cskey{csDesc}{parameter descriptions}\hspace{1.2em}%
-  \cskey{csVal}{argument values}\hspace{1.2em}%
-  \cskey{csSchema}{output schema}
-  \vspace{4pt}
-
-  \begin{minipage}[t]{0.31\textwidth}
+  % \csmsg{role}{segments}: one message as a card, its role on a tab.
+  \newcommand{\csmsg}[2]{\par\nointerlineskip\noindent
+    \vbox{\offinterlineskip
+      \hbox{\fboxsep=0.9pt\colorbox{black!62}{\sffamily\fontsize{4.3}{4.3}\selectfont\color{white}\strut#1}}
+      \hbox{\fboxsep=0pt\fboxrule=0.4pt\fcolorbox{black!62}{white}{\parbox{\dimexpr\linewidth-2\fboxrule\relax}{\ttfamily\csfont\offinterlineskip#2}}}}%
+    \par\nointerlineskip\vspace{1.4pt}}
+  \newcommand{\cshead}[1]{\par\nointerlineskip\noindent{\sffamily\scriptsize\bfseries\strut #1}\,{\color{black!35}\hrulefill}\par\nointerlineskip\vspace{1.4pt}}
+  \newcommand{\cskey}[2]{{\fboxsep=0pt\colorbox{#1!13}{{\color{#1}\vrule width\csbar height 1.55ex depth 0.45ex}\hspace{1.6pt}{\sffamily\fontsize{5}{6}\selectfont#2}\hspace{1.6pt}}}}
+  \begin{minipage}[t]{0.488\linewidth}
     \cshead{byLLM}
     \csmsg{system}{%
       \csscaf{This is a task you must complete by returning only the output. ...}}
@@ -39,20 +36,7 @@
       \csseg{csSchema}{Schema requirements: \ph{Finding fields}}}
     \csmsg{response\_format}{%
       \csseg{csSchema}{\ph{Finding JSON schema}}}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.31\textwidth}
-    \cshead{DSPy}
-    \csmsg{system}{%
-      \csseg{csDesc}{Your input fields are:\newline 1. `search\_results` (str): \ph{desc}\newline 2. `question` (str): \ph{desc}\newline 3. `claim` (str): \ph{desc}\newline 4. `evidences` (list[Evidence]): \ph{desc}\newline Your output fields are: 1. `finding` (Finding): \ph{desc}}
-      \csscaf{All interactions will be structured ...\newline [[ \#\# search\_results \#\# ]] \{search\_results\}\newline ... [[ \#\# evidences \#\# ]] \{evidences\}}
-      \csseg{csSchema}{[[ \#\# finding \#\# ]] \{finding\} \# note: ... JSON schema: \ph{Finding JSON schema}}
-      \csscaf{[[ \#\# completed \#\# ]]}
-      \csseg{csTask}{In adhering to this structure, your objective is: \ph{docstring}}}
-    \csmsg{user}{%
-      \csseg{csVal}{[[ \#\# search\_results \#\# ]] \ph{value}\newline [[ \#\# question \#\# ]] \ph{value}\newline [[ \#\# claim \#\# ]] \ph{value}\newline [[ \#\# evidences \#\# ]] \ph{value}}
-      \csscaf{Respond with the corresponding output fields, starting with `[[ \#\# finding \#\# ]]` ...}}
-  \end{minipage}\hfill
-  \begin{minipage}[t]{0.31\textwidth}
+    \vspace{0.8pt}
     \cshead{NVIDIA nooa}
     \csmsg{system}{%
       \csscaf{<strategy\_prompt> You are generating structured data matching the specified return type. ... </strategy\_prompt>}}
@@ -64,10 +48,34 @@
       \csscaf{Perform the task and return the result directly.''') </sys>}}
     \csmsg{response\_format}{%
       \csseg{csSchema}{\ph{Finding JSON schema}}}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.488\linewidth}
+    \cshead{DSPy}
+    \csmsg{system}{%
+      \csseg{csDesc}{Your input fields are:\newline 1. `search\_results` (str): \ph{desc}\newline 2. `question` (str): \ph{desc}\newline 3. `claim` (str): \ph{desc}\newline 4. `evidences` (list[Evidence]): \ph{desc}\newline Your output fields are: 1. `finding` (Finding): \ph{desc}}
+      \csscaf{All interactions will be structured ...\newline [[ \#\# search\_results \#\# ]] \{search\_results\}\newline ... [[ \#\# evidences \#\# ]] \{evidences\}}
+      \csseg{csSchema}{[[ \#\# finding \#\# ]] \{finding\} \# note: ... JSON schema: \ph{Finding JSON schema}}
+      \csscaf{[[ \#\# completed \#\# ]]}
+      \csseg{csTask}{In adhering to this structure, your objective is: \ph{docstring}}}
+    \csmsg{user}{%
+      \csseg{csVal}{[[ \#\# search\_results \#\# ]] \ph{value}\newline [[ \#\# question \#\# ]] \ph{value}\newline [[ \#\# claim \#\# ]] \ph{value}\newline [[ \#\# evidences \#\# ]] \ph{value}}
+      \csscaf{Respond with the corresponding output fields, starting with `[[ \#\# finding \#\# ]]` ...}}
+    \vspace{0.6pt}
+    \noindent\cskey{csScaf}{framework scaffolding}\par\nointerlineskip\vspace{0.8pt}
+    \noindent\cskey{csTask}{task instruction}\par\nointerlineskip\vspace{0.8pt}
+    \noindent\cskey{csDesc}{parameter descriptions}\par\nointerlineskip\vspace{0.8pt}
+    \noindent\cskey{csVal}{argument values}\par\nointerlineskip\vspace{0.8pt}
+    \noindent\cskey{csSchema}{output schema}\par\nointerlineskip\vspace{0.8pt}
+    \vspace{6pt}
+    {\raggedright\sffamily\fontsize{5}{6.6}\selectfont
+    \begin{itemize}[nosep, leftmargin=6pt, labelsep=2pt, label=\textbullet, topsep=2pt, itemsep=3pt]
+      \item \ph{sem}: byLLM \texttt{sem} string
+      \item \ph{docstring}: DSPy Signature or nooa docstring
+      \item \ph{desc}: DSPy field \texttt{desc}
+      \item \ph{arg doc}: nooa \texttt{Args} entry in the docstring
+      \item \ph{value}: runtime argument value
+    \end{itemize}\par}
   \end{minipage}
-  \par\smallskip
-  {\raggedright\sffamily\tiny
-  \ph{sem}, \ph{docstring}, \ph{desc} and \ph{arg doc} are the description strings each framework takes from the program (byLLM \texttt{sem} strings, DSPy Signature docstring and field \texttt{desc}, nooa function docstring and its \texttt{Args} entries); \ph{value} is the runtime argument.\par}
-  \caption{The prompt structure of programmatically generated prompts, lowered by three frameworks. They have similar structures: Same five kinds of component, only relative position differs.}
+  \caption{Prompts lowered by three frameworks for the same call share five kinds of components; only their order differs.}
   \label{fig:common-structure}
-\end{figure*}
+\end{figure}

@@ -237,7 +237,6 @@ node Executor {
 
 sem Executor = "Runs the tool the agent chose and records the observation.";
 
-
 def normalize(text: str) -> str {
     return re.sub(r"[^a-z0-9 ]", "", text.lower()).strip();
 }

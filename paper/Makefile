@@ -58,18 +58,18 @@ check:
 	    grep -E '^Overfull \\hbox \([0-9.]{3,}pt' $(MAIN).log | wc -l | sed 's/^/overfull hboxes > 10pt: /'; \
 	fi
 
-# Files the paper needs that a stock Debian/Ubuntu TeX Live lacks.
-#   acmart.cls, ACM-Reference-Format.bst   -> texlive-publishers
-#   algorithm.sty, algpseudocode.sty       -> texlive-science
-#   libertine.sty, zi4.sty, newtxmath.sty  -> texlive-fonts-extra (acmart fonts)
-DEPS := acmart.cls ACM-Reference-Format.bst algorithm.sty algpseudocode.sty \
-        libertine.sty zi4.sty newtxmath.sty
+# Files the paper needs beyond a basic TeX Live. mlsys2025.sty/.bst ship with
+# the repo; the rest come from TeX Live (tlmgr install inconsolata algorithms
+# algorithmicx enumitem xurl eso-pic forloop printlen).
+DEPS := mlsys2025.sty mlsys2025.bst algorithm.sty algorithmic.sty \
+        algpseudocode.sty zi4.sty enumitem.sty xurl.sty eso-pic.sty \
+        forloop.sty printlen.sty
 
 check-deps:
 	@missing=""; for f in $(DEPS); do kpsewhich $$f >/dev/null || missing="$$missing $$f"; done; \
 	if [ -n "$$missing" ]; then \
 	    echo "error: missing TeX files:$$missing"; \
-	    echo "  sudo apt install texlive-publishers texlive-science texlive-fonts-extra"; \
+	    echo "  tlmgr install <package>  (mlsys2025.* must be in the paper directory)"; \
 	    exit 1; fi
 
 clean:
