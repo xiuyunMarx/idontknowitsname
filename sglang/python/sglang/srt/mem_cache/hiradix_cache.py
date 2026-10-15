@@ -53,8 +53,8 @@ logger = logging.getLogger(__name__)
 
 
 # Host admission bands (mirror model/promote.py): KV past a request's host_admit_len is
-# demoted to TRANSIENT at insert and is never written through to the host tier; nodes the
-# planner protects (priority >= PLAN_BASE) are left alone.
+# demoted to TRANSIENT at insert and is never written through to the host tier; 
+# nodes the planner protects (priority >= PLAN_BASE) are left alone.
 HOST_ADMIT_TRANSIENT = -1
 HOST_ADMIT_PROTECTED_MIN = 10
 

@@ -8,8 +8,7 @@ Three numbers, all specific to this box + model + engine build:
                       prompt whose blocks were evicted to host)
 
 `profile_device(engine)` runs the measurements and stores the result on
-`engine.device_profile`; the engine persists it in the model's profile JSON so a
-restart loads instead of re-measuring.
+`engine.device_profile`; the engine persists it in the model's profile JSON so a restart loads instead of re-measuring.
 """
 import asyncio
 import time
@@ -80,25 +79,38 @@ async def _prefill_loaded(engine, priority: int, n: int = 4096, decoders: int = 
     return n / elapsed
 
 
-async def _promote(engine, priority: int, n: int = 3072):
-    """Land a target, push it off the device with junk, promote it back through the
-    scheduler RPC (waiting for the copy), then request it: a device hit proves the
-    promotion landed. None when it does not (no host tier, or the junk fell short)."""
+async def _promote(engine, priority: int, n: int = 16384):
+    """Land a target, push it off the device with junk, retire the junk, promote the
+    target back through the scheduler RPC (waiting for the copy), then request it: a
+    device hit proves the promotion landed. None when it does not (no host tier, or
+    the junk fell short)."""
     target = engine._random_ids(n)
     await _timed(engine, target, priority)
     junk = int(engine.ledger.device_cap_tokens() * 1.3)
+    junk_prompts = []
     while junk > 0:
         step = min(8192, junk)
-        await _timed(engine, engine._random_ids(step), priority)
+        ids = engine._random_ids(step)
+        await _timed(engine, ids, priority)
+        junk_prompts.append(ids)
         junk -= step
+    # The junk fills the device tier in the unclassified band, which a promotion may not
+    # reclaim, so it would be deferred for lack of room. Retire the junk (the band of an
+    # ended session's leftovers) so the load-back evicts it, as in operation.
+    await engine.set_kv_priority([], [], "devprof-retire", retire=[(ids, 0) for ids in junk_prompts])
+    # The RPC returns before the background thread issues the copy, so its event cannot be
+    # waited on here: time the RPC plus a request of the target, which waits on the loading
+    # event and then runs one cached step, and take that step's own cost off with a second,
+    # fully device-resident request.
     t0 = time.perf_counter()
     ok = await engine.promote(target, "devprof-promote", wait=True)
-    elapsed = time.perf_counter() - t0
     _, meta = await _timed(engine, target, priority)
+    elapsed = time.perf_counter() - t0
     device = int((meta.get("cached_tokens_details") or {}).get("device", 0))
     if not ok or device < n // 2:
         return None
-    return device / elapsed
+    cached_step, _ = await _timed(engine, target, priority)
+    return device / max(elapsed - cached_step, 1e-3)
 
 
 async def profile_device(engine, loaded_decoders: int = 12) -> DeviceProfile:

@@ -22,17 +22,15 @@ from model.device_profiler import DeviceProfile
 from model.request_trace import RequestTrace
 import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
 
-# Host-DRAM KV tier (HiCache L2): GPU evictions demote here, prefetch promotes back.
+# Host-DRAM KV tier (HiCache L2)
 # HiCache asserts the host pool is larger than the device pool, so this has to stay
 # above whatever `mem_fraction_static` leaves for KV on the card.
 HOST_KV_GB = 8
 LANDED_STRIDE = 8   # bookkeeping granularity for prefixes we have already computed
 
-# SGLang schedules the HIGHEST priority value first. A tool-loop
-# turn of a call already in flight outranks a fresh call.
+# SGLang schedules the HIGHEST priority value first. A tool-loop turn of a call already in flight should outranks a fresh call.
 PRIORITY_CONT = 2
 PRIORITY_REAL = 1
-
 
 class KVLedger:
     """Shadow model of the engine's two-tier KV cache, in stride-sized blocks.

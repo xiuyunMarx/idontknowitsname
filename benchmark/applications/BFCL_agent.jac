@@ -169,7 +169,6 @@ sem Task.observation = "The full result of the latest tool call.";
 
 node Agent {
     def step(observation: str, tools: str, question: str, history: list[Step]) -> Action by llm(temperature=0.0, max_tokens=4096);
-
     can act with Task entry {
         try {
             action = self.step(visitor.observation, TOOLS, visitor.question, visitor.history);

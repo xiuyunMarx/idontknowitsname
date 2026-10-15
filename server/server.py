@@ -106,12 +106,18 @@ class Controller:
         self.planner: Optional[KVPlanner] = KVPlanner(self.engine) if plan else None
 
     # ------------------------------------------------------------------ lifecycle
+    profile_only = False   # measure the device profile, save it, exit (greatlakes/setup_env.sh)
+    reprofile = False      # measure even when the model's profile JSON exists
+
     async def start_serving(self) -> None:
         await self.engine.warmup()
         profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
-        if not self.engine.load_profile(profile):
+        if self.reprofile or not self.engine.load_profile(profile):
             await profile_device(self.engine)
             self.engine.save_profile(profile)
+        if self.profile_only:
+            print(f"[profile-only] {profile}: {self.engine.device_profile.as_dict()}", flush=True)
+            return
         asyncio.create_task(self._sweep())
         if self.planner is not None:
             asyncio.create_task(self.planner.run())
@@ -124,7 +130,11 @@ class Controller:
                     req.reply(self._finalize(req.session))
                 elif req.kind == "flush":
                     try:
-                        req.reply(await self.engine.flush())
+                        ok = await self.engine.flush()
+                        flushed = getattr(self.planner, "flushed", None)   # a policy in the planner slot
+                        if ok and flushed is not None:
+                            flushed()
+                        req.reply(ok)
                     except Exception as e:
                         req.fail(e)
                 elif req.kind == "register":
@@ -848,7 +858,7 @@ async def main(model: str = "Qwen/Qwen3-14B-AWQ", port: int = 8964, plan: bool =
                host_gb: Optional[int] = None, hicache_io: Optional[str] = None,
                enable_relayout: bool = True, sched: str = "fcfs", risk_aging_s: float = 10.0,
                promote: bool = True, eviction: Optional[str] = None,
-               engine_log: Optional[str] = None) -> None:
+               engine_log: Optional[str] = None, profile_only: bool = False, reprofile: bool = False) -> None:
     server = HttpServer(port=port)
     await server.start()
     kwargs: Dict[str, Any] = {"context_length": 32768,
@@ -872,7 +882,11 @@ async def main(model: str = "Qwen/Qwen3-14B-AWQ", port: int = 8964, plan: bool =
     ctrl = Controller(model, server, plan=plan, enable_relayout=enable_relayout, **kwargs)
     if ctrl.planner is not None:
         ctrl.planner.promote_enabled = promote #type: ignore[assignment]
+    ctrl.profile_only, ctrl.reprofile = profile_only, reprofile
     await ctrl.start_serving()
+    if profile_only:   # start_serving returned after saving the profile: take the engine down
+        await server.stop()
+        ctrl.engine.shutdown()
 
 
 if __name__ == "__main__":
@@ -903,6 +917,10 @@ if __name__ == "__main__":
                     help="sglang log level; info prints the scheduler's batch statistics")
     ap.add_argument("--risk-aging-s", type=float, default=10.0, metavar="S",
                     help="--sched risk: an uncached request overtakes a fully cached one after waiting S s longer")
+    ap.add_argument("--profile-only", action="store_true",
+                    help="measure the device profile (prefill idle/loaded tps, host->device promote tps), "
+                         "save model/<model>.profile.json and exit")
+    ap.add_argument("--reprofile", action="store_true", help="measure even when the profile JSON exists")
     a = ap.parse_args()
     if a.no_header_last:
         HEADER_LAST = False
@@ -911,4 +929,4 @@ if __name__ == "__main__":
     asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
                      sched=a.sched, risk_aging_s=a.risk_aging_s, promote=not a.no_promote, eviction=a.eviction,
-                     engine_log=a.engine_log))
+                     engine_log=a.engine_log, profile_only=a.profile_only, reprofile=a.reprofile))

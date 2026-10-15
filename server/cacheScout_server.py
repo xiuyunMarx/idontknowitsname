@@ -250,6 +250,12 @@ class CacheScoutController:
             if req.kind == "register":
                 req.reply({"ok": True, "ignored": True, "file": req.body["file"]})
                 continue
+            if req.kind == "flush":
+                try:
+                    req.reply(await self._flush())
+                except Exception as e:
+                    req.fail(e)
+                continue
             if req.kind == "close":
                 known = req.session in self.current or req.session in self.seq
                 for d in (self.current, self.last_seen, self.served, self.seq, self.turn, self.last_body):
@@ -258,6 +264,16 @@ class CacheScoutController:
                 req.reply(known)
                 continue
             asyncio.create_task(self._serve(req))
+
+    async def _flush(self) -> bool:
+        """Drop the KV cache (both tiers) between runs. The learned state (fingerprint anchors,
+        transition chain) is kept, like the guard controller keeps its program statistics;
+        what pointed at cached blocks (tagged block sets, warmed anchors) is forgotten."""
+        ok = await self.engine.flush()
+        if ok:
+            self.served.clear()
+            self.warmed.clear()
+        return ok
 
     async def _serve(self, req: PendingRequest) -> None:
         sid, body = req.session, req.body
@@ -409,6 +425,11 @@ class CacheScoutPolicy:
         for d in (self.current, self.last_seen, self.served, self._site):
             d.pop(sid, None)   # bookkeeping only: no termination signal in CacheScout
         print(f"[close] {sid}", flush=True)
+
+    def flushed(self) -> None:
+        """The controller flushed the KV cache: tagged block sets and warmed anchors are gone."""
+        self.served.clear()
+        self.warmed.clear()
 
     # what the engine call shows
     def before(self, rid: str, ids: List[int], t_arrive: float, cont: bool = False) -> None:

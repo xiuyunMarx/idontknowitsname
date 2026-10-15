@@ -308,6 +308,12 @@ class ContinuumController:
             if req.kind == "register":
                 req.reply({"ok": True, "ignored": True, "file": req.body["file"]})
                 continue
+            if req.kind == "flush":
+                try:
+                    req.reply(await self._flush())
+                except Exception as e:
+                    req.fail(e)
+                continue
             if req.kind == "close":
                 self.pinner.note_finished(req.session)
                 closed = self.pinner.forget(req.session)
@@ -375,6 +381,14 @@ class ContinuumController:
               flush=True)
         if p.kept:
             await self._push()
+
+    async def _flush(self) -> bool:
+        """Drop the KV cache (both tiers) between runs. The pinner's learned waits and reuse
+        records are kept; the pins are not, since the blocks they held no longer exist."""
+        ok = await self.engine.flush()
+        if ok:
+            self.pinner.pins.clear()
+        return ok
 
     async def _push(self) -> None:
         """Mirror the pins into the engine's eviction bands. kv_priority replaces the
@@ -454,6 +468,11 @@ class ContinuumPolicy:
         print(f"[close] {sid} eta={self.pinner.eta():.2f}", flush=True)
         if held:
             asyncio.create_task(self._push())
+
+    def flushed(self) -> None:
+        """The controller flushed the KV cache: the pins' blocks are gone, the records stay."""
+        self.pinner.pins.clear()
+        self._open.clear()
 
     def _inflight(self, sid: str) -> int:
         sess = self.ctrl.sessions.get(sid) if self.ctrl is not None else None
