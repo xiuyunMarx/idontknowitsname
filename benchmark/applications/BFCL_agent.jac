@@ -8,8 +8,7 @@ import random;
 import hashlib;
 import requests;
 import from jaclang.byllm.llm { InterceptorLLM }
-
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-14B-AWQ", extra_body={"no_header_last": False});
+glob llm = InterceptorLLM(model_name=os.environ.get("HF_MODEL") or " Qwen3-14B-AWQ", extra_body={"no_header_last": False});
 glob HERE: str = os.path.dirname(os.path.abspath(__file__));
 glob DATA: str = os.environ.get("BF_DATA") or os.path.join(HERE, "bench_data", "BFCL", "BFCL_v4_web_search.json");
 glob ANSWERS: str = os.environ.get("BF_ANSWERS") or os.path.join(HERE, "bench_data", "BFCL", "BFCL_v4_web_search_answers.json");
@@ -220,7 +219,7 @@ node Executor {
         } else {
             verdict = "FAILED";
         }
-        verdict = "UNGRADED" if not visitor.gold else ("PASSED" if matches(visitor.answer, visitor.gold) else "FAILED");
+        # verdict = "UNGRADED" if not visitor.gold else ("PASSED" if matches(visitor.answer, visitor.gold) else "FAILED");
         print(f"Verdict: {verdict}");
         print(f"Answer: {visitor.answer}");
         print(f"Gold: {' | '.join(visitor.gold)}");

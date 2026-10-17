@@ -35,7 +35,9 @@ from typing import Any, Dict, Union
 from aiohttp import web
 
 MAX_BODY_BYTES = 64 * 1024 * 1024  # byllm prompts far exceed aiohttp's 1MB default
-REPLY_TIMEOUT_S = 600.0            # no reply by then: the client gets a 504
+REPLY_TIMEOUT_S = 1800.0           # no reply by then: the client gets a 504. Above the longest
+                                   # decode under load (max_tokens at a few tokens/s), so a
+                                   # truncated reply reaches the client instead of a retry storm.
 
 
 @dataclass

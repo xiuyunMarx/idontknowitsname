@@ -1,0 +1,63 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 08:46:43
+staged 19G 08:47:22
+arm=kvonly node=gl1509.arc-ts.umich.edu job=64136977 gpus=0 cpus=12 start=2026-10-16 08:47:22
+NVIDIA A40, 46068 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2560 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 3887 files
+10-16 08:47:23 kvonly ARM-START part=all levels=27 results=benchmark/results/kvonly
+10-16 08:47:23 kvonly server start #1 log=benchmark/results/kvonly/server.0.log
+kvonly server ready: pid=2924124 log=benchmark/results/kvonly/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-16 08:48:44 kvonly server ready in 81s
+10-16 08:48:44 kvonly sweep_fact_check_c4 start (1/27) fact_check=4x4 warmup=1 wrap=True
+[plan] kvonly/sweep_fact_check_c4 fact_check: 4 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 0 rc=0 wall=101.441s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 1 rc=0 wall=69.617s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=77.828s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=126.846s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=173.506s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 6 rc=0 wall=125.233s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 4 rc=0 wall=211.648s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=206.192s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=362.289s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=329.278s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=341.997s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 10 rc=0 wall=393.362s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=177.15s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 11 rc=0 wall=223.361s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 14 rc=0 wall=121.175s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=285.434s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=247.475s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 1260 events
+[level] server.log slice: 436676 bytes from offset 17954
+
+[kvonly/sweep_fact_check_c4] full-load window 758.5 s, 0.95 sessions/min, 80.66 prompt ktok/min, 47.61 recompute ktok/min; done_600s=9, done_900s=14, done_1200s=16, done_full_load=12
+[kvonly/sweep_fact_check_c4/fact_check] sessions=16 failed=0 timed_out=0 elapsed_s=1006.6 sessions_per_min=0.95 jct_p50_s=211.6 jct_p95_s=393.4 jct_mean_s=217.0 rounds_mean=4.62 accuracy=3/16 done_full_load=12 done_600s=9 done_900s=14 done_1200s=16 calls=291 calls_per_min=17.34 prompt_tokens_per_call=4650 prompt_ktokens_per_min=80.66 recompute_ktokens_per_min=47.61 output_ktokens_per_min=1.26 output_tokens_per_call=73 decode_ms_mean=6643 ttft_p50_ms=2097 ttft_p95_ms=13670 ttft_mean_ms=3894 device_pct=40.7 host_pct=0.3 miss_pct=59.0 predicted_hit=0.98
+10-16 09:07:12 kvonly sweep_fact_check_c4 done in 1108s: sessions=16 failed=0 full_load=758.5s sessions/min=0.95 prompt_ktok/min=80.66 recompute_ktok/min=47.61 host%=[0.3] miss%=[59.0]
+10-16 09:07:12 kvonly sweep_fact_check_c8 start (2/27) fact_check=8x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c8 fact_check: 8 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 6 rc=0 wall=168.448s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=179.363s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=219.764s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=343.731s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=383.778s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=386.382s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=457.131s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=459.832s rounds=6 verdict=NEED_MORE/SUPPORTED
+[2026-10-16T09:15:23.292] error: *** JOB 64136977 ON gl1509 CANCELLED AT 2026-10-16T09:15:23 DUE to SIGNAL Terminated ***
+10-16 09:15:23 kvonly signal SIGTERM: killing 8 sessions and the server
+2026-10-16 09:15:23 signal TERM -> driver 2924101
+10-16 09:15:23 kvonly signal SIGTERM: killing 8 sessions and the server
+[fact_check] measured 15 rc=-9 wall=30.755s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 8 rc=-9 wall=322.177s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 9 rc=-9 wall=311.266s rounds=0 verdict=/NOT_SUPPORTED
+[fact_check] measured 12 rc=-9 wall=106.855s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 10 rc=-9 wall=270.869s rounds=0 verdict=/NOT_SUPPORTED
+[fact_check] measured 13 rc=-9 wall=104.252s rounds=0 verdict=/NOT_SUPPORTED
+[fact_check] measured 11 rc=-9 wall=146.907s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 14 rc=-9 wall=33.509s rounds=0 verdict=/NOT_SUPPORTED
+10-16 09:15:28 kvonly ARM-INTERRUPTED (re-run the same command to resume)
+arm=kvonly rc=130 end=2026-10-16 09:15:28

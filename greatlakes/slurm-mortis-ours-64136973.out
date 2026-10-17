@@ -1,0 +1,75 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 08:44:09
+staged 19G 08:44:49
+arm=ours node=gl1514.arc-ts.umich.edu job=64136973 gpus=0 cpus=12 start=2026-10-16 08:44:49
+NVIDIA A40, 46068 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2560 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 3887 files
+10-16 08:44:50 ours ARM-START part=all levels=27 results=benchmark/results/ours
+10-16 08:44:50 ours server start #1 log=benchmark/results/ours/server.0.log
+ours server ready: pid=380247 log=benchmark/results/ours/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-16 08:45:59 ours server ready in 69s
+10-16 08:45:59 ours sweep_fact_check_c4 start (1/27) fact_check=4x4 warmup=1 wrap=True
+[plan] ours/sweep_fact_check_c4 fact_check: 4 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 0 rc=0 wall=73.503s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 3 rc=0 wall=63.701s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=74.873s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 0 rc=0 wall=99.447s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=194.23s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=166.781s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=67.758s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 5 rc=0 wall=189.869s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=191.566s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=219.651s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 11 rc=0 wall=160.374s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=205.503s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 9 rc=0 wall=234.642s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=89.834s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=141.601s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=229.352s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 15 rc=0 wall=182.948s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 1268 events
+[level] server.log slice: 478273 bytes from offset 18044
+
+[ours/sweep_fact_check_c4] full-load window 541.2 s, 1.44 sessions/min, 108.96 prompt ktok/min, 38.01 recompute ktok/min; done_600s=13, done_900s=16, done_1200s=16, done_full_load=13
+[ours/sweep_fact_check_c4/fact_check] sessions=16 failed=0 timed_out=0 elapsed_s=679.6 sessions_per_min=1.41 jct_p50_s=182.9 jct_p95_s=234.6 jct_mean_s=157.0 rounds_mean=4.81 accuracy=5/16 done_full_load=13 done_600s=13 done_900s=16 done_1200s=16 calls=296 calls_per_min=26.13 prompt_tokens_per_call=4169 prompt_ktokens_per_min=108.96 recompute_ktokens_per_min=38.01 output_ktokens_per_min=1.94 output_tokens_per_call=74 decode_ms_mean=5289 ttft_p50_ms=1762 ttft_p95_ms=4362 ttft_mean_ms=1841 device_pct=62.8 host_pct=2.3 miss_pct=34.9 predicted_hit=0.95
+10-16 08:58:32 ours sweep_fact_check_c4 done in 753s: sessions=16 failed=0 full_load=541.2s sessions/min=1.44 prompt_ktok/min=108.96 recompute_ktok/min=38.01 host%=[2.3] miss%=[34.9]
+10-16 08:58:32 ours sweep_fact_check_c8 start (2/27) fact_check=8x4 warmup=0 wrap=True
+[plan] ours/sweep_fact_check_c8 fact_check: 8 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 7 rc=0 wall=116.616s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 3 rc=0 wall=121.673s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=131.085s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 0 rc=0 wall=173.185s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=247.135s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=308.651s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=311.604s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=334.233s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 11 rc=0 wall=271.201s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=315.154s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=176.132s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 8 rc=0 wall=403.462s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=413.827s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=119.66s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 14 rc=0 wall=261.743s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 16 rc=0 wall=165.764s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=219.978s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=458.595s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 15 rc=0 wall=395.752s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 21 rc=0 wall=175.682s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=417.619s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[2026-10-16T09:15:23.288] error: *** JOB 64136973 ON gl1514 CANCELLED AT 2026-10-16T09:15:23 DUE to SIGNAL Terminated ***
+10-16 09:15:23 ours signal SIGTERM: killing 7 sessions and the server
+2026-10-16 09:15:23 signal TERM -> driver 380223
+10-16 09:15:23 ours signal SIGTERM: killing 7 sessions and the server
+[fact_check] measured 26 rc=-9 wall=281.057s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 27 rc=-9 wall=20.092s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 25 rc=-9 wall=305.346s rounds=0 verdict=/NOT_SUPPORTED
+[fact_check] measured 23 rc=-9 wall=400.941s rounds=0 verdict=/NOT_SUPPORTED
+[fact_check] measured 20 rc=-9 wall=475.593s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 24 rc=-9 wall=306.329s rounds=0 verdict=/SUPPORTED
+[fact_check] measured 19 rc=-9 wall=491.013s rounds=0 verdict=/NOT_SUPPORTED
+10-16 09:15:26 ours ARM-INTERRUPTED (re-run the same command to resume)
+arm=ours rc=130 end=2026-10-16 09:15:26

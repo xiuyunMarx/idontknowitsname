@@ -116,7 +116,7 @@ class Controller:
             await profile_device(self.engine)
             self.engine.save_profile(profile)
         if self.profile_only:
-            print(f"[profile-only] {profile}: {self.engine.device_profile.as_dict()}", flush=True)
+            print(f"[profile-only] {profile}: {self.engine.device_profile.as_dict()}", flush=True) #type: ignore 
             return
         asyncio.create_task(self._sweep())
         if self.planner is not None:

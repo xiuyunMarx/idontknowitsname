@@ -11,12 +11,9 @@ Writes into <results>/:
 
 Throughput columns: prompt_ktokens_per_min is the full prompt length (cached + recomputed) of every
 request per minute; recompute_ktokens_per_min is the uncached part, the prefill work the GPU did;
-output_ktokens_per_min the generated tokens. The steady window is defined by progress, not the
-clock: it opens when the fixed program (coding_agent) starts its input --start-frac of the way
-through its total sessions and closes at the first fixed lane's end, so it covers about the same
-inputs in a fast and a slow arm. The window's requests come from the level's requests.jsonl slice
-(request_start inside the window, first_token for the cache split), attributed to programs by
-session pid from sessions.jsonl.
+output_ktokens_per_min the generated tokens. 
+
+The steady window is defined by progress: 
 """
 import argparse
 import csv

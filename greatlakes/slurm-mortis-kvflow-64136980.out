@@ -1,0 +1,222 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 06:56:51
+staged 19G 06:58:02
+arm=kvflow node=gl1520.arc-ts.umich.edu job=64136980 gpus=0 cpus=12 start=2026-10-17 06:58:02
+NVIDIA A40, 46068 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2604 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4023 files
+10-17 06:58:03 kvflow ARM-START part=all levels=29 results=benchmark/results/kvflow
+10-17 06:58:03 kvflow server start #1 log=benchmark/results/kvflow/server.0.log
+kvflow server ready: pid=231576 log=benchmark/results/kvflow/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-17 06:59:12 kvflow server ready in 69s
+10-17 06:59:12 kvflow sweep_fact_check_c4 start (1/29) fact_check=4x4 warmup=1 wrap=True
+[plan] kvflow/sweep_fact_check_c4 fact_check: 4 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 0 rc=0 wall=95.551s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 1 rc=0 wall=69.519s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=77.783s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=122.766s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=155.374s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 6 rc=0 wall=95.332s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 4 rc=0 wall=157.16s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=159.384s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=282.396s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=278.396s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=290.106s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 10 rc=0 wall=314.342s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=126.717s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 14 rc=0 wall=86.219s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 11 rc=0 wall=233.437s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 13 rc=0 wall=181.93s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=149.543s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 1292 events
+[level] server.log slice: 479159 bytes from offset 18031
+
+[kvflow/sweep_fact_check_c4] full-load window 623.2 s, 1.16 sessions/min, 100.44 prompt ktok/min, 38.49 recompute ktok/min; done_600s=11, done_900s=16, done_1200s=16, done_full_load=12
+[kvflow/sweep_fact_check_c4/fact_check] sessions=16 failed=0 timed_out=0 elapsed_s=820.8 sessions_per_min=1.17 jct_p50_s=157.2 jct_p95_s=314.3 jct_mean_s=173.8 rounds_mean=4.75 accuracy=3/16 done_full_load=12 done_600s=11 done_900s=16 done_1200s=16 calls=299 calls_per_min=21.86 prompt_tokens_per_call=4595 prompt_ktokens_per_min=100.44 recompute_ktokens_per_min=38.49 output_ktokens_per_min=1.59 output_tokens_per_call=73 decode_ms_mean=5337 ttft_p50_ms=1958 ttft_p95_ms=9946 ttft_mean_ms=2593 device_pct=54.8 host_pct=6.9 miss_pct=38.3 predicted_hit=0.98
+10-17 07:14:28 kvflow sweep_fact_check_c4 done in 916s: sessions=16 failed=0 full_load=623.2s sessions/min=1.16 prompt_ktok/min=100.44 recompute_ktok/min=38.49 host%=[6.9] miss%=[38.3]
+10-17 07:14:28 kvflow sweep_fact_check_c8 start (2/29) fact_check=8x4 warmup=0 wrap=True
+[plan] kvflow/sweep_fact_check_c8 fact_check: 8 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 6 rc=0 wall=147.39s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=148.041s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=170.617s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=320.041s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=336.109s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=382.063s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=428.429s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=482.293s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=549.028s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 14 rc=0 wall=280.241s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=373.447s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 9 rc=0 wall=572.627s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 11 rc=0 wall=492.332s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 10 rc=0 wall=658.975s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=360.287s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 13 rc=0 wall=691.812s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 21 rc=0 wall=332.799s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=890.008s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 19 rc=0 wall=793.5s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 20 rc=0 wall=875.985s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 22 rc=0 wall=685.897s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=1064.626s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 16 rc=0 wall=1119.342s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 23 rc=0 wall=947.479s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 24 rc=0 wall=890.643s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 26 rc=0 wall=615.395s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 27 rc=0 wall=547.408s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 30 rc=0 wall=215.669s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 28 rc=0 wall=497.79s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=915.603s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=486.834s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 31 rc=0 wall=53.094s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[level] requests.jsonl slice: 2396 events
+[level] server.log slice: 1022384 bytes from offset 497546
+
+[kvflow/sweep_fact_check_c8] full-load window 1755.7 s, 0.72 sessions/min, 77.59 prompt ktok/min, 58.1 recompute ktok/min; done_600s=8, done_900s=14, done_1200s=17, done_full_load=21
+[kvflow/sweep_fact_check_c8/fact_check] sessions=32 failed=0 timed_out=0 elapsed_s=2341.0 sessions_per_min=0.82 jct_p50_s=497.8 jct_p95_s=1064.6 jct_mean_s=541.4 rounds_mean=4.78 accuracy=4/32 done_full_load=21 done_600s=8 done_900s=14 done_1200s=17 calls=599 calls_per_min=15.35 prompt_tokens_per_call=5054 prompt_ktokens_per_min=77.59 recompute_ktokens_per_min=58.1 output_ktokens_per_min=1.16 output_tokens_per_call=75 decode_ms_mean=20368 ttft_p50_ms=5556 ttft_p95_ms=19898 ttft_mean_ms=7186 device_pct=19.1 host_pct=6.0 miss_pct=74.9 predicted_hit=0.98
+10-17 07:53:29 kvflow sweep_fact_check_c8 done in 2341s: sessions=32 failed=0 full_load=1755.7s sessions/min=0.72 prompt_ktok/min=77.59 recompute_ktok/min=58.1 host%=[6.0] miss%=[74.9]
+10-17 07:53:29 kvflow sweep_fact_check_c12 start (3/29) fact_check=12x4 warmup=0 wrap=True
+[plan] kvflow/sweep_fact_check_c12 fact_check: 12 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 1 rc=0 wall=245.499s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=247.652s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 3 rc=0 wall=337.913s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 11 rc=0 wall=531.717s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=570.258s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=652.663s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=723.147s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 8 rc=0 wall=745.92s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=819.705s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=514.28s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=852.59s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=854.043s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 12 rc=0 wall=711.815s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 10 rc=0 wall=990.506s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 21 rc=0 wall=421.521s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=550.767s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 13 rc=0 wall=1177.632s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=1045.378s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=1446.639s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 19 rc=0 wall=1264.511s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=1484.614s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 16 rc=0 wall=1583.841s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 20 rc=0 wall=1394.719s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 24 rc=0 wall=1263.968s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 23 rc=0 wall=1458.068s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 31 rc=0 wall=423.925s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 30 rc=0 wall=510.913s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 26 rc=0 wall=1225.753s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 27 rc=0 wall=1305.479s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 32 rc=0 wall=475.189s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 28 rc=0 wall=1213.38s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 36 rc=0 wall=360.436s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=1724.029s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 35 rc=0 wall=781.8s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 39 rc=0 wall=438.138s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=1247.826s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=814.369s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 43 rc=0 wall=588.443s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=1110.828s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 38 rc=0 wall=863.026s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 33 rc=0 wall=1199.77s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 40 rc=0 wall=844.362s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=802.204s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 41 rc=0 wall=900.032s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 44 rc=0 wall=505.262s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 47 rc=0 wall=301.261s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 45 rc=0 wall=373.61s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 46 rc=0 wall=394.633s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[level] requests.jsonl slice: 3600 events
+[level] server.log slice: 1307079 bytes from offset 1520286
+
+[kvflow/sweep_fact_check_c12] full-load window 2499.5 s, 0.67 sessions/min, 73.8 prompt ktok/min, 61.15 recompute ktok/min; done_600s=5, done_900s=12, done_1200s=14, done_full_load=28
+[kvflow/sweep_fact_check_c12/fact_check] sessions=48 failed=0 timed_out=0 elapsed_s=3719.9 sessions_per_min=0.77 jct_p50_s=814.4 jct_p95_s=1484.6 jct_mean_s=839.5 rounds_mean=4.79 accuracy=8/48 done_full_load=28 done_600s=5 done_900s=12 done_1200s=14 calls=900 calls_per_min=14.52 prompt_tokens_per_call=5084 prompt_ktokens_per_min=73.8 recompute_ktokens_per_min=61.15 output_ktokens_per_min=1.12 output_tokens_per_call=77 decode_ms_mean=30593 ttft_p50_ms=9918 ttft_p95_ms=37862 ttft_mean_ms=12803 device_pct=13.9 host_pct=3.2 miss_pct=82.9 predicted_hit=0.98
+10-17 08:55:29 kvflow sweep_fact_check_c12 done in 3720s: sessions=48 failed=0 full_load=2499.5s sessions/min=0.67 prompt_ktok/min=73.8 recompute_ktok/min=61.15 host%=[3.2] miss%=[82.9]
+10-17 08:55:29 kvflow sweep_fact_check_c16 start (4/29) fact_check=16x4 warmup=0 wrap=True
+[plan] kvflow/sweep_fact_check_c16 fact_check: 16 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 14 rc=0 wall=376.513s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=382.964s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=400.02s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=485.446s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=566.378s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 11 rc=0 wall=850.566s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=953.851s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=1030.996s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=1094.424s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=765.248s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 8 rc=0 wall=1170.416s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=1236.215s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=1238.598s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=1301.504s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=1379.059s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=1475.491s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 21 rc=0 wall=653.408s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=1513.21s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 31 rc=0 wall=610.993s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 30 rc=0 wall=707.725s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 19 rc=0 wall=1635.528s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 32 rc=0 wall=646.381s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=1782.935s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 20 rc=0 wall=1643.825s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 16 rc=0 wall=1932.372s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=1444.036s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 26 rc=0 wall=1374.45s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 24 rc=0 wall=1534.393s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 36 rc=0 wall=637.731s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 23 rc=0 wall=1802.171s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 27 rc=0 wall=1613.903s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 28 rc=0 wall=1630.913s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 39 rc=0 wall=700.153s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=1721.18s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=2090.413s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 33 rc=0 wall=1842.553s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 43 rc=0 wall=766.394s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 35 rc=0 wall=1425.724s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=1522.269s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 38 rc=0 wall=1585.639s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 40 rc=0 wall=1542.466s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=1792.401s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 47 rc=0 wall=1172.23s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=1496.939s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 50 rc=0 wall=800.728s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 41 rc=0 wall=1836.238s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 44 rc=0 wall=1513.271s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 48 rc=0 wall=1430.543s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 45 rc=0 wall=1563.428s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 46 rc=0 wall=1864.759s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 53 rc=0 wall=1327.277s rounds=4 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 49 rc=0 wall=1887.316s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 52 rc=0 wall=1538.668s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 51 rc=0 wall=1667.505s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 56 rc=0 wall=1221.281s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 58 rc=0 wall=1083.444s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 54 rc=0 wall=1410.775s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 61 rc=0 wall=502.187s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 62 rc=0 wall=308.633s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 57 rc=0 wall=1284.706s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 55 rc=0 wall=1476.545s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 59 rc=0 wall=1108.312s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 63 rc=0 wall=348.082s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 60 rc=0 wall=984.665s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 4896 events
+[level] server.log slice: 1522726 bytes from offset 2827721
+
+[kvflow/sweep_fact_check_c16] full-load window 3672.6 s, 0.64 sessions/min, 69.35 prompt ktok/min, 62.84 recompute ktok/min; done_600s=5, done_900s=6, done_1200s=11, done_full_load=39
+[kvflow/sweep_fact_check_c16/fact_check] sessions=64 failed=0 timed_out=0 elapsed_s=5381.3 sessions_per_min=0.71 jct_p50_s=1374.5 jct_p95_s=1864.8 jct_mean_s=1229.5 rounds_mean=4.88 accuracy=11/64 done_full_load=39 done_600s=5 done_900s=6 done_1200s=11 calls=1224 calls_per_min=13.65 prompt_tokens_per_call=5081 prompt_ktokens_per_min=69.35 recompute_ktokens_per_min=62.84 output_ktokens_per_min=1.03 output_tokens_per_call=75 decode_ms_mean=36086 ttft_p50_ms=27474 ttft_p95_ms=49883 ttft_mean_ms=26800 device_pct=8.9 host_pct=0.5 miss_pct=90.6 predicted_hit=0.98
+10-17 10:25:11 kvflow sweep_fact_check_c16 done in 5382s: sessions=64 failed=0 full_load=3672.6s sessions/min=0.64 prompt_ktok/min=69.35 recompute_ktok/min=62.84 host%=[0.5] miss%=[90.6]
+10-17 10:25:11 kvflow sweep_fact_check_c24 start (5/29) fact_check=24x4 warmup=0 wrap=True
+[plan] kvflow/sweep_fact_check_c24 fact_check: 24 lanes x 4 sessions, 120 inputs (0 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 21 rc=0 wall=476.387s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=476.488s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=551.53s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 18 rc=0 wall=576.76s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=605.872s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=636.095s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=810.29s rounds=2 verdict=SUPPORTED/SUPPORTED

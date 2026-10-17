@@ -52,13 +52,13 @@ MIX_ONLY = {"ours_noprefetch"}
 
 # per-agent sweeps: (program, sessions per lane k, concurrency levels c)
 SWEEPS = [
-    ("fact_check", 4, [4, 8, 12, 16, 24, 32]),
-    ("coding_agent", 3, [16, 32, 48, 64, 80, 96]),
-    ("BFCL_agent", 3, [8, 12, 16, 24, 32, 40]),
-    ("doc_analysis", 4, [4, 6, 8, 12, 16, 24]),
+    ("fact_check", 4, [4, 8, 12, 16, 24]),
+    ("coding_agent", 3, [8, 16, 32, 48, 64, 80]),
+    ("BFCL_agent", 3, [4, 8, 12, 16, 20, 24]),
+    ("doc_analysis", 4, [4, 6, 8, 12, 16, 20]),
 ]
 # mixed workload: lanes per program; coding fixed at 6 sessions per lane, the other three follow
-MIX_LANES = [2, 4, 6, 8, 12, 16]
+MIX_LANES = [2, 3, 4, 5, 6, 8]
 MIX_PROGRAMS = ["fact_check", "BFCL_agent", "coding_agent", "doc_analysis"]
 MIX_FIXED = {"coding_agent": 6}
 

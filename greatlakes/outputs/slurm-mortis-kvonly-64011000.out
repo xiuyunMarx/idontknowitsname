@@ -1,0 +1,676 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 00:49:10
+staged 19G 01:00:31
+arm=kvonly node=gl1529.arc-ts.umich.edu job=64011000 gpus=0 cpus=12 start=2026-10-15 01:00:31
+NVIDIA A40, 46068 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2167 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 3095 files
+10-15 01:00:32 kvonly ARM-START part=all levels=30 results=benchmark/results/kvonly
+10-15 01:00:32 kvonly server start #1 log=benchmark/results/kvonly/server.0.log
+kvonly server ready: pid=1577691 log=benchmark/results/kvonly/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-15 01:01:32 kvonly server ready in 60s
+10-15 01:01:32 kvonly sweep_fact_check_c4 start (1/30) fact_check=4x4 warmup=1 wrap=True
+[plan] kvonly/sweep_fact_check_c4 fact_check: 4 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 0 rc=0 wall=96.894s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 1 rc=0 wall=68.962s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=76.722s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=125.14s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=175.303s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 6 rc=0 wall=125.329s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 4 rc=0 wall=210.637s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=205.581s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=357.651s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=324.942s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=357.894s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 10 rc=0 wall=391.74s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=171.692s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 11 rc=0 wall=223.362s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 14 rc=0 wall=99.797s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=272.974s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=251.292s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] server.log slice: 438102 bytes from offset 17844
+[level] requests.jsonl slice: 1260 events
+
+[kvonly/sweep_fact_check_c4] full-load window 747.1 s, 0.96 sessions/min, 80.58 prompt ktok/min, 47.79 recompute ktok/min; done_600s=9, done_900s=14, done_1200s=16, done_full_load=12
+[kvonly/sweep_fact_check_c4/fact_check] sessions=16 failed=0 timed_out=0 elapsed_s=1007.6 sessions_per_min=0.95 jct_p50_s=210.6 jct_p95_s=391.7 jct_mean_s=214.9 rounds_mean=4.62 accuracy=3/16 done_full_load=12 done_600s=9 done_900s=14 done_1200s=16 calls=291 calls_per_min=17.33 prompt_tokens_per_call=4650 prompt_ktokens_per_min=80.58 recompute_ktokens_per_min=47.79 output_ktokens_per_min=1.26 output_tokens_per_call=72 decode_ms_mean=6555 ttft_p50_ms=2014 ttft_p95_ms=14439 ttft_mean_ms=3904 device_pct=40.2 host_pct=0.5 miss_pct=59.3 predicted_hit=0.98
+10-15 01:19:56 kvonly sweep_fact_check_c4 done in 1105s: sessions=16 failed=0 full_load=747.1s sessions/min=0.96 prompt_ktok/min=80.58 recompute_ktok/min=47.79 host%=[0.5] miss%=[59.3]
+10-15 01:19:56 kvonly sweep_fact_check_c8 start (2/30) fact_check=8x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c8 fact_check: 8 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 6 rc=0 wall=166.446s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=177.362s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=217.464s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=343.332s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=382.784s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=383.936s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=452.726s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=472.553s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 8 rc=0 wall=541.731s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 14 rc=0 wall=265.501s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 12 rc=0 wall=360.977s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 9 rc=0 wall=566.65s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 10 rc=0 wall=630.229s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=555.142s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 11 rc=0 wall=625.182s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 18 rc=0 wall=332.249s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 15 rc=0 wall=677.656s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 21 rc=0 wall=251.138s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 19 rc=0 wall=605.409s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=529.008s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=792.711s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 16 rc=0 wall=835.703s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 20 rc=0 wall=701.351s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 23 rc=0 wall=730.376s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 24 rc=0 wall=662.336s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 30 rc=0 wall=313.916s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 26 rc=0 wall=529.162s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 31 rc=0 wall=159.933s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 27 rc=0 wall=491.811s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 28 rc=0 wall=512.588s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=840.356s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=501.571s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[level] server.log slice: 840917 bytes from offset 456302
+[level] requests.jsonl slice: 2440 events
+
+[kvonly/sweep_fact_check_c8] full-load window 1806.4 s, 0.8 sessions/min, 90.4 prompt ktok/min, 58.65 recompute ktok/min; done_600s=8, done_900s=13, done_1200s=18, done_full_load=24
+[kvonly/sweep_fact_check_c8/fact_check] sessions=32 failed=0 timed_out=0 elapsed_s=2045.5 sessions_per_min=0.94 jct_p50_s=512.6 jct_p95_s=835.7 jct_mean_s=487.8 rounds_mean=4.88 accuracy=4/32 done_full_load=24 done_600s=8 done_900s=13 done_1200s=18 calls=610 calls_per_min=17.89 prompt_tokens_per_call=5052 prompt_ktokens_per_min=90.4 recompute_ktokens_per_min=58.65 output_ktokens_per_min=1.34 output_tokens_per_call=75 decode_ms_mean=18133 ttft_p50_ms=3543 ttft_p95_ms=18137 ttft_mean_ms=6115 device_pct=19.8 host_pct=15.3 miss_pct=64.9 predicted_hit=0.98
+10-15 01:54:02 kvonly sweep_fact_check_c8 done in 2046s: sessions=32 failed=0 full_load=1806.4s sessions/min=0.8 prompt_ktok/min=90.4 recompute_ktok/min=58.65 host%=[15.3] miss%=[64.9]
+10-15 01:54:02 kvonly sweep_fact_check_c12 start (3/30) fact_check=12x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c12 fact_check: 12 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 1 rc=0 wall=242.846s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=243.797s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 3 rc=0 wall=313.539s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=498.487s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=594.211s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=611.132s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 8 rc=0 wall=631.098s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=727.187s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=745.949s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=432.532s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=774.451s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=821.165s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 11 rc=0 wall=829.126s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 12 rc=0 wall=586.78s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 18 rc=0 wall=450.855s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 21 rc=0 wall=352.683s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=884.134s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=901.373s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=1341.554s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 19 rc=0 wall=1126.422s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=1285.084s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 20 rc=0 wall=1181.909s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 16 rc=0 wall=1366.691s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 24 rc=0 wall=1198.266s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 23 rc=0 wall=1340.411s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 26 rc=0 wall=1138.653s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 31 rc=0 wall=405.25s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 27 rc=0 wall=1164.525s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 30 rc=0 wall=472.232s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 32 rc=0 wall=434.89s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 28 rc=0 wall=1219.31s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 36 rc=0 wall=258.146s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=1602.163s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 39 rc=0 wall=372.597s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 35 rc=0 wall=661.133s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=1066.571s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=853.956s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 43 rc=0 wall=468.983s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=687.206s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 33 rc=0 wall=1050.7s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 38 rc=0 wall=721.017s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 40 rc=0 wall=677.859s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=676.56s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 47 rc=0 wall=203.934s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 41 rc=0 wall=836.247s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 44 rc=0 wall=557.35s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 45 rc=0 wall=553.788s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 46 rc=0 wall=522.776s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[level] server.log slice: 1248496 bytes from offset 1297575
+[level] requests.jsonl slice: 3636 events
+
+[kvonly/sweep_fact_check_c12] full-load window 2263.3 s, 0.74 sessions/min, 83.76 prompt ktok/min, 61.44 recompute ktok/min; done_600s=5, done_900s=14, done_1200s=17, done_full_load=28
+[kvonly/sweep_fact_check_c12/fact_check] sessions=48 failed=0 timed_out=0 elapsed_s=3337.6 sessions_per_min=0.86 jct_p50_s=687.2 jct_p95_s=1341.6 jct_mean_s=751.8 rounds_mean=4.83 accuracy=8/48 done_full_load=28 done_600s=5 done_900s=14 done_1200s=17 calls=909 calls_per_min=16.34 prompt_tokens_per_call=5126 prompt_ktokens_per_min=83.76 recompute_ktokens_per_min=61.44 output_ktokens_per_min=1.24 output_tokens_per_call=76 decode_ms_mean=26441 ttft_p50_ms=8679 ttft_p95_ms=37114 ttft_mean_ms=11900 device_pct=13.7 host_pct=13.0 miss_pct=73.4 predicted_hit=0.98
+10-15 02:49:40 kvonly sweep_fact_check_c12 done in 3338s: sessions=48 failed=0 full_load=2263.3s sessions/min=0.74 prompt_ktok/min=83.76 recompute_ktok/min=61.44 host%=[13.0] miss%=[73.4]
+10-15 02:49:40 kvonly sweep_fact_check_c16 start (4/30) fact_check=16x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c16 fact_check: 16 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 14 rc=0 wall=330.786s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=337.546s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=346.258s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=410.947s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=479.539s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=697.586s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 11 rc=0 wall=708.901s rounds=4 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 4 rc=0 wall=914.53s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=973.607s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=648.677s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 8 rc=0 wall=1039.244s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=1138.776s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=1152.494s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 13 rc=0 wall=1156.299s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=1274.303s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 15 rc=0 wall=1287.87s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=1324.069s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 21 rc=0 wall=655.42s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=618.664s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 31 rc=0 wall=495.504s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 19 rc=0 wall=1438.363s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=1556.274s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 30 rc=0 wall=625.024s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 32 rc=0 wall=638.443s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 16 rc=0 wall=1711.38s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 22 rc=0 wall=1346.885s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 20 rc=0 wall=1610.941s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 26 rc=0 wall=1277.039s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 36 rc=0 wall=587.283s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 24 rc=0 wall=1469.844s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 27 rc=0 wall=1332.911s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 23 rc=0 wall=1598.113s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 28 rc=0 wall=1398.198s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 39 rc=0 wall=651.461s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=1616.433s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 33 rc=0 wall=1631.36s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 43 rc=0 wall=733.919s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 35 rc=0 wall=1469.746s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=1420.79s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 38 rc=0 wall=1439.354s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=1784.208s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 40 rc=0 wall=1378.78s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=1434.95s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 50 rc=0 wall=777.881s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 47 rc=0 wall=1138.054s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 53 rc=0 wall=470.12s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 44 rc=0 wall=1377.765s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 41 rc=0 wall=1777.05s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 48 rc=0 wall=1352.535s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 45 rc=0 wall=1527.425s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 46 rc=0 wall=1767.784s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 62 rc=0 wall=412.994s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 61 rc=0 wall=515.426s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 49 rc=0 wall=1853.06s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 52 rc=0 wall=1467.121s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 58 rc=0 wall=1017.026s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 51 rc=0 wall=1623.586s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 56 rc=0 wall=1188.628s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 54 rc=0 wall=1381.6s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 57 rc=0 wall=1207.976s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 55 rc=0 wall=1411.698s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 59 rc=0 wall=1108.192s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 63 rc=0 wall=547.905s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 60 rc=0 wall=970.636s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] server.log slice: 1635983 bytes from offset 2546427
+[level] requests.jsonl slice: 4796 events
+
+[kvonly/sweep_fact_check_c16] full-load window 3397.8 s, 0.72 sessions/min, 75.35 prompt ktok/min, 63.62 recompute ktok/min; done_600s=5, done_900s=7, done_1200s=14, done_full_load=41
+[kvonly/sweep_fact_check_c16/fact_check] sessions=64 failed=0 timed_out=0 elapsed_s=4803.5 sessions_per_min=0.8 jct_p50_s=1208.0 jct_p95_s=1767.8 jct_mean_s=1110.0 rounds_mean=4.78 accuracy=10/64 done_full_load=41 done_600s=5 done_900s=7 done_1200s=14 calls=1199 calls_per_min=14.98 prompt_tokens_per_call=5031 prompt_ktokens_per_min=75.35 recompute_ktokens_per_min=63.62 output_ktokens_per_min=1.12 output_tokens_per_call=74 decode_ms_mean=33409 ttft_p50_ms=23897 ttft_p95_ms=48361 ttft_mean_ms=24453 device_pct=9.0 host_pct=6.6 miss_pct=84.4 predicted_hit=0.98
+10-15 04:09:43 kvonly sweep_fact_check_c16 done in 4804s: sessions=64 failed=0 full_load=3397.8s sessions/min=0.72 prompt_ktok/min=75.35 recompute_ktok/min=63.62 host%=[6.6] miss%=[84.4]
+10-15 04:09:43 kvonly sweep_fact_check_c24 start (5/30) fact_check=24x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c24 fact_check: 24 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 21 rc=0 wall=404.218s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=509.255s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 6 rc=0 wall=521.921s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 18 rc=0 wall=535.803s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=566.245s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=609.488s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=750.223s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=1658.566s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 22 rc=0 wall=1771.616s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 5 rc=0 wall=1835.1s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 4 rc=0 wall=1930.824s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 30 rc=0 wall=1201.575s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 8 rc=0 wall=2006.12s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 19 rc=0 wall=2015.832s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=2038.011s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 9 rc=0 wall=2038.413s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 13 rc=0 wall=2089.58s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 20 rc=0 wall=2161.621s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 2 rc=0 wall=2183.9s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 7 rc=0 wall=2228.761s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=2252.739s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 11 rc=0 wall=2274.076s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 23 rc=0 wall=2284.779s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 16 rc=0 wall=2297.148s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 15 rc=0 wall=2323.938s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 24 rc=0 wall=2130.185s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 31 rc=0 wall=882.146s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 32 rc=0 wall=796.827s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 26 rc=0 wall=2223.382s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 36 rc=0 wall=802.809s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 27 rc=0 wall=2354.58s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 39 rc=0 wall=867.541s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 28 rc=0 wall=2429.225s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 43 rc=0 wall=826.987s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=2579.286s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 50 rc=0 wall=907.259s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 25 rc=0 wall=3028.529s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 53 rc=0 wall=740.319s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 47 rc=0 wall=1343.225s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 35 rc=0 wall=2199.691s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=2184.521s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 40 rc=0 wall=2144.723s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 38 rc=0 wall=2225.375s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 33 rc=0 wall=2543.934s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=2242.055s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=2497.823s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 44 rc=0 wall=2185.572s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 48 rc=0 wall=2135.7s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 61 rc=0 wall=922.553s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 62 rc=0 wall=862.318s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 45 rc=0 wall=2276.378s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 41 rc=0 wall=2530.707s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 46 rc=0 wall=2611.095s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 51 rc=0 wall=2373.239s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 49 rc=0 wall=2622.363s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 56 rc=0 wall=2176.513s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 52 rc=0 wall=2450.765s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 69 rc=0 wall=896.785s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 72 rc=0 wall=827.648s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 58 rc=0 wall=2178.463s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 54 rc=0 wall=2546.244s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 57 rc=0 wall=2420.13s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 74 rc=0 wall=813.889s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 55 rc=0 wall=2605.823s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 59 rc=0 wall=2432.313s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 79 rc=0 wall=831.422s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 63 rc=0 wall=1972.62s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 84 rc=0 wall=769.769s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 77 rc=0 wall=1121.734s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 60 rc=0 wall=2784.355s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 64 rc=0 wall=2191.49s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 70 rc=0 wall=2074.684s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 65 rc=0 wall=2300.868s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 68 rc=0 wall=2174.598s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 67 rc=0 wall=2443.644s rounds=6 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 66 rc=0 wall=2584.624s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 71 rc=0 wall=2421.013s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 76 rc=0 wall=1955.037s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 75 rc=0 wall=2000.995s rounds=5 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 81 rc=0 wall=1754.786s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 73 rc=0 wall=2602.289s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 80 rc=0 wall=1995.13s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 85 rc=0 wall=1881.589s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 82 rc=0 wall=2035.322s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 87 rc=0 wall=1129.185s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 78 rc=0 wall=2376.934s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 83 rc=0 wall=2115.946s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 95 rc=0 wall=439.535s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 88 rc=0 wall=1220.217s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 86 rc=0 wall=1478.361s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 90 rc=0 wall=1206.206s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 92 rc=0 wall=1017.678s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 91 rc=0 wall=1044.211s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 93 rc=0 wall=1004.013s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 89 rc=0 wall=1350.394s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 94 rc=0 wall=994.983s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[level] server.log slice: 2579158 bytes from offset 4182766
+[level] requests.jsonl slice: 7484 events
+
+[kvonly/sweep_fact_check_c24] full-load window 4471.8 s, 0.66 sessions/min, 71.97 prompt ktok/min, 64.2 recompute ktok/min; done_600s=5, done_900s=7, done_1200s=7, done_full_load=49
+[kvonly/sweep_fact_check_c24/fact_check] sessions=96 failed=0 timed_out=0 elapsed_s=7891.9 sessions_per_min=0.73 jct_p50_s=2038.4 jct_p95_s=2605.8 jct_mean_s=1766.5 rounds_mean=4.95 accuracy=17/96 done_full_load=49 done_600s=5 done_900s=7 done_1200s=7 calls=1871 calls_per_min=14.22 prompt_tokens_per_call=5060 prompt_ktokens_per_min=71.97 recompute_ktokens_per_min=64.2 output_ktokens_per_min=1.09 output_tokens_per_call=77 decode_ms_mean=35969 ttft_p50_ms=51712 ttft_p95_ms=104482 ttft_mean_ms=53247 device_pct=8.7 host_pct=2.1 miss_pct=89.2 predicted_hit=0.98
+10-15 06:21:15 kvonly sweep_fact_check_c24 done in 7892s: sessions=96 failed=0 full_load=4471.8s sessions/min=0.66 prompt_ktok/min=71.97 recompute_ktok/min=64.2 host%=[2.1] miss%=[89.2]
+10-15 06:21:15 kvonly sweep_fact_check_c32 start (6/30) fact_check=32x4 warmup=0 wrap=True
+[plan] kvonly/sweep_fact_check_c32 fact_check: 32 lanes x 4 sessions, 120 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3, 'unchanged': True}
+[fact_check] measured 21 rc=0 wall=529.492s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 31 rc=0 wall=550.66s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 14 rc=0 wall=552.137s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 18 rc=0 wall=599.898s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 6 rc=0 wall=613.411s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 1 rc=0 wall=705.673s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=714.185s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 30 rc=0 wall=743.987s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 12 rc=0 wall=856.629s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 32 rc=0 wall=1028.637s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 36 rc=0 wall=1133.375s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 39 rc=0 wall=1302.151s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 24 rc=0 wall=2274.993s rounds=5 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 0 rc=0 wall=2346.841s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 22 rc=0 wall=2405.174s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 26 rc=0 wall=2431.001s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=2431.052s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 17 rc=0 wall=2457.337s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 20 rc=0 wall=2522.278s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 4 rc=0 wall=2593.263s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 19 rc=0 wall=2698.999s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 8 rc=0 wall=2723.733s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 27 rc=0 wall=2736.247s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 13 rc=0 wall=2747.513s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 9 rc=0 wall=2787.725s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=2811.757s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 11 rc=0 wall=2815.353s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 28 rc=0 wall=2843.389s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 23 rc=0 wall=2886.146s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 16 rc=0 wall=2906.224s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 7 rc=0 wall=2921.245s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 15 rc=0 wall=2972.412s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 10 rc=0 wall=3006.308s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 29 rc=0 wall=3060.227s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 25 rc=0 wall=3361.377s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 43 rc=0 wall=1381.424s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 62 rc=0 wall=818.729s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 50 rc=0 wall=1235.114s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 33 rc=0 wall=3221.6s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 61 rc=0 wall=871.896s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 35 rc=0 wall=3178.622s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 37 rc=0 wall=3188.86s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 34 rc=0 wall=3386.296s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 38 rc=0 wall=3245.026s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 40 rc=0 wall=3243.568s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 47 rc=0 wall=1833.456s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 53 rc=0 wall=2076.777s rounds=4 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 72 rc=0 wall=1154.061s rounds=2 verdict=SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 69 rc=0 wall=1222.25s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 42 rc=0 wall=3248.628s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 74 rc=0 wall=1058.434s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 48 rc=0 wall=2855.297s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 41 rc=0 wall=3737.829s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 44 rc=0 wall=3178.47s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 56 rc=0 wall=2777.884s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 58 rc=0 wall=2773.704s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 45 rc=0 wall=3293.666s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 51 rc=0 wall=3112.028s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 63 rc=0 wall=2803.172s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 77 rc=0 wall=1575.458s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 54 rc=0 wall=3191.935s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 52 rc=0 wall=3265.129s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 57 rc=0 wall=3160.762s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 46 rc=0 wall=3658.315s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 59 rc=0 wall=3233.791s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 49 rc=0 wall=3631.259s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 64 rc=0 wall=3112.479s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 55 rc=0 wall=3422.04s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 79 rc=0 wall=1326.987s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 60 rc=0 wall=3411.569s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 65 rc=0 wall=3316.642s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 84 rc=0 wall=1223.093s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 75 rc=0 wall=2945.001s rounds=5 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 70 rc=0 wall=3151.634s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 67 rc=0 wall=3523.607s rounds=6 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 68 rc=0 wall=3281.789s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 95 rc=0 wall=994.73s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 66 rc=0 wall=3704.593s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 98 rc=0 wall=1015.824s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 97 rc=0 wall=1099.182s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 76 rc=0 wall=3154.718s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 71 rc=0 wall=3542.881s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 73 rc=0 wall=3594.081s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 87 rc=0 wall=2173.067s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 99 rc=0 wall=1623.91s rounds=3 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 81 rc=0 wall=2878.456s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 80 rc=0 wall=3256.658s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 82 rc=0 wall=3291.853s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 107 rc=0 wall=1178.691s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 110 rc=0 wall=1033.305s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 78 rc=0 wall=3554.097s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 88 rc=0 wall=2814.28s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 85 rc=0 wall=3024.652s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 83 rc=0 wall=3242.032s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 86 rc=0 wall=3096.09s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 91 rc=0 wall=2921.91s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 90 rc=0 wall=3012.178s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 92 rc=0 wall=2942.511s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 89 rc=0 wall=3176.794s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 96 rc=0 wall=2859.047s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 112 rc=0 wall=1193.407s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 93 rc=0 wall=3009.925s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 101 rc=0 wall=2618.506s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 94 rc=0 wall=3048.374s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 100 rc=0 wall=2872.635s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 106 rc=0 wall=2361.409s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 102 rc=0 wall=2586.499s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 121 rc=0 wall=839.471s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 104 rc=0 wall=2773.992s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 123 rc=0 wall=842.679s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 108 rc=0 wall=2732.642s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 103 rc=0 wall=3008.753s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 111 rc=0 wall=2489.28s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 126 rc=0 wall=885.296s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 105 rc=0 wall=3043.387s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 114 rc=0 wall=1779.742s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 109 rc=0 wall=2942.512s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 113 rc=0 wall=2498.39s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 116 rc=0 wall=1898.947s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 117 rc=0 wall=1896.696s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 120 rc=0 wall=1585.408s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 124 rc=0 wall=1586.302s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 118 rc=0 wall=1932.949s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 125 rc=0 wall=1579.091s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED
+[fact_check] measured 122 rc=0 wall=1675.792s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 115 rc=0 wall=2171.252s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 119 rc=0 wall=1865.349s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 127 rc=0 wall=1262.739s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] server.log slice: 3421659 bytes from offset 6762280
+[level] requests.jsonl slice: 9968 events
+
+[kvonly/sweep_fact_check_c32] full-load window 6259.6 s, 0.66 sessions/min, 70.81 prompt ktok/min, 64.4 recompute ktok/min; done_600s=4, done_900s=9, done_1200s=9, done_full_load=69
+[kvonly/sweep_fact_check_c32/fact_check] sessions=128 failed=0 timed_out=0 elapsed_s=10690.1 sessions_per_min=0.72 jct_p50_s=2773.7 jct_p95_s=3542.9 jct_mean_s=2371.6 rounds_mean=4.95 accuracy=25/128 done_full_load=69 done_600s=4 done_900s=9 done_1200s=9 calls=2492 calls_per_min=13.99 prompt_tokens_per_call=5062 prompt_ktokens_per_min=70.81 recompute_ktokens_per_min=64.4 output_ktokens_per_min=1.09 output_tokens_per_call=78 decode_ms_mean=36881 ttft_p50_ms=80765 ttft_p95_ms=143276 ttft_mean_ms=83464 device_pct=8.3 host_pct=0.7 miss_pct=91.0 predicted_hit=0.98
+10-15 09:19:25 kvonly sweep_fact_check_c32 done in 10690s: sessions=128 failed=0 full_load=6259.6s sessions/min=0.66 prompt_ktok/min=70.81 recompute_ktok/min=64.4 host%=[0.7] miss%=[91.0]
+10-15 09:19:25 kvonly sweep_coding_agent_c16 start (7/30) coding_agent=16x3 warmup=1 wrap=True
+[plan] kvonly/sweep_coding_agent_c16 coding_agent: 16 lanes x 3 sessions, 157 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/coding_agent-edb9b2de49e91212.json
+[register] coding_agent: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/coding_agent.jac', 'sites': 4}
+[coding_agent] warmup 0 rc=0 wall=113.206s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 0 rc=0 wall=264.106s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 3 rc=0 wall=270.275s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 5 rc=0 wall=287.635s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 12 rc=0 wall=316.637s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 7 rc=0 wall=317.723s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 1 rc=0 wall=317.723s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 2 rc=0 wall=344.373s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 6 rc=0 wall=362.284s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 14 rc=0 wall=386.215s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 11 rc=0 wall=406.642s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 10 rc=0 wall=432.326s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 13 rc=0 wall=434.528s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 8 rc=0 wall=434.739s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 15 rc=0 wall=488.952s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 9 rc=0 wall=517.089s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 4 rc=0 wall=581.48s rounds=13 verdict=FAILED/PASSED
+[coding_agent] measured 20 rc=0 wall=298.751s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 21 rc=0 wall=340.106s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 22 rc=0 wall=331.329s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 17 rc=0 wall=411.136s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 25 rc=0 wall=303.055s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 26 rc=0 wall=301.904s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 27 rc=0 wall=322.232s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 19 rc=0 wall=452.19s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 18 rc=0 wall=521.296s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 23 rc=0 wall=446.747s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 24 rc=0 wall=434.733s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 28 rc=0 wall=405.284s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 16 rc=0 wall=629.138s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 32 rc=0 wall=360.38s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 30 rc=0 wall=463.269s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 31 rc=0 wall=464.414s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 29 rc=0 wall=564.752s rounds=11 verdict=PASSED/PASSED
+[coding_agent] measured 40 rc=0 wall=290.633s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 34 rc=0 wall=438.839s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 41 rc=0 wall=332.89s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 37 rc=0 wall=408.141s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 42 rc=0 wall=329.584s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 33 rc=0 wall=577.367s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 38 rc=0 wall=498.412s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 39 rc=0 wall=489.451s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 45 rc=0 wall=294.941s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 43 rc=0 wall=455.353s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 44 rc=0 wall=402.233s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 35 rc=0 wall=626.982s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 46 rc=0 wall=322.636s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 47 rc=0 wall=314.876s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 36 rc=0 wall=662.688s rounds=14 verdict=FAILED/PASSED
+[level] server.log slice: 1330139 bytes from offset 10185388
+[level] requests.jsonl slice: 3884 events
+
+[kvonly/sweep_coding_agent_c16] full-load window 976.9 s, 1.84 sessions/min, 63.71 prompt ktok/min, 46.16 recompute ktok/min; done_600s=16, done_900s=29, done_1200s=38, done_full_load=30
+[kvonly/sweep_coding_agent_c16/coding_agent] sessions=48 failed=0 timed_out=0 elapsed_s=1372.4 sessions_per_min=2.1 jct_p50_s=406.6 jct_p95_s=627.0 jct_mean_s=409.6 rounds_mean=9.44 accuracy=28/48 done_full_load=30 done_600s=16 done_900s=29 done_1200s=38 calls=954 calls_per_min=41.71 prompt_tokens_per_call=1528 prompt_ktokens_per_min=63.71 recompute_ktokens_per_min=46.16 output_ktokens_per_min=6.83 output_tokens_per_call=164 decode_ms_mean=17769 ttft_p50_ms=1099 ttft_p95_ms=4368 ttft_mean_ms=1507 device_pct=27.3 host_pct=0.3 miss_pct=72.5 predicted_hit=0.93
+10-15 09:44:11 kvonly sweep_coding_agent_c16 done in 1486s: sessions=48 failed=0 full_load=976.9s sessions/min=1.84 prompt_ktok/min=63.71 recompute_ktok/min=46.16 host%=[0.3] miss%=[72.5]
+10-15 09:44:11 kvonly sweep_coding_agent_c32 start (8/30) coding_agent=32x3 warmup=0 wrap=True
+[plan] kvonly/sweep_coding_agent_c32 coding_agent: 32 lanes x 3 sessions, 157 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/coding_agent-edb9b2de49e91212.json
+[register] coding_agent: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/coding_agent.jac', 'sites': 4, 'unchanged': True}
+[coding_agent] measured 26 rc=0 wall=423.118s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 20 rc=0 wall=425.872s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 25 rc=0 wall=433.183s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 0 rc=0 wall=458.92s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 3 rc=0 wall=461.173s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 22 rc=0 wall=480.247s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 27 rc=0 wall=496.468s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 5 rc=0 wall=497.02s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 21 rc=0 wall=532.469s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 7 rc=0 wall=544.136s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 2 rc=0 wall=558.206s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 1 rc=0 wall=565.566s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 6 rc=0 wall=610.727s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 28 rc=0 wall=638.423s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 14 rc=0 wall=654.686s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 17 rc=0 wall=668.206s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 19 rc=0 wall=689.486s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 8 rc=0 wall=702.451s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 11 rc=0 wall=713.315s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 24 rc=0 wall=728.786s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 29 rc=0 wall=733.191s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 10 rc=0 wall=738.149s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 23 rc=0 wall=743.806s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 31 rc=0 wall=754.471s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 30 rc=0 wall=759.128s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 13 rc=0 wall=759.479s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 15 rc=0 wall=776.903s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 18 rc=0 wall=817.459s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 12 rc=0 wall=842.14s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 9 rc=0 wall=847.048s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 4 rc=0 wall=930.209s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 16 rc=0 wall=951.186s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 40 rc=0 wall=489.71s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 42 rc=0 wall=527.373s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 41 rc=0 wall=572.27s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 45 rc=0 wall=514.081s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 34 rc=0 wall=750.814s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 37 rc=0 wall=722.876s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 32 rc=0 wall=789.567s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 46 rc=0 wall=668.398s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 47 rc=0 wall=662.489s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 33 rc=0 wall=910.581s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 44 rc=0 wall=733.387s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 61 rc=0 wall=513.038s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 60 rc=0 wall=531.313s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 39 rc=0 wall=878.587s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 38 rc=0 wall=901.568s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 52 rc=0 wall=670.953s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 43 rc=0 wall=844.288s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 50 rc=0 wall=716.465s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 48 rc=0 wall=761.822s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 53 rc=0 wall=756.718s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 58 rc=0 wall=752.208s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 54 rc=0 wall=788.459s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 36 rc=0 wall=1099.933s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 62 rc=0 wall=643.712s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 57 rc=0 wall=819.049s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 35 rc=0 wall=1127.773s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 49 rc=0 wall=895.104s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 51 rc=0 wall=871.071s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 63 rc=0 wall=725.177s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 66 rc=0 wall=624.695s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 59 rc=0 wall=932.051s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 65 rc=0 wall=669.489s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 64 rc=0 wall=763.679s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 81 rc=0 wall=464.631s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 67 rc=0 wall=780.605s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 70 rc=0 wall=743.704s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 80 rc=0 wall=561.909s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 82 rc=0 wall=524.609s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 68 rc=0 wall=798.779s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 69 rc=0 wall=818.856s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 73 rc=0 wall=712.563s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 86 rc=0 wall=535.175s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 78 rc=0 wall=715.415s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 79 rc=0 wall=731.088s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 72 rc=0 wall=815.653s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 85 rc=0 wall=619.7s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 74 rc=0 wall=831.675s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 83 rc=0 wall=700.597s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 77 rc=0 wall=831.924s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 84 rc=0 wall=691.295s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 55 rc=0 wall=1478.694s rounds=13 verdict=FAILED/PASSED
+[coding_agent] measured 90 rc=0 wall=644.824s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 76 rc=0 wall=883.648s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 87 rc=0 wall=687.283s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 88 rc=0 wall=684.679s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 92 rc=0 wall=595.154s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 56 rc=0 wall=1525.659s rounds=13 verdict=FAILED/PASSED
+[coding_agent] measured 71 rc=0 wall=974.219s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 91 rc=0 wall=717.674s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 89 rc=0 wall=743.854s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 93 rc=0 wall=653.129s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 75 rc=0 wall=1043.055s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 94 rc=0 wall=242.97s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 95 rc=0 wall=332.089s rounds=11 verdict=FAILED/PASSED
+[level] server.log slice: 2598924 bytes from offset 11515885
+[level] requests.jsonl slice: 7672 events
+
+[kvonly/sweep_coding_agent_c32] full-load window 1741.1 s, 2.14 sessions/min, 68.86 prompt ktok/min, 49.25 recompute ktok/min; done_600s=12, done_900s=30, done_1200s=37, done_full_load=62
+[kvonly/sweep_coding_agent_c32/coding_agent] sessions=96 failed=0 timed_out=0 elapsed_s=2616.9 sessions_per_min=2.2 jct_p50_s=717.7 jct_p95_s=1043.1 jct_mean_s=715.1 rounds_mean=9.49 accuracy=51/96 done_full_load=62 done_600s=12 done_900s=30 done_1200s=37 calls=1918 calls_per_min=43.98 prompt_tokens_per_call=1566 prompt_ktokens_per_min=68.86 recompute_ktokens_per_min=49.25 output_ktokens_per_min=7.56 output_tokens_per_call=172 decode_ms_mean=31647 ttft_p50_ms=1889 ttft_p95_ms=8119 ttft_mean_ms=2821 device_pct=27.3 host_pct=1.1 miss_pct=71.5 predicted_hit=0.93
+10-15 10:27:48 kvonly sweep_coding_agent_c32 done in 2617s: sessions=96 failed=0 full_load=1741.1s sessions/min=2.14 prompt_ktok/min=68.86 recompute_ktok/min=49.25 host%=[1.1] miss%=[71.5]
+10-15 10:27:48 kvonly sweep_coding_agent_c48 start (9/30) coding_agent=48x3 warmup=0 wrap=True
+[plan] kvonly/sweep_coding_agent_c48 coding_agent: 48 lanes x 3 sessions, 157 inputs, wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/coding_agent-edb9b2de49e91212.json
+[register] coding_agent: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/coding_agent.jac', 'sites': 4, 'unchanged': True}
+[coding_agent] measured 20 rc=0 wall=618.229s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 26 rc=0 wall=630.346s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 0 rc=0 wall=655.481s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 40 rc=0 wall=670.448s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 25 rc=0 wall=676.009s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 45 rc=0 wall=689.623s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 5 rc=0 wall=702.191s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 42 rc=0 wall=718.158s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 12 rc=0 wall=726.07s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 7 rc=0 wall=733.13s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 3 rc=0 wall=740.591s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 22 rc=0 wall=764.973s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 41 rc=0 wall=777.689s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 32 rc=0 wall=789.906s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 27 rc=0 wall=827.51s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 21 rc=0 wall=835.072s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 17 rc=0 wall=849.092s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 28 rc=0 wall=873.374s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 2 rc=0 wall=881.835s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 1 rc=0 wall=888.295s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 37 rc=0 wall=927.747s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 14 rc=0 wall=933.056s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 6 rc=0 wall=952.282s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 44 rc=0 wall=963.645s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 47 rc=0 wall=977.614s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 11 rc=0 wall=985.577s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 31 rc=0 wall=990.532s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 19 rc=0 wall=997.944s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 24 rc=0 wall=1003.051s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 23 rc=0 wall=1010.862s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 46 rc=0 wall=1020.022s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 34 rc=0 wall=1020.023s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 13 rc=0 wall=1032.291s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 33 rc=0 wall=1049.613s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 29 rc=0 wall=1052.671s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 43 rc=0 wall=1072.195s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 8 rc=0 wall=1087.617s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 30 rc=0 wall=1115.656s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 18 rc=0 wall=1132.681s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 38 rc=0 wall=1133.881s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 10 rc=0 wall=1152.008s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 39 rc=0 wall=1166.927s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 9 rc=0 wall=1199.774s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 4 rc=0 wall=1333.413s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 16 rc=0 wall=1387.989s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 35 rc=0 wall=1415.174s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 61 rc=0 wall=785.984s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 60 rc=0 wall=836.701s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 15 rc=0 wall=1622.604s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 52 rc=0 wall=1013.385s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 36 rc=0 wall=1767.448s rounds=14 verdict=FAILED/PASSED
+[coding_agent] measured 48 rc=0 wall=1163.237s rounds=8 verdict=PASSED/PASSED

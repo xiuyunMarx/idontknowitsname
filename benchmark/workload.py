@@ -8,7 +8,11 @@ environment variable. Lanes of one program run their sessions back to back. A la
 with a session count is "fixed": with --wrap it keeps taking inputs modulo the dataset
 (a repeat comes >= 100 sessions later, long after the pools turned over); without it
 the lane stops when the dataset is exhausted. A program with 0 sessions per lane
-"follows": it keeps taking inputs until every fixed lane has finished.
+"follows": it keeps taking inputs until every fixed lane has finished. Inputs listed
+in bench_data/dirty_inputs.json (greedy decoding runs into max_tokens inside a JSON
+field) are skipped. A session that still hits max_tokens counts in throughput, JCT and
+TTFT like any other (it ran and the server served it) but is left out of accuracy, since
+its truncated reply is not the agent's verdict; summary.json lists it under "excluded".
 
 The level's raw data goes to --out-dir: logs/<program>-<phase>-<idx>.log per session,
 sessions.jsonl, session_events.jsonl, run_config.json, summary.json, and the slice of
@@ -19,6 +23,7 @@ did) and output ktokens/min, over the program's elapsed time and over the full-l
 window (first measured start to the first fixed lane's end).
 
 benchmark.run_arm drives the levels of one arm; this module is also usable alone.
+`--resummarize <level dir>...` rebuilds summary.json of finished levels from their logs.
 """
 import argparse
 import json
@@ -97,6 +102,39 @@ PROGRAMS = {
 }
 
 
+DIRTY_INPUTS_FILE = os.path.join(DATA, "dirty_inputs.json")
+
+
+def dirty_inputs() -> Dict[str, "set[int]"]:
+    """Per program: dataset positions never handed to a session (see dirty_inputs.json)."""
+    if not os.path.exists(DIRTY_INPUTS_FILE):
+        return {}
+    with open(DIRTY_INPUTS_FILE) as f:
+        raw = json.load(f)
+    return {p: set(v) for p, v in raw.items() if p in PROGRAMS}
+
+
+def max_tokens_hits(request_log: str) -> "set[int]":
+    """Session pids with a request that generated right up to its max_new_tokens: the
+    reply is a truncated JSON document, the session's outcome is not the agent's."""
+    limit: Dict[str, int] = {}
+    pids: "set[int]" = set()
+    if not os.path.exists(request_log):
+        return pids
+    with open(request_log) as f:
+        for line in f:
+            if not line.strip():
+                continue
+            d = json.loads(line)
+            if d.get("event") == "request_start":
+                limit[d["request_id"]] = int((d.get("sampling_params") or {}).get("max_new_tokens") or 0)
+            elif d.get("event") == "request_end":
+                cap = limit.get(d["request_id"], 0)
+                if cap and int(d.get("output_tokens") or 0) >= cap:
+                    pids.add(int(d["request_id"].split("-", 1)[0]))
+    return pids
+
+
 ACTIVE_PROCS: "set[subprocess.Popen]" = set()   # running `jac run` sessions, for a driver's signal handler
 _ACTIVE_LOCK = threading.Lock()
 
@@ -121,6 +159,7 @@ class Runner:
         self.records: List[dict] = []
         self.lock = threading.Lock()
         self.next_idx: Dict[str, int] = {}
+        self.dirty = dirty_inputs()
         self.stop = threading.Event()
         self.env = dict(os.environ)
         for k, v in ENV_DEFAULTS.items():
@@ -138,9 +177,13 @@ class Runner:
                                                "monotonic_ns": time.monotonic_ns(), **fields}) + "\n")
 
     def take(self, program: str, tasks: List[dict], wrap: bool) -> Optional[dict]:
+        skip = self.dirty.get(program, set())
         with self.lock:
             i = self.next_idx.get(program, 0)
+            while i % len(tasks) in skip and (wrap or i < len(tasks)):
+                i += 1
             if i >= len(tasks) and not wrap:
+                self.next_idx[program] = i
                 return None
             self.next_idx[program] = i + 1
             task = dict(tasks[i % len(tasks)])
@@ -313,7 +356,10 @@ def _rate(x: float, seconds: float) -> float:
     return round(x / (seconds / 60), 2) if seconds > 0 else 0.0
 
 
-def summarize(records: List[dict], server: Dict[str, dict], windows: List[int]) -> dict:
+def summarize(records: List[dict], server: Dict[str, dict], windows: List[int],
+              excluded: "set[int]" = frozenset()) -> dict:
+    """`excluded` (session pids whose reply was truncated at max_tokens) count everywhere
+    but in accuracy."""
     measured = [r for r in records if r["phase"] == "measured"]
     start = min(r["t0"] for r in measured)
     end = max(r["t1"] for r in measured)
@@ -336,7 +382,8 @@ def summarize(records: List[dict], server: Dict[str, dict], windows: List[int]) 
             "jct_p50_s": round(q(walls, 0.5), 1), "jct_p95_s": round(q(walls, 0.95), 1),
             "jct_mean_s": round(statistics.mean(walls), 1) if walls else 0.0,
             "rounds_mean": round(statistics.mean(r["rounds"] for r in ok), 2) if ok else 0.0,
-            "accuracy": f"{sum(r['verdict'] == r['expected'] for r in ok)}/{len(ok)}",
+            "accuracy": f"{sum(r['verdict'] == r['expected'] for r in ok if r['pid'] not in excluded)}"
+                        f"/{sum(r['pid'] not in excluded for r in ok)}",
             "done_full_load": sum(r["t1"] - start <= full_load for r in rs),
         }
         for w in windows:
@@ -394,9 +441,12 @@ def run_level(out_dir: str, lanes: Dict[str, int], sessions: Dict[str, int], *, 
     os.makedirs(out_dir)
     tag = tag or os.path.basename(out_dir.rstrip("/"))
     tasks = {p: PROGRAMS[p]["tasks"]() for p in lanes}
+    dirty = dirty_inputs()
     for p in lanes:
+        if len(dirty.get(p, ())) >= len(tasks[p]):
+            raise RuntimeError(f"{p}: every input is listed in {DIRTY_INPUTS_FILE}")
         print(f"[plan] {tag} {p}: {lanes[p]} lanes x {sessions.get(p, 0) or 'follow'} sessions, "
-              f"{len(tasks[p])} inputs, wrap={wrap_fixed}", flush=True)
+              f"{len(tasks[p])} inputs ({len(dirty.get(p, ()))} skipped), wrap={wrap_fixed}", flush=True)
     if register:
         register_programs(server, list(lanes))
 
@@ -438,22 +488,44 @@ def run_level(out_dir: str, lanes: Dict[str, int], sessions: Dict[str, int], *, 
     runner.close()
     t_level_end_ns = time.time_ns()
 
-    server_stats: Dict[str, dict] = {}
-    if server_log and os.path.exists(server_log):
-        n = copy_slice(server_log, os.path.join(out_dir, "server.log"), log_start)
-        print(f"[level] server.log slice: {n} bytes from offset {log_start}", flush=True)
-        pids = {r["pid"]: r["program"] for r in runner.records if r["phase"] == "measured"}
-        server_stats = parse_server_log(os.path.join(out_dir, "server.log"), pids)
+    hits: "set[int]" = set()
     if request_log and os.path.exists(request_log):
         n = copy_trace_window(request_log, os.path.join(out_dir, "requests.jsonl"), t_level_start_ns, t_level_end_ns)
         print(f"[level] requests.jsonl slice: {n} events", flush=True)
+        hits = max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
+    if server_log and os.path.exists(server_log):
+        n = copy_slice(server_log, os.path.join(out_dir, "server.log"), log_start)
+        print(f"[level] server.log slice: {n} bytes from offset {log_start}", flush=True)
 
-    summary = summarize(runner.records, server_stats, list(windows))
+    summary = build_summary(out_dir, runner.records, hits, list(windows))
     summary.update({"tag": tag, "lanes": lanes, "sessions": sessions, "wrap_fixed": wrap_fixed,
                     "level_start_ns": t_level_start_ns, "level_end_ns": t_level_end_ns,
                     "measured_elapsed_s": round(time.time() - t_start, 1)})
     with open(os.path.join(out_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
+    print_summary(tag, summary)
+    return summary
+
+
+def build_summary(out_dir: str, records: List[dict], hits: "set[int]", windows: List[int]) -> dict:
+    """The level summary from its session records and the server.log slice in out_dir;
+    `hits` are the pids of sessions that ran into max_tokens."""
+    excluded = [r for r in records if r["phase"] == "measured" and r["pid"] in hits]
+    for r in excluded:
+        print(f"[level] excluded from accuracy: {r['program']} {r['idx']} (input {r['input_idx']}): "
+              f"a call ran into max_tokens", flush=True)
+    server_stats: Dict[str, dict] = {}
+    log = os.path.join(out_dir, "server.log")
+    if os.path.exists(log):
+        pids = {r["pid"]: r["program"] for r in records if r["phase"] == "measured"}
+        server_stats = parse_server_log(log, pids)
+    summary = summarize(records, server_stats, windows, {r["pid"] for r in excluded})
+    summary["excluded"] = [{"program": r["program"], "idx": r["idx"], "input_idx": r["input_idx"],
+                            "reason": "max_tokens"} for r in excluded]
+    return summary
+
+
+def print_summary(tag: str, summary: dict) -> None:
     print(f"\n[{tag}] full-load window {summary['full_load_s']} s, "
           f"{summary['all']['sessions_per_min_full_load']} sessions/min, "
           f"{summary['all']['prompt_ktokens_per_min']} prompt ktok/min, "
@@ -461,6 +533,24 @@ def run_level(out_dir: str, lanes: Dict[str, int], sessions: Dict[str, int], *, 
           + ", ".join(f"{k}={v}" for k, v in summary["all"].items() if k.startswith("done_")), flush=True)
     for p, row in summary["programs"].items():
         print(f"[{tag}/{p}] " + " ".join(f"{k}={v}" for k, v in row.items()), flush=True)
+
+
+def resummarize(out_dir: str) -> dict:
+    """Rebuild summary.json of a finished level from sessions.jsonl, server.log and
+    requests.jsonl, keeping the run's own metadata (tag, lanes, timing)."""
+    with open(os.path.join(out_dir, "summary.json")) as f:
+        old = json.load(f)
+    with open(os.path.join(out_dir, "run_config.json")) as f:
+        cfg = json.load(f)
+    with open(os.path.join(out_dir, "sessions.jsonl")) as f:
+        records = [json.loads(line) for line in f if line.strip()]
+    hits = max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
+    summary = build_summary(out_dir, records, hits, list(cfg["windows"]))
+    summary.update({k: old[k] for k in ("tag", "lanes", "sessions", "wrap_fixed", "level_start_ns",
+                                        "level_end_ns", "measured_elapsed_s") if k in old})
+    with open(os.path.join(out_dir, "summary.json"), "w") as f:
+        json.dump(summary, f, indent=2)
+    print_summary(summary.get("tag", out_dir), summary)
     return summary
 
 
@@ -472,8 +562,10 @@ def parse_sessions(spec: str, lanes: Dict[str, int]) -> Dict[str, int]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--out-dir", required=True, help="fresh directory for this level's raw data and summary")
-    ap.add_argument("--lanes", required=True, help="program=lanes,...")
+    ap.add_argument("--resummarize", nargs="+", metavar="LEVEL_DIR",
+                    help="rebuild summary.json of finished levels from their logs, then exit")
+    ap.add_argument("--out-dir", help="fresh directory for this level's raw data and summary")
+    ap.add_argument("--lanes", help="program=lanes,...")
     ap.add_argument("--sessions", default="0", help="per lane: N, or program=N,... (0 = follow)")
     ap.add_argument("--wrap", action="store_true", help="fixed lanes wrap around the dataset (plan_on_greatlake.md)")
     ap.add_argument("--warmup", type=int, default=1, help="sequential sessions per program before measuring")
@@ -485,6 +577,12 @@ def main() -> int:
     ap.add_argument("--timeout", type=float, default=3600.0, help="per session (s)")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    if a.resummarize:
+        for d in a.resummarize:
+            resummarize(d)
+        return 0
+    if not a.out_dir or not a.lanes:
+        ap.error("--out-dir and --lanes are required")
     lanes = {k: int(v) for k, v in (kv.split("=") for kv in a.lanes.split(","))}
     sessions = parse_sessions(a.sessions, lanes)
     if a.dry_run:
