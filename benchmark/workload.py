@@ -1,30 +1,19 @@
-"""One benchmark level: the applications as interleaved sessions on a running server.
+"""Load generator for one benchmark level: run agent applications concurrently
+against an already running server and record JCT, TTFT, cache hits, accuracy
+and throughput into summary.json. benchmark.run_arm calls this once per level.
 
-    python -m benchmark.workload --out-dir benchmark/results/ours/sweep_fact_check_c4 \
-        --lanes fact_check=4 --sessions 4 --wrap --server-log benchmark/results/ours/server.0.log
+    python -m benchmark.workload --out-dir <level dir> --lanes fact_check=4 --sessions 4 --wrap \
+        --server-log benchmark/results/ours/server.0.log
+    python -m benchmark.workload --resummarize <level dir>...   # rebuild summary.json from logs
 
-Every session is one `jac run` of an application with its input in the program's
-environment variable. Lanes of one program run their sessions back to back. A lane
-with a session count is "fixed": with --wrap it keeps taking inputs modulo the dataset
-(a repeat comes >= 100 sessions later, long after the pools turned over); without it
-the lane stops when the dataset is exhausted. A program with 0 sessions per lane
-"follows": it keeps taking inputs until every fixed lane has finished. Inputs listed
-in bench_data/dirty_inputs.json (greedy decoding runs into max_tokens inside a JSON
-field) are skipped. A session that still hits max_tokens counts in throughput, JCT and
-TTFT like any other (it ran and the server served it) but is left out of accuracy, since
-its truncated reply is not the agent's verdict; summary.json lists it under "excluded".
+A session is one `jac run` of an application on one input.
+A lane runs sessions back to back; --lanes sets how many lanes per program.
+A lane with --sessions N stops after N (fixed; --wrap reuses inputs once the dataset is exhausted). A program without a session count keeps going until every fixed lane has
+finished (follow), so in mixed levels all four agents stay loaded the whole time.
+inputs in bench_data/dirty_inputs.json are skipped.
 
-The level's raw data goes to --out-dir: logs/<program>-<phase>-<idx>.log per session,
-sessions.jsonl, session_events.jsonl, run_config.json, summary.json, and the slice of
-the server's log (and of its request trace, if given) that belongs to this level:
-server.log and requests.jsonl. Throughput is reported as prompt ktokens/min (every
-request's full prompt), recompute ktokens/min (the uncached part, the prefill the GPU
-did) and output ktokens/min, over the program's elapsed time and over the full-load
-window (first measured start to the first fixed lane's end).
-
-benchmark.run_arm drives the levels of one arm; this module is also usable alone.
-`--resummarize <level dir>...` rebuilds summary.json of finished levels from their logs.
 """
+
 import argparse
 import json
 import os
@@ -36,6 +25,8 @@ import sys
 import threading
 import time
 from typing import Dict, List, Optional, Tuple
+
+from benchmark import grade
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
@@ -57,7 +48,6 @@ ENV_DEFAULTS = {
 SERVE_RE = re.compile(r"^\[serve\] (\d+)-\d+t(\d+)-\w+ (.*)$")
 DECODE_RE = re.compile(r"^\[decode\] (\d+)-\d+t\d+-\w+ decode_ms=([\d.]+) output_tokens=(\d+)")
 CALL_RE = re.compile(r"^\[call\] (\d+) #(\d+) (\S+?)(?: predicted=(hit|miss))?(?: ctx=\([^)]*\))?$")
-VERDICT_RE = re.compile(r"^Verdict: (\S+)")
 ROUNDS_RE = re.compile(r"^Rounds: (\d+), (?:findings|notes|attempts): (\d+)")
 
 
@@ -112,27 +102,6 @@ def dirty_inputs() -> Dict[str, "set[int]"]:
     with open(DIRTY_INPUTS_FILE) as f:
         raw = json.load(f)
     return {p: set(v) for p, v in raw.items() if p in PROGRAMS}
-
-
-def max_tokens_hits(request_log: str) -> "set[int]":
-    """Session pids with a request that generated right up to its max_new_tokens: the
-    reply is a truncated JSON document, the session's outcome is not the agent's."""
-    limit: Dict[str, int] = {}
-    pids: "set[int]" = set()
-    if not os.path.exists(request_log):
-        return pids
-    with open(request_log) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            d = json.loads(line)
-            if d.get("event") == "request_start":
-                limit[d["request_id"]] = int((d.get("sampling_params") or {}).get("max_new_tokens") or 0)
-            elif d.get("event") == "request_end":
-                cap = limit.get(d["request_id"], 0)
-                if cap and int(d.get("output_tokens") or 0) >= cap:
-                    pids.add(int(d["request_id"].split("-", 1)[0]))
-    return pids
 
 
 ACTIVE_PROCS: "set[subprocess.Popen]" = set()   # running `jac run` sessions, for a driver's signal handler
@@ -213,12 +182,9 @@ class Runner:
                 with _ACTIVE_LOCK:
                     ACTIVE_PROCS.discard(proc)
         t1 = time.time()
-        verdict, rounds, calls = "", 0, 0
+        verdict, rounds, calls = grade.verdict(program, log, task["input"]), 0, 0
         with open(log, errors="replace") as f:
             for line in f:
-                m = VERDICT_RE.match(line)
-                if m:
-                    verdict = m.group(1)
                 m = ROUNDS_RE.match(line)
                 if m:
                     rounds, calls = int(m.group(1)), int(m.group(2))
@@ -357,9 +323,9 @@ def _rate(x: float, seconds: float) -> float:
 
 
 def summarize(records: List[dict], server: Dict[str, dict], windows: List[int],
-              excluded: "set[int]" = frozenset()) -> dict:
+              excluded: "set[int]" = frozenset()) -> dict: #type: ignore
     """`excluded` (session pids whose reply was truncated at max_tokens) count everywhere
-    but in accuracy."""
+    but in accuracy (see benchmark.grade)."""
     measured = [r for r in records if r["phase"] == "measured"]
     start = min(r["t0"] for r in measured)
     end = max(r["t1"] for r in measured)
@@ -382,8 +348,7 @@ def summarize(records: List[dict], server: Dict[str, dict], windows: List[int],
             "jct_p50_s": round(q(walls, 0.5), 1), "jct_p95_s": round(q(walls, 0.95), 1),
             "jct_mean_s": round(statistics.mean(walls), 1) if walls else 0.0,
             "rounds_mean": round(statistics.mean(r["rounds"] for r in ok), 2) if ok else 0.0,
-            "accuracy": f"{sum(r['verdict'] == r['expected'] for r in ok if r['pid'] not in excluded)}"
-                        f"/{sum(r['pid'] not in excluded for r in ok)}",
+            "accuracy": grade.accuracy(ok, excluded),
             "done_full_load": sum(r["t1"] - start <= full_load for r in rs),
         }
         for w in windows:
@@ -492,7 +457,7 @@ def run_level(out_dir: str, lanes: Dict[str, int], sessions: Dict[str, int], *, 
     if request_log and os.path.exists(request_log):
         n = copy_trace_window(request_log, os.path.join(out_dir, "requests.jsonl"), t_level_start_ns, t_level_end_ns)
         print(f"[level] requests.jsonl slice: {n} events", flush=True)
-        hits = max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
+        hits = grade.max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
     if server_log and os.path.exists(server_log):
         n = copy_slice(server_log, os.path.join(out_dir, "server.log"), log_start)
         print(f"[level] server.log slice: {n} bytes from offset {log_start}", flush=True)
@@ -544,7 +509,7 @@ def resummarize(out_dir: str) -> dict:
         cfg = json.load(f)
     with open(os.path.join(out_dir, "sessions.jsonl")) as f:
         records = [json.loads(line) for line in f if line.strip()]
-    hits = max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
+    hits = grade.max_tokens_hits(os.path.join(out_dir, "requests.jsonl"))
     summary = build_summary(out_dir, records, hits, list(cfg["windows"]))
     summary.update({k: old[k] for k in ("tag", "lanes", "sessions", "wrap_fixed", "level_start_ns",
                                         "level_end_ns", "measured_elapsed_s") if k in old})

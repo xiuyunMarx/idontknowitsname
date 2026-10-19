@@ -1,0 +1,97 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 18:16:50
+staged 19G 18:17:30
+arm=relayout node=gl1526.arc-ts.umich.edu job=64198732 gpus=0 cpus=12 start=2026-10-18 18:17:30
+NVIDIA A40, 46068 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2639 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4188 files
+10-18 18:17:31 relayout ARM-START part=all levels=29 results=benchmark/results/relayout
+10-18 18:17:31 relayout sweep_fact_check_c4 done already, skipped
+10-18 18:17:31 relayout sweep_fact_check_c8 done already, skipped
+10-18 18:17:31 relayout sweep_fact_check_c12 done already, skipped
+10-18 18:17:31 relayout sweep_fact_check_c16 done already, skipped
+10-18 18:17:31 relayout sweep_fact_check_c24 done already, skipped
+10-18 18:17:31 relayout sweep_coding_agent_c16 done already, skipped
+10-18 18:17:31 relayout sweep_coding_agent_c32 done already, skipped
+10-18 18:17:31 relayout sweep_coding_agent_c48 done already, skipped
+10-18 18:17:31 relayout sweep_coding_agent_c64 done already, skipped
+10-18 18:17:31 relayout sweep_coding_agent_c80 done already, skipped
+10-18 18:17:31 relayout sweep_BFCL_agent_c8 done already, skipped
+10-18 18:17:31 relayout sweep_BFCL_agent_c12 done already, skipped
+10-18 18:17:31 relayout sweep_BFCL_agent_c16 done already, skipped
+10-18 18:17:31 relayout sweep_BFCL_agent_c20 done already, skipped
+10-18 18:17:31 relayout sweep_BFCL_agent_c24 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c4 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c6 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c8 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c12 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c16 done already, skipped
+10-18 18:17:31 relayout sweep_doc_analysis_c20 done already, skipped
+10-18 18:17:31 relayout mix_L2 done already, skipped
+10-18 18:17:31 relayout mix_L3 done already, skipped
+10-18 18:17:31 relayout mix_L4 done already, skipped
+10-18 18:17:31 relayout mix_L5 done already, skipped
+10-18 18:17:31 relayout mix_L6 done already, skipped
+10-18 18:17:31 relayout mix_L8 done already, skipped
+10-18 18:17:31 relayout server start #3 log=benchmark/results/relayout/server.2.log
+relayout server ready: pid=1115559 log=benchmark/results/relayout/server.2.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-18 18:18:37 relayout server ready in 66s
+10-18 18:18:37 relayout sweep_coding_agent_c8 start (1/2) coding_agent=8x3 warmup=1 wrap=True
+[plan] relayout/sweep_coding_agent_c8 coding_agent: 8 lanes x 3 sessions, 157 inputs (7 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/coding_agent-edb9b2de49e91212.json
+[register] coding_agent: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/coding_agent.jac', 'sites': 4}
+[coding_agent] warmup 0 rc=0 wall=110.221s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 3 rc=0 wall=131.237s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 2 rc=0 wall=158.077s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 0 rc=0 wall=158.271s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 7 rc=0 wall=159.028s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 5 rc=0 wall=165.531s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 1 rc=0 wall=181.351s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 6 rc=0 wall=201.281s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 4 rc=0 wall=320.63s rounds=14 verdict=FAILED/PASSED
+[coding_agent] measured 12 rc=0 wall=217.498s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 14 rc=0 wall=206.016s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 10 rc=0 wall=237.707s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 8 rc=0 wall=280.008s rounds=12 verdict=FAILED/PASSED
+[coding_agent] measured 9 rc=0 wall=254.096s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 13 rc=0 wall=301.21s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 15 rc=0 wall=301.106s rounds=10 verdict=PASSED/PASSED
+[coding_agent] measured 17 rc=0 wall=212.229s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 20 rc=0 wall=163.915s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 22 rc=0 wall=152.964s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 21 rc=0 wall=166.718s rounds=9 verdict=PASSED/PASSED
+[coding_agent] measured 19 rc=0 wall=219.733s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 18 rc=0 wall=252.941s rounds=10 verdict=FAILED/PASSED
+[coding_agent] measured 25 rc=0 wall=139.49s rounds=8 verdict=PASSED/PASSED
+[coding_agent] measured 23 rc=0 wall=213.688s rounds=11 verdict=FAILED/PASSED
+[coding_agent] measured 24 rc=0 wall=217.886s rounds=12 verdict=FAILED/PASSED
+[level] requests.jsonl slice: 1996 events
+[level] server.log slice: 350840 bytes from offset 17884
+
+[relayout/sweep_coding_agent_c8] full-load window 559.9 s, 1.82 sessions/min, 57.93 prompt ktok/min, 25.45 recompute ktok/min; done_600s=19, done_900s=24, done_1200s=24, done_full_load=17
+[relayout/sweep_coding_agent_c8/coding_agent] sessions=24 failed=0 timed_out=0 elapsed_s=720.3 sessions_per_min=2.0 jct_p50_s=212.2 jct_p95_s=301.2 jct_mean_s=208.9 rounds_mean=9.54 accuracy=15/24 done_full_load=17 done_600s=19 done_900s=24 done_1200s=24 calls=482 calls_per_min=40.15 prompt_tokens_per_call=1443 prompt_ktokens_per_min=57.93 recompute_ktokens_per_min=25.45 output_ktokens_per_min=6.02 output_tokens_per_call=150 decode_ms_mean=8370 ttft_p50_ms=450 ttft_p95_ms=2295 ttft_mean_ms=761 device_pct=56.1 host_pct=0.0 miss_pct=43.9 predicted_hit=None
+10-18 18:32:28 relayout sweep_coding_agent_c8 done in 831s: sessions=24 failed=0 full_load=559.9s sessions/min=1.82 prompt_ktok/min=57.93 recompute_ktok/min=25.45 host%=[0.0] miss%=[43.9]
+10-18 18:32:28 relayout sweep_BFCL_agent_c4 start (2/2) BFCL_agent=4x3 warmup=1 wrap=True
+[plan] relayout/sweep_BFCL_agent_c4 BFCL_agent: 4 lanes x 3 sessions, 100 inputs (2 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/BFCL_agent-5a0053424cfc954b.json
+[register] BFCL_agent: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/BFCL_agent.jac', 'sites': 1}
+[BFCL_agent] warmup 0 rc=0 wall=33.556s rounds=4 verdict=FAILED/PASSED
+[BFCL_agent] measured 0 rc=0 wall=57.292s rounds=4 verdict=FAILED/PASSED
+[BFCL_agent] measured 3 rc=0 wall=79.067s rounds=6 verdict=FAILED/PASSED
+[BFCL_agent] measured 1 rc=0 wall=92.935s rounds=8 verdict=FAILED/PASSED
+[BFCL_agent] measured 2 rc=0 wall=98.542s rounds=8 verdict=FAILED/PASSED
+[BFCL_agent] measured 5 rc=0 wall=60.593s rounds=5 verdict=FAILED/PASSED
+[BFCL_agent] measured 7 rc=0 wall=49.93s rounds=4 verdict=FAILED/PASSED
+[BFCL_agent] measured 4 rc=0 wall=94.534s rounds=8 verdict=FAILED/PASSED
+[BFCL_agent] measured 6 rc=0 wall=76.613s rounds=7 verdict=FAILED/PASSED
+[BFCL_agent] measured 8 rc=0 wall=51.231s rounds=5 verdict=FAILED/PASSED
+[BFCL_agent] measured 11 rc=0 wall=49.527s rounds=5 verdict=FAILED/PASSED
+[BFCL_agent] measured 9 rc=0 wall=80.865s rounds=8 verdict=FAILED/PASSED
+[BFCL_agent] measured 10 rc=0 wall=79.213s rounds=7 verdict=FAILED/PASSED
+[level] requests.jsonl slice: 316 events
+[level] server.log slice: 56483 bytes from offset 369424
+
+[relayout/sweep_BFCL_agent_c4] full-load window 190.9 s, 2.83 sessions/min, 98.04 prompt ktok/min, 38.42 recompute ktok/min; done_600s=12, done_900s=12, done_1200s=12, done_full_load=9
+[relayout/sweep_BFCL_agent_c4/BFCL_agent] sessions=12 failed=0 timed_out=0 elapsed_s=231.0 sessions_per_min=3.12 jct_p50_s=79.1 jct_p95_s=98.5 jct_mean_s=72.5 rounds_mean=6.25 accuracy=0/12 done_full_load=9 done_600s=12 done_900s=12 done_1200s=12 calls=75 calls_per_min=19.48 prompt_tokens_per_call=5033 prompt_ktokens_per_min=98.04 recompute_ktokens_per_min=38.42 output_ktokens_per_min=1.57 output_tokens_per_call=81 decode_ms_mean=4643 ttft_p50_ms=3725 ttft_p95_ms=9740 ttft_mean_ms=4296 device_pct=60.8 host_pct=0.0 miss_pct=39.2 predicted_hit=None
+10-18 18:36:53 relayout sweep_BFCL_agent_c4 done in 265s: sessions=12 failed=0 full_load=190.9s sessions/min=2.83 prompt_ktok/min=98.04 recompute_ktok/min=38.42 host%=[0.0] miss%=[39.2]
+10-18 18:36:58 relayout ARM-DONE
+arm=relayout rc=0 end=2026-10-18 18:36:58

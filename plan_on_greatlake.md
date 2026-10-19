@@ -1,10 +1,10 @@
 # expriment plan on Great Lakes
-Device: A40 48GB VRAM, partition spgpu, account lingjia0 (Great Lakes has no H100; the 72B-AWQ engine needs ~55 GB)
-Model: Qwen3-32B-AWQ, 19.5 GB (64 layers, 8 KV heads, 262 KB/token)
-Device Pool= 31830 tokens, 8.3 GB    (--kv 31830)
-Host Pool= 76k tokens, 20 GB          (--host 20)
+Device: A40 48GB VRAM (45 GiB reported), partition spgpu, account lingjia0
+Model: Qwen3-32B-AWQ, 18.3 GiB of weights on device (64 layers, 8 KV heads, 256 KiB/token)
+Device Pool= 61440 tokens, 15 GiB    (--kv 61440; sglang's profile leaves 19.25 GiB after the weights, the rest stays idle)
+Host Pool= ~95k tokens, 25 GB        (--host 25)
 CLIP=4096 (sglang default)
-mem_fraction_static, attention backend: sglang defaults
+mem_fraction_static (0.851 on the A40), attention backend: sglang defaults
 context_length: 32768
 
 ## SLURM per job

@@ -79,8 +79,7 @@ for p in fact_check coding_agent BFCL_agent doc_analysis; do
 done
 echo "== 6. model profile on an A40 (prefill tps idle / under load, host->device promote tps) -> model/*.profile.json"
 # The login node has no GPU: this step takes one A40 through a blocking srun (waits in the queue like a job).
-# The same engine configuration as the arms (HOST=20 GB, KV=31830, CLIP=4096). The first start also
-# JIT-compiles sglang's kernels, so the arm jobs never do. REPROFILE=1 re-measures an existing profile.
+# The first start also JIT-compiles sglang's kernels, so the arm jobs never do. REPROFILE=1 re-measures an existing profile.
 PROFILE="model/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
 if [[ -s "$PROFILE" && "${REPROFILE:-0}" != 1 ]]; then
   echo "$PROFILE exists (REPROFILE=1 to re-measure):"; cat "$PROFILE"

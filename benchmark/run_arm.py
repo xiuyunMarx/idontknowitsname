@@ -1,31 +1,14 @@
-"""Every experiment of one arm on one server (plan_on_greatlake.md), resumable.
+"""Run every level of one arm (one system configuration: ours, vanilla, relayout, ...)
+on one server, in order, resumably. This is what a Great Lakes job executes.
 
-    python -m benchmark.run_arm <arm> [--part all|sweeps|mixed] [--only sweep_coding_agent_c20,mix_L8]
+    python -m benchmark.run_arm <arm> [--part all|sweeps|mixed] [--only <level>,...]
                                       [--results benchmark/results] [--timeout 7200] [--smoke] [--dry-run]
 
-One SLURM job runs this once per arm: the arm's server is started once (start_server.bash,
-one model load), then
-
-  1. the four per-agent concurrency sweeps, workloads back to back, no flush (the cache and
-     the learned statistics carry over, as in the September/October runs);
-  2. one KV flush (POST /v1/cache/flush: device and host tiers, the planner's ledger), then
-     the five mixed-workload lane levels, a KV flush between consecutive levels. Learned
-     statistics are not reset by a flush.
-
-ours_noprefetch runs the mixed part only (its default --part).
-
-Output: <results>/<arm>/<level>/ per level (see benchmark.workload: logs/, sessions.jsonl,
-session_events.jsonl, server.log slice, requests.jsonl slice, summary.json); the server's own
-files at <results>/<arm>/server.<n>.log (n = start count), server.pid, requests.jsonl (all
-levels); progress.log one line per event; provenance in git_head.txt / working_tree.patch /
-plan.json. A level whose summary.json exists is skipped, so re-running the same command
-after a job died or hit its wall time continues where it stopped (an unfinished level is
-wiped and redone). Before every level the server is health-checked and restarted if it
-died (logged as SERVER-RESTART: the cache state resets there).
-
-SIGTERM / SIGINT / SIGUSR1 (SLURM's time-limit warning, forwarded by the batch script)
-kill the running sessions and the server and exit 130; the level in progress is redone
-on resume.
+Starts the arm's server once, then runs the four per-agent concurrency sweeps
+(no flush between levels), one KV flush, then the mixed lane levels L2..L8 with a
+flush between levels. Each level is one benchmark.workload run and writes
+<results>/<arm>/<level>/summary.json. Levels that already have a summary.json are
+skipped, so re-submitting the same command continues after a crash or wall-time kill.
 """
 import argparse
 import fnmatch
@@ -223,7 +206,7 @@ def provenance(out: str, levels: List[Level], args: argparse.Namespace) -> None:
     with open(os.path.join(out, "git_head.txt"), "a") as f:
         f.write(f"{time.strftime('%F %T')} {git('rev-parse', 'HEAD').strip()} {' '.join(sys.argv[1:])}\n")
     tracked = ["server", "model", "static_analysis", "start_server.bash", "benchmark/workload.py",
-               "benchmark/run_arm.py", "benchmark/applications"]
+               "benchmark/grade.py", "benchmark/run_arm.py", "benchmark/applications"]
     patch = git("diff", "HEAD", "--", *tracked)
     if patch and not os.path.exists(os.path.join(out, "working_tree.patch")):
         with open(os.path.join(out, "working_tree.patch"), "w") as f:

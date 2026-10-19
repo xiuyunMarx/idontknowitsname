@@ -5,7 +5,7 @@ two scheduler RPCs the planner steers HiCache with (promote, kv_priority).
     text = await engine.generate(prompt, request_id)
     await engine.promote(token_ids, request_id)   # host-tier prefix back onto the device
 """
-
+import os
 import asyncio
 import functools
 import random
@@ -141,6 +141,9 @@ class Engine:
     def __init__(self, model_name: str, **engine_kwargs) -> None:
         engine_kwargs.setdefault("enable_priority_scheduling", True)
         host_gb = int(engine_kwargs.pop("host_cache_gb", HOST_KV_GB))
+        if mem_fraction := engine_kwargs.pop("mem_fraction_static", None):
+            engine_kwargs.setdefault("mem_fraction_static", mem_fraction)
+        
         device_kv_tokens = engine_kwargs.pop("device_kv_tokens", None)
         kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
         if host_gb > 0:
