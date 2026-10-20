@@ -102,7 +102,7 @@ Everything stays in the repo under `benchmark/results/<arm>/` (git-ignored by th
 Levels are `sweep_<program>_c<c>` and `mix_L<lanes>`. Pull them back and build the tables:
 
 ```
-./greatlakes/pull_results.sh <uniqname>
+./greatlakes/pull_results.sh            # uses the `gl` ssh alias; one Duo prompt per 72h
 python -m benchmark.summarize          # benchmark/results/sweep_<program>.csv, mixed*.csv
 ```
 

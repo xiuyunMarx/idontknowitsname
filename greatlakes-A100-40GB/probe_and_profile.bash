@@ -7,14 +7,13 @@
 #         Pass = the server comes up and sglang keeps the full pool (it clamps a pool that
 #         does not fit and logs the smaller number).
 # Step 2: only if step 1 passed, measure the device profile (model/device_profiler.py:
-#         prefill tps idle and under load, host->device promote tps) and save it here.
-#         The A40 profile in model/ is moved aside while the server runs and put back after.
+#         prefill tps idle and under load, host->device promote tps). The server writes it
+#         to model/<device name>/<model>.profile.json.
 #
 # Files written to this directory:
 #   probe.out            everything this script prints
 #   probe_server.log     server log of step 1
 #   profile.out          server output of step 2
-#   <model>.profile.json the A100 profile
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,12 +25,14 @@ GL_GRES=gpu:nvidia_a100_80gb_pcie_3g.40gb:1
 GL_CPUS=8
 export KV=61440     # device pool in tokens: 15 GiB at 256 KiB/token
 export HOST=25      # host tier in GB
+PROFILE_KV=31830    # pool for step 2 only. The profiler pushes the 16k target to host with 1.3x the
+                    # pool of junk; at 61440 that overflows the 25 GB host tier and promote_tps is wrong.
+                    # The rates it measures do not depend on the pool size.
+export MEM_FRACTION=${MEM_FRACTION:-0.89}   # share of GPU memory for weights + KV; sglang's default (~0.83) clamps KV to ~13 GiB here
 export MODEL=${MODEL:-Qwen/Qwen3-32B-AWQ}
 
 OUT=greatlakes-A100-40GB
 PROFILE_NAME="$(echo "$MODEL" | sed 's#/#--#').profile.json"
-A40_PROFILE=model/$PROFILE_NAME
-A40_BACKUP=$OUT/$PROFILE_NAME.a40
 
 # ---- on the login node: take one slice and run this script on it
 if [[ -z "${SLURM_JOB_ID:-}" ]]; then
@@ -49,58 +50,55 @@ gl_stage_model
 echo "node=$(hostname) job=$SLURM_JOB_ID gpu=$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader)"
 echo "model=$MODEL kv=$KV tokens host=${HOST}GB"
 
+# The server names the profile directory after torch.cuda.get_device_name, which on a MIG slice
+# includes the slice ("NVIDIA A100 80GB PCIe MIG 3g.40gb") while nvidia-smi names the parent card.
+# Ask torch, with the same substitutions as Engine.get_device_name.
+DEVICE_DIR=$("$PYTHON" -c 'import torch; print(torch.cuda.get_device_name(0))' | sed 's/[ .-]/_/g')
+PROFILE=model/$DEVICE_DIR/$PROFILE_NAME
+echo "profile dir: model/$DEVICE_DIR"
+
 # ================================================================ step 1: probe
 echo
 echo "== step 1: start the ours server with KV=$KV HOST=${HOST}GB  $(date '+%T')"
 export LOG=$OUT/probe_server.log
 export PIDFILE=$OUT/server.pid
 
-if ! ./start_server.bash ours; then
+# --engine-log info makes sglang print its memory accounting (avail mem, max_total_num_tokens).
+if ! ./start_server.bash ours --engine-log info; then
   echo "PROBE FAILED: the server did not come up, see $LOG"
   exit 1
 fi
 
-pool=$(grep -oE 'max_total_num_tokens=[0-9]+' "$LOG" | tail -1 | cut -d= -f2)
-host_line=$(grep -oE 'Allocating [0-9.]+ GB host memory' "$LOG" | tail -1)
+# The pool the engine ended up with: our ledger line (always printed) and sglang's own line.
+# Every grep may legitimately miss, so none of them is allowed to end the script.
+pool=$(grep -oE '\[ledger\] device=[0-9]+' "$LOG" | tail -1 | grep -oE '[0-9]+' || true)
+sglang_pool=$(grep -oE 'max_total_num_tokens=[0-9]+' "$LOG" | tail -1 | cut -d= -f2 || true)
+host_line=$(grep -oE 'Allocating [0-9.]+ GB host memory' "$LOG" | tail -1 || true)
 echo "memory lines from the server log:"
-grep -E 'avail mem=|mem usage=|host memory|max_total_num_tokens' "$LOG" | tail -6
+grep -E 'avail mem=|mem usage=|host memory|max_total_num_tokens|\[ledger\]' "$LOG" | tail -8 || true
 ./start_server.bash stop
 
 if [[ "${pool:-0}" -ne "$KV" ]]; then
-  echo "PROBE FAILED: asked for $KV tokens, sglang kept ${pool:-none}."
-  echo "15 GiB does not fit under sglang's default mem_fraction_static on this slice."
+  echo "PROBE FAILED: asked for $KV tokens, the engine has ${pool:-none} (sglang: ${sglang_pool:-?})."
   exit 1
 fi
-echo "PROBE OK: device pool $pool tokens, $host_line"
+echo "PROBE OK: device pool $pool tokens, ${host_line:-host tier size not logged}"
 
 # ================================================================ step 2: profile
 echo
 echo "== step 2: device profile  $(date '+%T')"
 
-# The server writes model/<model>.profile.json. Keep the A40 one out of the way and restore
-# it whatever happens, including a SLURM kill.
-restore_a40_profile() {
-  if [[ -f "$A40_BACKUP" ]]; then
-    mv -f "$A40_BACKUP" "$A40_PROFILE"
-  fi
-}
-trap restore_a40_profile EXIT
-if [[ -f "$A40_PROFILE" ]]; then
-  mv "$A40_PROFILE" "$A40_BACKUP"
-fi
+# save_profile opens the path directly, so the directory has to exist first.
+mkdir -p "$(dirname "$PROFILE")"
 
 set +e
-./start_server.bash profile 2>&1 | tee "$OUT/profile.out"
+KV=$PROFILE_KV REPROFILE=1 ./start_server.bash profile 2>&1 | tee "$OUT/profile.out"
 status=${PIPESTATUS[0]}
 set -e
 
-if [[ -f "$A40_PROFILE" ]]; then
-  mv "$A40_PROFILE" "$OUT/$PROFILE_NAME"
-fi
-
-if [[ $status -ne 0 || ! -s "$OUT/$PROFILE_NAME" ]]; then
-  echo "PROFILE FAILED: rc=$status, see $OUT/profile.out"
+if [[ $status -ne 0 || ! -s "$PROFILE" ]]; then
+  echo "PROFILE FAILED: rc=$status, expected $PROFILE, see $OUT/profile.out"
   exit 1
 fi
-echo "PROFILE OK: $OUT/$PROFILE_NAME"
-cat "$OUT/$PROFILE_NAME"
+echo "PROFILE OK: $PROFILE"
+cat "$PROFILE"

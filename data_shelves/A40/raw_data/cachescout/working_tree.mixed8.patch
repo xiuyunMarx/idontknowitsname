@@ -1,0 +1,86 @@
+diff --git a/model/Qwen--Qwen3-32B-AWQ.profile.json b/model/NVIDIA_A40/Qwen--Qwen3-32B-AWQ.profile.json
+similarity index 100%
+rename from model/Qwen--Qwen3-32B-AWQ.profile.json
+rename to model/NVIDIA_A40/Qwen--Qwen3-32B-AWQ.profile.json
+diff --git a/model/model.py b/model/model.py
+index 3e157db..e114b7d 100644
+--- a/model/model.py
++++ b/model/model.py
+@@ -21,7 +21,7 @@ from sglang.srt.entrypoints.engine import Engine as SGLangEngine #type: ignore
+ from model.device_profiler import DeviceProfile
+ from model.request_trace import RequestTrace
+ import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
+-
++import torch
+ # Host-DRAM KV tier (HiCache L2)
+ # HiCache asserts the host pool is larger than the device pool, so this has to stay
+ # above whatever `mem_fraction_static` leaves for KV on the card.
+@@ -141,8 +141,8 @@ class Engine:
+     def __init__(self, model_name: str, **engine_kwargs) -> None:
+         engine_kwargs.setdefault("enable_priority_scheduling", True)
+         host_gb = int(engine_kwargs.pop("host_cache_gb", HOST_KV_GB))
+-        if mem_fraction := engine_kwargs.pop("mem_fraction_static", None):
+-            engine_kwargs.setdefault("mem_fraction_static", mem_fraction)
++        if mem_fraction := os.environ.get("MEM_FRACTION"):
++            engine_kwargs.setdefault("mem_fraction_static", float(mem_fraction))
+         
+         device_kv_tokens = engine_kwargs.pop("device_kv_tokens", None)
+         kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
+@@ -234,7 +234,12 @@ class Engine:
+         promotion covers."""
+         return self.ledger.cost(toks)
+ 
++    def profile_path(self) -> str:
++        """model/<device>/<model>.profile.json: the rates are specific to the GPU they were measured on."""
++        return f"model/{self.get_device_name()}/{self.name.replace('/', '--')}.profile.json"
++
+     def save_profile(self, path: str) -> None:
++        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+         with open(path, "w") as f:
+             json.dump({"model": self.name,
+                        "device": self.device_profile.as_dict() if self.device_profile else None},
+@@ -423,3 +428,8 @@ class Engine:
+         """`num_tokens` ids no earlier request has seen: an uncached prompt of exact length."""
+         vocab = len(self._tokenizer)  #type: ignore
+         return [random.randrange(1000, vocab - 1000) for _ in range(num_tokens)]
++
++    def get_device_name(self) -> str:
++        assert torch.cuda.is_available()
++        name = torch.cuda.get_device_name(0)
++        return name.replace(" ", "_").replace("-", "_").replace(".", "_")
+\ No newline at end of file
+diff --git a/server/continuum_server.py b/server/continuum_server.py
+index 0862fe2..b4c816c 100644
+--- a/server/continuum_server.py
++++ b/server/continuum_server.py
+@@ -298,7 +298,7 @@ class ContinuumController:
+ 
+     async def start_serving(self) -> None:
+         await self.engine.warmup()
+-        profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
++        profile = self.engine.profile_path()
+         if not self.engine.load_profile(profile):
+             await profile_device(self.engine)
+             self.engine.save_profile(profile)
+diff --git a/server/server.py b/server/server.py
+index 9f12d06..4e8d4ad 100644
+--- a/server/server.py
++++ b/server/server.py
+@@ -111,7 +111,7 @@ class Controller:
+ 
+     async def start_serving(self) -> None:
+         await self.engine.warmup()
+-        profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
++        profile = self.engine.profile_path()
+         if self.reprofile or not self.engine.load_profile(profile):
+             await profile_device(self.engine)
+             self.engine.save_profile(profile)
+@@ -919,7 +919,7 @@ if __name__ == "__main__":
+                     help="--sched risk: an uncached request overtakes a fully cached one after waiting S s longer")
+     ap.add_argument("--profile-only", action="store_true",
+                     help="measure the device profile (prefill idle/loaded tps, host->device promote tps), "
+-                         "save model/<model>.profile.json and exit")
++                         "save model/<device>/<model>.profile.json and exit")
+     ap.add_argument("--reprofile", action="store_true", help="measure even when the profile JSON exists")
+     a = ap.parse_args()
+     if a.no_header_last:

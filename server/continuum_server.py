@@ -298,7 +298,7 @@ class ContinuumController:
 
     async def start_serving(self) -> None:
         await self.engine.warmup()
-        profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
+        profile = self.engine.profile_path()
         if not self.engine.load_profile(profile):
             await profile_device(self.engine)
             self.engine.save_profile(profile)

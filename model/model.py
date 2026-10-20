@@ -21,7 +21,7 @@ from sglang.srt.entrypoints.engine import Engine as SGLangEngine #type: ignore
 from model.device_profiler import DeviceProfile
 from model.request_trace import RequestTrace
 import model.promote  # noqa: F401  patches Scheduler.hicache_promote (see module doc)
-
+import torch
 # Host-DRAM KV tier (HiCache L2)
 # HiCache asserts the host pool is larger than the device pool, so this has to stay
 # above whatever `mem_fraction_static` leaves for KV on the card.
@@ -141,9 +141,12 @@ class Engine:
     def __init__(self, model_name: str, **engine_kwargs) -> None:
         engine_kwargs.setdefault("enable_priority_scheduling", True)
         host_gb = int(engine_kwargs.pop("host_cache_gb", HOST_KV_GB))
-        if mem_fraction := engine_kwargs.pop("mem_fraction_static", None):
-            engine_kwargs.setdefault("mem_fraction_static", mem_fraction)
-        
+        if mem_fraction := os.environ.get("MEM_FRACTION"):
+            engine_kwargs.setdefault("mem_fraction_static", float(mem_fraction))
+        if chunked_prefill_size := os.environ.get("CHUNKED_PREFILL_SIZE"):
+            engine_kwargs.setdefault("chunked_prefill_size", int(chunked_prefill_size))
+        if cuda_graph_max_bs := os.environ.get("CUDA_GRAPH_MAX_BS"):
+            engine_kwargs.setdefault("cuda_graph_max_bs", int(cuda_graph_max_bs))
         device_kv_tokens = engine_kwargs.pop("device_kv_tokens", None)
         kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
         if host_gb > 0:
@@ -234,7 +237,13 @@ class Engine:
         promotion covers."""
         return self.ledger.cost(toks)
 
+    def profile_path(self) -> str:
+        """model/<device>/<model>.profile.json: the rates are specific to the GPU they were measured on."""
+        chip_name = torch.cuda.get_device_name(0).replace(" ", "_").replace("-", "_").replace(".", "_")
+        return f"model/{chip_name}/{self.name.replace('/', '--')}.profile.json"
+
     def save_profile(self, path: str) -> None:
+        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w") as f:
             json.dump({"model": self.name,
                        "device": self.device_profile.as_dict() if self.device_profile else None},

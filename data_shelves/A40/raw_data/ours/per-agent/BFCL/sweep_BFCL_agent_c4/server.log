@@ -1,0 +1,1121 @@
+[relayout] Agent.step:175 'Agent.step(observation: str, tools: str, question: str, history: list[Step]) -> Action --- Answer `question` by searching and reading pages. `observation` is th'...
+[call] 1486854 #0 Agent.step:175 ctx=(1,)
+[timing] 1486854 unplanned site=Agent.step:175
+[priority] plan-prio-71affafc demote=0/0n retire=0/0n protect=1 nodes=3 ms=0.7 usage=0.0000
+[promote] plan-hold-33622eec tokens=48 device=48 host=0 started=0 free=3012 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-33622eec tokens=48 duration_ms=5.27
+[2026-10-18 18:12:06] Prefill batch, #new-seq: 1, #new-token: 502, #cached-token: 50, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 362.86
+[serve] 1486854-1t0-9c07ddef prompt_tokens=552 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=379.69 inflight_prefill=0 inflight_decode=1
+[2026-10-18 18:12:07] Decode batch, #running-req: 1, #token: 578, token usage: 0.01, cuda graph: True, gen throughput (token/s): 4.56, #queue-req: 0
+[2026-10-18 18:12:09] Decode batch, #running-req: 1, #token: 618, token usage: 0.01, cuda graph: True, gen throughput (token/s): 30.33, #queue-req: 0
+[decode] 1486854-1t0-9c07ddef decode_ms=2409.45 output_tokens=74
+[ctl] 1486854-1t0-9c07ddef queue_ms=0.1 advance_ms=3.8 pre_ms=1.3 post_ms=0.1
+[2026-10-18 18:12:09] 127.0.0.1 [18/Oct/2026:18:12:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 802 "-" "python-httpx/0.28.1"
+[priority] plan-prio-de76825f demote=1/2n retire=0/0n protect=1 nodes=4 ms=0.8 usage=0.0000
+[promote] plan-hold-7b9b781a tokens=448 device=448 host=0 started=0 free=2436 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-7b9b781a tokens=448 duration_ms=0.51
+[call] 1486854 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1486854 Agent.act kills ['observation', 'steps']
+[timing] 1486854 err_s=+2.03 done=448/455 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-ddf999eb demote=1/2n retire=0/0n protect=1 nodes=5 ms=0.9 usage=0.0000
+[promote] plan-hold-5a1f1f8a tokens=448 device=448 host=0 started=0 free=2611 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-5a1f1f8a tokens=448 duration_ms=1005.05
+[2026-10-18 18:12:13] Prefill batch, #new-seq: 1, #new-token: 3292, #cached-token: 455, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 71.52
+[serve] 1486854-2t0-c27b493d prompt_tokens=3747 cached_tokens=455 cached_device=455 cached_host=0 ttft_ms=2568.67 inflight_prefill=0 inflight_decode=1
+[2026-10-18 18:12:15] Decode batch, #running-req: 1, #token: 3779, token usage: 0.06, cuda graph: True, gen throughput (token/s): 6.72, #queue-req: 0
+[2026-10-18 18:12:16] Decode batch, #running-req: 1, #token: 3819, token usage: 0.06, cuda graph: True, gen throughput (token/s): 29.00, #queue-req: 0
+[decode] 1486854-2t0-c27b493d decode_ms=3150.91 output_tokens=92
+[ctl] 1486854-2t0-c27b493d queue_ms=0.0 advance_ms=9.1 pre_ms=6.7 post_ms=0.3
+[2026-10-18 18:12:17] 127.0.0.1 [18/Oct/2026:18:12:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 869 "-" "python-httpx/0.28.1"
+[priority] plan-prio-57035b84 demote=1/2n retire=0/0n protect=1 nodes=6 ms=1.2 usage=0.0000
+[promote] plan-hold-e917e9ca tokens=2080 device=2080 host=0 started=0 free=2519 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-e917e9ca tokens=2080 duration_ms=0.98
+[call] 1486854 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1486854 Agent.act kills ['observation', 'steps']
+[timing] 1486854 err_s=-0.00 done=2080/2085 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-435dee3f demote=2/4n retire=0/0n protect=1 nodes=7 ms=1.5 usage=0.0937
+[2026-10-18 18:12:22] Prefill batch, #new-seq: 1, #new-token: 3672, #cached-token: 2085, token usage: 0.09, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 398.29
+[promote] plan-hold-93939d9b tokens=2080 device=2080 host=0 started=0 free=2799 reserve=4096 ms=0.3
+[serve] 1486854-3t0-186e4c90 prompt_tokens=5757 cached_tokens=2085 cached_device=2085 cached_host=0 ttft_ms=3063.04 inflight_prefill=0 inflight_decode=1
+[promote-rpc] plan-hold-93939d9b tokens=2080 duration_ms=1547.77
+[2026-10-18 18:12:22] Decode batch, #running-req: 1, #token: 5777, token usage: 0.09, cuda graph: True, gen throughput (token/s): 6.16, #queue-req: 0
+[2026-10-18 18:12:24] Decode batch, #running-req: 1, #token: 5817, token usage: 0.09, cuda graph: True, gen throughput (token/s): 28.26, #queue-req: 0
+[decode] 1486854-3t0-186e4c90 decode_ms=3306.20 output_tokens=94
+[ctl] 1486854-3t0-186e4c90 queue_ms=0.1 advance_ms=15.5 pre_ms=10.6 post_ms=0.4
+[2026-10-18 18:12:25] 127.0.0.1 [18/Oct/2026:18:12:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 870 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a903a0e1 demote=1/2n retire=0/0n protect=1 nodes=8 ms=1.9 usage=0.0000
+[promote] plan-hold-c9435a3e tokens=3912 device=3912 host=0 started=0 free=2706 reserve=4096 ms=0.5
+[promote-rpc] plan-hold-c9435a3e tokens=3912 duration_ms=1.45
+[call] 1486854 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1486854 Agent.act kills ['observation', 'steps']
+[timing] 1486854 err_s=+0.00 done=3912/3915 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-2c921a8b demote=3/6n retire=0/0n protect=1 nodes=9 ms=2.2 usage=0.1033
+[2026-10-18 18:12:29] Prefill batch, #new-seq: 1, #new-token: 2432, #cached-token: 3915, token usage: 0.10, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 495.12
+[serve] 1486854-4t0-cea79df9 prompt_tokens=6347 cached_tokens=3915 cached_device=3915 cached_host=0 ttft_ms=2046.79 inflight_prefill=0 inflight_decode=1
+[promote] plan-hold-11c6b2c0 tokens=3912 device=3912 host=0 started=0 free=273 reserve=4096 ms=0.5
+[promote-rpc] plan-hold-11c6b2c0 tokens=3912 duration_ms=1379.05
+[2026-10-18 18:12:29] Decode batch, #running-req: 1, #token: 6353, token usage: 0.10, cuda graph: True, gen throughput (token/s): 7.27, #queue-req: 0
+[2026-10-18 18:12:31] Decode batch, #running-req: 1, #token: 6393, token usage: 0.10, cuda graph: True, gen throughput (token/s): 28.08, #queue-req: 0
+[2026-10-18 18:12:32] Decode batch, #running-req: 1, #token: 6433, token usage: 0.10, cuda graph: True, gen throughput (token/s): 28.07, #queue-req: 0
+[decode] 1486854-4t0-cea79df9 decode_ms=4391.91 output_tokens=124
+[ctl] 1486854-4t0-cea79df9 queue_ms=0.1 advance_ms=20.3 pre_ms=17.6 post_ms=0.5
+[2026-10-18 18:12:34] 127.0.0.1 [18/Oct/2026:18:12:27 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1025 "-" "python-httpx/0.28.1"
+[close] 1486854 calls=4
+[2026-10-18 18:12:34] 127.0.0.1 [18/Oct/2026:18:12:34 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a7d4045a demote=1/2n retire=0/0n protect=1 nodes=10 ms=2.0 usage=0.0000
+[priority] plan-prio-c15a811f demote=0/0n retire=4/9n protect=0 nodes=0 ms=3.0 usage=0.0000
+[call] 1487086 #0 Agent.step:175 ctx=(1,)
+[timing] 1487086 unplanned site=Agent.step:175
+[call] 1487085 #0 Agent.step:175 ctx=(1,)
+[timing] 1487085 unplanned site=Agent.step:175
+[call] 1487087 #0 Agent.step:175 ctx=(1,)
+[timing] 1487087 unplanned site=Agent.step:175
+[priority] plan-prio-52ec9dcb demote=0/0n retire=0/0n protect=2 nodes=4 ms=0.7 usage=0.0090
+[call] 1487084 #0 Agent.step:175 ctx=(1,)
+[timing] 1487084 unplanned site=Agent.step:175
+[2026-10-18 18:12:40] Prefill batch, #new-seq: 1, #new-token: 149, #cached-token: 407, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 231.17
+[serve] 1487086-1t0-e9965298 prompt_tokens=556 cached_tokens=407 cached_device=407 cached_host=0 ttft_ms=177.56 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-6a96b4ee demote=0/0n retire=0/0n protect=3 nodes=6 ms=0.7 usage=0.0142
+[2026-10-18 18:12:40] Prefill batch, #new-seq: 2, #new-token: 319, #cached-token: 814, token usage: 0.02, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 641.92
+[serve] 1487085-1t0-ca74c1f0 prompt_tokens=569 cached_tokens=407 cached_device=407 cached_host=0 ttft_ms=406.92 inflight_prefill=2 inflight_decode=2
+[serve] 1487087-1t0-1fa5368c prompt_tokens=564 cached_tokens=407 cached_device=407 cached_host=0 ttft_ms=364.12 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-005023e5 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.7 usage=0.0166
+[2026-10-18 18:12:40] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 551, token usage: 0.02, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 90005.98
+[ledger] drift +over=1 +under=0 (total {'over': 7, 'under': 418}) device_used=61432
+[serve] 1487084-1t0-d8509b5a prompt_tokens=552 cached_tokens=551 cached_device=551 cached_host=0 ttft_ms=253.60 inflight_prefill=0 inflight_decode=4
+[2026-10-18 18:12:40] Decode batch, #running-req: 4, #token: 1026, token usage: 0.02, cuda graph: True, gen throughput (token/s): 5.55, #queue-req: 0
+[promote] plan-hold-75a2e0da tokens=400 device=400 host=0 started=0 free=73 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-75a2e0da tokens=400 duration_ms=24.22
+[promote] plan-hold-77929f19 tokens=400 device=400 host=0 started=0 free=69 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-77929f19 tokens=400 duration_ms=18.24
+[promote] plan-hold-e647190c tokens=400 device=400 host=0 started=0 free=65 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-e647190c tokens=400 duration_ms=18.41
+[2026-10-18 18:12:41] Decode batch, #running-req: 4, #token: 1186, token usage: 0.02, cuda graph: True, gen throughput (token/s): 118.58, #queue-req: 0
+[decode] 1487085-1t0-ca74c1f0 decode_ms=1859.53 output_tokens=56
+[ctl] 1487085-1t0-ca74c1f0 queue_ms=2.7 advance_ms=1.7 pre_ms=1.2 post_ms=0.2
+[2026-10-18 18:12:42] 127.0.0.1 [18/Oct/2026:18:12:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 694 "-" "python-httpx/0.28.1"
+[priority] plan-prio-9bb98798 demote=1/2n retire=0/0n protect=4 nodes=11 ms=0.9 usage=0.0167
+[promote] plan-hold-5592d2ed tokens=408 device=408 host=0 started=0 free=79 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-5592d2ed tokens=408 duration_ms=33.08
+[promote] plan-hold-b8a75f16 tokens=408 device=408 host=0 started=0 free=76 reserve=4096 ms=0.1
+[decode] 1487087-1t0-1fa5368c decode_ms=1960.78 output_tokens=59
+[ctl] 1487087-1t0-1fa5368c queue_ms=0.1 advance_ms=2.4 pre_ms=1.4 post_ms=0.2
+[2026-10-18 18:12:42] 127.0.0.1 [18/Oct/2026:18:12:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 710 "-" "python-httpx/0.28.1"
+[promote-rpc] plan-hold-b8a75f16 tokens=408 duration_ms=19.10
+[priority] plan-prio-c228d43a demote=1/2n retire=0/0n protect=4 nodes=11 ms=0.9 usage=0.0134
+[decode] 1487086-1t0-e9965298 decode_ms=2360.59 output_tokens=64
+[ctl] 1487086-1t0-e9965298 queue_ms=0.1 advance_ms=2.7 pre_ms=1.3 post_ms=0.6
+[2026-10-18 18:12:42] 127.0.0.1 [18/Oct/2026:18:12:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 743 "-" "python-httpx/0.28.1"
+[priority] plan-prio-54be517b demote=1/2n retire=0/0n protect=4 nodes=11 ms=0.9 usage=0.0100
+[decode] 1487084-1t0-d8509b5a decode_ms=2454.92 output_tokens=74
+[ctl] 1487084-1t0-d8509b5a queue_ms=0.1 advance_ms=0.3 pre_ms=2.1 post_ms=0.2
+[2026-10-18 18:12:42] 127.0.0.1 [18/Oct/2026:18:12:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 802 "-" "python-httpx/0.28.1"
+[priority] plan-prio-748d0574 demote=1/3n retire=0/0n protect=4 nodes=11 ms=0.9 usage=0.0000
+[promote] plan-hold-22c54245 tokens=472 device=472 host=0 started=0 free=130 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-22c54245 tokens=472 duration_ms=0.47
+[promote] plan-hold-07aed90e tokens=464 device=464 host=0 started=0 free=130 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-07aed90e tokens=464 duration_ms=0.52
+[promote] plan-hold-c38dabb7 tokens=456 device=456 host=0 started=0 free=130 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-c38dabb7 tokens=456 duration_ms=0.47
+[call] 1487085 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.00 done=472/472 kind=hold state=done site=Agent.step:175
+[call] 1487087 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.00 done=464/467 kind=hold state=queued site=Agent.step:175
+[call] 1487086 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.00 done=456/459 kind=hold state=queued site=Agent.step:175
+[call] 1487084 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487084 Agent.act kills ['observation', 'steps']
+[timing] 1487084 err_s=+0.00 done=455/455 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-b2d548ed demote=1/2n retire=0/0n protect=4 nodes=13 ms=0.9 usage=0.0461
+[2026-10-18 18:12:47] Prefill batch, #new-seq: 1, #new-token: 2358, #cached-token: 472, token usage: 0.11, #running-req: 0, #queue-req: 1, cuda graph: False, input throughput (token/s): 0.14
+[serve] 1487085-2t0-11bcac81 prompt_tokens=2830 cached_tokens=472 cached_device=472 cached_host=0 ttft_ms=3119.91 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-12a57614 demote=3/7n retire=0/0n protect=4 nodes=16 ms=1.7 usage=0.1145
+[2026-10-18 18:12:49] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 926, token usage: 0.20, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1023.31
+[serve] 1487087-2t0-482c0810 prompt_tokens=4078 cached_tokens=467 cached_device=467 cached_host=0 ttft_ms=5314.93 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-d0e40741 tokens=472 device=472 host=0 started=0 free=4909 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-d0e40741 tokens=472 duration_ms=2300.51
+[2026-10-18 18:12:50] Prefill batch, #new-seq: 2, #new-token: 1654, #cached-token: 3746, token usage: 0.20, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 4346.55
+[serve] 1487086-2t0-ab6daaa3 prompt_tokens=2597 cached_tokens=459 cached_device=459 cached_host=0 ttft_ms=6097.64 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-70870790 tokens=464 device=464 host=0 started=0 free=4906 reserve=4096 ms=0.1
+[serve] 1487084-2t0-36d939bc prompt_tokens=3747 cached_tokens=3746 cached_device=3746 cached_host=0 ttft_ms=5771.16 inflight_prefill=0 inflight_decode=4
+[promote-rpc] plan-hold-70870790 tokens=464 duration_ms=922.45
+[promote] plan-hold-6a32e1b1 tokens=456 device=456 host=0 started=0 free=4902 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-6a32e1b1 tokens=456 duration_ms=28.96
+[2026-10-18 18:12:50] Decode batch, #running-req: 4, #token: 12061, token usage: 0.20, cuda graph: True, gen throughput (token/s): 12.78, #queue-req: 0
+[priority] plan-prio-b1a17cb0 demote=0/0n retire=0/0n protect=3 nodes=17 ms=1.4 usage=0.1970
+[priority] plan-prio-b73faad6 demote=0/0n retire=0/0n protect=3 nodes=17 ms=1.2 usage=0.1970
+[priority] plan-prio-78a63db9 demote=0/0n retire=0/0n protect=2 nodes=14 ms=0.9 usage=0.1972
+[priority] plan-prio-14a6b47a demote=0/0n retire=0/0n protect=2 nodes=14 ms=0.8 usage=0.1972
+[priority] plan-prio-8c38ba8c demote=0/0n retire=0/0n protect=1 nodes=9 ms=0.7 usage=0.1974
+[priority] plan-prio-d9462bd8 demote=0/0n retire=0/0n protect=1 nodes=9 ms=0.7 usage=0.1975
+[2026-10-18 18:12:52] Decode batch, #running-req: 4, #token: 12221, token usage: 0.20, cuda graph: True, gen throughput (token/s): 103.64, #queue-req: 0
+[decode] 1487086-2t0-ab6daaa3 decode_ms=2246.65 output_tokens=59
+[ctl] 1487086-2t0-ab6daaa3 queue_ms=0.1 advance_ms=6.5 pre_ms=4.8 post_ms=0.2
+[2026-10-18 18:12:52] 127.0.0.1 [18/Oct/2026:18:12:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 723 "-" "python-httpx/0.28.1"
+[priority] plan-prio-58a75c49 demote=1/2n retire=0/0n protect=2 nodes=14 ms=1.2 usage=0.1631
+[decode] 1487085-2t0-11bcac81 decode_ms=5947.07 output_tokens=71
+[ctl] 1487085-2t0-11bcac81 queue_ms=0.1 advance_ms=8.3 pre_ms=5.3 post_ms=0.3
+[2026-10-18 18:12:53] 127.0.0.1 [18/Oct/2026:18:12:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 727 "-" "python-httpx/0.28.1"
+[priority] plan-prio-eb1ff99e demote=1/2n retire=0/0n protect=3 nodes=16 ms=1.5 usage=0.1231
+[decode] 1487087-2t0-482c0810 decode_ms=4154.76 output_tokens=85
+[ctl] 1487087-2t0-482c0810 queue_ms=0.1 advance_ms=11.1 pre_ms=9.2 post_ms=0.3
+[2026-10-18 18:12:53] 127.0.0.1 [18/Oct/2026:18:12:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 813 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1b97b29c demote=1/2n retire=0/0n protect=4 nodes=19 ms=1.8 usage=0.0624
+[2026-10-18 18:12:54] Decode batch, #running-req: 1, #token: 3835, token usage: 0.06, cuda graph: True, gen throughput (token/s): 76.22, #queue-req: 0
+[decode] 1487084-2t0-36d939bc decode_ms=3593.42 output_tokens=96
+[ctl] 1487084-2t0-36d939bc queue_ms=0.1 advance_ms=0.8 pre_ms=9.3 post_ms=0.3
+[2026-10-18 18:12:54] 127.0.0.1 [18/Oct/2026:18:12:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 892 "-" "python-httpx/0.28.1"
+[priority] plan-prio-019419c2 demote=1/6n retire=0/0n protect=4 nodes=19 ms=1.8 usage=0.0000
+[call] 1487086 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.00 done=1507/1507 kind=hold state=done site=Agent.step:175
+[call] 1487085 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.00 done=1626/1626 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-18e6c665 demote=2/4n retire=0/0n protect=4 nodes=19 ms=2.0 usage=0.0634
+[call] 1487087 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.00 done=2249/2249 kind=hold state=done site=Agent.step:175
+[call] 1487084 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487084 Agent.act kills ['observation', 'steps']
+[timing] 1487084 err_s=+0.00 done=2085/2085 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:12:57] Prefill batch, #new-seq: 1, #new-token: 2387, #cached-token: 1507, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 231.69
+[serve] 1487086-3t0-7396c079 prompt_tokens=3894 cached_tokens=1507 cached_device=1507 cached_host=0 ttft_ms=2849.45 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-3c57ea08 demote=2/4n retire=0/0n protect=4 nodes=20 ms=2.2 usage=0.1282
+[2026-10-18 18:13:00] Prefill batch, #new-seq: 1, #new-token: 2764, #cached-token: 1626, token usage: 0.25, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 879.06
+[serve] 1487085-3t0-1cc5ab83 prompt_tokens=4390 cached_tokens=1626 cached_device=1626 cached_host=0 ttft_ms=5104.42 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-4c0f91a3 tokens=1504 device=1504 host=0 started=0 free=3672 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-4c0f91a3 tokens=1504 duration_ms=2714.08
+[2026-10-18 18:13:03] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 4393, token usage: 0.30, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 933.00
+[serve] 1487087-3t0-d5d9fab0 prompt_tokens=5736 cached_tokens=2249 cached_device=2249 cached_host=0 ttft_ms=7549.85 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-ff26baf2 demote=4/5n retire=0/0n protect=4 nodes=25 ms=3.2 usage=0.3004
+[2026-10-18 18:13:04] Prefill batch, #new-seq: 1, #new-token: 2909, #cached-token: 0, token usage: 0.30, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2841.93
+[serve] 1487084-3t0-fbaba8e6 prompt_tokens=5662 cached_tokens=2144 cached_device=2144 cached_host=0 ttft_ms=8617.17 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-387d3645 tokens=1624 device=1624 host=0 started=0 free=759 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-387d3645 tokens=1624 duration_ms=1435.87
+[priority] plan-prio-647be54c demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.3006
+[priority] plan-prio-136d5b0f demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.3006
+[2026-10-18 18:13:06] Decode batch, #running-req: 4, #token: 18587, token usage: 0.30, cuda graph: True, gen throughput (token/s): 10.87, #queue-req: 0
+[decode] 1487085-3t0-1cc5ab83 decode_ms=6654.70 output_tokens=55
+[ctl] 1487085-3t0-1cc5ab83 queue_ms=0.1 advance_ms=14.0 pre_ms=9.0 post_ms=0.4
+[2026-10-18 18:13:07] 127.0.0.1 [18/Oct/2026:18:12:55 -0400] "POST /v1/chat/completions HTTP/1.1" 200 683 "-" "python-httpx/0.28.1"
+[priority] plan-prio-0e032d12 demote=1/2n retire=0/0n protect=1 nodes=10 ms=1.4 usage=0.2384
+[decode] 1487086-3t0-7396c079 decode_ms=9489.78 output_tokens=58
+[ctl] 1487086-3t0-7396c079 queue_ms=0.1 advance_ms=11.5 pre_ms=6.7 post_ms=0.3
+[2026-10-18 18:13:07] 127.0.0.1 [18/Oct/2026:18:12:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 750 "-" "python-httpx/0.28.1"
+[priority] plan-prio-e401f309 demote=1/2n retire=0/0n protect=2 nodes=16 ms=1.6 usage=0.1808
+[2026-10-18 18:13:07] Decode batch, #running-req: 2, #token: 5734, token usage: 0.09, cuda graph: True, gen throughput (token/s): 81.46, #queue-req: 0
+[decode] 1487087-3t0-d5d9fab0 decode_ms=4346.75 output_tokens=72
+[ctl] 1487087-3t0-d5d9fab0 queue_ms=0.1 advance_ms=16.6 pre_ms=12.4 post_ms=0.4
+[2026-10-18 18:13:07] 127.0.0.1 [18/Oct/2026:18:12:55 -0400] "POST /v1/chat/completions HTTP/1.1" 200 802 "-" "python-httpx/0.28.1"
+[priority] plan-prio-88adf5c8 demote=1/2n retire=0/0n protect=3 nodes=20 ms=2.5 usage=0.0933
+[decode] 1487084-3t0-fbaba8e6 decode_ms=3544.24 output_tokens=90
+[ctl] 1487084-3t0-fbaba8e6 queue_ms=0.3 advance_ms=11.7 pre_ms=9.8 post_ms=0.4
+[2026-10-18 18:13:08] 127.0.0.1 [18/Oct/2026:18:12:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 857 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1d8dc831 demote=1/2n retire=0/0n protect=4 nodes=27 ms=2.9 usage=0.0000
+[call] 1487085 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.00 done=2991/2991 kind=hold state=done site=Agent.step:175
+[call] 1487086 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.00 done=2678/2678 kind=hold state=done site=Agent.step:175
+[call] 1487087 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.00 done=3983/3983 kind=hold state=done site=Agent.step:175
+[call] 1487084 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487084 Agent.act kills ['observation', 'steps']
+[timing] 1487084 err_s=+0.00 done=3869/3869 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-e97d85d4 demote=3/0n retire=0/0n protect=4 nodes=27 ms=2.9 usage=0.1075
+[2026-10-18 18:13:13] Prefill batch, #new-seq: 1, #new-token: 3614, #cached-token: 2991, token usage: 0.21, #running-req: 0, #queue-req: 2, cuda graph: False, input throughput (token/s): 334.60
+[serve] 1487085-4t0-76e1d87a prompt_tokens=6605 cached_tokens=2991 cached_device=2991 cached_host=0 ttft_ms=4384.26 inflight_prefill=3 inflight_decode=1
+[promote] plan-hold-6a305817 tokens=2672 device=2672 host=0 started=0 free=1589 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-6a305817 tokens=2672 duration_ms=2917.71
+[2026-10-18 18:13:17] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 2678, token usage: 0.39, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1055.89
+[priority] plan-prio-067c152d demote=9/0n retire=0/0n protect=4 nodes=30 ms=6.0 usage=0.3923
+[2026-10-18 18:13:19] Prefill batch, #new-seq: 3, #new-token: 4096, #cached-token: 7852, token usage: 0.40, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1972.25
+[serve] 1487086-4t0-764a7e5b prompt_tokens=7336 cached_tokens=2678 cached_device=2678 cached_host=0 ttft_ms=9765.99 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-415d0bc6 tokens=2984 device=2984 host=0 started=0 free=1584 reserve=4096 ms=0.5
+[serve] 1487087-4t0-7bf2a1d3 prompt_tokens=5418 cached_tokens=3983 cached_device=3983 cached_host=0 ttft_ms=9216.30 inflight_prefill=1 inflight_decode=3
+[promote-rpc] plan-hold-415d0bc6 tokens=2984 duration_ms=2065.29
+[2026-10-18 18:13:19] Prefill batch, #new-seq: 1, #new-token: 330, #cached-token: 0, token usage: 0.40, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 14613.29
+[serve] 1487084-4t0-ba11eddb prompt_tokens=6298 cached_tokens=3869 cached_device=3869 cached_host=0 ttft_ms=8873.00 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-4b2dc1e1 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.3978
+[priority] plan-prio-401a3b5a demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.3978
+[2026-10-18 18:13:20] Decode batch, #running-req: 4, #token: 24522, token usage: 0.40, cuda graph: True, gen throughput (token/s): 8.32, #queue-req: 0
+[decode] 1487085-4t0-76e1d87a decode_ms=8167.64 output_tokens=55
+[ctl] 1487085-4t0-76e1d87a queue_ms=0.1 advance_ms=19.5 pre_ms=12.9 post_ms=0.5
+[decode] 1487087-4t0-7bf2a1d3 decode_ms=2668.83 output_tokens=55
+[ctl] 1487087-4t0-7bf2a1d3 queue_ms=0.1 advance_ms=28.5 pre_ms=18.3 post_ms=0.4
+[2026-10-18 18:13:21] 127.0.0.1 [18/Oct/2026:18:13:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 683 "-" "python-httpx/0.28.1"
+[2026-10-18 18:13:21] 127.0.0.1 [18/Oct/2026:18:13:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 746 "-" "python-httpx/0.28.1"
+[priority] plan-prio-ccaa80a9 demote=2/4n retire=0/0n protect=2 nodes=17 ms=3.4 usage=0.2171
+[2026-10-18 18:13:22] Decode batch, #running-req: 2, #token: 13351, token usage: 0.22, cuda graph: True, gen throughput (token/s): 85.52, #queue-req: 0
+[decode] 1487086-4t0-764a7e5b decode_ms=3140.27 output_tokens=67
+[ctl] 1487086-4t0-764a7e5b queue_ms=0.0 advance_ms=18.2 pre_ms=12.6 post_ms=0.5
+[2026-10-18 18:13:22] 127.0.0.1 [18/Oct/2026:18:13:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 797 "-" "python-httpx/0.28.1"
+[priority] plan-prio-e35bbd4f demote=1/3n retire=0/0n protect=3 nodes=25 ms=3.3 usage=0.1036
+[2026-10-18 18:13:23] Decode batch, #running-req: 1, #token: 6400, token usage: 0.10, cuda graph: True, gen throughput (token/s): 31.85, #queue-req: 0
+[call] 1487085 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.00 done=4773/4773 kind=hold state=done site=Agent.step:175
+[call] 1487087 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.04 done=4684/4684 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-1a49b3bd demote=4/2n retire=0/0n protect=3 nodes=25 ms=4.3 usage=0.1043
+[priority] plan-prio-f6512e86 demote=4/2n retire=0/0n protect=3 nodes=25 ms=5.1 usage=0.1793
+[call] 1487086 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.00 done=4983/4983 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:13:25] Prefill batch, #new-seq: 1, #new-token: 241, #cached-token: 4773, token usage: 0.30, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 57.89
+[serve] 1487085-5t0-81a3163a prompt_tokens=5014 cached_tokens=4773 cached_device=4773 cached_host=0 ttft_ms=1255.25 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-fd68afd1 demote=4/3n retire=0/0n protect=3 nodes=26 ms=4.4 usage=0.2952
+[2026-10-18 18:13:27] Prefill batch, #new-seq: 1, #new-token: 2845, #cached-token: 4684, token usage: 0.42, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 93.73
+[serve] 1487087-5t0-1629a18c prompt_tokens=7529 cached_tokens=4684 cached_device=4684 cached_host=0 ttft_ms=3775.48 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-7830cb3c tokens=4680 device=4680 host=0 started=0 free=1576 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-7830cb3c tokens=4680 duration_ms=2565.72
+[2026-10-18 18:13:29] Prefill batch, #new-seq: 1, #new-token: 3057, #cached-token: 4983, token usage: 0.42, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1732.01
+[serve] 1487086-5t0-89805887 prompt_tokens=8040 cached_tokens=4983 cached_device=4983 cached_host=0 ttft_ms=4989.72 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-c42884bb tokens=4768 device=4768 host=0 started=0 free=1572 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-c42884bb tokens=4768 duration_ms=1624.68
+[promote] plan-hold-e675204f tokens=4976 device=4976 host=0 started=0 free=1568 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-e675204f tokens=4976 duration_ms=34.64
+[2026-10-18 18:13:30] Decode batch, #running-req: 4, #token: 25890, token usage: 0.42, cuda graph: True, gen throughput (token/s): 17.87, #queue-req: 0
+[priority] plan-prio-9f6e46e5 demote=0/0n retire=0/0n protect=2 nodes=23 ms=2.1 usage=0.4218
+[priority] plan-prio-415daf57 demote=0/0n retire=0/0n protect=1 nodes=16 ms=1.1 usage=0.4218
+[priority] plan-prio-5eba24f2 demote=0/0n retire=0/0n protect=1 nodes=16 ms=1.0 usage=0.4219
+[priority] plan-prio-f2029b8c demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.4224
+[priority] plan-prio-a060de17 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.4225
+[decode] 1487086-5t0-89805887 decode_ms=2374.80 output_tokens=54
+[ctl] 1487086-5t0-89805887 queue_ms=0.0 advance_ms=25.9 pre_ms=13.5 post_ms=0.5
+[2026-10-18 18:13:31] 127.0.0.1 [18/Oct/2026:18:13:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 709 "-" "python-httpx/0.28.1"
+[decode] 1487087-5t0-1629a18c decode_ms=4061.50 output_tokens=55
+[ctl] 1487087-5t0-1629a18c queue_ms=0.1 advance_ms=24.2 pre_ms=14.5 post_ms=0.5
+[2026-10-18 18:13:31] 127.0.0.1 [18/Oct/2026:18:13:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 746 "-" "python-httpx/0.28.1"
+[priority] plan-prio-03270737 demote=1/2n retire=0/0n protect=1 nodes=16 ms=2.7 usage=0.1811
+[decode] 1487085-5t0-81a3163a decode_ms=6673.40 output_tokens=56
+[ctl] 1487085-5t0-81a3163a queue_ms=0.1 advance_ms=22.1 pre_ms=9.2 post_ms=0.4
+[2026-10-18 18:13:31] 127.0.0.1 [18/Oct/2026:18:13:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 688 "-" "python-httpx/0.28.1"
+[priority] plan-prio-34235ce5 demote=1/2n retire=0/0n protect=2 nodes=23 ms=3.3 usage=0.1052
+[priority] plan-prio-4d170a67 demote=1/2n retire=0/0n protect=3 nodes=31 ms=3.5 usage=0.1053
+[decode] 1487084-4t0-ba11eddb decode_ms=12626.69 output_tokens=175
+[ctl] 1487084-4t0-ba11eddb queue_ms=0.1 advance_ms=20.0 pre_ms=9.9 post_ms=0.4
+[2026-10-18 18:13:32] 127.0.0.1 [18/Oct/2026:18:13:10 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1238 "-" "python-httpx/0.28.1"
+[close] 1487084 calls=4
+[2026-10-18 18:13:32] 127.0.0.1 [18/Oct/2026:18:13:32 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-15f7cf92 demote=1/3n retire=0/0n protect=4 nodes=39 ms=4.0 usage=0.0000
+[priority] plan-prio-5398ea48 demote=0/0n retire=4/3n protect=3 nodes=31 ms=4.6 usage=0.0000
+[call] 1487086 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=-0.00 done=6493/6493 kind=hold state=done site=Agent.step:175
+[call] 1487087 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.02 done=6081/6081 kind=hold state=done site=Agent.step:175
+[call] 1487085 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.02 done=4869/4869 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-e0da35b2 demote=5/0n retire=0/0n protect=3 nodes=31 ms=5.9 usage=0.1493
+[2026-10-18 18:13:37] Prefill batch, #new-seq: 1, #new-token: 2682, #cached-token: 6493, token usage: 0.38, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 357.78
+[serve] 1487086-6t0-c9b146ac prompt_tokens=9175 cached_tokens=6493 cached_device=6493 cached_host=0 ttft_ms=4096.74 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-e8370a15 demote=10/0n retire=0/0n protect=3 nodes=32 ms=9.2 usage=0.3765
+[call] 1487508 #0 Agent.step:175 ctx=(1,)
+[timing] 1487508 unplanned site=Agent.step:175
+[2026-10-18 18:13:39] Prefill batch, #new-seq: 2, #new-token: 3823, #cached-token: 10949, token usage: 0.38, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1539.51
+[serve] 1487087-6t0-d4a712cc prompt_tokens=6322 cached_tokens=6081 cached_device=6081 cached_host=0 ttft_ms=5787.57 inflight_prefill=2 inflight_decode=2
+[serve] 1487085-6t0-db141a7f prompt_tokens=8450 cached_tokens=4868 cached_device=4868 cached_host=0 ttft_ms=5740.64 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-e6e3d005 tokens=6488 device=6488 host=0 started=0 free=2148 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-e6e3d005 tokens=6488 duration_ms=1719.98
+[priority] plan-prio-e600a3f1 demote=0/0n retire=0/0n protect=4 nodes=36 ms=3.2 usage=0.3789
+[2026-10-18 18:13:39] Prefill batch, #new-seq: 1, #new-token: 147, #cached-token: 408, token usage: 0.38, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 20285.10
+[serve] 1487508-1t0-b8b26cb3 prompt_tokens=555 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=1406.62 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-1c57da9d tokens=6080 device=6080 host=0 started=0 free=1997 reserve=4096 ms=0.9
+[promote-rpc] plan-hold-1c57da9d tokens=6080 duration_ms=91.51
+[promote] plan-hold-05a6dec8 tokens=4864 device=4864 host=0 started=0 free=1993 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-05a6dec8 tokens=4864 duration_ms=25.65
+[promote] plan-hold-4ab6de0d tokens=408 device=408 host=0 started=0 free=1989 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-4ab6de0d tokens=408 duration_ms=8.42
+[2026-10-18 18:13:40] Decode batch, #running-req: 4, #token: 23306, token usage: 0.38, cuda graph: True, gen throughput (token/s): 14.37, #queue-req: 0
+[priority] plan-prio-72ea422e demote=0/0n retire=0/0n protect=3 nodes=27 ms=2.1 usage=0.3805
+[priority] plan-prio-d253afff demote=0/0n retire=0/0n protect=3 nodes=27 ms=2.0 usage=0.3806
+[priority] plan-prio-52d867bd demote=0/0n retire=0/0n protect=2 nodes=18 ms=1.3 usage=0.3806
+[priority] plan-prio-ebcf3071 demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.5 usage=0.3807
+[priority] plan-prio-395e71da demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.5 usage=0.3808
+[2026-10-18 18:13:41] Decode batch, #running-req: 4, #token: 23466, token usage: 0.38, cuda graph: True, gen throughput (token/s): 91.97, #queue-req: 0
+[decode] 1487086-6t0-c9b146ac decode_ms=4064.43 output_tokens=51
+[ctl] 1487086-6t0-c9b146ac queue_ms=0.1 advance_ms=32.2 pre_ms=15.7 post_ms=0.8
+[2026-10-18 18:13:41] 127.0.0.1 [18/Oct/2026:18:13:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 689 "-" "python-httpx/0.28.1"
+[priority] plan-prio-39e95142 demote=1/2n retire=0/0n protect=2 nodes=20 ms=3.4 usage=0.2387
+[decode] 1487085-6t0-db141a7f decode_ms=2404.62 output_tokens=53
+[ctl] 1487085-6t0-db141a7f queue_ms=0.1 advance_ms=21.6 pre_ms=14.9 post_ms=0.6
+[2026-10-18 18:13:42] 127.0.0.1 [18/Oct/2026:18:13:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 673 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3a0bf2db demote=1/2n retire=0/0n protect=3 nodes=30 ms=3.6 usage=0.1070
+[decode] 1487087-6t0-d4a712cc decode_ms=2480.33 output_tokens=55
+[ctl] 1487087-6t0-d4a712cc queue_ms=0.1 advance_ms=22.3 pre_ms=10.2 post_ms=0.6
+[2026-10-18 18:13:42] 127.0.0.1 [18/Oct/2026:18:13:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 737 "-" "python-httpx/0.28.1"
+[priority] plan-prio-190ffd62 demote=1/2n retire=0/0n protect=4 nodes=39 ms=4.1 usage=0.0099
+[decode] 1487508-1t0-b8b26cb3 decode_ms=2359.14 output_tokens=56
+[ctl] 1487508-1t0-b8b26cb3 queue_ms=0.1 advance_ms=2.4 pre_ms=1.7 post_ms=0.2
+[2026-10-18 18:13:42] 127.0.0.1 [18/Oct/2026:18:13:38 -0400] "POST /v1/chat/completions HTTP/1.1" 200 689 "-" "python-httpx/0.28.1"
+[priority] plan-prio-7ea7bc26 demote=1/2n retire=0/0n protect=4 nodes=39 ms=3.2 usage=0.0000
+[promote] plan-hold-c03e8d7d tokens=456 device=456 host=0 started=0 free=1789 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-c03e8d7d tokens=456 duration_ms=0.62
+[call] 1487086 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.01 done=7808/7808 kind=hold state=done site=Agent.step:175
+[call] 1487085 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.01 done=6635/6635 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-1bf38093 demote=6/2n retire=0/0n protect=4 nodes=40 ms=8.5 usage=0.1309
+[call] 1487087 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1487087 Agent.act kills ['observation', 'steps']
+[timing] 1487087 err_s=+0.01 done=6177/6177 kind=hold state=done site=Agent.step:175
+[call] 1487508 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=+0.01 done=456/458 kind=hold state=queued site=Agent.step:175
+[2026-10-18 18:13:44] Prefill batch, #new-seq: 1, #new-token: 237, #cached-token: 7808, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 33.04
+[serve] 1487086-7t0-44a00ad9 prompt_tokens=8045 cached_tokens=7808 cached_device=7808 cached_host=0 ttft_ms=236.12 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-330f146e demote=6/2n retire=0/0n protect=4 nodes=41 ms=7.7 usage=0.1310
+[priority] plan-prio-db25980a demote=7/0n retire=0/0n protect=4 nodes=41 ms=7.6 usage=0.3929
+[2026-10-18 18:13:48] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 12811, token usage: 0.44, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 52.84
+[serve] 1487085-7t0-2f5b9eca prompt_tokens=9262 cached_tokens=6635 cached_device=6635 cached_host=0 ttft_ms=4640.06 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-b7af0080 tokens=7808 device=7808 host=0 started=0 free=1816 reserve=4096 ms=1.1
+[promote-rpc] plan-hold-b7af0080 tokens=7808 duration_ms=2937.04
+[2026-10-18 18:13:49] Prefill batch, #new-seq: 2, #new-token: 2554, #cached-token: 458, token usage: 0.44, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 3383.32
+[promote] plan-hold-557bc2c1 tokens=6632 device=6632 host=0 started=0 free=1812 reserve=4096 ms=1.0
+[serve] 1487087-7t0-376fd725 prompt_tokens=8387 cached_tokens=6176 cached_device=6176 cached_host=0 ttft_ms=5781.43 inflight_prefill=1 inflight_decode=3
+[serve] 1487508-2t0-5a3f06c6 prompt_tokens=2270 cached_tokens=458 cached_device=458 cached_host=0 ttft_ms=5752.63 inflight_prefill=0 inflight_decode=4
+[promote-rpc] plan-hold-557bc2c1 tokens=6632 duration_ms=1192.16
+[promote] plan-hold-56099690 tokens=6176 device=6176 host=0 started=0 free=1808 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-56099690 tokens=6176 duration_ms=38.90
+[promote] plan-hold-9dd75a75 tokens=456 device=456 host=0 started=0 free=1804 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-9dd75a75 tokens=456 duration_ms=26.16
+[priority] plan-prio-4fce7cfb demote=0/0n retire=0/0n protect=3 nodes=32 ms=2.5 usage=0.4369
+[priority] plan-prio-ff280ce4 demote=0/0n retire=0/0n protect=3 nodes=32 ms=2.5 usage=0.4369
+[priority] plan-prio-ae65ac3c demote=0/0n retire=0/0n protect=2 nodes=20 ms=1.5 usage=0.4370
+[priority] plan-prio-9dce47da demote=0/0n retire=0/0n protect=2 nodes=20 ms=1.5 usage=0.4371
+[2026-10-18 18:13:51] Decode batch, #running-req: 4, #token: 26858, token usage: 0.44, cuda graph: True, gen throughput (token/s): 15.33, #queue-req: 0
+[priority] plan-prio-0815170c demote=0/0n retire=0/0n protect=1 nodes=9 ms=0.6 usage=0.4371
+[priority] plan-prio-d4fa7ffd demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.4372
+[priority] plan-prio-51a21eed demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.4373
+[decode] 1487086-7t0-44a00ad9 decode_ms=8367.72 output_tokens=61
+[ctl] 1487086-7t0-44a00ad9 queue_ms=0.1 advance_ms=39.9 pre_ms=14.0 post_ms=0.8
+[2026-10-18 18:13:52] 127.0.0.1 [18/Oct/2026:18:13:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 732 "-" "python-httpx/0.28.1"
+[priority] plan-prio-089b45ce demote=1/2n retire=0/0n protect=1 nodes=19 ms=3.3 usage=0.3139
+[2026-10-18 18:13:53] Decode batch, #running-req: 3, #token: 19311, token usage: 0.31, cuda graph: True, gen throughput (token/s): 85.61, #queue-req: 0
+[decode] 1487085-7t0-2f5b9eca decode_ms=5097.37 output_tokens=89
+[ctl] 1487085-7t0-2f5b9eca queue_ms=0.1 advance_ms=32.2 pre_ms=19.7 post_ms=0.6
+[2026-10-18 18:13:53] 127.0.0.1 [18/Oct/2026:18:13:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 814 "-" "python-httpx/0.28.1"
+[priority] plan-prio-06a71e7e demote=1/2n retire=0/0n protect=2 nodes=31 ms=4.3 usage=0.1698
+[decode] 1487087-7t0-376fd725 decode_ms=4266.38 output_tokens=99
+[ctl] 1487087-7t0-376fd725 queue_ms=0.1 advance_ms=31.1 pre_ms=15.4 post_ms=0.6
+[2026-10-18 18:13:54] 127.0.0.1 [18/Oct/2026:18:13:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 983 "-" "python-httpx/0.28.1"
+[close] 1487087 calls=7
+[2026-10-18 18:13:54] 127.0.0.1 [18/Oct/2026:18:13:54 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-da80b51a demote=1/3n retire=0/0n protect=3 nodes=41 ms=5.1 usage=0.0386
+[priority] plan-prio-643705b9 demote=0/0n retire=7/3n protect=2 nodes=31 ms=8.3 usage=0.0386
+[2026-10-18 18:13:54] Decode batch, #running-req: 1, #token: 2379, token usage: 0.04, cuda graph: True, gen throughput (token/s): 59.03, #queue-req: 0
+[call] 1487086 #7 Agent.step:175 predicted=hit ctx=(8,)
+[invalidate] 1487086 Agent.act kills ['observation', 'steps']
+[timing] 1487086 err_s=+0.01 done=7900/7900 kind=hold state=done site=Agent.step:175
+[decode] 1487508-2t0-5a3f06c6 decode_ms=4783.06 output_tokens=114
+[ctl] 1487508-2t0-5a3f06c6 queue_ms=0.1 advance_ms=4.6 pre_ms=3.8 post_ms=0.2
+[2026-10-18 18:13:54] 127.0.0.1 [18/Oct/2026:18:13:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 923 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3a9f7d2c demote=7/2n retire=0/0n protect=2 nodes=31 ms=9.7 usage=0.0000
+[call] 1487085 #7 Agent.step:175 predicted=hit ctx=(8,)
+[invalidate] 1487085 Agent.act kills ['observation', 'steps']
+[timing] 1487085 err_s=+0.01 done=7923/7923 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-4245f7d0 demote=1/0n retire=0/0n protect=3 nodes=35 ms=3.1 usage=0.1802
+[call] 1487508 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=+0.01 done=1339/1339 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:13:59] Prefill batch, #new-seq: 1, #new-token: 3174, #cached-token: 7899, token usage: 0.36, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 272.93
+[serve] 1487086-8t0-4fad43ae prompt_tokens=11073 cached_tokens=7899 cached_device=7899 cached_host=0 ttft_ms=4599.49 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-d01492ec demote=7/0n retire=0/0n protect=3 nodes=36 ms=8.9 usage=0.3605
+[call] 1487690 #0 Agent.step:175 ctx=(1,)
+[timing] 1487690 unplanned site=Agent.step:175
+[2026-10-18 18:14:01] Prefill batch, #new-seq: 1, #new-token: 3560, #cached-token: 7923, token usage: 0.38, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1823.92
+[serve] 1487085-8t0-b25c17f9 prompt_tokens=11483 cached_tokens=7923 cached_device=7923 cached_host=0 ttft_ms=5117.24 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-871a5ac1 tokens=7896 device=7896 host=0 started=0 free=2017 reserve=4096 ms=1.4
+[promote-rpc] plan-hold-871a5ac1 tokens=7896 duration_ms=1720.56
+[2026-10-18 18:14:01] Prefill batch, #new-seq: 1, #new-token: 300, #cached-token: 1339, token usage: 0.38, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 14600.34
+[serve] 1487508-3t0-c0e3506c prompt_tokens=1639 cached_tokens=1339 cached_device=1339 cached_host=0 ttft_ms=4521.13 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-86b677bd demote=2/0n retire=0/0n protect=4 nodes=39 ms=3.5 usage=0.3829
+[2026-10-18 18:14:01] Prefill batch, #new-seq: 1, #new-token: 148, #cached-token: 408, token usage: 0.38, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 3064.40
+[serve] 1487690-1t0-3e4eb27f prompt_tokens=556 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=1531.40 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-496978eb tokens=7920 device=7920 host=0 started=0 free=1865 reserve=4096 ms=1.1
+[promote-rpc] plan-hold-496978eb tokens=7920 duration_ms=93.41
+[promote] plan-hold-af10389b tokens=1336 device=1336 host=0 started=0 free=1861 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-af10389b tokens=1336 duration_ms=24.96
+[promote] plan-hold-a331754f tokens=408 device=408 host=0 started=0 free=1857 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-a331754f tokens=408 duration_ms=26.47
+[priority] plan-prio-c14aaf81 demote=0/0n retire=0/0n protect=3 nodes=27 ms=1.9 usage=0.3835
+[priority] plan-prio-9c07791a demote=0/0n retire=0/0n protect=3 nodes=27 ms=2.0 usage=0.3836
+[2026-10-18 18:14:02] Decode batch, #running-req: 4, #token: 23668, token usage: 0.39, cuda graph: True, gen throughput (token/s): 17.07, #queue-req: 0
+[priority] plan-prio-d77fa3ea demote=0/0n retire=0/0n protect=2 nodes=13 ms=0.7 usage=0.3853
+[priority] plan-prio-9320d6cf demote=0/0n retire=0/0n protect=2 nodes=13 ms=0.7 usage=0.3854
+[decode] 1487086-8t0-4fad43ae decode_ms=4356.31 output_tokens=53
+[ctl] 1487086-8t0-4fad43ae queue_ms=0.1 advance_ms=39.4 pre_ms=21.5 post_ms=0.8
+[2026-10-18 18:14:03] 127.0.0.1 [18/Oct/2026:18:13:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 720 "-" "python-httpx/0.28.1"
+[priority] plan-prio-80eb28e2 demote=1/2n retire=0/0n protect=3 nodes=28 ms=4.4 usage=0.2120
+[priority] plan-prio-d194da2d demote=0/0n retire=0/0n protect=2 nodes=22 ms=1.8 usage=0.2121
+[priority] plan-prio-4efafe46 demote=0/0n retire=0/0n protect=2 nodes=22 ms=1.7 usage=0.2122
+[2026-10-18 18:14:04] Decode batch, #running-req: 3, #token: 12865, token usage: 0.21, cuda graph: True, gen throughput (token/s): 84.20, #queue-req: 0
+[decode] 1487690-1t0-3e4eb27f decode_ms=3135.06 output_tokens=75
+[ctl] 1487690-1t0-3e4eb27f queue_ms=0.0 advance_ms=2.3 pre_ms=1.7 post_ms=0.1
+[2026-10-18 18:14:04] 127.0.0.1 [18/Oct/2026:18:13:59 -0400] "POST /v1/chat/completions HTTP/1.1" 200 786 "-" "python-httpx/0.28.1"
+[priority] plan-prio-75df167a demote=1/2n retire=0/0n protect=2 nodes=22 ms=1.9 usage=0.2094
+[decode] 1487085-8t0-b25c17f9 decode_ms=3907.37 output_tokens=86
+[ctl] 1487085-8t0-b25c17f9 queue_ms=0.1 advance_ms=41.9 pre_ms=25.5 post_ms=0.7
+[2026-10-18 18:14:04] 127.0.0.1 [18/Oct/2026:18:13:55 -0400] "POST /v1/chat/completions HTTP/1.1" 200 844 "-" "python-httpx/0.28.1"
+[close] 1487085 calls=8
+[2026-10-18 18:14:04] 127.0.0.1 [18/Oct/2026:18:14:04 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-97c2dcdf demote=1/2n retire=0/0n protect=3 nodes=36 ms=5.5 usage=0.0281
+[priority] plan-prio-d3a99f30 demote=0/0n retire=8/2n protect=2 nodes=22 ms=9.8 usage=0.0281
+[close] 1487086 calls=8
+[2026-10-18 18:14:05] 127.0.0.1 [18/Oct/2026:18:14:05 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-8ae71f2b demote=0/0n retire=8/2n protect=1 nodes=7 ms=10.0 usage=0.0285
+[2026-10-18 18:14:05] Decode batch, #running-req: 1, #token: 1754, token usage: 0.03, cuda graph: True, gen throughput (token/s): 37.72, #queue-req: 0
+[promote] plan-hold-1ae826df tokens=456 device=456 host=0 started=0 free=1536 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-1ae826df tokens=456 duration_ms=20.34
+[decode] 1487508-3t0-c0e3506c decode_ms=4940.28 output_tokens=124
+[ctl] 1487508-3t0-c0e3506c queue_ms=0.1 advance_ms=8.2 pre_ms=3.3 post_ms=0.2
+[2026-10-18 18:14:06] 127.0.0.1 [18/Oct/2026:18:13:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 960 "-" "python-httpx/0.28.1"
+[priority] plan-prio-dcef95fe demote=1/2n retire=0/0n protect=2 nodes=14 ms=1.0 usage=0.0000
+[call] 1487690 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487690 Agent.act kills ['observation', 'steps']
+[timing] 1487690 err_s=+0.01 done=456/459 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-cb12a89e demote=1/2n retire=0/0n protect=2 nodes=14 ms=0.9 usage=0.0487
+[call] 1487508 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=+0.01 done=1494/1494 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:14:08] Prefill batch, #new-seq: 1, #new-token: 2536, #cached-token: 459, token usage: 0.05, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 20.79
+[serve] 1487690-2t0-d22a16d9 prompt_tokens=2995 cached_tokens=459 cached_device=459 cached_host=0 ttft_ms=1944.25 inflight_prefill=1 inflight_decode=1
+[promote] plan-hold-9543ee75 tokens=456 device=456 host=0 started=0 free=2530 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-9543ee75 tokens=456 duration_ms=1130.69
+[priority] plan-prio-8045608c demote=3/0n retire=0/0n protect=2 nodes=15 ms=1.6 usage=0.1177
+[call] 1487777 #0 Agent.step:175 ctx=(1,)
+[timing] 1487777 unplanned site=Agent.step:175
+[2026-10-18 18:14:11] Prefill batch, #new-seq: 1, #new-token: 3151, #cached-token: 1493, token usage: 0.12, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 984.02
+[serve] 1487508-4t0-95c44527 prompt_tokens=4644 cached_tokens=1493 cached_device=1493 cached_host=0 ttft_ms=2797.23 inflight_prefill=1 inflight_decode=2
+[promote] plan-hold-c33229b3 tokens=1488 device=1488 host=0 started=0 free=2582 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-c33229b3 tokens=1488 duration_ms=1285.07
+[priority] plan-prio-362be32f demote=0/0n retire=0/0n protect=3 nodes=18 ms=1.0 usage=0.1202
+[2026-10-18 18:14:11] Prefill batch, #new-seq: 1, #new-token: 147, #cached-token: 409, token usage: 0.12, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 17471.59
+[serve] 1487777-1t0-27f56033 prompt_tokens=556 cached_tokens=409 cached_device=409 cached_host=0 ttft_ms=559.96 inflight_prefill=0 inflight_decode=3
+[call] 1487779 #0 Agent.step:175 ctx=(1,)
+[timing] 1487779 unplanned site=Agent.step:175
+[priority] plan-prio-a9247a48 demote=0/0n retire=0/0n protect=4 nodes=20 ms=1.2 usage=0.1204
+[2026-10-18 18:14:11] Prefill batch, #new-seq: 1, #new-token: 154, #cached-token: 409, token usage: 0.12, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 524.48
+[serve] 1487779-1t0-2b311f04 prompt_tokens=563 cached_tokens=409 cached_device=409 cached_host=0 ttft_ms=195.42 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-56a1f5e4 tokens=408 device=408 host=0 started=0 free=2193 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-56a1f5e4 tokens=408 duration_ms=16.71
+[2026-10-18 18:14:12] Decode batch, #running-req: 4, #token: 7650, token usage: 0.12, cuda graph: True, gen throughput (token/s): 18.63, #queue-req: 0
+[promote] plan-hold-c726809f tokens=408 device=408 host=0 started=0 free=2125 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-c726809f tokens=408 duration_ms=11.69
+[priority] plan-prio-ddbe29cc demote=0/0n retire=0/0n protect=3 nodes=18 ms=0.9 usage=0.1267
+[priority] plan-prio-85eab3b4 demote=0/0n retire=0/0n protect=3 nodes=18 ms=0.8 usage=0.1267
+[decode] 1487777-1t0-27f56033 decode_ms=2554.53 output_tokens=67
+[ctl] 1487777-1t0-27f56033 queue_ms=0.1 advance_ms=2.2 pre_ms=1.6 post_ms=0.2
+[2026-10-18 18:14:13] 127.0.0.1 [18/Oct/2026:18:14:10 -0400] "POST /v1/chat/completions HTTP/1.1" 200 751 "-" "python-httpx/0.28.1"
+[priority] plan-prio-40bd0ddc demote=1/2n retire=0/0n protect=3 nodes=18 ms=1.1 usage=0.1235
+[2026-10-18 18:14:13] Decode batch, #running-req: 3, #token: 7593, token usage: 0.12, cuda graph: True, gen throughput (token/s): 108.33, #queue-req: 0
+[decode] 1487690-2t0-d22a16d9 decode_ms=5459.13 output_tokens=73
+[ctl] 1487690-2t0-d22a16d9 queue_ms=0.0 advance_ms=7.5 pre_ms=6.1 post_ms=0.2
+[2026-10-18 18:14:13] 127.0.0.1 [18/Oct/2026:18:14:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 812 "-" "python-httpx/0.28.1"
+[priority] plan-prio-62568d1b demote=1/2n retire=0/0n protect=4 nodes=21 ms=1.5 usage=0.0804
+[decode] 1487508-4t0-95c44527 decode_ms=3166.30 output_tokens=80
+[ctl] 1487508-4t0-95c44527 queue_ms=0.1 advance_ms=12.7 pre_ms=19.1 post_ms=0.3
+[2026-10-18 18:14:14] 127.0.0.1 [18/Oct/2026:18:14:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 805 "-" "python-httpx/0.28.1"
+[priority] plan-prio-396826de demote=1/2n retire=0/0n protect=4 nodes=21 ms=1.7 usage=0.0104
+[decode] 1487779-1t0-2b311f04 decode_ms=3069.80 output_tokens=86
+[ctl] 1487779-1t0-2b311f04 queue_ms=0.0 advance_ms=2.3 pre_ms=1.8 post_ms=0.1
+[2026-10-18 18:14:14] 127.0.0.1 [18/Oct/2026:18:14:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 841 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5196d9c5 demote=1/2n retire=0/0n protect=4 nodes=21 ms=1.2 usage=0.0000
+[promote] plan-hold-178e0207 tokens=456 device=456 host=0 started=0 free=1978 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-178e0207 tokens=456 duration_ms=0.52
+[promote] plan-hold-9c52f5e5 tokens=3072 device=3072 host=0 started=0 free=1978 reserve=4096 ms=0.5
+[promote-rpc] plan-hold-9c52f5e5 tokens=3072 duration_ms=1.14
+[promote] plan-hold-1ed7713b tokens=464 device=464 host=0 started=0 free=1978 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-1ed7713b tokens=464 duration_ms=0.46
+[call] 1487777 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=+0.01 done=456/459 kind=hold state=queued site=Agent.step:175
+[call] 1487690 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487690 Agent.act kills ['observation', 'steps']
+[timing] 1487690 err_s=+0.01 done=1712/1712 kind=hold state=done site=Agent.step:175
+[call] 1487508 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=+0.01 done=3072/3079 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-bb88d816 demote=1/0n retire=0/0n protect=4 nodes=24 ms=1.3 usage=0.0435
+[call] 1487779 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1487779 Agent.act kills ['observation', 'steps']
+[timing] 1487779 err_s=+0.01 done=464/466 kind=hold state=queued site=Agent.step:175
+[2026-10-18 18:14:18] Prefill batch, #new-seq: 1, #new-token: 2211, #cached-token: 459, token usage: 0.17, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 20.81
+[serve] 1487777-2t0-ceb61713 prompt_tokens=2670 cached_tokens=459 cached_device=459 cached_host=0 ttft_ms=3087.85 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-a2cbe5ba demote=6/0n retire=0/0n protect=4 nodes=25 ms=3.1 usage=0.1748
+[2026-10-18 18:14:22] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 4790, token usage: 0.23, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 687.13
+[serve] 1487690-3t0-b63e6edc prompt_tokens=2631 cached_tokens=1711 cached_device=1711 cached_host=0 ttft_ms=6159.30 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-291ee471 tokens=456 device=456 host=0 started=0 free=2935 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-291ee471 tokens=456 duration_ms=3210.92
+[2026-10-18 18:14:23] Prefill batch, #new-seq: 2, #new-token: 3176, #cached-token: 466, token usage: 0.23, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 3123.36
+[serve] 1487508-5t0-8cf3d7bd prompt_tokens=7085 cached_tokens=3079 cached_device=3079 cached_host=0 ttft_ms=7168.32 inflight_prefill=1 inflight_decode=3
+[serve] 1487779-2t0-60487c69 prompt_tokens=2812 cached_tokens=466 cached_device=466 cached_host=0 ttft_ms=6824.18 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-a1a5fa78 demote=1/0n retire=0/0n protect=4 nodes=28 ms=1.9 usage=0.2275
+[promote] plan-hold-84575cbd tokens=1704 device=1704 host=0 started=0 free=2927 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-84575cbd tokens=1704 duration_ms=56.94
+[priority] plan-prio-d5b38b07 demote=0/0n retire=0/0n protect=1 nodes=10 ms=0.6 usage=0.2277
+[promote] plan-hold-51f95d1e tokens=464 device=464 host=0 started=0 free=2919 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-51f95d1e tokens=464 duration_ms=38.88
+[priority] plan-prio-a7dec423 demote=0/0n retire=0/0n protect=1 nodes=10 ms=0.6 usage=0.2278
+[priority] plan-prio-e67dfc71 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.2278
+[priority] plan-prio-7e204158 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.2279
+[2026-10-18 18:14:24] Decode batch, #running-req: 4, #token: 14051, token usage: 0.23, cuda graph: True, gen throughput (token/s): 10.47, #queue-req: 0
+[2026-10-18 18:14:25] Decode batch, #running-req: 4, #token: 14211, token usage: 0.23, cuda graph: True, gen throughput (token/s): 101.29, #queue-req: 0
+[decode] 1487777-2t0-ceb61713 decode_ms=7394.36 output_tokens=73
+[ctl] 1487777-2t0-ceb61713 queue_ms=0.0 advance_ms=7.1 pre_ms=5.5 post_ms=0.2
+[2026-10-18 18:14:26] 127.0.0.1 [18/Oct/2026:18:14:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5676b6bc demote=1/2n retire=0/0n protect=1 nodes=10 ms=1.0 usage=0.1943
+[decode] 1487508-5t0-8cf3d7bd decode_ms=2982.62 output_tokens=76
+[ctl] 1487508-5t0-8cf3d7bd queue_ms=0.0 advance_ms=18.1 pre_ms=12.7 post_ms=0.4
+[2026-10-18 18:14:26] 127.0.0.1 [18/Oct/2026:18:14:16 -0400] "POST /v1/chat/completions HTTP/1.1" 200 824 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6e79ba32 demote=1/3n retire=0/0n protect=2 nodes=20 ms=2.4 usage=0.0845
+[decode] 1487690-3t0-b63e6edc decode_ms=4791.55 output_tokens=90
+[ctl] 1487690-3t0-b63e6edc queue_ms=0.0 advance_ms=9.5 pre_ms=4.5 post_ms=0.3
+[2026-10-18 18:14:26] 127.0.0.1 [18/Oct/2026:18:14:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 870 "-" "python-httpx/0.28.1"
+[priority] plan-prio-bd869eef demote=1/2n retire=0/0n protect=3 nodes=25 ms=2.0 usage=0.0472
+[2026-10-18 18:14:27] Decode batch, #running-req: 1, #token: 2911, token usage: 0.05, cuda graph: True, gen throughput (token/s): 71.09, #queue-req: 0
+[decode] 1487779-2t0-60487c69 decode_ms=3992.06 output_tokens=105
+[ctl] 1487779-2t0-60487c69 queue_ms=0.0 advance_ms=6.6 pre_ms=5.2 post_ms=0.2
+[2026-10-18 18:14:27] 127.0.0.1 [18/Oct/2026:18:14:16 -0400] "POST /v1/chat/completions HTTP/1.1" 200 924 "-" "python-httpx/0.28.1"
+[priority] plan-prio-d89f608e demote=1/2n retire=0/0n protect=4 nodes=29 ms=2.0 usage=0.0000
+[call] 1487777 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=-0.00 done=1545/1545 kind=hold state=done site=Agent.step:175
+[call] 1487508 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=-0.00 done=5069/5069 kind=hold state=done site=Agent.step:175
+[call] 1487690 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487690 Agent.act kills ['observation', 'steps']
+[timing] 1487690 err_s=-0.00 done=2156/2156 kind=hold state=done site=Agent.step:175
+[call] 1487779 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1487779 Agent.act kills ['observation', 'steps']
+[timing] 1487779 err_s=-0.00 done=1629/1629 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-d4b1227c demote=2/0n retire=0/0n protect=4 nodes=29 ms=2.3 usage=0.0918
+[2026-10-18 18:14:33] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 1545, token usage: 0.26, #running-req: 0, #queue-req: 1, cuda graph: False, input throughput (token/s): 327.96
+[promote] plan-hold-30df5ec4 tokens=1544 device=1544 host=0 started=0 free=3028 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-30df5ec4 tokens=1544 duration_ms=3401.37
+[2026-10-18 18:14:36] Prefill batch, #new-seq: 3, #new-token: 4096, #cached-token: 7225, token usage: 0.35, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1193.70
+[serve] 1487777-3t0-84641f2f prompt_tokens=5817 cached_tokens=1545 cached_device=1545 cached_host=0 ttft_ms=8203.34 inflight_prefill=3 inflight_decode=1
+[serve] 1487508-6t0-18015065 prompt_tokens=8796 cached_tokens=5069 cached_device=5069 cached_host=0 ttft_ms=8068.95 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-ad537323 demote=10/0n retire=0/0n protect=4 nodes=33 ms=5.8 usage=0.3493
+[2026-10-18 18:14:38] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 1629, token usage: 0.36, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1976.65
+[serve] 1487690-4t0-f1d88c68 prompt_tokens=4556 cached_tokens=2156 cached_device=2156 cached_host=0 ttft_ms=9662.67 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-30eadece tokens=5064 device=5064 host=0 started=0 free=2445 reserve=4096 ms=0.9
+[promote-rpc] plan-hold-30eadece tokens=5064 duration_ms=2071.93
+[2026-10-18 18:14:39] Prefill batch, #new-seq: 1, #new-token: 891, #cached-token: 0, token usage: 0.36, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 6319.10
+[priority] plan-prio-38f8032a demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.4 usage=0.3639
+[serve] 1487779-3t0-531baecb prompt_tokens=4409 cached_tokens=1629 cached_device=1629 cached_host=0 ttft_ms=9800.33 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-f0c2c12e demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.3640
+[2026-10-18 18:14:40] Decode batch, #running-req: 4, #token: 22491, token usage: 0.37, cuda graph: True, gen throughput (token/s): 10.31, #queue-req: 0
+[decode] 1487777-3t0-84641f2f decode_ms=5321.20 output_tokens=61
+[ctl] 1487777-3t0-84641f2f queue_ms=0.0 advance_ms=13.2 pre_ms=9.7 post_ms=0.4
+[2026-10-18 18:14:41] 127.0.0.1 [18/Oct/2026:18:14:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 752 "-" "python-httpx/0.28.1"
+[priority] plan-prio-030e03ff demote=1/3n retire=0/0n protect=1 nodes=12 ms=1.7 usage=0.2788
+[decode] 1487779-3t0-531baecb decode_ms=3050.63 output_tokens=72
+[ctl] 1487779-3t0-531baecb queue_ms=0.1 advance_ms=11.2 pre_ms=7.9 post_ms=0.3
+[2026-10-18 18:14:42] 127.0.0.1 [18/Oct/2026:18:14:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 788 "-" "python-httpx/0.28.1"
+[decode] 1487690-4t0-f1d88c68 decode_ms=3740.19 output_tokens=73
+[ctl] 1487690-4t0-f1d88c68 queue_ms=0.1 advance_ms=12.9 pre_ms=7.8 post_ms=0.3
+[2026-10-18 18:14:42] 127.0.0.1 [18/Oct/2026:18:14:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 781 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6194ddab demote=1/3n retire=0/0n protect=2 nodes=17 ms=1.8 usage=0.1444
+[2026-10-18 18:14:42] Decode batch, #running-req: 2, #token: 8870, token usage: 0.14, cuda graph: True, gen throughput (token/s): 86.65, #queue-req: 0
+[priority] plan-prio-a91b47d1 demote=1/2n retire=0/0n protect=3 nodes=24 ms=2.1 usage=0.1444
+[decode] 1487508-6t0-18015065 decode_ms=6990.64 output_tokens=105
+[ctl] 1487508-6t0-18015065 queue_ms=0.0 advance_ms=24.6 pre_ms=15.3 post_ms=0.5
+[2026-10-18 18:14:43] 127.0.0.1 [18/Oct/2026:18:14:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 928 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1d2377a9 demote=1/2n retire=0/0n protect=4 nodes=36 ms=4.0 usage=0.0000
+[call] 1487777 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=+0.00 done=3665/3665 kind=hold state=done site=Agent.step:175
+[call] 1487779 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1487779 Agent.act kills ['observation', 'steps']
+[timing] 1487779 err_s=-0.00 done=3019/3019 kind=hold state=done site=Agent.step:175
+[call] 1487690 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487690 Agent.act kills ['observation', 'steps']
+[timing] 1487690 err_s=-0.00 done=3348/3348 kind=hold state=done site=Agent.step:175
+[call] 1487508 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=+0.00 done=6918/6918 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-475a86d1 demote=3/0n retire=0/0n protect=4 nodes=36 ms=3.6 usage=0.1260
+[2026-10-18 18:14:48] Prefill batch, #new-seq: 1, #new-token: 4076, #cached-token: 3665, token usage: 0.28, #running-req: 0, #queue-req: 1, cuda graph: False, input throughput (token/s): 92.43
+[serve] 1487777-4t0-1be49138 prompt_tokens=7741 cached_tokens=3665 cached_device=3665 cached_host=0 ttft_ms=4976.56 inflight_prefill=3 inflight_decode=1
+[promote] plan-hold-5d7cec81 tokens=3664 device=3664 host=0 started=0 free=3145 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-5d7cec81 tokens=3664 duration_ms=3211.95
+[2026-10-18 18:14:51] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 6367, token usage: 0.40, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1925.53
+[serve] 1487779-4t0-f7b41265 prompt_tokens=5880 cached_tokens=3019 cached_device=3019 cached_host=0 ttft_ms=6655.73 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-4b64bd62 demote=13/0n retire=0/0n protect=4 nodes=40 ms=8.9 usage=0.4038
+[2026-10-18 18:14:51] Prefill batch, #new-seq: 2, #new-token: 908, #cached-token: 6918, token usage: 0.40, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 6570.31
+[serve] 1487690-5t0-aac4b4c8 prompt_tokens=5200 cached_tokens=3348 cached_device=3348 cached_host=0 ttft_ms=7242.32 inflight_prefill=1 inflight_decode=3
+[serve] 1487508-7t0-00535544 prompt_tokens=7209 cached_tokens=6918 cached_device=6918 cached_host=0 ttft_ms=6040.44 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-242b13dd tokens=3016 device=3016 host=0 started=0 free=2233 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-242b13dd tokens=3016 duration_ms=604.98
+[priority] plan-prio-3171d0b8 demote=0/0n retire=0/0n protect=1 nodes=18 ms=1.2 usage=0.4039
+[promote] plan-hold-edb50870 tokens=6912 device=6912 host=0 started=0 free=2225 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-edb50870 tokens=6912 duration_ms=43.38
+[priority] plan-prio-95521e8e demote=0/0n retire=0/0n protect=1 nodes=19 ms=1.3 usage=0.4040
+[2026-10-18 18:14:52] Decode batch, #running-req: 4, #token: 24843, token usage: 0.40, cuda graph: True, gen throughput (token/s): 6.66, #queue-req: 0
+[priority] plan-prio-6b32f02c demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.4053
+[priority] plan-prio-389aefb4 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.4053
+[2026-10-18 18:14:53] Decode batch, #running-req: 4, #token: 25003, token usage: 0.41, cuda graph: True, gen throughput (token/s): 90.52, #queue-req: 0
+[decode] 1487777-4t0-1be49138 decode_ms=5355.45 output_tokens=60
+[ctl] 1487777-4t0-1be49138 queue_ms=0.1 advance_ms=21.8 pre_ms=13.9 post_ms=0.6
+[2026-10-18 18:14:54] 127.0.0.1 [18/Oct/2026:18:14:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 747 "-" "python-httpx/0.28.1"
+[priority] plan-prio-cd92a92d demote=1/2n retire=0/0n protect=1 nodes=14 ms=2.5 usage=0.2874
+[decode] 1487690-5t0-aac4b4c8 decode_ms=2781.16 output_tokens=64
+[ctl] 1487690-5t0-aac4b4c8 queue_ms=0.0 advance_ms=13.9 pre_ms=8.3 post_ms=0.5
+[2026-10-18 18:14:54] 127.0.0.1 [18/Oct/2026:18:14:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 757 "-" "python-httpx/0.28.1"
+[close] 1487690 calls=5
+[2026-10-18 18:14:54] 127.0.0.1 [18/Oct/2026:18:14:54 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-9c133359 demote=1/3n retire=0/0n protect=2 nodes=22 ms=2.5 usage=0.2085
+[priority] plan-prio-b69d0c64 demote=0/0n retire=5/3n protect=1 nodes=14 ms=3.4 usage=0.2086
+[2026-10-18 18:14:55] Decode batch, #running-req: 2, #token: 12860, token usage: 0.21, cuda graph: True, gen throughput (token/s): 66.48, #queue-req: 0
+[decode] 1487779-4t0-f7b41265 decode_ms=4569.40 output_tokens=94
+[ctl] 1487779-4t0-f7b41265 queue_ms=0.0 advance_ms=15.8 pre_ms=9.3 post_ms=0.4
+[2026-10-18 18:14:55] 127.0.0.1 [18/Oct/2026:18:14:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 825 "-" "python-httpx/0.28.1"
+[close] 1487779 calls=4
+[2026-10-18 18:14:55] 127.0.0.1 [18/Oct/2026:18:14:55 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-438e668c demote=1/2n retire=0/0n protect=2 nodes=21 ms=2.7 usage=0.1189
+[priority] plan-prio-be1e73f4 demote=0/0n retire=4/2n protect=1 nodes=14 ms=3.2 usage=0.1189
+[decode] 1487508-7t0-00535544 decode_ms=4344.72 output_tokens=105
+[ctl] 1487508-7t0-00535544 queue_ms=0.1 advance_ms=29.5 pre_ms=13.3 post_ms=0.6
+[2026-10-18 18:14:56] 127.0.0.1 [18/Oct/2026:18:14:45 -0400] "POST /v1/chat/completions HTTP/1.1" 200 928 "-" "python-httpx/0.28.1"
+[priority] plan-prio-7e3cfbd8 demote=1/2n retire=0/0n protect=2 nodes=28 ms=3.6 usage=0.0000
+[call] 1487777 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=-0.00 done=5681/5681 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-32af137d demote=4/2n retire=0/0n protect=2 nodes=28 ms=4.7 usage=0.0965
+[2026-10-18 18:14:56] Prefill batch, #new-seq: 1, #new-token: 246, #cached-token: 5681, token usage: 0.10, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 185.06
+[serve] 1487777-5t0-bb2b4dbc prompt_tokens=5927 cached_tokens=5681 cached_device=5681 cached_host=0 ttft_ms=225.65 inflight_prefill=0 inflight_decode=1
+[2026-10-18 18:14:57] Decode batch, #running-req: 1, #token: 5951, token usage: 0.10, cuda graph: True, gen throughput (token/s): 23.34, #queue-req: 0
+[promote] plan-hold-16ef5d32 tokens=5680 device=5680 host=0 started=0 free=1633 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-16ef5d32 tokens=5680 duration_ms=22.81
+[call] 1487508 #7 Agent.step:175 predicted=hit ctx=(8,)
+[invalidate] 1487508 Agent.act kills ['observation', 'steps']
+[timing] 1487508 err_s=-0.00 done=7064/7064 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-5f646911 demote=7/2n retire=0/0n protect=2 nodes=30 ms=7.1 usage=0.0972
+[2026-10-18 18:14:58] Prefill batch, #new-seq: 1, #new-token: 292, #cached-token: 7063, token usage: 0.21, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 131.66
+[serve] 1487508-8t0-3b9c43bb prompt_tokens=7355 cached_tokens=7063 cached_device=7063 cached_host=0 ttft_ms=356.45 inflight_prefill=0 inflight_decode=2
+[decode] 1487777-5t0-bb2b4dbc decode_ms=2411.75 output_tokens=60
+[ctl] 1487777-5t0-bb2b4dbc queue_ms=0.0 advance_ms=29.0 pre_ms=12.7 post_ms=0.4
+[2026-10-18 18:14:59] 127.0.0.1 [18/Oct/2026:18:14:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 751 "-" "python-httpx/0.28.1"
+[priority] plan-prio-8049470e demote=1/2n retire=0/0n protect=2 nodes=31 ms=3.1 usage=0.1200
+[2026-10-18 18:14:59] Decode batch, #running-req: 1, #token: 7374, token usage: 0.12, cuda graph: True, gen throughput (token/s): 31.57, #queue-req: 0
+[promote] plan-hold-64c57705 tokens=7056 device=7056 host=0 started=0 free=1288 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-64c57705 tokens=7056 duration_ms=2.71
+[promote] plan-hold-0235f5bb tokens=5776 device=5776 host=0 started=0 free=1258 reserve=4096 ms=0.9
+[promote-rpc] plan-hold-0235f5bb tokens=5776 duration_ms=26.73
+[2026-10-18 18:15:00] Decode batch, #running-req: 1, #token: 7414, token usage: 0.12, cuda graph: True, gen throughput (token/s): 27.73, #queue-req: 0
+[call] 1488143 #0 Agent.step:175 ctx=(1,)
+[timing] 1488143 unplanned site=Agent.step:175
+[priority] plan-prio-813a0b21 demote=0/0n retire=0/0n protect=3 nodes=33 ms=2.1 usage=0.1207
+[2026-10-18 18:15:00] Prefill batch, #new-seq: 1, #new-token: 141, #cached-token: 408, token usage: 0.12, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 121.35
+[serve] 1488143-1t0-17251fde prompt_tokens=549 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=196.19 inflight_prefill=0 inflight_decode=2
+[call] 1487777 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=+0.00 done=5776/5782 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-bba782f0 demote=5/4n retire=0/0n protect=3 nodes=34 ms=6.1 usage=0.1233
+[call] 1488154 #0 Agent.step:175 ctx=(1,)
+[timing] 1488154 unplanned site=Agent.step:175
+[promote] plan-hold-e022062d tokens=5776 device=5776 host=0 started=0 free=3067 reserve=4096 ms=0.9
+[promote-rpc] plan-hold-e022062d tokens=5776 duration_ms=794.49
+[2026-10-18 18:15:03] Prefill batch, #new-seq: 1, #new-token: 2991, #cached-token: 5781, token usage: 0.26, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 48.77
+[serve] 1487777-6t0-291a369f prompt_tokens=8772 cached_tokens=5781 cached_device=5781 cached_host=0 ttft_ms=2686.40 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-051f616d demote=0/0n retire=0/0n protect=4 nodes=35 ms=2.4 usage=0.2617
+[2026-10-18 18:15:03] Prefill batch, #new-seq: 1, #new-token: 137, #cached-token: 408, token usage: 0.26, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 29292.87
+[serve] 1488154-1t0-e4247da8 prompt_tokens=545 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=2426.76 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-3aa66ef4 tokens=408 device=408 host=0 started=0 free=2926 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-3aa66ef4 tokens=408 duration_ms=97.63
+[promote] plan-hold-3319f799 tokens=408 device=408 host=0 started=0 free=2922 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-3319f799 tokens=408 duration_ms=23.48
+[2026-10-18 18:15:05] Decode batch, #running-req: 4, #token: 16192, token usage: 0.26, cuda graph: True, gen throughput (token/s): 30.01, #queue-req: 0
+[priority] plan-prio-cf05bdaa demote=0/0n retire=0/0n protect=3 nodes=21 ms=1.7 usage=0.2637
+[priority] plan-prio-b6cc224f demote=0/0n retire=0/0n protect=3 nodes=21 ms=1.5 usage=0.2638
+[decode] 1487508-8t0-3b9c43bb decode_ms=6775.08 output_tokens=105
+[ctl] 1487508-8t0-3b9c43bb queue_ms=0.0 advance_ms=33.7 pre_ms=14.9 post_ms=0.5
+[2026-10-18 18:15:05] 127.0.0.1 [18/Oct/2026:18:14:58 -0400] "POST /v1/chat/completions HTTP/1.1" 200 928 "-" "python-httpx/0.28.1"
+[priority] plan-prio-2ec602a4 demote=1/2n retire=0/0n protect=4 nodes=36 ms=3.9 usage=0.1492
+[decode] 1487777-6t0-291a369f decode_ms=2415.42 output_tokens=60
+[ctl] 1487777-6t0-291a369f queue_ms=0.0 advance_ms=27.7 pre_ms=14.5 post_ms=0.5
+[2026-10-18 18:15:06] 127.0.0.1 [18/Oct/2026:18:15:01 -0400] "POST /v1/chat/completions HTTP/1.1" 200 745 "-" "python-httpx/0.28.1"
+[priority] plan-prio-22842568 demote=1/2n retire=0/0n protect=4 nodes=36 ms=4.2 usage=0.0133
+[2026-10-18 18:15:06] Decode batch, #running-req: 2, #token: 614, token usage: 0.01, cuda graph: True, gen throughput (token/s): 80.20, #queue-req: 0
+[decode] 1488143-1t0-17251fde decode_ms=5607.86 output_tokens=77
+[ctl] 1488143-1t0-17251fde queue_ms=0.0 advance_ms=2.0 pre_ms=1.5 post_ms=0.2
+[2026-10-18 18:15:06] 127.0.0.1 [18/Oct/2026:18:15:00 -0400] "POST /v1/chat/completions HTTP/1.1" 200 782 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3ae60714 demote=1/2n retire=0/0n protect=4 nodes=36 ms=2.5 usage=0.0100
+[decode] 1488154-1t0-e4247da8 decode_ms=2746.23 output_tokens=73
+[ctl] 1488154-1t0-e4247da8 queue_ms=0.1 advance_ms=2.0 pre_ms=1.6 post_ms=0.1
+[2026-10-18 18:15:06] 127.0.0.1 [18/Oct/2026:18:15:01 -0400] "POST /v1/chat/completions HTTP/1.1" 200 788 "-" "python-httpx/0.28.1"
+[priority] plan-prio-fd14b37b demote=1/2n retire=0/0n protect=4 nodes=36 ms=2.5 usage=0.0000
+[promote] plan-hold-746f0d6b tokens=7248 device=7248 host=0 started=0 free=2693 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-746f0d6b tokens=7248 duration_ms=2.21
+[promote] plan-hold-8460efed tokens=448 device=448 host=0 started=0 free=2693 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-8460efed tokens=448 duration_ms=0.54
+[promote] plan-hold-c8a2b4d5 tokens=448 device=448 host=0 started=0 free=2693 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-c8a2b4d5 tokens=448 duration_ms=0.45
+[close] 1487508 calls=8
+[2026-10-18 18:15:07] 127.0.0.1 [18/Oct/2026:18:15:07 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-95c63a4c demote=0/0n retire=8/4n protect=3 nodes=23 ms=8.2 usage=0.0000
+[call] 1487777 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1487777 Agent.act kills ['observation', 'steps']
+[timing] 1487777 err_s=+0.00 done=7248/7255 kind=hold state=queued site=Agent.step:175
+[call] 1488143 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1488143 Agent.act kills ['observation', 'steps']
+[timing] 1488143 err_s=+0.00 done=448/452 kind=hold state=queued site=Agent.step:175
+[call] 1488154 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=+0.00 done=448/448 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-dfccfa68 demote=6/0n retire=0/0n protect=3 nodes=23 ms=6.7 usage=0.1847
+[call] 1490241 #0 Agent.step:175 ctx=(1,)
+[timing] 1490241 unplanned site=Agent.step:175
+[2026-10-18 18:15:13] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 7255, token usage: 0.25, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 14.22
+[promote] plan-hold-2d2618c4 tokens=7248 device=7248 host=0 started=0 free=4297 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-2d2618c4 tokens=7248 duration_ms=3652.84
+[2026-10-18 18:15:16] Prefill batch, #new-seq: 3, #new-token: 4096, #cached-token: 900, token usage: 0.28, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1631.69
+[serve] 1487777-7t0-c8f93707 prompt_tokens=13171 cached_tokens=7255 cached_device=7255 cached_host=0 ttft_ms=7743.49 inflight_prefill=3 inflight_decode=1
+[serve] 1488143-2t0-ebc09921 prompt_tokens=2559 cached_tokens=452 cached_device=452 cached_host=0 ttft_ms=7495.82 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-2752691e demote=2/0n retire=0/0n protect=4 nodes=26 ms=2.6 usage=0.2804
+[2026-10-18 18:15:16] Prefill batch, #new-seq: 2, #new-token: 1698, #cached-token: 408, token usage: 0.28, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 4220.05
+[serve] 1488154-2t0-b51e48fb prompt_tokens=2158 cached_tokens=448 cached_device=448 cached_host=0 ttft_ms=8334.44 inflight_prefill=1 inflight_decode=3
+[serve] 1490241-1t0-62664eb3 prompt_tokens=565 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=3761.62 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-fdd09c6e tokens=448 device=448 host=0 started=0 free=2595 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-fdd09c6e tokens=448 duration_ms=966.49
+[priority] plan-prio-723760ab demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.4 usage=0.2806
+[promote] plan-hold-e416d40e tokens=408 device=408 host=0 started=0 free=2587 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-e416d40e tokens=408 duration_ms=41.11
+[priority] plan-prio-d21a142e demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.4 usage=0.2807
+[2026-10-18 18:15:18] Decode batch, #running-req: 4, #token: 17374, token usage: 0.28, cuda graph: True, gen throughput (token/s): 12.23, #queue-req: 0
+[decode] 1488154-2t0-b51e48fb decode_ms=2788.89 output_tokens=69
+[ctl] 1488154-2t0-b51e48fb queue_ms=0.0 advance_ms=5.6 pre_ms=4.0 post_ms=0.2
+[2026-10-18 18:15:19] 127.0.0.1 [18/Oct/2026:18:15:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 791 "-" "python-httpx/0.28.1"
+[priority] plan-prio-999c20bd demote=1/2n retire=0/0n protect=2 nodes=10 ms=0.9 usage=0.2554
+[decode] 1488143-2t0-ebc09921 decode_ms=3920.69 output_tokens=73
+[ctl] 1488143-2t0-ebc09921 queue_ms=0.1 advance_ms=6.0 pre_ms=4.8 post_ms=0.2
+[2026-10-18 18:15:19] 127.0.0.1 [18/Oct/2026:18:15:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[priority] plan-prio-e32fc758 demote=1/2n retire=0/0n protect=3 nodes=13 ms=1.1 usage=0.0104
+[decode] 1487777-7t0-c8f93707 decode_ms=3964.71 output_tokens=74
+[ctl] 1487777-7t0-c8f93707 queue_ms=0.1 advance_ms=39.0 pre_ms=24.3 post_ms=0.8
+[2026-10-18 18:15:19] 127.0.0.1 [18/Oct/2026:18:15:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 813 "-" "python-httpx/0.28.1"
+[close] 1487777 calls=7
+[2026-10-18 18:15:20] 127.0.0.1 [18/Oct/2026:18:15:20 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-2f3daa7b demote=1/3n retire=0/0n protect=4 nodes=28 ms=5.3 usage=0.0104
+[2026-10-18 18:15:20] Decode batch, #running-req: 1, #token: 641, token usage: 0.01, cuda graph: True, gen throughput (token/s): 92.92, #queue-req: 0
+[priority] plan-prio-48b8494a demote=0/0n retire=7/3n protect=3 nodes=13 ms=9.1 usage=0.0104
+[priority] plan-prio-95862a23 demote=0/0n retire=0/0n protect=2 nodes=12 ms=0.7 usage=0.0105
+[priority] plan-prio-1f01193f demote=0/0n retire=0/0n protect=2 nodes=12 ms=0.7 usage=0.0106
+[decode] 1490241-1t0-62664eb3 decode_ms=3358.75 output_tokens=85
+[ctl] 1490241-1t0-62664eb3 queue_ms=0.1 advance_ms=2.0 pre_ms=1.6 post_ms=0.2
+[2026-10-18 18:15:20] 127.0.0.1 [18/Oct/2026:18:15:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 836 "-" "python-httpx/0.28.1"
+[priority] plan-prio-ef6593e5 demote=1/2n retire=0/0n protect=3 nodes=13 ms=1.0 usage=0.0000
+[call] 1488154 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=-0.00 done=1287/1287 kind=hold state=done site=Agent.step:175
+[call] 1488143 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1488143 Agent.act kills ['observation', 'steps']
+[timing] 1488143 err_s=-0.00 done=1491/1491 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-3174a5b5 demote=2/2n retire=0/0n protect=3 nodes=13 ms=1.3 usage=0.0537
+[call] 1490241 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=+0.00 done=468/468 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:15:24] Prefill batch, #new-seq: 1, #new-token: 2014, #cached-token: 1287, token usage: 0.11, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 231.66
+[serve] 1488154-3t0-fde10d33 prompt_tokens=3301 cached_tokens=1287 cached_device=1287 cached_host=0 ttft_ms=2500.51 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-f7c2584f demote=2/2n retire=0/0n protect=3 nodes=14 ms=1.5 usage=0.1106
+[call] 1490978 #0 Agent.step:175 ctx=(1,)
+[timing] 1490978 unplanned site=Agent.step:175
+[2026-10-18 18:15:26] Prefill batch, #new-seq: 1, #new-token: 2412, #cached-token: 1491, token usage: 0.15, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1060.22
+[serve] 1488143-3t0-cf033e1a prompt_tokens=3903 cached_tokens=1491 cached_device=1491 cached_host=0 ttft_ms=4237.76 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-a48bdb8b demote=1/0n retire=0/0n protect=3 nodes=15 ms=1.1 usage=0.1502
+[2026-10-18 18:15:27] Prefill batch, #new-seq: 1, #new-token: 2371, #cached-token: 468, token usage: 0.15, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2112.60
+[serve] 1490241-2t0-c6a53c19 prompt_tokens=2839 cached_tokens=468 cached_device=468 cached_host=0 ttft_ms=4975.11 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-c1870d69 tokens=1280 device=1280 host=0 started=0 free=2355 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-c1870d69 tokens=1280 duration_ms=1137.85
+[2026-10-18 18:15:27] Prefill batch, #new-seq: 1, #new-token: 153, #cached-token: 408, token usage: 0.15, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 22255.08
+[serve] 1490978-1t0-4e6a425a prompt_tokens=561 cached_tokens=408 cached_device=408 cached_host=0 ttft_ms=1680.53 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-a1e2e686 demote=0/0n retire=0/0n protect=4 nodes=18 ms=1.2 usage=0.1527
+[promote] plan-hold-ac4b4ea6 tokens=1488 device=1488 host=0 started=0 free=2347 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-ac4b4ea6 tokens=1488 duration_ms=35.17
+[promote] plan-hold-a4a179ae tokens=464 device=464 host=0 started=0 free=2343 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-a4a179ae tokens=464 duration_ms=21.85
+[promote] plan-hold-58f50306 tokens=408 device=408 host=0 started=0 free=2339 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-58f50306 tokens=408 duration_ms=21.60
+[2026-10-18 18:15:28] Decode batch, #running-req: 4, #token: 9504, token usage: 0.15, cuda graph: True, gen throughput (token/s): 15.23, #queue-req: 0
+[priority] plan-prio-fcddbcf8 demote=0/0n retire=0/0n protect=3 nodes=15 ms=1.0 usage=0.1551
+[priority] plan-prio-85319aef demote=0/0n retire=0/0n protect=3 nodes=15 ms=0.8 usage=0.1552
+[priority] plan-prio-22cee90c demote=0/0n retire=0/0n protect=2 nodes=10 ms=0.6 usage=0.1554
+[priority] plan-prio-b1f3e223 demote=0/0n retire=0/0n protect=2 nodes=10 ms=0.6 usage=0.1555
+[decode] 1490978-1t0-4e6a425a decode_ms=1872.23 output_tokens=51
+[ctl] 1490978-1t0-4e6a425a queue_ms=0.1 advance_ms=2.0 pre_ms=1.5 post_ms=0.1
+[2026-10-18 18:15:29] 127.0.0.1 [18/Oct/2026:18:15:25 -0400] "POST /v1/chat/completions HTTP/1.1" 200 651 "-" "python-httpx/0.28.1"
+[priority] plan-prio-0542cad4 demote=1/2n retire=0/0n protect=2 nodes=10 ms=0.8 usage=0.1527
+[priority] plan-prio-92e1c021 demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.4 usage=0.1528
+[priority] plan-prio-d53890a1 demote=0/0n retire=0/0n protect=1 nodes=7 ms=0.4 usage=0.1528
+[decode] 1488154-3t0-fde10d33 decode_ms=5655.90 output_tokens=68
+[ctl] 1488154-3t0-fde10d33 queue_ms=0.0 advance_ms=9.4 pre_ms=7.0 post_ms=0.3
+[2026-10-18 18:15:29] 127.0.0.1 [18/Oct/2026:18:15:21 -0400] "POST /v1/chat/completions HTTP/1.1" 200 769 "-" "python-httpx/0.28.1"
+[priority] plan-prio-4d73cd27 demote=1/2n retire=0/0n protect=2 nodes=12 ms=1.1 usage=0.1053
+[decode] 1490241-2t0-c6a53c19 decode_ms=2688.14 output_tokens=70
+[ctl] 1490241-2t0-c6a53c19 queue_ms=0.0 advance_ms=6.3 pre_ms=5.3 post_ms=0.2
+[2026-10-18 18:15:30] 127.0.0.1 [18/Oct/2026:18:15:22 -0400] "POST /v1/chat/completions HTTP/1.1" 200 713 "-" "python-httpx/0.28.1"
+[2026-10-18 18:15:30] Decode batch, #running-req: 2, #token: 3974, token usage: 0.06, cuda graph: True, gen throughput (token/s): 93.03, #queue-req: 0
+[priority] plan-prio-2e8bcee1 demote=1/2n retire=0/0n protect=3 nodes=15 ms=1.3 usage=0.0647
+[decode] 1488143-3t0-cf033e1a decode_ms=4072.95 output_tokens=77
+[ctl] 1488143-3t0-cf033e1a queue_ms=0.1 advance_ms=9.7 pre_ms=7.0 post_ms=0.3
+[2026-10-18 18:15:30] 127.0.0.1 [18/Oct/2026:18:15:21 -0400] "POST /v1/chat/completions HTTP/1.1" 200 796 "-" "python-httpx/0.28.1"
+[priority] plan-prio-c79b51ba demote=1/2n retire=0/0n protect=4 nodes=20 ms=1.7 usage=0.0000
+[promote] plan-hold-96353e1b tokens=464 device=464 host=0 started=0 free=2089 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-96353e1b tokens=464 duration_ms=0.42
+[call] 1490978 #1 Agent.step:175 predicted=hit ctx=(2,)
+[invalidate] 1490978 Agent.act kills ['observation', 'steps']
+[timing] 1490978 err_s=+0.00 done=464/464 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-042a6cf4 demote=1/2n retire=0/0n protect=4 nodes=20 ms=1.4 usage=0.0284
+[call] 1488154 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=-0.00 done=2276/2276 kind=hold state=done site=Agent.step:175
+[call] 1490241 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=-0.00 done=1643/1643 kind=hold state=done site=Agent.step:175
+[call] 1488143 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1488143 Agent.act kills ['observation', 'steps']
+[timing] 1488143 err_s=-0.00 done=2681/2681 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:15:32] Prefill batch, #new-seq: 1, #new-token: 1282, #cached-token: 464, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 31.14
+[serve] 1490978-2t0-0eaa0358 prompt_tokens=1746 cached_tokens=464 cached_device=464 cached_host=0 ttft_ms=1008.22 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-420113a9 demote=3/2n retire=0/0n protect=4 nodes=21 ms=2.4 usage=0.0284
+[priority] plan-prio-400fca7c demote=5/0n retire=0/0n protect=4 nodes=21 ms=2.9 usage=0.1456
+[2026-10-18 18:15:37] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 3919, token usage: 0.24, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 270.48
+[serve] 1488154-4t0-89a78651 prompt_tokens=5306 cached_tokens=2276 cached_device=2276 cached_host=0 ttft_ms=5098.01 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-a31dd64e tokens=2272 device=2272 host=0 started=0 free=1967 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-a31dd64e tokens=2272 duration_ms=3357.85
+[2026-10-18 18:15:38] Prefill batch, #new-seq: 2, #new-token: 3607, #cached-token: 2681, token usage: 0.24, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2726.18
+[promote] plan-hold-27ce6a08 tokens=464 device=464 host=0 started=0 free=1963 reserve=4096 ms=0.1
+[serve] 1490241-3t0-c507bd20 prompt_tokens=3772 cached_tokens=1643 cached_device=1643 cached_host=0 ttft_ms=6533.87 inflight_prefill=1 inflight_decode=3
+[serve] 1488143-4t0-106ec28d prompt_tokens=5225 cached_tokens=2681 cached_device=2681 cached_host=0 ttft_ms=6282.79 inflight_prefill=0 inflight_decode=4
+[promote-rpc] plan-hold-27ce6a08 tokens=464 duration_ms=1479.18
+[priority] plan-prio-a8fdacce demote=0/0n retire=0/0n protect=3 nodes=23 ms=1.4 usage=0.2414
+[promote] plan-hold-29ec3cfb tokens=1640 device=1640 host=0 started=0 free=1955 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-29ec3cfb tokens=1640 duration_ms=37.77
+[priority] plan-prio-60fae92f demote=0/0n retire=0/0n protect=3 nodes=24 ms=1.4 usage=0.2416
+[promote] plan-hold-9db481c5 tokens=2680 device=2680 host=0 started=0 free=1947 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-9db481c5 tokens=2680 duration_ms=38.01
+[priority] plan-prio-adf78914 demote=0/0n retire=0/0n protect=2 nodes=18 ms=1.0 usage=0.2420
+[priority] plan-prio-d86bef73 demote=0/0n retire=0/0n protect=2 nodes=18 ms=1.0 usage=0.2421
+[priority] plan-prio-050abf85 demote=0/0n retire=0/0n protect=1 nodes=13 ms=0.7 usage=0.2422
+[priority] plan-prio-c79a9989 demote=0/0n retire=0/0n protect=1 nodes=13 ms=0.7 usage=0.2422
+[priority] plan-prio-328c8b7c demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.2 usage=0.2426
+[priority] plan-prio-7efc0810 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.2 usage=0.2427
+[2026-10-18 18:15:39] Decode batch, #running-req: 4, #token: 14958, token usage: 0.24, cuda graph: True, gen throughput (token/s): 13.84, #queue-req: 0
+[decode] 1488154-4t0-89a78651 decode_ms=4266.07 output_tokens=70
+[ctl] 1488154-4t0-89a78651 queue_ms=0.0 advance_ms=14.0 pre_ms=9.5 post_ms=0.4
+[2026-10-18 18:15:41] 127.0.0.1 [18/Oct/2026:18:15:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 785 "-" "python-httpx/0.28.1"
+[decode] 1488143-4t0-106ec28d decode_ms=2802.67 output_tokens=71
+[ctl] 1488143-4t0-106ec28d queue_ms=0.0 advance_ms=14.8 pre_ms=9.6 post_ms=0.3
+[2026-10-18 18:15:41] 127.0.0.1 [18/Oct/2026:18:15:32 -0400] "POST /v1/chat/completions HTTP/1.1" 200 766 "-" "python-httpx/0.28.1"
+[priority] plan-prio-cfa2ece2 demote=1/2n retire=0/0n protect=1 nodes=13 ms=1.5 usage=0.0855
+[priority] plan-prio-edea1c52 demote=1/2n retire=0/0n protect=2 nodes=20 ms=1.7 usage=0.0855
+[2026-10-18 18:15:41] Decode batch, #running-req: 2, #token: 5257, token usage: 0.09, cuda graph: True, gen throughput (token/s): 98.97, #queue-req: 0
+[decode] 1490241-3t0-c507bd20 decode_ms=3265.43 output_tokens=84
+[ctl] 1490241-3t0-c507bd20 queue_ms=0.0 advance_ms=9.4 pre_ms=7.3 post_ms=0.3
+[2026-10-18 18:15:41] 127.0.0.1 [18/Oct/2026:18:15:32 -0400] "POST /v1/chat/completions HTTP/1.1" 200 795 "-" "python-httpx/0.28.1"
+[priority] plan-prio-d00237a5 demote=1/3n retire=0/0n protect=3 nodes=25 ms=2.0 usage=0.0298
+[decode] 1490978-2t0-0eaa0358 decode_ms=10079.96 output_tokens=102
+[ctl] 1490978-2t0-0eaa0358 queue_ms=0.0 advance_ms=5.0 pre_ms=3.4 post_ms=0.2
+[2026-10-18 18:15:42] 127.0.0.1 [18/Oct/2026:18:15:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 859 "-" "python-httpx/0.28.1"
+[priority] plan-prio-f4c18825 demote=1/2n retire=0/0n protect=4 nodes=27 ms=1.9 usage=0.0000
+[call] 1488154 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=-0.00 done=3772/3772 kind=hold state=done site=Agent.step:175
+[call] 1488143 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1488143 Agent.act kills ['observation', 'steps']
+[timing] 1488143 err_s=+0.00 done=3939/3939 kind=hold state=done site=Agent.step:175
+[call] 1490241 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=-0.00 done=2690/2690 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-7a12159e demote=4/0n retire=0/0n protect=4 nodes=27 ms=3.0 usage=0.0931
+[call] 1490978 #2 Agent.step:175 predicted=hit ctx=(3,)
+[invalidate] 1490978 Agent.act kills ['observation', 'steps']
+[timing] 1490978 err_s=+0.00 done=1078/1078 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:15:45] Prefill batch, #new-seq: 1, #new-token: 1949, #cached-token: 3772, token usage: 0.18, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 526.23
+[serve] 1488154-5t0-b870f09d prompt_tokens=5721 cached_tokens=3772 cached_device=3772 cached_host=0 ttft_ms=2035.53 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-9a7433bd demote=7/3n retire=0/0n protect=4 nodes=28 ms=4.6 usage=0.1780
+[2026-10-18 18:15:48] Prefill batch, #new-seq: 1, #new-token: 1684, #cached-token: 3939, token usage: 0.29, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 714.75
+[serve] 1488143-5t0-f7ddd9d9 prompt_tokens=5623 cached_tokens=3939 cached_device=3939 cached_host=0 ttft_ms=4722.72 inflight_prefill=2 inflight_decode=2
+[promote] plan-hold-a99d4f79 tokens=2688 device=2688 host=0 started=0 free=2220 reserve=4096 ms=0.5
+[promote-rpc] plan-hold-a99d4f79 tokens=2688 duration_ms=2724.76
+[2026-10-18 18:15:49] Prefill batch, #new-seq: 2, #new-token: 4092, #cached-token: 3768, token usage: 0.29, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 937.06
+[serve] 1490241-4t0-a15ab2af prompt_tokens=6567 cached_tokens=2690 cached_device=2690 cached_host=0 ttft_ms=6057.82 inflight_prefill=1 inflight_decode=3
+[serve] 1490978-3t0-95625374 prompt_tokens=1293 cached_tokens=1078 cached_device=1078 cached_host=0 ttft_ms=5507.85 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-32406e2a demote=2/0n retire=0/0n protect=4 nodes=32 ms=2.3 usage=0.2927
+[promote] plan-hold-6d646d0a tokens=3768 device=3768 host=0 started=0 free=2212 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-6d646d0a tokens=3768 duration_ms=49.60
+[promote] plan-hold-ef733596 tokens=3936 device=3936 host=0 started=0 free=2208 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-ef733596 tokens=3936 duration_ms=24.11
+[promote] plan-hold-c8bcca87 tokens=1072 device=1072 host=0 started=0 free=2204 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-c8bcca87 tokens=1072 duration_ms=24.07
+[2026-10-18 18:15:50] Decode batch, #running-req: 4, #token: 18028, token usage: 0.29, cuda graph: True, gen throughput (token/s): 9.48, #queue-req: 0
+[priority] plan-prio-f652a864 demote=0/0n retire=0/0n protect=3 nodes=26 ms=1.4 usage=0.2934
+[priority] plan-prio-70ce2967 demote=0/0n retire=0/0n protect=2 nodes=17 ms=0.8 usage=0.2935
+[priority] plan-prio-cee98ec7 demote=0/0n retire=0/0n protect=2 nodes=17 ms=0.8 usage=0.2936
+[priority] plan-prio-560068c1 demote=0/0n retire=0/0n protect=1 nodes=10 ms=0.4 usage=0.2942
+[priority] plan-prio-837be1c6 demote=0/0n retire=0/0n protect=1 nodes=10 ms=0.4 usage=0.2943
+[priority] plan-prio-9c71ef93 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.2 usage=0.2951
+[priority] plan-prio-a060c754 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.2 usage=0.2952
+[2026-10-18 18:15:52] Decode batch, #running-req: 4, #token: 18188, token usage: 0.30, cuda graph: True, gen throughput (token/s): 97.07, #queue-req: 0
+[decode] 1490978-3t0-95625374 decode_ms=2566.11 output_tokens=63
+[ctl] 1490978-3t0-95625374 queue_ms=0.1 advance_ms=6.2 pre_ms=2.4 post_ms=0.2
+[2026-10-18 18:15:52] 127.0.0.1 [18/Oct/2026:18:15:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 737 "-" "python-httpx/0.28.1"
+[priority] plan-prio-ac2ab713 demote=1/2n retire=0/0n protect=1 nodes=10 ms=0.7 usage=0.2814
+[decode] 1488154-5t0-b870f09d decode_ms=7337.43 output_tokens=69
+[ctl] 1488154-5t0-b870f09d queue_ms=0.1 advance_ms=19.9 pre_ms=11.1 post_ms=0.5
+[2026-10-18 18:15:52] 127.0.0.1 [18/Oct/2026:18:15:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 779 "-" "python-httpx/0.28.1"
+[decode] 1488143-5t0-f7ddd9d9 decode_ms=4651.20 output_tokens=70
+[ctl] 1488143-5t0-f7ddd9d9 queue_ms=0.0 advance_ms=16.9 pre_ms=9.7 post_ms=0.4
+[2026-10-18 18:15:52] 127.0.0.1 [18/Oct/2026:18:15:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 737 "-" "python-httpx/0.28.1"
+[priority] plan-prio-8a94e077 demote=1/2n retire=0/0n protect=2 nodes=19 ms=1.8 usage=0.1080
+[close] 1488143 calls=5
+[2026-10-18 18:15:52] 127.0.0.1 [18/Oct/2026:18:15:52 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-d468fc98 demote=1/2n retire=0/0n protect=3 nodes=28 ms=2.3 usage=0.1080
+[priority] plan-prio-502937b1 demote=0/0n retire=5/2n protect=2 nodes=19 ms=3.8 usage=0.1081
+[2026-10-18 18:15:53] Decode batch, #running-req: 1, #token: 6659, token usage: 0.11, cuda graph: True, gen throughput (token/s): 58.21, #queue-req: 0
+[decode] 1490241-4t0-a15ab2af decode_ms=4250.77 output_tokens=109
+[ctl] 1490241-4t0-a15ab2af queue_ms=0.1 advance_ms=17.8 pre_ms=13.1 post_ms=0.4
+[2026-10-18 18:15:54] 127.0.0.1 [18/Oct/2026:18:15:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 958 "-" "python-httpx/0.28.1"
+[priority] plan-prio-bc9fa7be demote=1/2n retire=0/0n protect=3 nodes=26 ms=2.4 usage=0.0000
+[call] 1490978 #3 Agent.step:175 predicted=hit ctx=(4,)
+[invalidate] 1490978 Agent.act kills ['observation', 'steps']
+[timing] 1490978 err_s=+0.00 done=1184/1184 kind=hold state=done site=Agent.step:175
+[call] 1488154 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=+0.00 done=4729/4729 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-28923116 demote=3/0n retire=0/0n protect=3 nodes=26 ms=2.2 usage=0.0504
+[call] 1490241 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=+0.00 done=4618/4618 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:15:56] Prefill batch, #new-seq: 1, #new-token: 1911, #cached-token: 1184, token usage: 0.16, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 610.71
+[serve] 1490978-4t0-3516da68 prompt_tokens=3095 cached_tokens=1184 cached_device=1184 cached_host=0 ttft_ms=2093.33 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-49e5eb96 demote=5/0n retire=0/0n protect=3 nodes=27 ms=3.8 usage=0.1550
+[2026-10-18 18:15:58] Prefill batch, #new-seq: 1, #new-token: 2110, #cached-token: 4729, token usage: 0.27, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 851.64
+[serve] 1488154-6t0-5e9f8986 prompt_tokens=6839 cached_tokens=4729 cached_device=4729 cached_host=0 ttft_ms=4068.12 inflight_prefill=1 inflight_decode=2
+[priority] plan-prio-5a8482bd demote=4/0n retire=0/0n protect=3 nodes=28 ms=3.6 usage=0.2696
+[2026-10-18 18:16:00] Prefill batch, #new-seq: 1, #new-token: 2827, #cached-token: 4618, token usage: 0.27, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1467.78
+[serve] 1490241-5t0-da4a9d6b prompt_tokens=7445 cached_tokens=4618 cached_device=4618 cached_host=0 ttft_ms=4063.82 inflight_prefill=0 inflight_decode=3
+[promote] plan-hold-ff982666 tokens=1184 device=1184 host=0 started=0 free=684 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-ff982666 tokens=1184 duration_ms=1431.45
+[promote] plan-hold-e6812e2b tokens=4728 device=4728 host=0 started=0 free=681 reserve=4096 ms=0.7
+[promote-rpc] plan-hold-e6812e2b tokens=4728 duration_ms=34.15
+[promote] plan-hold-fe256247 tokens=4616 device=4616 host=0 started=0 free=678 reserve=4096 ms=0.7
+[promote-rpc] plan-hold-fe256247 tokens=4616 duration_ms=24.20
+[2026-10-18 18:16:01] Decode batch, #running-req: 3, #token: 16632, token usage: 0.27, cuda graph: True, gen throughput (token/s): 10.99, #queue-req: 0
+[priority] plan-prio-a394933e demote=0/0n retire=0/0n protect=2 nodes=26 ms=1.5 usage=0.2711
+[priority] plan-prio-548a7618 demote=0/0n retire=0/0n protect=2 nodes=26 ms=1.5 usage=0.2712
+[priority] plan-prio-b4ae4142 demote=0/0n retire=0/0n protect=1 nodes=15 ms=0.9 usage=0.2714
+[priority] plan-prio-fdc7164e demote=0/0n retire=0/0n protect=1 nodes=15 ms=0.9 usage=0.2715
+[decode] 1490978-4t0-3516da68 decode_ms=6083.48 output_tokens=60
+[ctl] 1490978-4t0-3516da68 queue_ms=0.1 advance_ms=9.1 pre_ms=6.6 post_ms=0.3
+[2026-10-18 18:16:02] 127.0.0.1 [18/Oct/2026:18:15:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 731 "-" "python-httpx/0.28.1"
+[priority] plan-prio-e7ad26d7 demote=1/2n retire=0/0n protect=2 nodes=20 ms=2.5 usage=0.2278
+[2026-10-18 18:16:02] Decode batch, #running-req: 2, #token: 14002, token usage: 0.23, cuda graph: True, gen throughput (token/s): 72.86, #queue-req: 0
+[decode] 1488154-6t0-5e9f8986 decode_ms=4195.24 output_tokens=69
+[ctl] 1488154-6t0-5e9f8986 queue_ms=0.0 advance_ms=24.4 pre_ms=13.7 post_ms=0.4
+[2026-10-18 18:16:03] 127.0.0.1 [18/Oct/2026:18:15:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 777 "-" "python-httpx/0.28.1"
+[priority] plan-prio-0530c477 demote=1/2n retire=0/0n protect=3 nodes=31 ms=2.9 usage=0.1223
+[priority] plan-prio-6780b37b demote=0/0n retire=0/0n protect=2 nodes=22 ms=1.2 usage=0.1224
+[priority] plan-prio-bf8cba68 demote=0/0n retire=0/0n protect=2 nodes=22 ms=1.0 usage=0.1224
+[2026-10-18 18:16:04] Decode batch, #running-req: 1, #token: 7548, token usage: 0.12, cuda graph: True, gen throughput (token/s): 32.05, #queue-req: 0
+[decode] 1490241-5t0-da4a9d6b decode_ms=4205.77 output_tokens=109
+[ctl] 1490241-5t0-da4a9d6b queue_ms=0.1 advance_ms=25.1 pre_ms=15.9 post_ms=0.5
+[2026-10-18 18:16:04] 127.0.0.1 [18/Oct/2026:18:15:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 958 "-" "python-httpx/0.28.1"
+[priority] plan-prio-c0e3d2ea demote=1/2n retire=0/0n protect=3 nodes=31 ms=3.1 usage=0.0000
+[call] 1490978 #4 Agent.step:175 predicted=hit ctx=(5,)
+[invalidate] 1490978 Agent.act kills ['observation', 'steps']
+[timing] 1490978 err_s=-0.00 done=2118/2118 kind=hold state=done site=Agent.step:175
+[call] 1488154 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=+0.00 done=5766/5766 kind=hold state=done site=Agent.step:175
+[priority] plan-prio-70230123 demote=4/0n retire=0/0n protect=3 nodes=31 ms=2.7 usage=0.0863
+[call] 1490241 #5 Agent.step:175 predicted=hit ctx=(6,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=-0.00 done=6034/6034 kind=hold state=done site=Agent.step:175
+[2026-10-18 18:16:07] Prefill batch, #new-seq: 1, #new-token: 3187, #cached-token: 2118, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 383.34
+[serve] 1490978-5t0-fef09426 prompt_tokens=5305 cached_tokens=2118 cached_device=2118 cached_host=0 ttft_ms=2923.83 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-84b68466 demote=6/0n retire=0/0n protect=3 nodes=32 ms=5.3 usage=0.1926
+[2026-10-18 18:16:08] Prefill batch, #new-seq: 1, #new-token: 1168, #cached-token: 5766, token usage: 0.29, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 4178.99
+[serve] 1488154-7t0-fa3c380e prompt_tokens=6934 cached_tokens=5766 cached_device=5766 cached_host=0 ttft_ms=3313.64 inflight_prefill=1 inflight_decode=2
+[promote] plan-hold-c11894be tokens=2112 device=2112 host=0 started=0 free=1009 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-c11894be tokens=2112 duration_ms=755.84
+[2026-10-18 18:16:08] Prefill batch, #new-seq: 1, #new-token: 294, #cached-token: 6034, token usage: 0.29, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 5178.05
+[serve] 1490241-6t0-28bcd461 prompt_tokens=6328 cached_tokens=6034 cached_device=6034 cached_host=0 ttft_ms=2092.60 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-f79c823f demote=5/0n retire=0/0n protect=3 nodes=35 ms=4.8 usage=0.2890
+[promote] plan-hold-b76efffe tokens=5760 device=5760 host=0 started=0 free=1003 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-b76efffe tokens=5760 duration_ms=34.39
+[promote] plan-hold-801c904a tokens=6032 device=6032 host=0 started=0 free=1000 reserve=4096 ms=0.9
+[promote-rpc] plan-hold-801c904a tokens=6032 duration_ms=23.88
+[2026-10-18 18:16:10] Decode batch, #running-req: 3, #token: 17853, token usage: 0.29, cuda graph: True, gen throughput (token/s): 18.50, #queue-req: 0
+[decode] 1490978-5t0-fef09426 decode_ms=3576.89 output_tokens=64
+[ctl] 1490978-5t0-fef09426 queue_ms=0.0 advance_ms=14.6 pre_ms=10.5 post_ms=0.4
+[2026-10-18 18:16:11] 127.0.0.1 [18/Oct/2026:18:16:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 762 "-" "python-httpx/0.28.1"
+[close] 1490978 calls=5
+[2026-10-18 18:16:11] 127.0.0.1 [18/Oct/2026:18:16:11 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-ce1608d7 demote=1/2n retire=0/0n protect=3 nodes=37 ms=2.9 usage=0.2113
+[priority] plan-prio-d8baa77e demote=0/0n retire=5/2n protect=2 nodes=30 ms=3.4 usage=0.2114
+[decode] 1488154-7t0-fa3c380e decode_ms=3165.23 output_tokens=73
+[ctl] 1488154-7t0-fa3c380e queue_ms=0.0 advance_ms=27.3 pre_ms=13.7 post_ms=0.5
+[2026-10-18 18:16:11] 127.0.0.1 [18/Oct/2026:18:16:05 -0400] "POST /v1/chat/completions HTTP/1.1" 200 819 "-" "python-httpx/0.28.1"
+[2026-10-18 18:16:11] Decode batch, #running-req: 2, #token: 6402, token usage: 0.10, cuda graph: True, gen throughput (token/s): 68.40, #queue-req: 0
+[priority] plan-prio-67cc6244 demote=1/2n retire=0/0n protect=2 nodes=30 ms=2.9 usage=0.1042
+[decode] 1490241-6t0-28bcd461 decode_ms=4261.02 output_tokens=110
+[ctl] 1490241-6t0-28bcd461 queue_ms=0.1 advance_ms=27.1 pre_ms=12.9 post_ms=0.5
+[2026-10-18 18:16:13] 127.0.0.1 [18/Oct/2026:18:16:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 962 "-" "python-httpx/0.28.1"
+[priority] plan-prio-559f4747 demote=1/2n retire=0/0n protect=2 nodes=30 ms=2.8 usage=0.0000
+[promote] plan-hold-a76313f3 tokens=6328 device=6328 host=0 started=0 free=762 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-a76313f3 tokens=6328 duration_ms=1.83
+[promote] plan-hold-6a873772 tokens=6176 device=6176 host=0 started=0 free=762 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-6a873772 tokens=6176 duration_ms=1.74
+[call] 1488154 #7 Agent.step:175 predicted=hit ctx=(8,)
+[invalidate] 1488154 Agent.act kills ['observation', 'steps']
+[timing] 1488154 err_s=+0.00 done=6328/6332 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-af4cd24b demote=7/2n retire=0/0n protect=2 nodes=32 ms=6.0 usage=0.1062
+[2026-10-18 18:16:13] Prefill batch, #new-seq: 1, #new-token: 193, #cached-token: 6332, token usage: 0.11, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 56.35
+[serve] 1488154-8t0-b225a00a prompt_tokens=6525 cached_tokens=6332 cached_device=6332 cached_host=0 ttft_ms=213.35 inflight_prefill=0 inflight_decode=1
+[2026-10-18 18:16:14] Decode batch, #running-req: 1, #token: 6529, token usage: 0.11, cuda graph: True, gen throughput (token/s): 17.05, #queue-req: 0
+[call] 1490241 #6 Agent.step:175 predicted=hit ctx=(7,)
+[invalidate] 1490241 Agent.act kills ['observation', 'steps']
+[timing] 1490241 err_s=+0.00 done=6176/6183 kind=hold state=queued site=Agent.step:175
+[priority] plan-prio-dd58568d demote=6/2n retire=0/0n protect=2 nodes=33 ms=5.6 usage=0.1067
+[promote] plan-hold-5f9a6e75 tokens=6328 device=6328 host=0 started=0 free=2107 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-5f9a6e75 tokens=6328 duration_ms=1425.61
+[2026-10-18 18:16:18] Prefill batch, #new-seq: 1, #new-token: 3344, #cached-token: 6182, token usage: 0.26, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 46.35
+[serve] 1490241-7t0-5466a468 prompt_tokens=9526 cached_tokens=6182 cached_device=6182 cached_host=0 ttft_ms=3044.42 inflight_prefill=0 inflight_decode=2
+[promote] plan-hold-9154eab7 tokens=6176 device=6176 host=0 started=0 free=2105 reserve=4096 ms=0.7
+[promote-rpc] plan-hold-9154eab7 tokens=6176 duration_ms=1511.79
+[2026-10-18 18:16:18] Decode batch, #running-req: 2, #token: 15698, token usage: 0.26, cuda graph: True, gen throughput (token/s): 11.19, #queue-req: 0
+[2026-10-18 18:16:20] Decode batch, #running-req: 2, #token: 15778, token usage: 0.26, cuda graph: True, gen throughput (token/s): 49.99, #queue-req: 0
+[priority] plan-prio-c6a096c0 demote=0/0n retire=0/0n protect=1 nodes=19 ms=1.1 usage=0.2573
+[priority] plan-prio-fe3ead29 demote=0/0n retire=0/0n protect=1 nodes=19 ms=1.1 usage=0.2574
+[decode] 1488154-8t0-b225a00a decode_ms=7337.84 output_tokens=113
+[ctl] 1488154-8t0-b225a00a queue_ms=0.0 advance_ms=27.8 pre_ms=12.3 post_ms=0.5
+[2026-10-18 18:16:21] 127.0.0.1 [18/Oct/2026:18:16:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1059 "-" "python-httpx/0.28.1"
+[close] 1488154 calls=8
+[2026-10-18 18:16:21] 127.0.0.1 [18/Oct/2026:18:16:21 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-eaf0e655 demote=1/2n retire=0/0n protect=2 nodes=34 ms=3.0 usage=0.1564
+[priority] plan-prio-2fa9e2a3 demote=0/0n retire=8/2n protect=1 nodes=19 ms=6.6 usage=0.1564
+[2026-10-18 18:16:21] Decode batch, #running-req: 1, #token: 9617, token usage: 0.16, cuda graph: True, gen throughput (token/s): 44.53, #queue-req: 0
+[priority] plan-prio-13643e3e demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.3 usage=0.1567
+[priority] plan-prio-b9290c64 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.2 usage=0.1567
+[decode] 1490241-7t0-5466a468 decode_ms=4995.66 output_tokens=129
+[ctl] 1490241-7t0-5466a468 queue_ms=0.1 advance_ms=32.8 pre_ms=17.9 post_ms=0.6
+[2026-10-18 18:16:23] 127.0.0.1 [18/Oct/2026:18:16:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1084 "-" "python-httpx/0.28.1"
+[close] 1490241 calls=7
+[2026-10-18 18:16:23] 127.0.0.1 [18/Oct/2026:18:16:23 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-9e4cf555 demote=1/2n retire=0/0n protect=1 nodes=19 ms=3.0 usage=0.0000
+[priority] plan-prio-145458f3 demote=0/0n retire=7/2n protect=0 nodes=0 ms=5.7 usage=0.0000

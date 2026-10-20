@@ -77,10 +77,10 @@ echo "== 5. static analysis of the four agents (warms static_analysis/.cache; ru
 for p in fact_check coding_agent BFCL_agent doc_analysis; do
   "$JAC" -m static_analysis.agent_launcher --no-register --dry-run "benchmark/applications/$p.jac" 2>&1 | tail -1
 done
-echo "== 6. model profile on an A40 (prefill tps idle / under load, host->device promote tps) -> model/*.profile.json"
+echo "== 6. model profile on the configured GPU (prefill tps idle / under load, host->device promote tps) -> model/$GL_DEVICE_DIR/*.profile.json"
 # The login node has no GPU: this step takes one A40 through a blocking srun (waits in the queue like a job).
 # The first start also JIT-compiles sglang's kernels, so the arm jobs never do. REPROFILE=1 re-measures an existing profile.
-PROFILE="model/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
+PROFILE="model/$GL_DEVICE_DIR/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
 if [[ -s "$PROFILE" && "${REPROFILE:-0}" != 1 ]]; then
   echo "$PROFILE exists (REPROFILE=1 to re-measure):"; cat "$PROFILE"
 else

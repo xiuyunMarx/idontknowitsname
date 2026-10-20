@@ -21,7 +21,7 @@ export JAC_DATA_PATH=/tmp/$USER/jacdata-$SLURM_JOB_ID; mkdir -p "$JAC_DATA_PATH"
 echo "node=$(hostname) job=$SLURM_JOB_ID gpus=${CUDA_VISIBLE_DEVICES:-?} python=$PYTHON jac=$JAC"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader
 free -g | head -2; nproc
-PROFILE="model/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
+PROFILE="model/$GL_DEVICE_DIR/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
 [[ -s "$PROFILE" ]] || { echo "no $PROFILE: run step 6 of greatlakes/setup_env.sh first (the model profile)" >&2; exit 1; }
 echo "profile: $(cat "$PROFILE" | tr -d '\n ')"
 
@@ -29,5 +29,5 @@ for ARM in vanilla cachescout; do
   echo "== smoke $ARM $(date '+%F %T')"
   $PYTHON -m benchmark.run_arm "$ARM" --smoke --results benchmark/results --python "$PYTHON" || echo "smoke $ARM FAILED rc=$?"
 done
-ls -la model/*.profile.json
+ls -la model/*/*.profile.json
 echo "prepare done $(date '+%F %T')"

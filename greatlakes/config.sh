@@ -12,6 +12,7 @@ export GL_ZIG_URL=${GL_ZIG_URL:-https://ziglang.org/download/0.16.0/zig-x86_64-l
 export GL_ACCOUNT=${GL_ACCOUNT:-lingjia0}
 export GL_PARTITION=${GL_PARTITION:-spgpu}
 export GL_GRES=${GL_GRES:-gpu:a40:1}
+export GL_DEVICE_DIR=${GL_DEVICE_DIR:-NVIDIA_A40}                # torch.cuda.get_device_name of that GPU, underscored: model/<it>/ holds its profile
 export GL_CPUS=${GL_CPUS:-12}                                 # spgpu nodes: 32 cores per 8 GPUs; c=80 means 80 jac processes
 export GL_MEM=${GL_MEM:-96G}                                  # host KV tier (25 GB pinned) + weights staging + jac sessions
 # Server pools for the A40 (start_server.bash defaults are the old local-GPU values). sglang's own

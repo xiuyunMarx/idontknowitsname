@@ -111,7 +111,7 @@ class Controller:
 
     async def start_serving(self) -> None:
         await self.engine.warmup()
-        profile = f"model/{self.engine.name.replace('/', '--')}.profile.json"
+        profile = self.engine.profile_path()
         if self.reprofile or not self.engine.load_profile(profile):
             await profile_device(self.engine)
             self.engine.save_profile(profile)
@@ -919,7 +919,7 @@ if __name__ == "__main__":
                     help="--sched risk: an uncached request overtakes a fully cached one after waiting S s longer")
     ap.add_argument("--profile-only", action="store_true",
                     help="measure the device profile (prefill idle/loaded tps, host->device promote tps), "
-                         "save model/<model>.profile.json and exit")
+                         "save model/<device>/<model>.profile.json and exit")
     ap.add_argument("--reprofile", action="store_true", help="measure even when the profile JSON exists")
     a = ap.parse_args()
     if a.no_header_last:
