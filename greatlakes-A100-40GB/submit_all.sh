@@ -7,24 +7,26 @@
 #   RUN_ARM_OPTS="--only mix_L6" PREP=none ./greatlakes-A100-40GB/submit_all.sh cachescout
 #                                                             extra benchmark/run_arm.py options for every arm
 #
-# The arm job is greatlakes/arm.sbatch, unchanged: the A100 settings reach it through the environment
-# (sbatch --export=ALL, and greatlakes/config.sh keeps values that are already set), and the results
-# directory is appended to run_arm's arguments, where the last --results wins.
-# Resources come from greatlakes-A100-40GB/config.sh. Job ids are appended to greatlakes-A100-40GB/jobs.txt.
+# Uses greatlakes/arm.sbatch unchanged: the A100 settings go in through the environment (--export=ALL) and
+# the results directory is appended to run_arm's arguments (last --results wins). Job ids go to jobs.txt.
+# Arms share nodes (8 slices each), so every arm gets its own server port via GUARD_PORT; prepare uses 9000.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source greatlakes/config.sh
 source greatlakes-A100-40GB/config.sh
 
 ARMS=${*:-"vanilla adapter kvonly relayout ours continuum cachescout kvflow continuum_relayout cachescout_relayout kvflow_relayout ours_noprefetch"}
+declare -A PORT=([vanilla]=9001 [adapter]=9002 [kvonly]=9003 [relayout]=9004 [ours]=9005 [continuum]=9006
+                 [cachescout]=9007 [kvflow]=9008 [continuum_relayout]=9009 [cachescout_relayout]=9010
+                 [kvflow_relayout]=9011 [ours_noprefetch]=9012)
 COMMON=(--account="$GL_ACCOUNT" --partition="$GL_PARTITION" --gres="$GL_GRES"
-        --cpus-per-task="$GL_CPUS" --mem="$GL_MEM" --export=ALL
+        --cpus-per-task="$GL_CPUS" --mem="$GL_MEM"
         --output="$A100_DIR/slurm-%x-%j.out")
 [[ -n "$GL_MAIL" ]] && COMMON+=(--mail-user="$GL_MAIL" --mail-type=END,FAIL)
 
 PREP=${PREP:-}
 if [[ -z "$PREP" ]]; then
-  PREP=$(sbatch --parsable "${COMMON[@]}" --time="$GL_PREP_TIME" "$A100_DIR/prepare.sbatch")
+  PREP=$(sbatch --parsable "${COMMON[@]}" --export=ALL,GUARD_PORT=9000 --time="$GL_PREP_TIME" "$A100_DIR/prepare.sbatch")
   echo "prepare job $PREP" | tee -a "$A100_JOBS"
 fi
 DEP=()
@@ -32,8 +34,10 @@ DEP=()
 
 # shellcheck disable=SC2086   # RUN_ARM_OPTS is meant to split into words
 for ARM in $ARMS; do
-  JID=$(sbatch --parsable "${COMMON[@]}" "${DEP[@]}" --time="$GL_TIME" --job-name="mortis-a100-$ARM" \
+  [[ -n "${PORT[$ARM]:-}" ]] || { echo "unknown arm: $ARM" >&2; exit 2; }
+  JID=$(sbatch --parsable "${COMMON[@]}" "${DEP[@]}" --export=ALL,GUARD_PORT="${PORT[$ARM]}" \
+        --time="$GL_TIME" --job-name="mortis-a100-$ARM" \
         greatlakes/arm.sbatch "$ARM" --results "$A100_RESULTS" ${RUN_ARM_OPTS:-})
-  echo "$ARM job $JID" | tee -a "$A100_JOBS"
+  echo "$ARM job $JID port ${PORT[$ARM]}" | tee -a "$A100_JOBS"
 done
 echo "queue: squeue -u $USER -o '%.10i %.24j %.8T %.10M %.9l %R'"

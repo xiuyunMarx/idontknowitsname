@@ -4,7 +4,7 @@ import sys;
 import json;
 import from jaclang.byllm.llm { InterceptorLLM }
 
-glob llm = InterceptorLLM(model_name="Qwen/Qwen3-14B-AWQ");
+glob llm = InterceptorLLM(model_name="Qwen/Qwen3-14B-AWQ", comm_port=int(os.environ.get("GUARD_PORT") or 8964));
 glob HERE: str = os.path.dirname(os.path.abspath(__file__));
 glob DATA: str = os.environ.get("DA_DATA") or os.path.join(HERE, "bench_data", "finicial_bench", "financebench_open_source.jsonl");
 glob PAGES_DIR: str = os.environ.get("DA_PAGES_DIR") or os.path.join(HERE, "bench_data", "finicial_bench", "pages");

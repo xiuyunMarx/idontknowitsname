@@ -19,7 +19,8 @@ export JAC_DATA_PATH=/tmp/$USER/jacdata-$SLURM_JOB_ID; mkdir -p "$JAC_DATA_PATH"
 echo "node=$(hostname) job=$SLURM_JOB_ID gpus=${CUDA_VISIBLE_DEVICES:-?} python=$PYTHON jac=$JAC"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader
 free -g | head -2; nproc
-echo "kv=$KV host=${HOST}GB mem_fraction=$MEM_FRACTION chunked_prefill=$CHUNKED_PREFILL_SIZE cuda_graph_max_bs=$CUDA_GRAPH_MAX_BS results=$A100_RESULTS"
+export GUARD_PORT=${GUARD_PORT:-9000}   # own server port, the node is shared with arm jobs
+echo "kv=$KV host=${HOST}GB mem_fraction=$MEM_FRACTION chunked_prefill=$CHUNKED_PREFILL_SIZE cuda_graph_max_bs=$CUDA_GRAPH_MAX_BS port=$GUARD_PORT results=$A100_RESULTS"
 
 PROFILE="model/$GL_DEVICE_DIR/$(echo "${MODEL:-Qwen/Qwen3-32B-AWQ}" | sed 's#/#--#').profile.json"
 [[ -s "$PROFILE" ]] || { echo "no $PROFILE: run greatlakes-A100-40GB/probe_and_profile.bash first" >&2; exit 1; }

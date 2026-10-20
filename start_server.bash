@@ -61,7 +61,7 @@ if [[ "$ARM" == stop ]]; then stop_recorded; exit 0; fi
 if [[ "$ARM" == profile ]]; then
   MODEL=${MODEL:-Qwen/Qwen3-32B-AWQ}; HOST=${HOST:-20}; KV=${KV:-31830}; CLIP=${CLIP:-4096}
   export SGLANG_CLIP_MAX_NEW_TOKENS_ESTIMATION="$CLIP"
-  FLAGS=(--profile-only); [[ "${REPROFILE:-0}" == 1 ]] && FLAGS+=(--reprofile)
+  FLAGS=(--profile-only --port "${GUARD_PORT:-8964}"); [[ "${REPROFILE:-0}" == 1 ]] && FLAGS+=(--reprofile)
   echo "[start_server] $(date '+%F %T') profile: $PYTHON -m server.server $MODEL --host $HOST --kv $KV ${FLAGS[*]} $*"
   exec "$PYTHON" -m server.server "$MODEL" --host "$HOST" --kv "$KV" "${FLAGS[@]}" "$@"
 fi
@@ -100,7 +100,8 @@ fi
 
 mkdir -p "$(dirname "$LOG")" "$(dirname "$PIDFILE")"
 : >"$LOG"   # a stale log already contains "engine ready"
-COMMAND=("$PYTHON" -m "$MODULE" "$MODEL" "${ARM_FLAGS[@]}" --sched "$SCHED" --host "$HOST" --kv "$KV" "$@")
+# GUARD_PORT: the server's port (default 8964); run_arm.py and the jac agents read the same variable.
+COMMAND=("$PYTHON" -m "$MODULE" "$MODEL" "${ARM_FLAGS[@]}" --sched "$SCHED" --host "$HOST" --kv "$KV" --port "${GUARD_PORT:-8964}" "$@")
 echo "[start_server] $(date '+%F %T') $ARM: ${COMMAND[*]} (CLIP=$CLIP)" >>"$LOG"
 # setsid: the server and every sglang subprocess share one process group, which `stop` kills as a unit.
 setsid nohup "${COMMAND[@]}" >>"$LOG" 2>&1 </dev/null &

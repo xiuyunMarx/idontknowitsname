@@ -921,12 +921,13 @@ if __name__ == "__main__":
                     help="measure the device profile (prefill idle/loaded tps, host->device promote tps), "
                          "save model/<device>/<model>.profile.json and exit")
     ap.add_argument("--reprofile", action="store_true", help="measure even when the profile JSON exists")
+    ap.add_argument("--port", type=int, default=8964)
     a = ap.parse_args()
     if a.no_header_last:
         HEADER_LAST = False
     if a.layout == "adapter":
         LAYOUT_ADAPTER = True
-    asyncio.run(main(a.model, plan=not a.lru, kv_tokens=a.kv,
+    asyncio.run(main(a.model, port=a.port, plan=not a.lru, kv_tokens=a.kv,
                      host_gb=a.host, hicache_io=a.hicache_io, enable_relayout=not a.no_relayout,
                      sched=a.sched, risk_aging_s=a.risk_aging_s, promote=not a.no_promote, eviction=a.eviction,
                      engine_log=a.engine_log, profile_only=a.profile_only, reprofile=a.reprofile))
