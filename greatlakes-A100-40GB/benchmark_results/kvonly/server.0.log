@@ -1,0 +1,1488 @@
+[start_server] 2026-10-20 10:40:47 kvonly: /home/xiaoyma/miniforge3/envs/mortis/bin/python -m server.server Qwen/Qwen3-32B-AWQ --no-relayout --sched fcfs --host 25 --kv 61440 --port 9003 --engine-log info (CLIP=4096)
+[http] listening on 0.0.0.0:9003
+[2026-10-20 10:41:00] --default-priority-value is not set while --enable-priority-scheduling is enabled. Requests without explicit priority will have priority=None, resulting in priority='None' string labels in Prometheus metrics.
+[2026-10-20 10:41:00] server_args=ServerArgs(model_path='Qwen/Qwen3-32B-AWQ', tokenizer_path='Qwen/Qwen3-32B-AWQ', tokenizer_mode='auto', tokenizer_worker_num=1, skip_tokenizer_init=False, load_format='auto', model_loader_extra_config='{}', trust_remote_code=False, context_length=32768, is_embedding=False, enable_multimodal=None, revision=None, model_impl='auto', host='127.0.0.1', port=30000, fastapi_root_path='', grpc_mode=False, skip_server_warmup=False, warmups=None, nccl_port=None, checkpoint_engine_wait_weights_before_ready=False, ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_keyfile_password=None, enable_ssl_refresh=False, dtype='auto', quantization=None, quantization_param_path=None, kv_cache_dtype='auto', enable_fp32_lm_head=False, modelopt_quant=None, modelopt_checkpoint_restore_path=None, modelopt_checkpoint_save_path=None, modelopt_export_path=None, quantize_and_serve=False, rl_quant_profile=None, mem_fraction_static=0.89, max_running_requests=None, max_queued_requests=None, max_total_tokens=61440, chunked_prefill_size=4096, enable_dynamic_chunking=False, max_prefill_tokens=16384, prefill_max_requests=None, schedule_policy='fcfs', enable_priority_scheduling=True, disable_priority_preemption=False, default_priority_value=None, abort_on_priority_when_disabled=False, schedule_low_priority_values_first=False, priority_scheduling_preemption_threshold=10, schedule_conservativeness=1.0, cache_risk_aging_s=10.0, page_size=1, swa_full_tokens_ratio=0.8, disable_hybrid_swa_memory=False, radix_eviction_policy='priority', enable_prefill_delayer=False, prefill_delayer_max_delay_passes=30, prefill_delayer_token_usage_low_watermark=None, prefill_delayer_forward_passes_buckets=None, prefill_delayer_wait_seconds_buckets=None, device='cuda', tp_size=1, pp_size=1, pp_max_micro_batch_size=None, pp_async_batch_depth=0, stream_interval=1, stream_response_default_include_usage=False, incremental_streaming_output=False, enable_streaming_session=False, random_seed=981847636, constrained_json_whitespace_pattern=None, constrained_json_disable_any_whitespace=False, watchdog_timeout=300, soft_watchdog_timeout=None, dist_timeout=None, download_dir=None, model_checksum=None, base_gpu_id=0, gpu_id_step=1, sleep_on_idle=False, use_ray=False, custom_sigquit_handler=None, log_level='info', log_level_http=None, log_requests=False, log_requests_level=2, log_requests_format='text', log_requests_target=None, uvicorn_access_log_exclude_prefixes=[], crash_dump_folder=None, show_time_cost=False, enable_metrics=False, enable_mfu_metrics=False, enable_metrics_for_all_schedulers=False, tokenizer_metrics_custom_labels_header='x-custom-labels', tokenizer_metrics_allowed_custom_labels=None, extra_metric_labels=None, bucket_time_to_first_token=None, bucket_inter_token_latency=None, bucket_e2e_request_latency=None, collect_tokens_histogram=False, prompt_tokens_buckets=None, generation_tokens_buckets=None, gc_warning_threshold_secs=0.0, decode_log_interval=40, enable_request_time_stats_logging=False, kv_events_config=None, enable_trace=False, otlp_traces_endpoint='localhost:4317', export_metrics_to_file=False, export_metrics_to_file_dir=None, api_key=None, admin_api_key=None, served_model_name='Qwen/Qwen3-32B-AWQ', weight_version='default', chat_template=None, hf_chat_template_name=None, completion_template=None, file_storage_path='sglang_storage', enable_cache_report=False, reasoning_parser=None, tool_call_parser=None, tool_server=None, sampling_defaults='model', dp_size=1, load_balance_method='round_robin', attn_cp_size=1, moe_dp_size=1, dist_init_addr=None, nnodes=1, node_rank=0, json_model_override_args='{}', preferred_sampling_params=None, enable_lora=None, enable_lora_overlap_loading=None, max_lora_rank=None, lora_target_modules=None, lora_paths=None, max_loaded_loras=None, max_loras_per_batch=8, lora_eviction_policy='lru', lora_backend='csgmv', max_lora_chunk_size=16, experts_shared_outer_loras=None, attention_backend='flashinfer', decode_attention_backend=None, prefill_attention_backend=None, sampling_backend='flashinfer', grammar_backend='xgrammar', mm_attention_backend=None, fp8_gemm_runner_backend='auto', fp4_gemm_runner_backend='auto', nsa_prefill_backend=None, nsa_decode_backend=None, disable_flashinfer_autotune=False, mamba_backend='triton', speculative_algorithm=None, speculative_draft_model_path=None, speculative_draft_model_revision=None, speculative_draft_load_format=None, speculative_num_steps=None, speculative_eagle_topk=None, speculative_num_draft_tokens=None, speculative_accept_threshold_single=1.0, speculative_accept_threshold_acc=1.0, speculative_token_map=None, speculative_attention_mode='prefill', speculative_draft_attention_backend=None, speculative_moe_runner_backend='auto', speculative_moe_a2a_backend=None, speculative_draft_model_quantization=None, speculative_ngram_min_bfs_breadth=1, speculative_ngram_max_bfs_breadth=10, speculative_ngram_match_type='BFS', speculative_ngram_max_trie_depth=18, speculative_ngram_capacity=10000000, enable_multi_layer_eagle=False, ep_size=1, moe_a2a_backend='none', moe_runner_backend='auto', flashinfer_mxfp4_moe_precision='default', enable_flashinfer_allreduce_fusion=False, enforce_disable_flashinfer_allreduce_fusion=False, enable_aiter_allreduce_fusion=False, deepep_mode='auto', ep_num_redundant_experts=0, ep_dispatch_algorithm=None, init_expert_location='trivial', enable_eplb=False, eplb_algorithm='auto', eplb_rebalance_num_iterations=1000, eplb_rebalance_layers_per_chunk=None, eplb_min_rebalancing_utilization_threshold=1.0, expert_distribution_recorder_mode=None, expert_distribution_recorder_buffer_size=1000, enable_expert_distribution_metrics=False, deepep_config=None, moe_dense_tp_size=None, elastic_ep_backend=None, enable_elastic_expert_backup=False, mooncake_ib_device=None, max_mamba_cache_size=None, mamba_ssm_dtype=None, mamba_full_memory_ratio=0.9, mamba_scheduler_strategy='no_buffer', mamba_track_interval=256, linear_attn_backend='triton', linear_attn_decode_backend=None, linear_attn_prefill_backend=None, enable_hierarchical_cache=True, hicache_ratio=2.0, hicache_size=25, hicache_write_policy='write_through', hicache_io_backend='kernel', hicache_mem_layout='layer_first', hicache_storage_backend=None, hicache_storage_prefetch_policy='best_effort', hicache_storage_backend_extra_config=None, enable_hisparse=False, hisparse_config=None, enable_lmcache=False, kt_weight_path=None, kt_method=None, kt_cpuinfer=None, kt_threadpool_count=None, kt_num_gpu_experts=None, kt_max_deferred_experts_per_token=None, dllm_algorithm=None, dllm_algorithm_config=None, enable_double_sparsity=False, ds_channel_config_path=None, ds_heavy_channel_num=32, ds_heavy_token_num=256, ds_heavy_channel_type='qk', ds_sparse_decode_threshold=4096, cpu_offload_gb=0, offload_group_size=-1, offload_num_in_group=1, offload_prefetch_step=1, offload_mode='cpu', multi_item_scoring_delimiter=None, disable_radix_cache=False, cuda_graph_max_bs=32, cuda_graph_bs=[1, 2, 4, 8, 12, 16, 24, 32], disable_cuda_graph=False, disable_cuda_graph_padding=False, enable_profile_cuda_graph=False, enable_cudagraph_gc=False, enable_layerwise_nvtx_marker=False, enable_nccl_nvls=False, enable_symm_mem=False, disable_flashinfer_cutlass_moe_fp4_allgather=False, enable_tokenizer_batch_encode=False, disable_tokenizer_batch_decode=False, disable_outlines_disk_cache=False, disable_custom_all_reduce=False, enable_mscclpp=False, enable_torch_symm_mem=False, pre_warm_nccl=False, disable_overlap_schedule=False, enable_mixed_chunk=False, enable_dp_attention=False, enable_dp_lm_head=False, enable_two_batch_overlap=False, enable_single_batch_overlap=False, tbo_token_distribution_threshold=0.48, enable_torch_compile=False, disable_piecewise_cuda_graph=True, enforce_piecewise_cuda_graph=False, enable_torch_compile_debug_mode=False, torch_compile_max_bs=32, piecewise_cuda_graph_max_tokens=4096, piecewise_cuda_graph_tokens=[4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352, 384, 416, 448, 480, 512, 576, 640, 704, 768, 832, 896, 960, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096], piecewise_cuda_graph_compiler='eager', torchao_config='', enable_nan_detection=False, enable_p2p_check=False, triton_attention_reduce_in_fp32=False, triton_attention_num_kv_splits=8, triton_attention_split_tile_size=None, num_continuous_decode_steps=1, delete_ckpt_after_loading=False, enable_memory_saver=False, enable_weights_cpu_backup=False, enable_draft_weights_cpu_backup=False, allow_auto_truncate=False, enable_custom_logit_processor=False, flashinfer_mla_disable_ragged=False, disable_shared_experts_fusion=False, disable_chunked_prefix_cache=False, disable_fast_image_processor=False, keep_mm_feature_on_device=False, enable_return_hidden_states=False, enable_return_routed_experts=False, scheduler_recv_interval=1, numa_node=None, enable_deterministic_inference=False, rl_on_policy_target=None, enable_attn_tp_input_scattered=False, gc_threshold=None, enable_nsa_prefill_context_parallel=False, nsa_prefill_cp_mode='round-robin-split', enable_fused_qk_norm_rope=False, enable_precise_embedding_interpolation=False, enable_fused_moe_sum_all_reduce=False, enable_prefill_context_parallel=False, prefill_cp_mode='in-seq-split', enable_dynamic_batch_tokenizer=False, dynamic_batch_tokenizer_batch_size=32, dynamic_batch_tokenizer_batch_timeout=0.002, debug_tensor_dump_output_folder=None, debug_tensor_dump_layers=None, debug_tensor_dump_input_file=None, debug_tensor_dump_inject=False, disaggregation_mode='null', disaggregation_transfer_backend='mooncake', disaggregation_bootstrap_port=8998, disaggregation_ib_device=None, disaggregation_decode_enable_offload_kvcache=False, num_reserved_decode_tokens=512, disaggregation_decode_polling_interval=1, encoder_only=False, language_only=False, encoder_transfer_backend='zmq_to_scheduler', encoder_urls=[], enable_adaptive_dispatch_to_encoder=False, custom_weight_loader=[], weight_loader_disable_mmap=False, remote_instance_weight_loader_seed_instance_ip=None, remote_instance_weight_loader_seed_instance_service_port=None, remote_instance_weight_loader_send_weights_group_ports=None, remote_instance_weight_loader_backend='nccl', remote_instance_weight_loader_start_seed_via_transfer_engine=False, engine_info_bootstrap_port=6789, modelexpress_config=None, enable_pdmux=False, pdmux_config_path=None, sm_group_num=8, enable_broadcast_mm_inputs_process=False, enable_prefix_mm_cache=False, mm_enable_dp_encoder=False, mm_process_config={}, limit_mm_data_per_request=None, enable_mm_global_cache=False, decrypted_config_file=None, decrypted_draft_config_file=None, forward_hooks=None)
+[2026-10-20 10:41:00] NUMA affinity is already constrained for process, skipping NUMA node configuration for GPU. Remove your constraints to allow automatic configuration.
+[2026-10-20 10:41:00] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:41:01] Using default HuggingFace chat template with detected content format: string
+[2026-10-20 10:41:08] NUMA affinity is already constrained for process, skipping NUMA node configuration for GPU. Remove your constraints to allow automatic configuration.
+[2026-10-20 10:41:08] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:41:09] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:41:09] Init torch distributed begin.
+[W1020 10:41:10.974938346 socket.cpp:767] [c10d] The client socket cannot be initialized to connect to [localhost]:42423 (errno: 97 - Address family not supported by protocol).
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[2026-10-20 10:41:10] Init torch distributed ends. elapsed=0.40 s, mem usage=0.03 GB
+[2026-10-20 10:41:10] Load weight begin. avail mem=38.91 GB
+[2026-10-20 10:41:10] Found local HF snapshot for Qwen/Qwen3-32B-AWQ at /tmp/xiaoyma/hf/hub/models--Qwen--Qwen3-32B-AWQ/snapshots/0499c3ac83fdef8810b907a23894ba91e95eddd8; skipping download.
+Multi-thread loading shards:   0% Completed | 0/4 [00:00<?, ?it/s]Multi-thread loading shards:  25% Completed | 1/4 [00:01<00:05,  1.85s/it]Multi-thread loading shards:  50% Completed | 2/4 [00:02<00:02,  1.28s/it]Multi-thread loading shards:  75% Completed | 3/4 [00:03<00:01,  1.08s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:05<00:00,  1.36s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:05<00:00,  1.34s/it]
+[2026-10-20 10:41:18] Load weight end. elapsed=7.53 s, type=Qwen3ForCausalLM, quant=awq, bits=4, avail mem=20.64 GB, mem usage=18.27 GB.
+[2026-10-20 10:41:18] Using KV cache dtype: torch.float16
+[2026-10-20 10:41:18] KV Cache is allocated. #tokens: 61440, K size: 7.50 GB, V size: 7.50 GB
+[2026-10-20 10:41:18] Memory pool end. avail mem=5.14 GB
+[2026-10-20 10:41:18] Capture cuda graph begin. This can take up to several minutes. avail mem=4.58 GB
+[2026-10-20 10:41:18] Capture cuda graph bs [1, 2, 4, 8, 12, 16, 24, 32]
+  0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=4.56 GB):   0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=4.56 GB):  12%|█▎        | 1/8 [00:01<00:09,  1.32s/it]Capturing batches (bs=24 avail_mem=4.49 GB):  12%|█▎        | 1/8 [00:01<00:09,  1.32s/it]Capturing batches (bs=24 avail_mem=4.49 GB):  25%|██▌       | 2/8 [00:01<00:03,  1.64it/s]Capturing batches (bs=16 avail_mem=4.49 GB):  25%|██▌       | 2/8 [00:01<00:03,  1.64it/s]Capturing batches (bs=16 avail_mem=4.49 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.55it/s]Capturing batches (bs=12 avail_mem=4.48 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.55it/s]Capturing batches (bs=8 avail_mem=4.46 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.55it/s] Capturing batches (bs=8 avail_mem=4.46 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.46it/s]Capturing batches (bs=4 avail_mem=4.45 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.46it/s]Capturing batches (bs=2 avail_mem=4.42 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.46it/s]Capturing batches (bs=2 avail_mem=4.42 GB):  88%|████████▊ | 7/8 [00:01<00:00,  6.08it/s]Capturing batches (bs=1 avail_mem=4.42 GB):  88%|████████▊ | 7/8 [00:01<00:00,  6.08it/s]Capturing batches (bs=1 avail_mem=4.42 GB): 100%|██████████| 8/8 [00:02<00:00,  3.95it/s]
+[2026-10-20 10:41:21] Capture cuda graph end. Time elapsed: 2.54 s. mem usage=0.19 GB. avail mem=4.39 GB.
+[2026-10-20 10:41:21] Disable piecewise CUDA graph because --disable-piecewise-cuda-graph is set
+[2026-10-20 10:41:22] max_total_num_tokens=61440, chunked_prefill_size=4096, max_prefill_tokens=16384, max_running_requests=2048, context_len=32768, available_gpu_mem=4.39 GB
+[2026-10-20 10:41:22] Allocating 25.00 GB host memory for hierarchical KV cache.
+[ledger] device=61440 tokens host=95367 tokens stride=8 kv_bytes_per_token=262144
+[2026-10-20 10:41:29] Prefill batch, #new-seq: 1, #new-token: 64, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.00
+[2026-10-20 10:41:29] Prefill batch, #new-seq: 1, #new-token: 512, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 118.90
+[warmup] engine ready in 792 ms
+[loop] 0: head ClaimAnalyzer.decompose_claim:90 body ['ClaimAnalyzer.decompose_claim:90', 'EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205']
+[loop] 1: head EvidenceScout.assess_evidence:205 body ['EvidenceScout.assess_evidence:205'] in loop 0
+[layout] ClaimAnalyzer.decompose_claim:90 order=None header_last=False bindings=[('maximum_questions', 'CONST'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[layout] EvidenceScout.assess_evidence:205 order=None header_last=False bindings=[('search_results', 'VOLATILE'), ('question', 'RESP'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'COPY')]
+[layout] EvidenceAnalyzer.verify_claim:251 order=None header_last=False bindings=[('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[program] /home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac: 3 sites, entry ClaimAnalyzer.decompose_claim:90, exits ['EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205'], edges ['ClaimAnalyzer.decompose_claim:90->EvidenceAnalyzer.verify_claim:251', 'ClaimAnalyzer.decompose_claim:90->EvidenceScout.assess_evidence:205', 'EvidenceAnalyzer.verify_claim:251->ClaimAnalyzer.decompose_claim:90', 'EvidenceScout.assess_evidence:205->EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205->EvidenceScout.assess_evidence:205']
+[2026-10-20 10:41:32] 127.0.0.1 [20/Oct/2026:10:41:32 -0400] "POST /v1/programs/register HTTP/1.1" 200 283 "-" "Python-urllib/3.12"
+[call] 1001415 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1001415 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1001415 unplanned site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-fa61864e demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.0 usage=0.0000
+[2026-10-20 10:41:38] Prefill batch, #new-seq: 1, #new-token: 504, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 58.04
+[serve] 1001415-1t0-84690e5f prompt_tokens=504 cached_tokens=0 cached_device=0 cached_host=0 ttft_ms=627.22 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:41:39] Decode batch, #running-req: 1, #token: 537, token usage: 0.01, cuda graph: True, gen throughput (token/s): 1.28, #queue-req: 0
+[decode] 1001415-1t0-84690e5f decode_ms=1603.18 output_tokens=58
+[ctl] 1001415-1t0-84690e5f queue_ms=0.1 advance_ms=4.9 pre_ms=1.4 post_ms=0.2
+[2026-10-20 10:41:40] 127.0.0.1 [20/Oct/2026:10:41:38 -0400] "POST /v1/chat/completions HTTP/1.1" 200 714 "-" "python-httpx/0.28.1"
+[priority] plan-prio-c8cda9e2 demote=1/2n retire=0/0n protect=2 nodes=1 ms=0.4 usage=0.0000
+[promote] plan-hold-9a804051 tokens=48 device=48 host=0 started=0 free=60294 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-9a804051 tokens=48 duration_ms=0.38
+[promote] plan-hold-e838f807 tokens=48 device=48 host=0 started=0 free=60294 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-e838f807 tokens=48 duration_ms=0.28
+[call] 1001415 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1001415 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001415 err_s=+2.02 done=48/411 kind=hold state=queued site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-055452f6 demote=0/0n retire=0/0n protect=2 nodes=2 ms=0.2 usage=0.0000
+[promote] plan-hold-4ea838cc tokens=48 device=48 host=0 started=0 free=60294 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-4ea838cc tokens=48 duration_ms=7.37
+[promote] plan-hold-18887266 tokens=48 device=48 host=0 started=0 free=59107 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-18887266 tokens=48 duration_ms=398.79
+[2026-10-20 10:41:43] Prefill batch, #new-seq: 1, #new-token: 1187, #cached-token: 50, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 104.65
+[serve] 1001415-2t0-b1f684c1 prompt_tokens=1237 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=1184.68 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:41:43] Decode batch, #running-req: 1, #token: 1252, token usage: 0.02, cuda graph: True, gen throughput (token/s): 9.27, #queue-req: 0
+[2026-10-20 10:41:45] Decode batch, #running-req: 1, #token: 1292, token usage: 0.02, cuda graph: True, gen throughput (token/s): 35.20, #queue-req: 0
+[decode] 1001415-2t0-b1f684c1 decode_ms=2077.11 output_tokens=74
+[ctl] 1001415-2t0-b1f684c1 queue_ms=0.0 advance_ms=2.4 pre_ms=2.9 post_ms=0.2
+[2026-10-20 10:41:45] 127.0.0.1 [20/Oct/2026:10:41:42 -0400] "POST /v1/chat/completions HTTP/1.1" 200 756 "-" "python-httpx/0.28.1"
+[priority] plan-prio-81bd56e7 demote=1/2n retire=0/0n protect=2 nodes=4 ms=0.5 usage=0.0000
+[promote] plan-hold-7bffa217 tokens=408 device=408 host=0 started=0 free=59033 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-7bffa217 tokens=408 duration_ms=0.45
+[call] 1001415 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1001415 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001415 err_s=+2.02 done=408/411 kind=hold state=queued site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-529c6cd3 demote=0/0n retire=0/0n protect=2 nodes=5 ms=0.2 usage=0.0290
+[2026-10-20 10:41:48] Prefill batch, #new-seq: 1, #new-token: 1364, #cached-token: 418, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 219.42
+[serve] 1001415-3t0-d8cdc8ea prompt_tokens=1782 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=1303.10 inflight_prefill=0 inflight_decode=1
+[promote] plan-hold-f9c3de92 tokens=48 device=48 host=0 started=0 free=57668 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-f9c3de92 tokens=48 duration_ms=895.09
+[2026-10-20 10:41:49] Decode batch, #running-req: 1, #token: 1803, token usage: 0.03, cuda graph: True, gen throughput (token/s): 9.00, #queue-req: 0
+[2026-10-20 10:41:50] Decode batch, #running-req: 1, #token: 1843, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.82, #queue-req: 0
+[2026-10-20 10:41:51] Decode batch, #running-req: 1, #token: 1883, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.87, #queue-req: 0
+[priority] plan-prio-258885d2 demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.2 usage=0.0311
+[priority] plan-prio-09af0157 demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0312
+[2026-10-20 10:41:52] Decode batch, #running-req: 1, #token: 1923, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.84, #queue-req: 0
+[2026-10-20 10:41:54] Decode batch, #running-req: 1, #token: 1963, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.83, #queue-req: 0
+[decode] 1001415-3t0-d8cdc8ea decode_ms=5707.97 output_tokens=200
+[ctl] 1001415-3t0-d8cdc8ea queue_ms=0.0 advance_ms=2.8 pre_ms=3.8 post_ms=0.2
+[2026-10-20 10:41:54] 127.0.0.1 [20/Oct/2026:10:41:47 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1361 "-" "python-httpx/0.28.1"
+[call] 1001415 #3 EvidenceAnalyzer.verify_claim:251 predicted=miss ctx=(1,)
+[invalidate] 1001415 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001415 err_s=+0.02 done=0/1074 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-0689edf1 demote=1/3n retire=0/0n protect=2 nodes=5 ms=0.4 usage=0.0000
+[promote] plan-hold-bdd8b1af tokens=464 device=464 host=0 started=0 free=57469 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-bdd8b1af tokens=464 duration_ms=5.73
+[priority] plan-prio-615856c9 demote=0/0n retire=0/0n protect=1 nodes=3 ms=0.1 usage=0.0000
+[2026-10-20 10:41:56] Prefill batch, #new-seq: 1, #new-token: 1797, #cached-token: 51, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 183.43
+[serve] 1001415-4t0-59192d62 prompt_tokens=1848 cached_tokens=51 cached_device=51 cached_host=0 ttft_ms=1695.00 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:41:56] Decode batch, #running-req: 1, #token: 1869, token usage: 0.03, cuda graph: True, gen throughput (token/s): 13.99, #queue-req: 0
+[2026-10-20 10:41:58] Decode batch, #running-req: 1, #token: 1909, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.81, #queue-req: 0
+[2026-10-20 10:41:59] Decode batch, #running-req: 1, #token: 1949, token usage: 0.03, cuda graph: True, gen throughput (token/s): 34.77, #queue-req: 0
+[priority] plan-prio-90716eb0 demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0320
+[priority] plan-prio-2e8d425e demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0320
+[decode] 1001415-4t0-59192d62 decode_ms=3635.43 output_tokens=127
+[ctl] 1001415-4t0-59192d62 queue_ms=0.0 advance_ms=4.1 pre_ms=3.3 post_ms=0.2
+[2026-10-20 10:41:59] 127.0.0.1 [20/Oct/2026:10:41:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1044 "-" "python-httpx/0.28.1"
+[call] 1001415 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1001415 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001415 err_s=+0.02 done=0/1840 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-4f61e980 demote=1/2n retire=0/0n protect=1 nodes=3 ms=0.4 usage=0.0000
+[priority] plan-prio-77454538 demote=0/0n retire=0/0n protect=2 nodes=7 ms=0.3 usage=0.0299
+[2026-10-20 10:42:01] Prefill batch, #new-seq: 1, #new-token: 1376, #cached-token: 464, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 360.71
+[serve] 1001415-5t0-2c482792 prompt_tokens=1840 cached_tokens=464 cached_device=464 cached_host=0 ttft_ms=1312.40 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:42:01] Decode batch, #running-req: 1, #token: 1854, token usage: 0.03, cuda graph: True, gen throughput (token/s): 16.14, #queue-req: 0
+[decode] 1001415-5t0-2c482792 decode_ms=1415.55 output_tokens=50
+[ctl] 1001415-5t0-2c482792 queue_ms=0.0 advance_ms=5.1 pre_ms=3.3 post_ms=0.3
+[2026-10-20 10:42:02] 127.0.0.1 [20/Oct/2026:10:42:00 -0400] "POST /v1/chat/completions HTTP/1.1" 200 704 "-" "python-httpx/0.28.1"
+[priority] plan-prio-bf8ac362 demote=1/2n retire=0/0n protect=2 nodes=7 ms=0.6 usage=0.0000
+[call] 1001415 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1001415 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001415 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-a01ca982 demote=2/4n retire=0/0n protect=2 nodes=6 ms=1.0 usage=0.0680
+[2026-10-20 10:42:08] Prefill batch, #new-seq: 1, #new-token: 3759, #cached-token: 418, token usage: 0.07, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 193.80
+[serve] 1001415-6t0-13e54d4b prompt_tokens=4177 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=3644.46 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:42:08] Decode batch, #running-req: 1, #token: 4181, token usage: 0.07, cuda graph: True, gen throughput (token/s): 5.88, #queue-req: 0
+[2026-10-20 10:42:09] Decode batch, #running-req: 1, #token: 4221, token usage: 0.07, cuda graph: True, gen throughput (token/s): 33.84, #queue-req: 0
+[decode] 1001415-6t0-13e54d4b decode_ms=2124.49 output_tokens=73
+[ctl] 1001415-6t0-13e54d4b queue_ms=0.0 advance_ms=7.9 pre_ms=9.6 post_ms=0.3
+[2026-10-20 10:42:10] 127.0.0.1 [20/Oct/2026:10:42:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 762 "-" "python-httpx/0.28.1"
+[priority] plan-prio-4eb4b6ea demote=1/3n retire=0/0n protect=2 nodes=6 ms=0.7 usage=0.0000
+[call] 1001415 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1001415 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001415 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-3b0e0166 demote=0/0n retire=0/0n protect=2 nodes=6 ms=0.3 usage=0.0551
+[2026-10-20 10:42:15] Prefill batch, #new-seq: 1, #new-token: 2965, #cached-token: 418, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 537.12
+[serve] 1001415-7t0-e86ba75c prompt_tokens=3383 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2838.61 inflight_prefill=0 inflight_decode=1
+[promote] plan-hold-a125f93f tokens=1736 device=1736 host=0 started=0 free=47321 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-a125f93f tokens=1736 duration_ms=1669.92
+[2026-10-20 10:42:15] Decode batch, #running-req: 1, #token: 3394, token usage: 0.06, cuda graph: True, gen throughput (token/s): 6.64, #queue-req: 0
+[2026-10-20 10:42:16] Decode batch, #running-req: 1, #token: 3434, token usage: 0.06, cuda graph: True, gen throughput (token/s): 34.09, #queue-req: 0
+[priority] plan-prio-3eb4a71f demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0563
+[priority] plan-prio-db5b7da6 demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0563
+[2026-10-20 10:42:18] Decode batch, #running-req: 1, #token: 3474, token usage: 0.06, cuda graph: True, gen throughput (token/s): 34.03, #queue-req: 0
+[decode] 1001415-7t0-e86ba75c decode_ms=2791.21 output_tokens=96
+[ctl] 1001415-7t0-e86ba75c queue_ms=0.0 advance_ms=5.8 pre_ms=6.2 post_ms=0.3
+[2026-10-20 10:42:18] 127.0.0.1 [20/Oct/2026:10:42:12 -0400] "POST /v1/chat/completions HTTP/1.1" 200 886 "-" "python-httpx/0.28.1"
+[call] 1001415 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1001415 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001415 err_s=-0.00 done=0/2671 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-13481052 demote=1/3n retire=0/0n protect=2 nodes=7 ms=0.6 usage=0.0000
+[promote] plan-hold-874a4b9c tokens=1792 device=1792 host=0 started=0 free=45613 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-874a4b9c tokens=1792 duration_ms=500.01
+[2026-10-20 10:42:19] Prefill batch, #new-seq: 1, #new-token: 1613, #cached-token: 1738, token usage: 0.05, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 668.70
+[serve] 1001415-8t0-4aa7dece prompt_tokens=3351 cached_tokens=1738 cached_device=1738 cached_host=0 ttft_ms=1601.81 inflight_prefill=0 inflight_decode=1
+[priority] plan-prio-be6d8645 demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.3 usage=0.0546
+[2026-10-20 10:42:20] Decode batch, #running-req: 1, #token: 3386, token usage: 0.06, cuda graph: True, gen throughput (token/s): 14.28, #queue-req: 0
+[2026-10-20 10:42:22] Decode batch, #running-req: 1, #token: 3426, token usage: 0.06, cuda graph: True, gen throughput (token/s): 34.06, #queue-req: 0
+[2026-10-20 10:42:23] Decode batch, #running-req: 1, #token: 3466, token usage: 0.06, cuda graph: True, gen throughput (token/s): 33.99, #queue-req: 0
+[priority] plan-prio-6677f28d demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0564
+[priority] plan-prio-700e7e7c demote=0/0n retire=0/0n protect=1 nodes=5 ms=0.1 usage=0.0565
+[decode] 1001415-8t0-4aa7dece decode_ms=4468.49 output_tokens=153
+[ctl] 1001415-8t0-4aa7dece queue_ms=0.0 advance_ms=6.9 pre_ms=5.9 post_ms=0.2
+[2026-10-20 10:42:24] 127.0.0.1 [20/Oct/2026:10:42:18 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1172 "-" "python-httpx/0.28.1"
+[close] 1001415 calls=8
+[2026-10-20 10:42:24] 127.0.0.1 [20/Oct/2026:10:42:24 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3a87c88b demote=1/2n retire=0/0n protect=1 nodes=5 ms=0.8 usage=0.0000
+[priority] plan-prio-131b6159 demote=0/0n retire=8/22n protect=0 nodes=0 ms=2.2 usage=0.0000
+[call] 1001767 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1001767 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1001767 unplanned site=ClaimAnalyzer.decompose_claim:90
+[call] 1001768 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1001768 unplanned site=ClaimAnalyzer.decompose_claim:90
+[call] 1001765 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1001765 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1001765 unplanned site=ClaimAnalyzer.decompose_claim:90
+[call] 1001766 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1001766 unplanned site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-9aca711d demote=0/0n retire=0/0n protect=2 nodes=6 ms=0.3 usage=0.0080
+[2026-10-20 10:42:29] Prefill batch, #new-seq: 1, #new-token: 62, #cached-token: 428, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 159.63
+[serve] 1001767-1t0-4f8df925 prompt_tokens=490 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=107.71 inflight_prefill=3 inflight_decode=1
+[promote] plan-hold-ae7ece6e tokens=360 device=360 host=0 started=0 free=45260 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-ae7ece6e tokens=360 duration_ms=182.91
+[2026-10-20 10:42:30] Prefill batch, #new-seq: 3, #new-token: 138, #cached-token: 1359, token usage: 0.01, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 512.33
+[serve] 1001768-1t0-939fe83b prompt_tokens=497 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=223.11 inflight_prefill=2 inflight_decode=2
+[ledger] drift +over=1 +under=0 (total {'over': 1, 'under': 0}) device_used=14544
+[serve] 1001765-1t0-ae5f5d87 prompt_tokens=504 cached_tokens=503 cached_device=503 cached_host=0 ttft_ms=220.50 inflight_prefill=1 inflight_decode=3
+[serve] 1001766-1t0-e2ed693c prompt_tokens=496 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=215.63 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-e790f1fc demote=0/0n retire=0/0n protect=8 nodes=8 ms=0.6 usage=0.0115
+[2026-10-20 10:42:30] Decode batch, #running-req: 4, #token: 711, token usage: 0.01, cuda graph: True, gen throughput (token/s): 6.24, #queue-req: 0
+[promote] plan-hold-a880c63b tokens=360 device=360 host=0 started=0 free=45253 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-a880c63b tokens=360 duration_ms=27.68
+[promote] plan-hold-df4a5aeb tokens=400 device=400 host=0 started=0 free=45249 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-df4a5aeb tokens=400 duration_ms=13.96
+[promote] plan-hold-bdd00a67 tokens=360 device=360 host=0 started=0 free=45245 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-bdd00a67 tokens=360 duration_ms=13.87
+[decode] 1001768-1t0-939fe83b decode_ms=765.25 output_tokens=27
+[ctl] 1001768-1t0-939fe83b queue_ms=0.1 advance_ms=1.3 pre_ms=1.1 post_ms=0.2
+[2026-10-20 10:42:30] 127.0.0.1 [20/Oct/2026:10:42:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6c3697fd demote=1/2n retire=0/0n protect=8 nodes=9 ms=0.6 usage=0.0117
+[decode] 1001767-1t0-4f8df925 decode_ms=1004.17 output_tokens=31
+[ctl] 1001767-1t0-4f8df925 queue_ms=0.0 advance_ms=1.8 pre_ms=1.2 post_ms=0.2
+[2026-10-20 10:42:30] 127.0.0.1 [20/Oct/2026:10:42:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 610 "-" "python-httpx/0.28.1"
+[priority] plan-prio-8ffb1ab6 demote=1/2n retire=0/0n protect=8 nodes=9 ms=0.6 usage=0.0104
+[2026-10-20 10:42:31] Decode batch, #running-req: 2, #token: 656, token usage: 0.01, cuda graph: True, gen throughput (token/s): 116.04, #queue-req: 0
+[decode] 1001766-1t0-e2ed693c decode_ms=1344.54 output_tokens=47
+[ctl] 1001766-1t0-e2ed693c queue_ms=2.7 advance_ms=1.3 pre_ms=1.0 post_ms=0.2
+[2026-10-20 10:42:31] 127.0.0.1 [20/Oct/2026:10:42:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 676 "-" "python-httpx/0.28.1"
+[priority] plan-prio-00476cb9 demote=1/2n retire=0/0n protect=8 nodes=9 ms=0.6 usage=0.0090
+[decode] 1001765-1t0-ae5f5d87 decode_ms=1649.49 output_tokens=58
+[ctl] 1001765-1t0-ae5f5d87 queue_ms=3.4 advance_ms=0.2 pre_ms=1.1 post_ms=0.2
+[2026-10-20 10:42:31] 127.0.0.1 [20/Oct/2026:10:42:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 714 "-" "python-httpx/0.28.1"
+[priority] plan-prio-0320be42 demote=1/3n retire=0/0n protect=8 nodes=9 ms=0.6 usage=0.0000
+[call] 1001768 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001767 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1001767 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001767 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001766 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-cffa1ac1 demote=0/0n retire=0/0n protect=8 nodes=9 ms=0.5 usage=0.0390
+[call] 1001765 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1001765 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001765 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:42:35] Prefill batch, #new-seq: 1, #new-token: 1977, #cached-token: 418, token usage: 0.08, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 24.11
+[serve] 1001768-2t0-1cc70327 prompt_tokens=2395 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2926.44 inflight_prefill=3 inflight_decode=1
+[promote] plan-hold-b5678b58 tokens=360 device=360 host=0 started=0 free=40506 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-b5678b58 tokens=360 duration_ms=2345.11
+[2026-10-20 10:42:37] Prefill batch, #new-seq: 2, #new-token: 2673, #cached-token: 833, token usage: 0.10, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1278.13
+[serve] 1001767-2t0-735fca76 prompt_tokens=2855 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=4355.79 inflight_prefill=2 inflight_decode=2
+[serve] 1001766-2t0-c315810f prompt_tokens=651 cached_tokens=415 cached_device=415 cached_host=0 ttft_ms=3899.70 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-272c90e6 demote=0/0n retire=0/0n protect=8 nodes=9 ms=0.5 usage=0.0958
+[2026-10-20 10:42:37] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1236, token usage: 0.10, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 944153.65
+[serve] 1001765-2t0-710ed92b prompt_tokens=1237 cached_tokens=1236 cached_device=1236 cached_host=0 ttft_ms=3596.78 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-ed7562f8 tokens=360 device=360 host=0 started=0 free=40502 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-ed7562f8 tokens=360 duration_ms=2.07
+[promote] plan-hold-6ae4a32c tokens=360 device=360 host=0 started=0 free=40498 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-6ae4a32c tokens=360 duration_ms=15.02
+[priority] plan-prio-dd731513 demote=0/0n retire=0/0n protect=7 nodes=9 ms=0.5 usage=0.0971
+[priority] plan-prio-6c5e060d demote=0/0n retire=0/0n protect=7 nodes=9 ms=0.4 usage=0.0971
+[priority] plan-prio-aa132f8e demote=0/0n retire=0/0n protect=6 nodes=9 ms=0.4 usage=0.0973
+[2026-10-20 10:42:38] Decode batch, #running-req: 4, #token: 5983, token usage: 0.10, cuda graph: True, gen throughput (token/s): 16.95, #queue-req: 0
+[priority] plan-prio-87a7205b demote=0/0n retire=0/0n protect=6 nodes=9 ms=0.4 usage=0.0974
+[priority] plan-prio-615ce1b2 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.4 usage=0.0983
+[priority] plan-prio-31c40f21 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.3 usage=0.0984
+[decode] 1001768-2t0-1cc70327 decode_ms=2790.81 output_tokens=41
+[ctl] 1001768-2t0-1cc70327 queue_ms=0.0 advance_ms=1.6 pre_ms=5.7 post_ms=0.2
+[2026-10-20 10:42:38] 127.0.0.1 [20/Oct/2026:10:42:32 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5439f591 demote=1/4n retire=0/0n protect=6 nodes=9 ms=0.7 usage=0.0657
+[promote] plan-hold-af0fd6ee tokens=360 device=360 host=0 started=0 free=40336 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-af0fd6ee tokens=360 duration_ms=29.81
+[decode] 1001766-2t0-c315810f decode_ms=1427.59 output_tokens=47
+[ctl] 1001766-2t0-c315810f queue_ms=0.0 advance_ms=1.2 pre_ms=1.3 post_ms=0.2
+[2026-10-20 10:42:38] 127.0.0.1 [20/Oct/2026:10:42:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 650 "-" "python-httpx/0.28.1"
+[priority] plan-prio-c78908a4 demote=1/3n retire=0/0n protect=7 nodes=9 ms=0.6 usage=0.0614
+[promote] plan-hold-8f0084e9 tokens=360 device=360 host=0 started=0 free=40320 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-8f0084e9 tokens=360 duration_ms=29.50
+[2026-10-20 10:42:39] Decode batch, #running-req: 2, #token: 3802, token usage: 0.06, cuda graph: True, gen throughput (token/s): 99.85, #queue-req: 0
+[decode] 1001765-2t0-710ed92b decode_ms=2235.44 output_tokens=74
+[ctl] 1001765-2t0-710ed92b queue_ms=0.0 advance_ms=0.3 pre_ms=2.7 post_ms=0.2
+[2026-10-20 10:42:39] 127.0.0.1 [20/Oct/2026:10:42:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 756 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1adedee1 demote=1/6n retire=0/0n protect=7 nodes=9 ms=0.6 usage=0.0477
+[2026-10-20 10:42:40] Decode batch, #running-req: 1, #token: 2959, token usage: 0.05, cuda graph: True, gen throughput (token/s): 43.12, #queue-req: 0
+[call] 1001768 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-a41fac3d demote=0/0n retire=0/0n protect=7 nodes=9 ms=0.5 usage=0.0483
+[call] 1001766 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001765 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1001765 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001765 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[promote] plan-hold-a084c302 tokens=360 device=360 host=0 started=0 free=37126 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-a084c302 tokens=360 duration_ms=1542.89
+[2026-10-20 10:42:43] Prefill batch, #new-seq: 1, #new-token: 3182, #cached-token: 418, token usage: 0.13, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.15
+[serve] 1001768-3t0-095c5b1b prompt_tokens=3600 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=3202.55 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-c75fdcd1 demote=0/0n retire=0/0n protect=7 nodes=10 ms=0.7 usage=0.1274
+[2026-10-20 10:42:44] Prefill batch, #new-seq: 2, #new-token: 318, #cached-token: 2197, token usage: 0.13, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 12513.92
+[serve] 1001766-3t0-541bf298 prompt_tokens=733 cached_tokens=416 cached_device=416 cached_host=0 ttft_ms=3281.74 inflight_prefill=1 inflight_decode=3
+[serve] 1001765-3t0-23aef683 prompt_tokens=1782 cached_tokens=1781 cached_device=1781 cached_host=0 ttft_ms=2470.31 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-4584f9be tokens=360 device=360 host=0 started=0 free=36805 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-4584f9be tokens=360 duration_ms=251.74
+[2026-10-20 10:42:45] Decode batch, #running-req: 4, #token: 7964, token usage: 0.13, cuda graph: True, gen throughput (token/s): 29.84, #queue-req: 0
+[decode] 1001768-3t0-095c5b1b decode_ms=1394.57 output_tokens=37
+[ctl] 1001768-3t0-095c5b1b queue_ms=0.0 advance_ms=3.5 pre_ms=7.8 post_ms=0.2
+[2026-10-20 10:42:45] 127.0.0.1 [20/Oct/2026:10:42:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=360/1409 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-0f45058c demote=1/5n retire=0/0n protect=7 nodes=10 ms=1.0 usage=0.0775
+[promote] plan-hold-de356eae tokens=456 device=456 host=0 started=0 free=36655 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-de356eae tokens=456 duration_ms=22.64
+[priority] plan-prio-65404f21 demote=0/0n retire=0/0n protect=6 nodes=13 ms=0.5 usage=0.1172
+[2026-10-20 10:42:47] Prefill batch, #new-seq: 1, #new-token: 2120, #cached-token: 367, token usage: 0.12, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 96.82
+[serve] 1001768-4t0-62600b7f prompt_tokens=2487 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=2107.42 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-136e2f88 demote=0/0n retire=0/0n protect=5 nodes=13 ms=0.5 usage=0.1172
+[priority] plan-prio-58a39830 demote=0/0n retire=0/0n protect=5 nodes=13 ms=0.5 usage=0.1173
+[decode] 1001766-3t0-541bf298 decode_ms=3647.49 output_tokens=51
+[ctl] 1001766-3t0-541bf298 queue_ms=0.0 advance_ms=1.3 pre_ms=1.4 post_ms=0.2
+[2026-10-20 10:42:47] 127.0.0.1 [20/Oct/2026:10:42:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 670 "-" "python-httpx/0.28.1"
+[call] 1001766 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=0/467 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-1b1f36bc demote=1/4n retire=0/0n protect=6 nodes=13 ms=0.7 usage=0.1120
+[promote] plan-hold-b2ce4209 tokens=456 device=456 host=0 started=0 free=34194 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-b2ce4209 tokens=456 duration_ms=78.51
+[2026-10-20 10:42:48] Prefill batch, #new-seq: 1, #new-token: 290, #cached-token: 367, token usage: 0.12, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2972.02
+[serve] 1001766-4t0-2a37bc7f prompt_tokens=657 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=322.51 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-69859621 demote=0/0n retire=0/0n protect=5 nodes=14 ms=0.5 usage=0.1168
+[2026-10-20 10:42:48] Decode batch, #running-req: 4, #token: 7260, token usage: 0.12, cuda graph: True, gen throughput (token/s): 43.41, #queue-req: 0
+[2026-10-20 10:42:50] Decode batch, #running-req: 4, #token: 7420, token usage: 0.12, cuda graph: True, gen throughput (token/s): 126.90, #queue-req: 0
+[priority] plan-prio-de952081 demote=0/0n retire=0/0n protect=5 nodes=12 ms=0.5 usage=0.1214
+[priority] plan-prio-4c82f10a demote=0/0n retire=0/0n protect=5 nodes=12 ms=0.4 usage=0.1214
+[decode] 1001766-4t0-2a37bc7f decode_ms=2428.15 output_tokens=78
+[ctl] 1001766-4t0-2a37bc7f queue_ms=0.0 advance_ms=2.0 pre_ms=1.5 post_ms=0.1
+[2026-10-20 10:42:50] 127.0.0.1 [20/Oct/2026:10:42:47 -0400] "POST /v1/chat/completions HTTP/1.1" 200 822 "-" "python-httpx/0.28.1"
+[call] 1001766 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001766 err_s=+0.00 done=456/649 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-0c06e953 demote=1/2n retire=0/0n protect=5 nodes=12 ms=0.6 usage=0.1159
+[priority] plan-prio-42f4eca4 demote=0/0n retire=0/0n protect=6 nodes=12 ms=0.5 usage=0.1256
+[2026-10-20 10:42:50] Prefill batch, #new-seq: 1, #new-token: 193, #cached-token: 456, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 107.54
+[serve] 1001766-5t0-251b7050 prompt_tokens=649 cached_tokens=456 cached_device=456 cached_host=0 ttft_ms=241.50 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:42:51] Decode batch, #running-req: 4, #token: 5259, token usage: 0.09, cuda graph: True, gen throughput (token/s): 107.84, #queue-req: 0
+[decode] 1001768-4t0-62600b7f decode_ms=4111.10 output_tokens=115
+[ctl] 1001768-4t0-62600b7f queue_ms=0.0 advance_ms=5.5 pre_ms=4.2 post_ms=0.2
+[2026-10-20 10:42:51] 127.0.0.1 [20/Oct/2026:10:42:45 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1012 "-" "python-httpx/0.28.1"
+[call] 1001768 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001768 err_s=+0.00 done=0/2479 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-51afcd92 demote=1/2n retire=0/0n protect=6 nodes=15 ms=0.9 usage=0.0856
+[priority] plan-prio-f0234ce1 demote=0/0n retire=0/0n protect=7 nodes=14 ms=0.7 usage=0.0857
+[2026-10-20 10:42:53] Prefill batch, #new-seq: 1, #new-token: 2022, #cached-token: 457, token usage: 0.12, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 70.25
+[serve] 1001768-5t0-182989c9 prompt_tokens=2479 cached_tokens=457 cached_device=457 cached_host=0 ttft_ms=2009.98 inflight_prefill=0 inflight_decode=4
+[decode] 1001767-2t0-735fca76 decode_ms=16759.48 output_tokens=285
+[ctl] 1001767-2t0-735fca76 queue_ms=0.0 advance_ms=1.2 pre_ms=6.2 post_ms=0.1
+[2026-10-20 10:42:54] 127.0.0.1 [20/Oct/2026:10:42:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1717 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6b3c5aa7 demote=1/5n retire=0/0n protect=7 nodes=14 ms=1.0 usage=0.0761
+[decode] 1001766-5t0-251b7050 decode_ms=3545.95 output_tokens=51
+[ctl] 1001766-5t0-251b7050 queue_ms=0.0 advance_ms=2.0 pre_ms=1.5 post_ms=0.2
+[2026-10-20 10:42:54] 127.0.0.1 [20/Oct/2026:10:42:50 -0400] "POST /v1/chat/completions HTTP/1.1" 200 705 "-" "python-httpx/0.28.1"
+[decode] 1001768-5t0-182989c9 decode_ms=829.66 output_tokens=27
+[ctl] 1001768-5t0-182989c9 queue_ms=0.0 advance_ms=5.5 pre_ms=4.2 post_ms=0.3
+[2026-10-20 10:42:54] 127.0.0.1 [20/Oct/2026:10:42:51 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5c3261d0 demote=1/2n retire=0/0n protect=7 nodes=14 ms=0.9 usage=0.0320
+[priority] plan-prio-2703007d demote=1/2n retire=0/0n protect=7 nodes=14 ms=1.0 usage=0.0320
+[2026-10-20 10:42:54] Decode batch, #running-req: 1, #token: 1976, token usage: 0.03, cuda graph: True, gen throughput (token/s): 37.22, #queue-req: 0
+[decode] 1001765-3t0-23aef683 decode_ms=10767.66 output_tokens=200
+[ctl] 1001765-3t0-23aef683 queue_ms=0.0 advance_ms=0.3 pre_ms=3.5 post_ms=0.2
+[2026-10-20 10:42:54] 127.0.0.1 [20/Oct/2026:10:42:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1361 "-" "python-httpx/0.28.1"
+[call] 1001765 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1001765 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001765 err_s=+0.00 done=1074/1074 kind=hold state=done site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-809af261 demote=1/7n retire=0/0n protect=7 nodes=14 ms=0.9 usage=0.0000
+[priority] plan-prio-c5e142d0 demote=0/0n retire=0/0n protect=6 nodes=17 ms=0.7 usage=0.0301
+[2026-10-20 10:42:54] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1847, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1446.21
+[ledger] drift +over=1 +under=0 (total {'over': 2, 'under': 0}) device_used=27520
+[serve] 1001765-4t0-f9ab4e46 prompt_tokens=1848 cached_tokens=1847 cached_device=1847 cached_host=0 ttft_ms=44.35 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:42:55] Decode batch, #running-req: 1, #token: 1882, token usage: 0.03, cuda graph: True, gen throughput (token/s): 33.03, #queue-req: 0
+[call] 1001767 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1001767 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001767 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-d905b9cc demote=0/0n retire=0/0n protect=6 nodes=17 ms=0.8 usage=0.0308
+[call] 1001766 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001768 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[promote] plan-hold-ba1e97bb tokens=360 device=360 host=0 started=0 free=27923 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-ba1e97bb tokens=360 duration_ms=1802.84
+[2026-10-20 10:43:00] Prefill batch, #new-seq: 1, #new-token: 3684, #cached-token: 418, token usage: 0.17, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.17
+[serve] 1001767-3t0-03e0491c prompt_tokens=4102 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=4721.14 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-8d08fb9b demote=4/9n retire=0/0n protect=6 nodes=15 ms=2.3 usage=0.1677
+[2026-10-20 10:43:02] Prefill batch, #new-seq: 2, #new-token: 2535, #cached-token: 2660, token usage: 0.17, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2457.72
+[serve] 1001766-6t0-ced33440 prompt_tokens=818 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=6012.40 inflight_prefill=1 inflight_decode=3
+[serve] 1001768-6t0-51b349d8 prompt_tokens=4377 cached_tokens=2236 cached_device=2236 cached_host=0 ttft_ms=5967.13 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-3f2cf28c demote=0/0n retire=0/0n protect=6 nodes=15 ms=0.7 usage=0.1678
+[priority] plan-prio-a12c2845 demote=0/0n retire=0/0n protect=6 nodes=15 ms=0.7 usage=0.1678
+[2026-10-20 10:43:03] Decode batch, #running-req: 4, #token: 10427, token usage: 0.17, cuda graph: True, gen throughput (token/s): 17.44, #queue-req: 0
+[decode] 1001768-6t0-51b349d8 decode_ms=1305.60 output_tokens=41
+[ctl] 1001768-6t0-51b349d8 queue_ms=0.0 advance_ms=12.3 pre_ms=7.0 post_ms=0.3
+[2026-10-20 10:43:03] 127.0.0.1 [20/Oct/2026:10:42:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-8c5fecd1 demote=1/7n retire=0/0n protect=6 nodes=15 ms=1.1 usage=0.1053
+[decode] 1001766-6t0-ced33440 decode_ms=1682.34 output_tokens=53
+[ctl] 1001766-6t0-ced33440 queue_ms=0.0 advance_ms=3.4 pre_ms=1.6 post_ms=0.2
+[2026-10-20 10:43:04] 127.0.0.1 [20/Oct/2026:10:42:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 676 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a4c83a84 demote=1/5n retire=0/0n protect=6 nodes=15 ms=0.8 usage=0.0985
+[2026-10-20 10:43:04] Decode batch, #running-req: 2, #token: 6084, token usage: 0.10, cuda graph: True, gen throughput (token/s): 90.28, #queue-req: 0
+[decode] 1001765-4t0-f9ab4e46 decode_ms=10084.19 output_tokens=127
+[ctl] 1001765-4t0-f9ab4e46 queue_ms=0.0 advance_ms=0.3 pre_ms=4.3 post_ms=0.2
+[2026-10-20 10:43:05] 127.0.0.1 [20/Oct/2026:10:42:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1044 "-" "python-httpx/0.28.1"
+[call] 1001765 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1001765 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001765 err_s=+0.00 done=1840/1840 kind=hold state=done site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-f44bd466 demote=1/3n retire=0/0n protect=6 nodes=15 ms=1.0 usage=0.0681
+[priority] plan-prio-244af976 demote=0/0n retire=0/0n protect=6 nodes=9 ms=0.6 usage=0.0682
+[2026-10-20 10:43:05] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1839, token usage: 0.10, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 914.53
+[ledger] drift +over=1 +under=0 (total {'over': 3, 'under': 0}) device_used=30056
+[serve] 1001765-5t0-a77283b0 prompt_tokens=1840 cached_tokens=1839 cached_device=1839 cached_host=0 ttft_ms=100.06 inflight_prefill=0 inflight_decode=2
+[call] 1001768 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-92ba206c demote=0/0n retire=0/0n protect=6 nodes=9 ms=0.6 usage=0.0979
+[call] 1001766 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[promote] plan-hold-c102f2a4 tokens=2376 device=2376 host=0 started=0 free=23070 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-c102f2a4 tokens=2376 duration_ms=963.79
+[2026-10-20 10:43:08] Prefill batch, #new-seq: 1, #new-token: 2141, #cached-token: 3440, token usage: 0.19, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.34
+[serve] 1001768-7t0-090d9dc2 prompt_tokens=5581 cached_tokens=3440 cached_device=3440 cached_host=0 ttft_ms=2389.49 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-9fd88826 demote=0/0n retire=0/0n protect=6 nodes=10 ms=0.7 usage=0.1898
+[2026-10-20 10:43:08] Prefill batch, #new-seq: 1, #new-token: 467, #cached-token: 427, token usage: 0.19, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 5710.10
+[serve] 1001766-7t0-d2da929e prompt_tokens=894 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=2400.67 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-914cb32c tokens=544 device=544 host=0 started=0 free=22599 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-914cb32c tokens=544 duration_ms=370.89
+[2026-10-20 10:43:08] Decode batch, #running-req: 4, #token: 11679, token usage: 0.19, cuda graph: True, gen throughput (token/s): 21.49, #queue-req: 0
+[decode] 1001765-5t0-a77283b0 decode_ms=4297.13 output_tokens=50
+[ctl] 1001765-5t0-a77283b0 queue_ms=0.0 advance_ms=0.2 pre_ms=4.4 post_ms=0.1
+[2026-10-20 10:43:09] 127.0.0.1 [20/Oct/2026:10:43:05 -0400] "POST /v1/chat/completions HTTP/1.1" 200 704 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a6434d7f demote=1/3n retire=0/0n protect=6 nodes=11 ms=0.9 usage=0.1618
+[decode] 1001768-7t0-090d9dc2 decode_ms=1564.61 output_tokens=37
+[ctl] 1001768-7t0-090d9dc2 queue_ms=0.0 advance_ms=7.1 pre_ms=9.5 post_ms=0.3
+[2026-10-20 10:43:09] 127.0.0.1 [20/Oct/2026:10:43:05 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=-0.00 done=2376/3390 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-1ddab232 demote=1/7n retire=0/0n protect=6 nodes=11 ms=1.2 usage=0.0775
+[promote] plan-hold-e5d695a3 tokens=2432 device=2432 host=0 started=0 free=22508 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-e5d695a3 tokens=2432 duration_ms=11.21
+[priority] plan-prio-1c0b6884 demote=0/0n retire=0/0n protect=5 nodes=14 ms=0.6 usage=0.1494
+[call] 1001765 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1001765 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001765 err_s=-0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:43:11] Prefill batch, #new-seq: 1, #new-token: 2091, #cached-token: 2377, token usage: 0.15, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 136.08
+[serve] 1001768-8t0-74856133 prompt_tokens=4468 cached_tokens=2377 cached_device=2377 cached_host=0 ttft_ms=2196.22 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-3f172222 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.6 usage=0.1495
+[priority] plan-prio-b4fc19f0 demote=2/6n retire=0/0n protect=4 nodes=10 ms=1.0 usage=0.2107
+[2026-10-20 10:43:12] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 4176, token usage: 0.21, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 23783.65
+[serve] 1001765-6t0-eb474754 prompt_tokens=4177 cached_tokens=4176 cached_device=4176 cached_host=0 ttft_ms=529.32 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:43:12] Decode batch, #running-req: 4, #token: 12963, token usage: 0.21, cuda graph: True, gen throughput (token/s): 42.03, #queue-req: 0
+[decode] 1001767-3t0-03e0491c decode_ms=11398.88 output_tokens=155
+[ctl] 1001767-3t0-03e0491c queue_ms=0.0 advance_ms=3.9 pre_ms=8.7 post_ms=0.2
+[decode] 1001766-7t0-d2da929e decode_ms=3790.34 output_tokens=49
+[ctl] 1001766-7t0-d2da929e queue_ms=0.0 advance_ms=1.7 pre_ms=1.7 post_ms=0.2
+[2026-10-20 10:43:12] 127.0.0.1 [20/Oct/2026:10:42:56 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1130 "-" "python-httpx/0.28.1"
+[2026-10-20 10:43:12] 127.0.0.1 [20/Oct/2026:10:43:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 673 "-" "python-httpx/0.28.1"
+[call] 1001766 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=0/631 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[call] 1001767 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1001767 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001767 err_s=+0.00 done=0/1560 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-080dc028 demote=2/11n retire=0/0n protect=5 nodes=14 ms=1.2 usage=0.1402
+[promote] plan-hold-6f1798e7 tokens=608 device=608 host=0 started=0 free=20374 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-6f1798e7 tokens=608 duration_ms=15.55
+[priority] plan-prio-b1f25e22 demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.6 usage=0.1865
+[2026-10-20 10:43:14] Prefill batch, #new-seq: 2, #new-token: 2664, #cached-token: 914, token usage: 0.19, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.34
+[serve] 1001766-8t0-65de323b prompt_tokens=817 cached_tokens=547 cached_device=547 cached_host=0 ttft_ms=2647.50 inflight_prefill=1 inflight_decode=3
+[serve] 1001767-4t0-dbb4ae52 prompt_tokens=2761 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=2636.72 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-26278920 tokens=448 device=448 host=0 started=0 free=17706 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-26278920 tokens=448 duration_ms=1518.61
+[priority] plan-prio-03564797 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.4 usage=0.1867
+[priority] plan-prio-6026b916 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.4 usage=0.1867
+[2026-10-20 10:43:16] Decode batch, #running-req: 4, #token: 11597, token usage: 0.19, cuda graph: True, gen throughput (token/s): 39.76, #queue-req: 0
+[decode] 1001765-6t0-eb474754 decode_ms=4983.74 output_tokens=73
+[ctl] 1001765-6t0-eb474754 queue_ms=0.0 advance_ms=0.3 pre_ms=8.6 post_ms=0.1
+[2026-10-20 10:43:16] 127.0.0.1 [20/Oct/2026:10:43:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 762 "-" "python-httpx/0.28.1"
+[priority] plan-prio-39213faa demote=1/6n retire=0/0n protect=4 nodes=10 ms=0.8 usage=0.1223
+[decode] 1001766-8t0-65de323b decode_ms=2350.63 output_tokens=72
+[ctl] 1001766-8t0-65de323b queue_ms=0.1 advance_ms=2.3 pre_ms=1.6 post_ms=0.2
+[2026-10-20 10:43:17] 127.0.0.1 [20/Oct/2026:10:43:12 -0400] "POST /v1/chat/completions HTTP/1.1" 200 806 "-" "python-httpx/0.28.1"
+[call] 1001766 #8 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(3,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001766 err_s=-0.00 done=608/809 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-022d1479 demote=1/2n retire=0/0n protect=4 nodes=10 ms=0.6 usage=0.1143
+[2026-10-20 10:43:17] Decode batch, #running-req: 2, #token: 7779, token usage: 0.13, cuda graph: True, gen throughput (token/s): 109.99, #queue-req: 0
+[priority] plan-prio-5ccb07f5 demote=0/0n retire=0/0n protect=5 nodes=11 ms=0.4 usage=0.1266
+[2026-10-20 10:43:17] Prefill batch, #new-seq: 1, #new-token: 201, #cached-token: 608, token usage: 0.13, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1012.04
+[serve] 1001766-9t0-eb1988ef prompt_tokens=809 cached_tokens=608 cached_device=608 cached_host=0 ttft_ms=253.55 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-fcfda306 demote=0/0n retire=0/0n protect=5 nodes=11 ms=0.4 usage=0.1267
+[decode] 1001768-8t0-74856133 decode_ms=5770.56 output_tokens=89
+[ctl] 1001768-8t0-74856133 queue_ms=0.0 advance_ms=8.8 pre_ms=7.2 post_ms=0.3
+[2026-10-20 10:43:17] 127.0.0.1 [20/Oct/2026:10:43:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 882 "-" "python-httpx/0.28.1"
+[call] 1001768 #8 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(3,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001768 err_s=+0.00 done=0/4460 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-532fa399 demote=1/2n retire=0/0n protect=5 nodes=16 ms=1.2 usage=0.0586
+[priority] plan-prio-80c39bd2 demote=0/0n retire=0/0n protect=6 nodes=15 ms=0.7 usage=0.0587
+[call] 1001765 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1001765 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001765 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:43:19] Prefill batch, #new-seq: 1, #new-token: 2022, #cached-token: 2438, token usage: 0.12, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 88.33
+[serve] 1001768-9t0-593ccf57 prompt_tokens=4460 cached_tokens=2438 cached_device=2438 cached_host=0 ttft_ms=2131.92 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-f70101ed demote=0/0n retire=0/0n protect=6 nodes=21 ms=1.2 usage=0.1243
+[2026-10-20 10:43:19] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 3382, token usage: 0.18, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 24276.84
+[serve] 1001765-7t0-47c94e3d prompt_tokens=3383 cached_tokens=3382 cached_device=3382 cached_host=0 ttft_ms=929.07 inflight_prefill=0 inflight_decode=4
+[decode] 1001768-9t0-593ccf57 decode_ms=905.77 output_tokens=27
+[ctl] 1001768-9t0-593ccf57 queue_ms=0.0 advance_ms=8.5 pre_ms=7.0 post_ms=0.4
+[2026-10-20 10:43:20] 127.0.0.1 [20/Oct/2026:10:43:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[priority] plan-prio-bc83d6bc demote=1/2n retire=0/0n protect=6 nodes=21 ms=1.6 usage=0.1143
+[2026-10-20 10:43:21] Decode batch, #running-req: 3, #token: 7041, token usage: 0.11, cuda graph: True, gen throughput (token/s): 39.82, #queue-req: 0
+[decode] 1001766-9t0-eb1988ef decode_ms=3718.04 output_tokens=50
+[ctl] 1001766-9t0-eb1988ef queue_ms=0.0 advance_ms=2.4 pre_ms=1.8 post_ms=0.2
+[2026-10-20 10:43:21] 127.0.0.1 [20/Oct/2026:10:43:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 684 "-" "python-httpx/0.28.1"
+[priority] plan-prio-88ce5bcf demote=1/2n retire=0/0n protect=6 nodes=21 ms=1.1 usage=0.1019
+[2026-10-20 10:43:22] Decode batch, #running-req: 2, #token: 6321, token usage: 0.10, cuda graph: True, gen throughput (token/s): 71.94, #queue-req: 0
+[decode] 1001767-4t0-dbb4ae52 decode_ms=7570.53 output_tokens=162
+[ctl] 1001767-4t0-dbb4ae52 queue_ms=2.3 advance_ms=5.6 pre_ms=4.7 post_ms=0.2
+[2026-10-20 10:43:22] 127.0.0.1 [20/Oct/2026:10:43:12 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1121 "-" "python-httpx/0.28.1"
+[call] 1001767 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1001767 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001767 err_s=+0.00 done=0/2753 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-cd13c588 demote=1/2n retire=0/0n protect=6 nodes=24 ms=1.5 usage=0.0564
+[priority] plan-prio-55ff919f demote=0/0n retire=0/0n protect=6 nodes=21 ms=1.0 usage=0.0564
+[call] 1001768 #9 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001766 #9 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-dc6c5556 demote=4/12n retire=0/0n protect=6 nodes=20 ms=3.0 usage=0.1004
+[2026-10-20 10:43:26] Prefill batch, #new-seq: 1, #new-token: 2303, #cached-token: 450, token usage: 0.21, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.16
+[serve] 1001767-5t0-bddd5bf3 prompt_tokens=2753 cached_tokens=450 cached_device=450 cached_host=0 ttft_ms=3529.04 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-6c96d63b demote=4/8n retire=0/0n protect=6 nodes=19 ms=1.8 usage=0.2080
+[2026-10-20 10:43:27] Prefill batch, #new-seq: 2, #new-token: 2810, #cached-token: 4635, token usage: 0.21, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1310.63
+[serve] 1001768-10t0-288af169 prompt_tokens=6358 cached_tokens=4217 cached_device=4217 cached_host=0 ttft_ms=5032.09 inflight_prefill=1 inflight_decode=3
+[serve] 1001766-10t0-fd83d11b prompt_tokens=1087 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=4508.78 inflight_prefill=0 inflight_decode=4
+[decode] 1001767-5t0-bddd5bf3 decode_ms=1990.76 output_tokens=8
+[ctl] 1001767-5t0-bddd5bf3 queue_ms=0.0 advance_ms=0.2 pre_ms=5.9 post_ms=0.1
+[2026-10-20 10:43:28] 127.0.0.1 [20/Oct/2026:10:43:22 -0400] "POST /v1/chat/completions HTTP/1.1" 200 500 "-" "python-httpx/0.28.1"
+[priority] plan-prio-2b6b97bb demote=1/2n retire=0/0n protect=6 nodes=19 ms=1.4 usage=0.1644
+[decode] 1001765-7t0-47c94e3d decode_ms=8265.29 output_tokens=96
+[ctl] 1001765-7t0-47c94e3d queue_ms=0.0 advance_ms=0.4 pre_ms=6.6 post_ms=0.3
+[2026-10-20 10:43:28] 127.0.0.1 [20/Oct/2026:10:43:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 886 "-" "python-httpx/0.28.1"
+[call] 1001765 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1001765 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001765 err_s=+0.00 done=2671/2671 kind=hold state=done site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-970e1216 demote=1/6n retire=0/0n protect=6 nodes=19 ms=1.3 usage=0.1148
+[promote] plan-hold-2ae9ea63 tokens=1792 device=1792 host=0 started=0 free=9961 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-2ae9ea63 tokens=1792 duration_ms=27.33
+[priority] plan-prio-55aa3347 demote=0/0n retire=0/0n protect=6 nodes=17 ms=0.9 usage=0.1685
+[2026-10-20 10:43:28] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 3350, token usage: 0.17, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 5635.18
+[serve] 1001765-8t0-11c71203 prompt_tokens=3351 cached_tokens=3350 cached_device=3350 cached_host=0 ttft_ms=102.31 inflight_prefill=0 inflight_decode=3
+[2026-10-20 10:43:28] Decode batch, #running-req: 3, #token: 10403, token usage: 0.17, cuda graph: True, gen throughput (token/s): 17.23, #queue-req: 0
+[decode] 1001768-10t0-288af169 decode_ms=1345.54 output_tokens=41
+[ctl] 1001768-10t0-288af169 queue_ms=0.0 advance_ms=8.3 pre_ms=10.2 post_ms=0.4
+[2026-10-20 10:43:29] 127.0.0.1 [20/Oct/2026:10:43:22 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5b3388d1 demote=1/8n retire=0/0n protect=6 nodes=17 ms=1.5 usage=0.0725
+[decode] 1001766-10t0-fd83d11b decode_ms=1621.40 output_tokens=50
+[ctl] 1001766-10t0-fd83d11b queue_ms=0.0 advance_ms=3.8 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:43:29] 127.0.0.1 [20/Oct/2026:10:43:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 661 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5d010f25 demote=1/5n retire=0/0n protect=6 nodes=17 ms=1.1 usage=0.0551
+[2026-10-20 10:43:30] Decode batch, #running-req: 1, #token: 3407, token usage: 0.06, cuda graph: True, gen throughput (token/s): 58.88, #queue-req: 0
+[call] 1001767 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1001767 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001767 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-d8a3c719 demote=2/4n retire=0/0n protect=6 nodes=17 ms=2.2 usage=0.0555
+[call] 1001768 #10 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001766 #10 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-14406b34 demote=0/0n retire=0/0n protect=6 nodes=17 ms=1.0 usage=0.1282
+[2026-10-20 10:43:35] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 420, token usage: 0.26, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.14
+[promote] plan-hold-968b4e18 tokens=4352 device=4352 host=0 started=0 free=2754 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-968b4e18 tokens=4352 duration_ms=3717.33
+[2026-10-20 10:43:37] Prefill batch, #new-seq: 3, #new-token: 2990, #cached-token: 5848, token usage: 0.26, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 2191.39
+[serve] 1001767-6t0-43fd90bb prompt_tokens=4625 cached_tokens=420 cached_device=420 cached_host=0 ttft_ms=7300.88 inflight_prefill=2 inflight_decode=2
+[serve] 1001768-11t0-f8be856d prompt_tokens=7562 cached_tokens=5421 cached_device=5421 cached_host=0 ttft_ms=6184.87 inflight_prefill=1 inflight_decode=3
+[serve] 1001766-11t0-600a54db prompt_tokens=1167 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=5929.06 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-163f9f54 demote=0/0n retire=0/0n protect=6 nodes=20 ms=1.1 usage=0.2585
+[promote] plan-hold-23a3e81e tokens=704 device=704 host=0 started=0 free=2746 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-23a3e81e tokens=704 duration_ms=29.41
+[priority] plan-prio-087d9013 demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.5 usage=0.2586
+[priority] plan-prio-9535bd7d demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.5 usage=0.2587
+[decode] 1001768-11t0-f8be856d decode_ms=1237.54 output_tokens=37
+[ctl] 1001768-11t0-f8be856d queue_ms=0.0 advance_ms=10.4 pre_ms=12.6 post_ms=0.4
+[2026-10-20 10:43:38] 127.0.0.1 [20/Oct/2026:10:43:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #11 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(3,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=0/5371 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[2026-10-20 10:43:38] Decode batch, #running-req: 4, #token: 8848, token usage: 0.14, cuda graph: True, gen throughput (token/s): 17.51, #queue-req: 0
+[priority] plan-prio-411e0731 demote=1/8n retire=0/0n protect=5 nodes=17 ms=1.6 usage=0.1440
+[promote] plan-hold-64bbce34 tokens=4416 device=4416 host=0 started=0 free=509 reserve=4096 ms=0.5
+[promote-rpc] plan-hold-64bbce34 tokens=4416 duration_ms=748.88
+[2026-10-20 10:43:41] Prefill batch, #new-seq: 1, #new-token: 2091, #cached-token: 4358, token usage: 0.24, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 829.07
+[serve] 1001768-12t0-21b3fcaa prompt_tokens=6449 cached_tokens=4358 cached_device=4358 cached_host=0 ttft_ms=2313.17 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-fb735c2c demote=0/0n retire=0/0n protect=4 nodes=20 ms=0.9 usage=0.2431
+[decode] 1001766-11t0-600a54db decode_ms=3995.49 output_tokens=51
+[ctl] 1001766-11t0-600a54db queue_ms=0.0 advance_ms=2.1 pre_ms=2.0 post_ms=0.2
+[2026-10-20 10:43:41] 127.0.0.1 [20/Oct/2026:10:43:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 667 "-" "python-httpx/0.28.1"
+[call] 1001766 #11 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(3,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=0/900 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-9db9d5b6 demote=1/6n retire=0/0n protect=5 nodes=24 ms=1.1 usage=0.2308
+[promote] plan-hold-131dd323 tokens=768 device=768 host=0 started=0 free=74 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-131dd323 tokens=768 duration_ms=68.56
+[2026-10-20 10:43:41] Prefill batch, #new-seq: 1, #new-token: 384, #cached-token: 707, token usage: 0.24, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2564.17
+[serve] 1001766-12t0-0121b85c prompt_tokens=1091 cached_tokens=707 cached_device=707 cached_host=0 ttft_ms=395.37 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-630206aa demote=0/0n retire=0/0n protect=4 nodes=23 ms=0.9 usage=0.2427
+[2026-10-20 10:43:42] Decode batch, #running-req: 4, #token: 15010, token usage: 0.24, cuda graph: True, gen throughput (token/s): 39.23, #queue-req: 0
+[decode] 1001765-8t0-11c71203 decode_ms=14929.86 output_tokens=153
+[ctl] 1001765-8t0-11c71203 queue_ms=0.0 advance_ms=0.4 pre_ms=7.3 post_ms=0.3
+[2026-10-20 10:43:43] 127.0.0.1 [20/Oct/2026:10:43:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1172 "-" "python-httpx/0.28.1"
+[close] 1001765 calls=8
+[2026-10-20 10:43:43] 127.0.0.1 [20/Oct/2026:10:43:43 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5e47987f demote=1/3n retire=0/0n protect=4 nodes=18 ms=1.6 usage=0.1944
+[priority] plan-prio-8216be10 demote=0/0n retire=8/38n protect=3 nodes=15 ms=3.1 usage=0.1944
+[priority] plan-prio-a43df488 demote=0/0n retire=0/0n protect=3 nodes=9 ms=0.4 usage=0.1950
+[priority] plan-prio-e0ffa993 demote=0/0n retire=0/0n protect=3 nodes=9 ms=0.4 usage=0.1951
+[2026-10-20 10:43:44] Decode batch, #running-req: 3, #token: 12010, token usage: 0.20, cuda graph: True, gen throughput (token/s): 102.87, #queue-req: 0
+[decode] 1001768-12t0-21b3fcaa decode_ms=3845.32 output_tokens=104
+[ctl] 1001768-12t0-21b3fcaa queue_ms=0.0 advance_ms=11.8 pre_ms=10.0 post_ms=0.4
+[2026-10-20 10:43:44] 127.0.0.1 [20/Oct/2026:10:43:38 -0400] "POST /v1/chat/completions HTTP/1.1" 200 950 "-" "python-httpx/0.28.1"
+[call] 1001768 #12 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(4,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001768 err_s=+0.00 done=0/6441 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-6a24dd37 demote=1/2n retire=0/0n protect=3 nodes=15 ms=1.6 usage=0.0960
+[priority] plan-prio-04f2190f demote=0/0n retire=0/0n protect=4 nodes=17 ms=0.9 usage=0.0961
+[2026-10-20 10:43:47] Prefill batch, #new-seq: 1, #new-token: 2022, #cached-token: 4419, token usage: 0.20, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 71.69
+[serve] 1001768-13t0-cd1560d7 prompt_tokens=6441 cached_tokens=4419 cached_device=4419 cached_host=0 ttft_ms=2271.82 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-fd8db031 demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.9 usage=0.2002
+[priority] plan-prio-82993381 demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.8 usage=0.2002
+[2026-10-20 10:43:47] Decode batch, #running-req: 3, #token: 12332, token usage: 0.20, cuda graph: True, gen throughput (token/s): 33.04, #queue-req: 0
+[decode] 1001768-13t0-cd1560d7 decode_ms=876.23 output_tokens=27
+[ctl] 1001768-13t0-cd1560d7 queue_ms=0.0 advance_ms=12.1 pre_ms=9.9 post_ms=0.6
+[2026-10-20 10:43:48] 127.0.0.1 [20/Oct/2026:10:43:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[priority] plan-prio-861a5de0 demote=1/2n retire=0/0n protect=4 nodes=13 ms=1.9 usage=0.0970
+[decode] 1001766-12t0-0121b85c decode_ms=6607.99 output_tokens=133
+[ctl] 1001766-12t0-0121b85c queue_ms=0.0 advance_ms=2.9 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:43:48] 127.0.0.1 [20/Oct/2026:10:43:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1034 "-" "python-httpx/0.28.1"
+[call] 1001766 #12 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(4,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001766 err_s=-0.00 done=0/1083 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-6b333e42 demote=1/2n retire=0/0n protect=4 nodes=17 ms=1.1 usage=0.0783
+[priority] plan-prio-a1edce73 demote=0/0n retire=0/0n protect=5 nodes=19 ms=0.9 usage=0.0783
+[call] 1002179 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1002179 unplanned site=ClaimAnalyzer.decompose_claim:90
+[2026-10-20 10:43:48] Prefill batch, #new-seq: 1, #new-token: 315, #cached-token: 768, token usage: 0.10, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1226.77
+[serve] 1001766-13t0-3be99d3b prompt_tokens=1083 cached_tokens=768 cached_device=768 cached_host=0 ttft_ms=367.44 inflight_prefill=1 inflight_decode=2
+[priority] plan-prio-47a4071c demote=0/0n retire=0/0n protect=6 nodes=19 ms=1.0 usage=0.0952
+[2026-10-20 10:43:48] Prefill batch, #new-seq: 1, #new-token: 77, #cached-token: 429, token usage: 0.10, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2327.69
+[serve] 1002179-1t0-77824346 prompt_tokens=506 cached_tokens=429 cached_device=429 cached_host=0 ttft_ms=325.27 inflight_prefill=0 inflight_decode=3
+[2026-10-20 10:43:49] Decode batch, #running-req: 3, #token: 5955, token usage: 0.10, cuda graph: True, gen throughput (token/s): 60.97, #queue-req: 0
+[call] 1001768 #13 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-a8c84941 demote=6/22n retire=0/0n protect=6 nodes=18 ms=4.4 usage=0.0983
+[2026-10-20 10:43:52] Prefill batch, #new-seq: 1, #new-token: 2141, #cached-token: 6198, token usage: 0.23, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 21.16
+[serve] 1001768-14t0-d711b46f prompt_tokens=8339 cached_tokens=6198 cached_device=6198 cached_host=0 ttft_ms=2497.27 inflight_prefill=0 inflight_decode=4
+[decode] 1001766-13t0-3be99d3b decode_ms=4045.00 output_tokens=48
+[ctl] 1001766-13t0-3be99d3b queue_ms=0.0 advance_ms=3.1 pre_ms=2.1 post_ms=0.1
+[decode] 1002179-1t0-77824346 decode_ms=3910.03 output_tokens=47
+[ctl] 1002179-1t0-77824346 queue_ms=0.0 advance_ms=0.2 pre_ms=1.5 post_ms=0.1
+[2026-10-20 10:43:52] 127.0.0.1 [20/Oct/2026:10:43:48 -0400] "POST /v1/chat/completions HTTP/1.1" 200 690 "-" "python-httpx/0.28.1"
+[2026-10-20 10:43:52] 127.0.0.1 [20/Oct/2026:10:43:48 -0400] "POST /v1/chat/completions HTTP/1.1" 200 678 "-" "python-httpx/0.28.1"
+[priority] plan-prio-dcd02af8 demote=2/4n retire=0/0n protect=6 nodes=18 ms=1.3 usage=0.2082
+[2026-10-20 10:43:53] Decode batch, #running-req: 2, #token: 12796, token usage: 0.21, cuda graph: True, gen throughput (token/s): 34.06, #queue-req: 0
+[decode] 1001767-6t0-43fd90bb decode_ms=15807.62 output_tokens=245
+[ctl] 1001767-6t0-43fd90bb queue_ms=0.0 advance_ms=11.1 pre_ms=8.5 post_ms=0.1
+[2026-10-20 10:43:53] 127.0.0.1 [20/Oct/2026:10:43:30 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1477 "-" "python-httpx/0.28.1"
+[call] 1001767 #6 EvidenceAnalyzer.verify_claim:251 predicted=miss ctx=(2,)
+[invalidate] 1001767 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001767 unplanned site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-042cac34 demote=1/7n retire=0/0n protect=6 nodes=18 ms=1.5 usage=0.1361
+[promote] plan-hold-03e8a853 tokens=2712 device=2712 host=0 started=0 free=1782 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-03e8a853 tokens=2712 duration_ms=13.29
+[priority] plan-prio-38d48d51 demote=0/0n retire=0/0n protect=6 nodes=22 ms=1.1 usage=0.1986
+[2026-10-20 10:43:54] Prefill batch, #new-seq: 1, #new-token: 1242, #cached-token: 2651, token usage: 0.20, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1080.65
+[serve] 1001767-7t0-29d3a3a2 prompt_tokens=3893 cached_tokens=2651 cached_device=2651 cached_host=0 ttft_ms=1329.66 inflight_prefill=0 inflight_decode=2
+[call] 1001766 #13 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1002179 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.01 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-90c9b42c demote=6/12n retire=0/0n protect=6 nodes=21 ms=2.3 usage=0.1990
+[promote] plan-hold-40f8c1c6 tokens=368 device=368 host=0 started=0 free=2901 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-40f8c1c6 tokens=368 duration_ms=142.46
+[2026-10-20 10:43:55] Prefill batch, #new-seq: 2, #new-token: 678, #cached-token: 1354, token usage: 0.22, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1207.31
+[serve] 1001766-14t0-b8dac584 prompt_tokens=1361 cached_tokens=927 cached_device=927 cached_host=0 ttft_ms=708.98 inflight_prefill=1 inflight_decode=3
+[serve] 1002179-2t0-d9e3c875 prompt_tokens=671 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=702.70 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-3e4de2ef demote=0/0n retire=0/0n protect=7 nodes=22 ms=1.3 usage=0.2185
+[decode] 1001768-14t0-d711b46f decode_ms=3279.67 output_tokens=41
+[ctl] 1001768-14t0-d711b46f queue_ms=0.0 advance_ms=11.7 pre_ms=13.1 post_ms=0.5
+[2026-10-20 10:43:55] 127.0.0.1 [20/Oct/2026:10:43:50 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6a932fec demote=1/9n retire=0/0n protect=7 nodes=22 ms=1.9 usage=0.0895
+[2026-10-20 10:43:56] Decode batch, #running-req: 3, #token: 5529, token usage: 0.09, cuda graph: True, gen throughput (token/s): 32.62, #queue-req: 0
+[2026-10-20 10:43:57] Decode batch, #running-req: 3, #token: 5649, token usage: 0.09, cuda graph: True, gen throughput (token/s): 96.19, #queue-req: 0
+[call] 1001768 #14 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-ac1f26cd demote=0/0n retire=0/0n protect=7 nodes=22 ms=1.4 usage=0.0927
+[promote] plan-hold-d4138254 tokens=6336 device=6336 host=0 started=0 free=2664 reserve=4096 ms=0.6
+[promote-rpc] plan-hold-d4138254 tokens=6336 duration_ms=25.68
+[priority] plan-prio-db4a8987 demote=0/0n retire=0/0n protect=7 nodes=19 ms=1.1 usage=0.2412
+[2026-10-20 10:44:00] Prefill batch, #new-seq: 1, #new-token: 2141, #cached-token: 7402, token usage: 0.24, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 138.14
+[serve] 1001768-15t0-06b5717c prompt_tokens=9543 cached_tokens=7402 cached_device=7402 cached_host=0 ttft_ms=2583.40 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-140cc5a9 demote=0/0n retire=0/0n protect=7 nodes=19 ms=1.0 usage=0.2413
+[priority] plan-prio-92665299 demote=0/0n retire=0/0n protect=6 nodes=19 ms=1.0 usage=0.2414
+[priority] plan-prio-0b2bcdfb demote=0/0n retire=0/0n protect=6 nodes=19 ms=0.9 usage=0.2414
+[decode] 1002179-2t0-d9e3c875 decode_ms=5008.88 output_tokens=80
+[ctl] 1002179-2t0-d9e3c875 queue_ms=0.0 advance_ms=1.2 pre_ms=1.3 post_ms=0.2
+[2026-10-20 10:44:00] 127.0.0.1 [20/Oct/2026:10:43:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 810 "-" "python-httpx/0.28.1"
+[priority] plan-prio-f150dd67 demote=1/6n retire=0/0n protect=7 nodes=19 ms=1.1 usage=0.2361
+[promote] plan-hold-d672d158 tokens=368 device=368 host=0 started=0 free=501 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-d672d158 tokens=368 duration_ms=32.07
+[decode] 1001766-14t0-b8dac584 decode_ms=5246.80 output_tokens=87
+[ctl] 1001766-14t0-b8dac584 queue_ms=0.0 advance_ms=5.0 pre_ms=2.5 post_ms=0.3
+[2026-10-20 10:44:00] 127.0.0.1 [20/Oct/2026:10:43:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 798 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1be15c4e demote=1/7n retire=0/0n protect=7 nodes=19 ms=1.3 usage=0.2197
+[2026-10-20 10:44:01] Decode batch, #running-req: 2, #token: 13520, token usage: 0.22, cuda graph: True, gen throughput (token/s): 29.33, #queue-req: 0
+[decode] 1001767-7t0-29d3a3a2 decode_ms=6842.30 output_tokens=115
+[ctl] 1001767-7t0-29d3a3a2 queue_ms=0.0 advance_ms=8.6 pre_ms=6.8 post_ms=0.3
+[2026-10-20 10:44:01] 127.0.0.1 [20/Oct/2026:10:43:53 -0400] "POST /v1/chat/completions HTTP/1.1" 200 918 "-" "python-httpx/0.28.1"
+[close] 1001767 calls=7
+[2026-10-20 10:44:01] 127.0.0.1 [20/Oct/2026:10:44:01 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-29f890a6 demote=1/2n retire=0/0n protect=7 nodes=23 ms=2.0 usage=0.1558
+[priority] plan-prio-bd2d4da0 demote=0/0n retire=7/28n protect=6 nodes=19 ms=3.7 usage=0.1558
+[decode] 1001768-15t0-06b5717c decode_ms=1195.77 output_tokens=37
+[ctl] 1001768-15t0-06b5717c queue_ms=0.1 advance_ms=13.8 pre_ms=15.0 post_ms=0.5
+[2026-10-20 10:44:01] 127.0.0.1 [20/Oct/2026:10:43:57 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #15 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(4,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=6336/7352 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-b4a1d544 demote=1/9n retire=0/0n protect=6 nodes=19 ms=1.9 usage=0.0000
+[promote] plan-hold-f303855c tokens=6400 device=6400 host=0 started=0 free=1145 reserve=4096 ms=0.7
+[promote-rpc] plan-hold-f303855c tokens=6400 duration_ms=752.13
+[call] 1002179 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1002179 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1001766 #14 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:44:04] Prefill batch, #new-seq: 1, #new-token: 2091, #cached-token: 6339, token usage: 0.14, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 583.08
+[serve] 1001768-16t0-5b55921d prompt_tokens=8430 cached_tokens=6339 cached_device=6339 cached_host=0 ttft_ms=2410.39 inflight_prefill=2 inflight_decode=1
+[priority] plan-prio-d145c728 demote=0/0n retire=0/0n protect=5 nodes=22 ms=1.1 usage=0.1372
+[promote] plan-hold-22a7085c tokens=368 device=368 host=0 started=0 free=56 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-22a7085c tokens=368 duration_ms=221.52
+[2026-10-20 10:44:05] Prefill batch, #new-seq: 2, #new-token: 1088, #cached-token: 1158, token usage: 0.17, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1944.66
+[serve] 1002179-3t0-b74eac54 prompt_tokens=773 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=2618.57 inflight_prefill=1 inflight_decode=2
+[serve] 1001766-15t0-0c0c977c prompt_tokens=1473 cached_tokens=734 cached_device=734 cached_host=0 ttft_ms=2377.96 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-fae8a359 demote=0/0n retire=0/0n protect=3 nodes=20 ms=0.9 usage=0.1661
+[promote] plan-hold-0265c4b6 tokens=976 device=976 host=0 started=0 free=50 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-0265c4b6 tokens=976 duration_ms=30.08
+[2026-10-20 10:44:06] Decode batch, #running-req: 3, #token: 10280, token usage: 0.17, cuda graph: True, gen throughput (token/s): 19.82, #queue-req: 0
+[priority] plan-prio-192036ba demote=0/0n retire=0/0n protect=3 nodes=14 ms=0.4 usage=0.1683
+[priority] plan-prio-6973aaf8 demote=0/0n retire=0/0n protect=3 nodes=14 ms=0.4 usage=0.1684
+[call] 1002351 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1002351 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1002351 unplanned site=ClaimAnalyzer.decompose_claim:90
+[decode] 1001766-15t0-0c0c977c decode_ms=1571.67 output_tokens=49
+[ctl] 1001766-15t0-0c0c977c queue_ms=0.0 advance_ms=3.0 pre_ms=2.7 post_ms=0.2
+[2026-10-20 10:44:06] 127.0.0.1 [20/Oct/2026:10:44:02 -0400] "POST /v1/chat/completions HTTP/1.1" 200 673 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3de43418 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.4 usage=0.1506
+[call] 1001766 #15 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(4,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=-0.00 done=976/1210 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-abeecf1a demote=1/8n retire=0/0n protect=4 nodes=14 ms=0.6 usage=0.1581
+[2026-10-20 10:44:07] Prefill batch, #new-seq: 1, #new-token: 87, #cached-token: 428, token usage: 0.17, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 612.77
+[serve] 1002351-1t0-1e41dae3 prompt_tokens=515 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=217.53 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-4cba82d4 tokens=1040 device=1040 host=0 started=0 free=932 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-4cba82d4 tokens=1040 duration_ms=137.12
+[2026-10-20 10:44:07] Prefill batch, #new-seq: 1, #new-token: 416, #cached-token: 981, token usage: 0.17, #running-req: 4, #queue-req: 0, cuda graph: False, input throughput (token/s): 256.75
+[serve] 1001766-16t0-a15d5646 prompt_tokens=1397 cached_tokens=981 cached_device=981 cached_host=0 ttft_ms=512.65 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-791e5ec1 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.4 usage=0.1750
+[priority] plan-prio-3b1701af demote=0/0n retire=0/0n protect=4 nodes=11 ms=0.4 usage=0.1756
+[priority] plan-prio-c01ac36e demote=0/0n retire=0/0n protect=4 nodes=11 ms=0.4 usage=0.1756
+[2026-10-20 10:44:07] Decode batch, #running-req: 4, #token: 10814, token usage: 0.18, cuda graph: True, gen throughput (token/s): 74.28, #queue-req: 0
+[decode] 1002179-3t0-b74eac54 decode_ms=2843.02 output_tokens=72
+[ctl] 1002179-3t0-b74eac54 queue_ms=0.0 advance_ms=1.9 pre_ms=1.8 post_ms=0.2
+[2026-10-20 10:44:08] 127.0.0.1 [20/Oct/2026:10:44:02 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[call] 1002179 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1002179 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=0/514 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-914422ae demote=1/5n retire=0/0n protect=4 nodes=14 ms=0.6 usage=0.1635
+[promote] plan-hold-1bb600c4 tokens=464 device=464 host=0 started=0 free=484 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-1bb600c4 tokens=464 duration_ms=91.02
+[2026-10-20 10:44:08] Prefill batch, #new-seq: 1, #new-token: 353, #cached-token: 368, token usage: 0.17, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 362.57
+[serve] 1002179-4t0-1899f988 prompt_tokens=721 cached_tokens=368 cached_device=368 cached_host=0 ttft_ms=389.30 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-9350c698 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.4 usage=0.1693
+[decode] 1002351-1t0-1e41dae3 decode_ms=2045.77 output_tokens=42
+[ctl] 1002351-1t0-1e41dae3 queue_ms=0.0 advance_ms=0.2 pre_ms=1.7 post_ms=0.1
+[2026-10-20 10:44:09] 127.0.0.1 [20/Oct/2026:10:44:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 636 "-" "python-httpx/0.28.1"
+[priority] plan-prio-b2e20175 demote=1/2n retire=0/0n protect=4 nodes=14 ms=0.6 usage=0.1622
+[2026-10-20 10:44:09] Decode batch, #running-req: 3, #token: 10010, token usage: 0.16, cuda graph: True, gen throughput (token/s): 86.76, #queue-req: 0
+[decode] 1001768-16t0-5b55921d decode_ms=5526.45 output_tokens=111
+[ctl] 1001768-16t0-5b55921d queue_ms=0.0 advance_ms=15.6 pre_ms=13.2 post_ms=0.5
+[2026-10-20 10:44:09] 127.0.0.1 [20/Oct/2026:10:44:01 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1000 "-" "python-httpx/0.28.1"
+[call] 1001768 #16 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(5,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001768 err_s=+0.00 done=0/8422 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-20e437de demote=1/2n retire=0/0n protect=4 nodes=21 ms=2.3 usage=0.0301
+[priority] plan-prio-b701acbb demote=0/0n retire=0/0n protect=5 nodes=25 ms=1.1 usage=0.0302
+[call] 1002351 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1002351 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002351 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:44:12] Prefill batch, #new-seq: 1, #new-token: 2022, #cached-token: 6400, token usage: 0.17, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 97.59
+[serve] 1001768-17t0-a24d42ff prompt_tokens=8422 cached_tokens=6400 cached_device=6400 cached_host=0 ttft_ms=2363.21 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-f89ee681 demote=0/0n retire=0/0n protect=5 nodes=25 ms=1.2 usage=0.1665
+[priority] plan-prio-b0a8b50f demote=0/0n retire=0/0n protect=5 nodes=20 ms=1.0 usage=0.1766
+[2026-10-20 10:44:12] Prefill batch, #new-seq: 1, #new-token: 245, #cached-token: 427, token usage: 0.18, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 7014.48
+[serve] 1002351-2t0-018a4d1b prompt_tokens=672 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=1320.36 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-bd411d42 demote=0/0n retire=0/0n protect=5 nodes=20 ms=1.1 usage=0.1767
+[decode] 1002179-4t0-1899f988 decode_ms=4466.43 output_tokens=59
+[ctl] 1002179-4t0-1899f988 queue_ms=0.0 advance_ms=2.1 pre_ms=1.6 post_ms=0.1
+[2026-10-20 10:44:13] 127.0.0.1 [20/Oct/2026:10:44:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 746 "-" "python-httpx/0.28.1"
+[call] 1002179 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002179 err_s=+0.00 done=464/713 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-1862cba6 demote=1/2n retire=0/0n protect=5 nodes=20 ms=1.2 usage=0.1711
+[priority] plan-prio-04982098 demote=0/0n retire=0/0n protect=5 nodes=16 ms=1.0 usage=0.1757
+[2026-10-20 10:44:13] Prefill batch, #new-seq: 1, #new-token: 247, #cached-token: 466, token usage: 0.18, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 280.64
+[serve] 1002179-5t0-1b9d0eaf prompt_tokens=713 cached_tokens=466 cached_device=466 cached_host=0 ttft_ms=285.39 inflight_prefill=0 inflight_decode=4
+[decode] 1001766-16t0-a15d5646 decode_ms=6025.53 output_tokens=88
+[ctl] 1001766-16t0-a15d5646 queue_ms=0.0 advance_ms=3.0 pre_ms=2.5 post_ms=0.2
+[2026-10-20 10:44:13] 127.0.0.1 [20/Oct/2026:10:44:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 842 "-" "python-httpx/0.28.1"
+[call] 1001766 #16 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(5,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001766 err_s=-0.00 done=0/1389 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-867d4db7 demote=1/2n retire=0/0n protect=5 nodes=22 ms=1.3 usage=0.1527
+[priority] plan-prio-8fa1d871 demote=0/0n retire=0/0n protect=6 nodes=24 ms=1.1 usage=0.1528
+[decode] 1001768-17t0-a24d42ff decode_ms=1414.64 output_tokens=27
+[ctl] 1001768-17t0-a24d42ff queue_ms=0.0 advance_ms=15.0 pre_ms=12.8 post_ms=0.6
+[2026-10-20 10:44:13] 127.0.0.1 [20/Oct/2026:10:44:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[2026-10-20 10:44:13] Prefill batch, #new-seq: 1, #new-token: 347, #cached-token: 1042, token usage: 0.04, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 451.21
+[serve] 1001766-17t0-3f10a6dd prompt_tokens=1389 cached_tokens=1042 cached_device=1042 cached_host=0 ttft_ms=417.44 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-0694debb demote=1/2n retire=0/0n protect=6 nodes=24 ms=2.4 usage=0.0379
+[2026-10-20 10:44:14] Decode batch, #running-req: 3, #token: 2348, token usage: 0.04, cuda graph: True, gen throughput (token/s): 31.21, #queue-req: 0
+[decode] 1001766-17t0-3f10a6dd decode_ms=982.34 output_tokens=34
+[ctl] 1001766-17t0-3f10a6dd queue_ms=0.0 advance_ms=3.2 pre_ms=2.4 post_ms=0.2
+[2026-10-20 10:44:14] 127.0.0.1 [20/Oct/2026:10:44:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 623 "-" "python-httpx/0.28.1"
+[priority] plan-prio-5efce52d demote=1/2n retire=0/0n protect=6 nodes=24 ms=1.5 usage=0.0234
+[decode] 1002179-5t0-1b9d0eaf decode_ms=1739.84 output_tokens=47
+[ctl] 1002179-5t0-1b9d0eaf queue_ms=0.0 advance_ms=0.2 pre_ms=1.9 post_ms=0.1
+[2026-10-20 10:44:15] 127.0.0.1 [20/Oct/2026:10:44:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 678 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3a9506e1 demote=1/2n retire=0/0n protect=6 nodes=24 ms=1.3 usage=0.0120
+[2026-10-20 10:44:15] Decode batch, #running-req: 1, #token: 0, token usage: 0.00, cuda graph: True, gen throughput (token/s): 86.91, #queue-req: 0
+[decode] 1002351-2t0-018a4d1b decode_ms=2788.84 output_tokens=72
+[ctl] 1002351-2t0-018a4d1b queue_ms=0.0 advance_ms=0.2 pre_ms=1.6 post_ms=0.1
+[2026-10-20 10:44:15] 127.0.0.1 [20/Oct/2026:10:44:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 754 "-" "python-httpx/0.28.1"
+[priority] plan-prio-c7068638 demote=1/6n retire=0/0n protect=6 nodes=24 ms=1.4 usage=0.0000
+[call] 1001768 #17 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-27d73ce6 demote=8/34n retire=0/0n protect=6 nodes=23 ms=6.2 usage=0.0000
+[call] 1001766 #17 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1002179 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1002351 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1002351 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002351 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:44:18] Prefill batch, #new-seq: 1, #new-token: 2141, #cached-token: 8179, token usage: 0.17, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 79.65
+[serve] 1001768-18t0-c4961e64 prompt_tokens=10320 cached_tokens=8179 cached_device=8179 cached_host=0 ttft_ms=2593.86 inflight_prefill=3 inflight_decode=1
+[priority] plan-prio-3a5b4491 demote=8/20n retire=0/0n protect=6 nodes=22 ms=2.5 usage=0.1680
+[promote] plan-hold-a1c74797 tokens=360 device=360 host=0 started=0 free=2479 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-a1c74797 tokens=360 duration_ms=1135.01
+[2026-10-20 10:44:20] Prefill batch, #new-seq: 3, #new-token: 2799, #cached-token: 1365, token usage: 0.22, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 790.30
+[serve] 1001766-18t0-fcebe8fe prompt_tokens=1544 cached_tokens=437 cached_device=437 cached_host=0 ttft_ms=4054.33 inflight_prefill=2 inflight_decode=2
+[serve] 1002179-6t0-5527ce25 prompt_tokens=878 cached_tokens=512 cached_device=512 cached_host=0 ttft_ms=3845.84 inflight_prefill=1 inflight_decode=3
+[ledger] drift +over=0 +under=1 (total {'over': 3, 'under': 1}) device_used=61440
+[serve] 1002351-3t0-12ca5d63 prompt_tokens=1742 cached_tokens=416 cached_device=416 cached_host=0 ttft_ms=3668.99 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-caeda2c7 demote=2/5n retire=0/0n protect=7 nodes=23 ms=1.7 usage=0.2153
+[2026-10-20 10:44:22] Decode batch, #running-req: 4, #token: 13383, token usage: 0.22, cuda graph: True, gen throughput (token/s): 22.09, #queue-req: 0
+[decode] 1001768-18t0-c4961e64 decode_ms=4016.75 output_tokens=41
+[ctl] 1001768-18t0-c4961e64 queue_ms=0.0 advance_ms=15.3 pre_ms=16.3 post_ms=0.7
+[2026-10-20 10:44:22] 127.0.0.1 [20/Oct/2026:10:44:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-3f2f34cc demote=1/10n retire=0/0n protect=7 nodes=23 ms=2.1 usage=0.0561
+[priority] plan-prio-76a78665 demote=0/0n retire=0/0n protect=7 nodes=23 ms=1.2 usage=0.0561
+[priority] plan-prio-95c29030 demote=0/0n retire=0/0n protect=7 nodes=23 ms=1.2 usage=0.0562
+[decode] 1001766-18t0-fcebe8fe decode_ms=1492.37 output_tokens=46
+[ctl] 1001766-18t0-fcebe8fe queue_ms=0.0 advance_ms=3.6 pre_ms=2.9 post_ms=0.2
+[2026-10-20 10:44:22] 127.0.0.1 [20/Oct/2026:10:44:16 -0400] "POST /v1/chat/completions HTTP/1.1" 200 652 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a13117e4 demote=1/7n retire=0/0n protect=7 nodes=23 ms=1.4 usage=0.0374
+[2026-10-20 10:44:23] Decode batch, #running-req: 2, #token: 2363, token usage: 0.04, cuda graph: True, gen throughput (token/s): 74.62, #queue-req: 0
+[decode] 1002179-6t0-5527ce25 decode_ms=2508.62 output_tokens=80
+[ctl] 1002179-6t0-5527ce25 queue_ms=0.0 advance_ms=3.5 pre_ms=1.6 post_ms=0.2
+[2026-10-20 10:44:23] 127.0.0.1 [20/Oct/2026:10:44:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 810 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a148432e demote=1/8n retire=0/0n protect=7 nodes=23 ms=1.4 usage=0.0297
+[call] 1001768 #18 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-26ab5a20 demote=0/0n retire=0/0n protect=7 nodes=23 ms=1.4 usage=0.0301
+[call] 1001766 #18 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[promote] plan-hold-114913bd tokens=8320 device=8320 host=0 started=0 free=62 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-114913bd tokens=8320 duration_ms=1117.45
+[call] 1002179 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1002179 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:44:28] Prefill batch, #new-seq: 1, #new-token: 2141, #cached-token: 9383, token usage: 0.27, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 353.67
+[serve] 1001768-19t0-d188359c prompt_tokens=11524 cached_tokens=9383 cached_device=9383 cached_host=0 ttft_ms=4546.92 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-2ca2c6d3 demote=0/0n retire=0/0n protect=7 nodes=23 ms=1.4 usage=0.2726
+[2026-10-20 10:44:30] Prefill batch, #new-seq: 1, #new-token: 3788, #cached-token: 418, token usage: 0.28, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1077.07
+[serve] 1001766-19t0-d0518d82 prompt_tokens=4206 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=6374.54 inflight_prefill=1 inflight_decode=3
+[promote] plan-hold-aac4091b tokens=1280 device=1280 host=0 started=0 free=733 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-aac4091b tokens=1280 duration_ms=1984.85
+[2026-10-20 10:44:31] Prefill batch, #new-seq: 1, #new-token: 366, #cached-token: 613, token usage: 0.28, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 12649.23
+[serve] 1002179-7t0-4dcb96e1 prompt_tokens=979 cached_tokens=613 cached_device=613 cached_host=0 ttft_ms=5664.22 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-c53985d4 demote=0/0n retire=0/0n protect=4 nodes=5 ms=0.3 usage=0.2818
+[priority] plan-prio-fb88f66b demote=0/0n retire=0/0n protect=4 nodes=5 ms=0.3 usage=0.2819
+[2026-10-20 10:44:31] Decode batch, #running-req: 4, #token: 17348, token usage: 0.28, cuda graph: True, gen throughput (token/s): 8.25, #queue-req: 0
+[decode] 1001768-19t0-d188359c decode_ms=3549.16 output_tokens=37
+[ctl] 1001768-19t0-d188359c queue_ms=0.0 advance_ms=17.0 pre_ms=17.7 post_ms=0.7
+[2026-10-20 10:44:32] 127.0.0.1 [20/Oct/2026:10:44:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #19 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(5,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=0/9333 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-5d3aad4d demote=1/10n retire=0/0n protect=5 nodes=15 ms=2.0 usage=0.1029
+[promote] plan-hold-b66ee3e6 tokens=8376 device=8376 host=0 started=0 free=576 reserve=4096 ms=0.8
+[promote-rpc] plan-hold-b66ee3e6 tokens=8376 duration_ms=8.19
+[priority] plan-prio-eaa98ecd demote=0/0n retire=0/0n protect=4 nodes=16 ms=1.0 usage=0.2716
+[2026-10-20 10:44:35] Prefill batch, #new-seq: 1, #new-token: 2091, #cached-token: 8320, token usage: 0.27, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 94.11
+[serve] 1001768-20t0-52b4e94a prompt_tokens=10411 cached_tokens=8320 cached_device=8320 cached_host=0 ttft_ms=2553.29 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:44:35] Decode batch, #running-req: 4, #token: 16722, token usage: 0.27, cuda graph: True, gen throughput (token/s): 40.20, #queue-req: 0
+[decode] 1002351-3t0-12ca5d63 decode_ms=14454.56 output_tokens=161
+[ctl] 1002351-3t0-12ca5d63 queue_ms=0.0 advance_ms=1.4 pre_ms=3.7 post_ms=0.2
+[2026-10-20 10:44:35] 127.0.0.1 [20/Oct/2026:10:44:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1012 "-" "python-httpx/0.28.1"
+[call] 1002351 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1002351 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002351 err_s=+0.00 done=0/511 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-e7692771 demote=1/4n retire=0/0n protect=4 nodes=18 ms=1.3 usage=0.2481
+[promote] plan-hold-6ed91db3 tokens=472 device=472 host=0 started=0 free=2546 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-6ed91db3 tokens=472 duration_ms=31.24
+[priority] plan-prio-8a25d1dc demote=0/0n retire=0/0n protect=4 nodes=18 ms=1.1 usage=0.2704
+[2026-10-20 10:44:36] Prefill batch, #new-seq: 1, #new-token: 1367, #cached-token: 367, token usage: 0.27, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1174.68
+[serve] 1002351-4t0-64a76ecf prompt_tokens=1734 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=1381.06 inflight_prefill=0 inflight_decode=4
+[decode] 1002179-7t0-4dcb96e1 decode_ms=6299.63 output_tokens=72
+[ctl] 1002179-7t0-4dcb96e1 queue_ms=0.0 advance_ms=1.8 pre_ms=1.9 post_ms=0.2
+[2026-10-20 10:44:37] 127.0.0.1 [20/Oct/2026:10:44:25 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[call] 1002179 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1002179 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=0/720 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-40e2eff1 demote=1/7n retire=0/0n protect=4 nodes=22 ms=1.3 usage=0.2614
+[promote] plan-hold-086a5d4f tokens=672 device=672 host=0 started=0 free=784 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-086a5d4f tokens=672 duration_ms=82.80
+[2026-10-20 10:44:37] Prefill batch, #new-seq: 1, #new-token: 316, #cached-token: 611, token usage: 0.27, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1362.01
+[serve] 1002179-8t0-83131821 prompt_tokens=927 cached_tokens=611 cached_device=611 cached_host=0 ttft_ms=343.76 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-e8755065 demote=0/0n retire=0/0n protect=4 nodes=12 ms=0.4 usage=0.2705
+[priority] plan-prio-f85eb3ce demote=0/0n retire=0/0n protect=4 nodes=12 ms=0.6 usage=0.2706
+[2026-10-20 10:44:38] Decode batch, #running-req: 4, #token: 16682, token usage: 0.27, cuda graph: True, gen throughput (token/s): 52.16, #queue-req: 0
+[decode] 1001766-19t0-d0518d82 decode_ms=8263.74 output_tokens=111
+[ctl] 1001766-19t0-d0518d82 queue_ms=0.0 advance_ms=2.9 pre_ms=8.2 post_ms=0.2
+[2026-10-20 10:44:39] 127.0.0.1 [20/Oct/2026:10:44:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 912 "-" "python-httpx/0.28.1"
+[call] 1001766 #19 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(5,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=0/1357 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-74050944 demote=1/5n retire=0/0n protect=5 nodes=22 ms=1.1 usage=0.2036
+[promote] plan-hold-a218d32a tokens=1344 device=1344 host=0 started=0 free=626 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-a218d32a tokens=1344 duration_ms=27.42
+[priority] plan-prio-7412f79c demote=0/0n retire=0/0n protect=4 nodes=19 ms=0.5 usage=0.2388
+[2026-10-20 10:44:40] Prefill batch, #new-seq: 1, #new-token: 1242, #cached-token: 1287, token usage: 0.24, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 121.14
+[serve] 1001766-20t0-9ca73e8e prompt_tokens=2529 cached_tokens=1287 cached_device=1287 cached_host=0 ttft_ms=1280.08 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-302e4906 demote=0/0n retire=0/0n protect=4 nodes=17 ms=0.5 usage=0.2389
+[priority] plan-prio-7c88d4e8 demote=0/0n retire=0/0n protect=4 nodes=17 ms=0.5 usage=0.2390
+[2026-10-20 10:44:40] Decode batch, #running-req: 4, #token: 14736, token usage: 0.24, cuda graph: True, gen throughput (token/s): 60.64, #queue-req: 0
+[decode] 1002179-8t0-83131821 decode_ms=3538.38 output_tokens=68
+[ctl] 1002179-8t0-83131821 queue_ms=0.0 advance_ms=2.6 pre_ms=1.9 post_ms=0.2
+[2026-10-20 10:44:41] 127.0.0.1 [20/Oct/2026:10:44:37 -0400] "POST /v1/chat/completions HTTP/1.1" 200 780 "-" "python-httpx/0.28.1"
+[call] 1002179 #8 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(3,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002179 err_s=-0.00 done=672/919 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-3f57e7bb demote=1/2n retire=0/0n protect=4 nodes=17 ms=0.7 usage=0.2305
+[priority] plan-prio-7f2edb69 demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.5 usage=0.2446
+[2026-10-20 10:44:41] Prefill batch, #new-seq: 1, #new-token: 247, #cached-token: 672, token usage: 0.24, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 994.96
+[serve] 1002179-9t0-6fc28fb1 prompt_tokens=919 cached_tokens=672 cached_device=672 cached_host=0 ttft_ms=291.76 inflight_prefill=0 inflight_decode=4
+[decode] 1001768-20t0-52b4e94a decode_ms=6815.31 output_tokens=108
+[ctl] 1001768-20t0-52b4e94a queue_ms=0.0 advance_ms=18.1 pre_ms=15.8 post_ms=0.6
+[2026-10-20 10:44:41] 127.0.0.1 [20/Oct/2026:10:44:32 -0400] "POST /v1/chat/completions HTTP/1.1" 200 963 "-" "python-httpx/0.28.1"
+[call] 1001768 #20 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(6,)
+[invalidate] 1001768 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001768 err_s=+0.00 done=0/10403 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-6b52853a demote=1/2n retire=0/0n protect=4 nodes=23 ms=2.8 usage=0.0798
+[decode] 1002179-9t0-6fc28fb1 decode_ms=265.19 output_tokens=8
+[ctl] 1002179-9t0-6fc28fb1 queue_ms=0.0 advance_ms=0.2 pre_ms=2.4 post_ms=0.1
+[2026-10-20 10:44:41] 127.0.0.1 [20/Oct/2026:10:44:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 500 "-" "python-httpx/0.28.1"
+[priority] plan-prio-35eb395e demote=0/0n retire=0/0n protect=5 nodes=25 ms=1.3 usage=0.0656
+[priority] plan-prio-7d6e73de demote=1/2n retire=0/0n protect=5 nodes=25 ms=1.5 usage=0.2341
+[call] 1002179 #9 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:44:44] Prefill batch, #new-seq: 1, #new-token: 2022, #cached-token: 8381, token usage: 0.23, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 90.63
+[serve] 1001768-21t0-94104487 prompt_tokens=10403 cached_tokens=8381 cached_device=8381 cached_host=0 ttft_ms=2478.35 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-16854308 demote=4/9n retire=0/0n protect=6 nodes=27 ms=2.1 usage=0.2342
+[priority] plan-prio-2e09473e demote=0/0n retire=0/0n protect=6 nodes=19 ms=1.3 usage=0.2514
+[2026-10-20 10:44:45] Prefill batch, #new-seq: 1, #new-token: 684, #cached-token: 424, token usage: 0.25, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2905.14
+[serve] 1002179-10t0-3d17445d prompt_tokens=1108 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=1126.02 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-fba1acf4 demote=0/0n retire=0/0n protect=6 nodes=19 ms=1.3 usage=0.2514
+[2026-10-20 10:44:45] Decode batch, #running-req: 4, #token: 15513, token usage: 0.25, cuda graph: True, gen throughput (token/s): 32.72, #queue-req: 0
+[decode] 1002351-4t0-64a76ecf decode_ms=9043.29 output_tokens=122
+[ctl] 1002351-4t0-64a76ecf queue_ms=0.0 advance_ms=4.3 pre_ms=3.0 post_ms=0.2
+[2026-10-20 10:44:45] 127.0.0.1 [20/Oct/2026:10:44:35 -0400] "POST /v1/chat/completions HTTP/1.1" 200 929 "-" "python-httpx/0.28.1"
+[call] 1002351 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1002351 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002351 err_s=+0.00 done=0/1726 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-826a2085 demote=1/2n retire=0/0n protect=6 nodes=22 ms=1.6 usage=0.2287
+[priority] plan-prio-06478497 demote=0/0n retire=0/0n protect=6 nodes=19 ms=1.3 usage=0.2498
+[2026-10-20 10:44:47] Prefill batch, #new-seq: 1, #new-token: 1251, #cached-token: 475, token usage: 0.25, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 337.78
+[serve] 1002351-5t0-3fbde628 prompt_tokens=1726 cached_tokens=475 cached_device=475 cached_host=0 ttft_ms=1232.80 inflight_prefill=0 inflight_decode=4
+[decode] 1001768-21t0-94104487 decode_ms=2765.98 output_tokens=27
+[ctl] 1001768-21t0-94104487 queue_ms=0.0 advance_ms=17.6 pre_ms=15.4 post_ms=0.7
+[2026-10-20 10:44:47] 127.0.0.1 [20/Oct/2026:10:44:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 579 "-" "python-httpx/0.28.1"
+[priority] plan-prio-4c3288ca demote=1/2n retire=0/0n protect=6 nodes=19 ms=2.8 usage=0.0872
+[2026-10-20 10:44:48] Decode batch, #running-req: 3, #token: 5448, token usage: 0.09, cuda graph: True, gen throughput (token/s): 51.81, #queue-req: 0
+[decode] 1002351-5t0-3fbde628 decode_ms=1302.79 output_tokens=42
+[ctl] 1002351-5t0-3fbde628 queue_ms=0.0 advance_ms=0.2 pre_ms=3.9 post_ms=0.1
+[2026-10-20 10:44:48] 127.0.0.1 [20/Oct/2026:10:44:45 -0400] "POST /v1/chat/completions HTTP/1.1" 200 636 "-" "python-httpx/0.28.1"
+[priority] plan-prio-d63b041d demote=1/2n retire=0/0n protect=6 nodes=19 ms=1.6 usage=0.0612
+[call] 1001768 #21 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 1)
+[invalidate] 1001768 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-ca2477a6 demote=10/22n retire=0/0n protect=6 nodes=18 ms=7.3 usage=0.0620
+[call] 1002351 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1002351 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002351 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-7705b99e demote=2/2n retire=0/0n protect=7 nodes=19 ms=2.1 usage=0.1583
+[2026-10-20 10:44:55] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 2236, token usage: 0.22, #running-req: 2, #queue-req: 1, cuda graph: False, input throughput (token/s): 150.33
+[2026-10-20 10:45:00] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.28, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 891.95
+[2026-10-20 10:45:01] Prefill batch, #new-seq: 2, #new-token: 3332, #cached-token: 424, token usage: 0.28, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2127.84
+[ledger] drift +over=991 +under=0 (total {'over': 994, 'under': 1}) device_used=53512
+[serve] 1001768-22t0-3f0e45e0 prompt_tokens=12301 cached_tokens=2236 cached_device=2236 cached_host=0 ttft_ms=12732.31 inflight_prefill=1 inflight_decode=3
+[ledger] drift +over=11 +under=0 (total {'over': 1005, 'under': 1}) device_used=53424
+[serve] 1002351-6t0-13b26a00 prompt_tokens=1883 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=11504.15 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:45:02] Decode batch, #running-req: 4, #token: 17171, token usage: 0.28, cuda graph: True, gen throughput (token/s): 6.90, #queue-req: 0
+[decode] 1001766-20t0-9ca73e8e decode_ms=21774.15 output_tokens=140
+[ctl] 1001766-20t0-9ca73e8e queue_ms=0.0 advance_ms=5.7 pre_ms=4.3 post_ms=0.2
+[2026-10-20 10:45:02] 127.0.0.1 [20/Oct/2026:10:44:39 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1053 "-" "python-httpx/0.28.1"
+[call] 1001766 #20 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(6,)
+[invalidate] 1001766 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1001766 err_s=+0.00 done=0/2521 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-b5bc2c3e demote=1/2n retire=0/0n protect=7 nodes=27 ms=2.2 usage=0.2372
+[priority] plan-prio-7fede024 demote=0/0n retire=0/0n protect=7 nodes=19 ms=1.3 usage=0.2372
+[2026-10-20 10:45:03] Prefill batch, #new-seq: 1, #new-token: 1173, #cached-token: 1348, token usage: 0.28, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2224.15
+[serve] 1001766-21t0-364f0098 prompt_tokens=2521 cached_tokens=1348 cached_device=1348 cached_host=0 ttft_ms=1223.65 inflight_prefill=0 inflight_decode=4
+[decode] 1002179-10t0-3d17445d decode_ms=18439.56 output_tokens=106
+[ctl] 1002179-10t0-3d17445d queue_ms=0.0 advance_ms=2.6 pre_ms=2.2 post_ms=0.2
+[2026-10-20 10:45:03] 127.0.0.1 [20/Oct/2026:10:44:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 912 "-" "python-httpx/0.28.1"
+[call] 1002179 #10 EvidenceAnalyzer.verify_claim:251 predicted=miss ctx=(3,)
+[invalidate] 1002179 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=817/817 kind=hold state=done site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-7a71c74d demote=1/5n retire=0/0n protect=7 nodes=19 ms=1.6 usage=0.2648
+[promote] plan-hold-64fd8a6e tokens=872 device=872 host=0 started=0 free=1338 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-64fd8a6e tokens=872 duration_ms=79.53
+[2026-10-20 10:45:03] Prefill batch, #new-seq: 1, #new-token: 257, #cached-token: 817, token usage: 0.28, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2779.61
+[serve] 1002179-11t0-eeb1775b prompt_tokens=1074 cached_tokens=817 cached_device=817 cached_host=0 ttft_ms=314.11 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-c2866b34 demote=0/0n retire=0/0n protect=6 nodes=24 ms=1.4 usage=0.2815
+[decode] 1001768-22t0-3f0e45e0 decode_ms=2833.46 output_tokens=41
+[ctl] 1001768-22t0-3f0e45e0 queue_ms=0.1 advance_ms=18.8 pre_ms=18.2 post_ms=0.8
+[2026-10-20 10:45:04] 127.0.0.1 [20/Oct/2026:10:44:49 -0400] "POST /v1/chat/completions HTTP/1.1" 200 621 "-" "python-httpx/0.28.1"
+[priority] plan-prio-2cd6e3a5 demote=1/9n retire=0/0n protect=6 nodes=24 ms=2.5 usage=0.0892
+[2026-10-20 10:45:04] Decode batch, #running-req: 3, #token: 2980, token usage: 0.05, cuda graph: True, gen throughput (token/s): 54.80, #queue-req: 0
+[decode] 1001766-21t0-364f0098 decode_ms=1432.45 output_tokens=34
+[ctl] 1001766-21t0-364f0098 queue_ms=0.0 advance_ms=0.3 pre_ms=5.6 post_ms=0.1
+[2026-10-20 10:45:04] 127.0.0.1 [20/Oct/2026:10:45:02 -0400] "POST /v1/chat/completions HTTP/1.1" 200 634 "-" "python-httpx/0.28.1"
+[priority] plan-prio-46f59673 demote=1/2n retire=0/0n protect=6 nodes=24 ms=1.8 usage=0.0485
+[decode] 1002351-6t0-13b26a00 decode_ms=3779.55 output_tokens=72
+[ctl] 1002351-6t0-13b26a00 queue_ms=0.0 advance_ms=7.4 pre_ms=3.2 post_ms=0.3
+[2026-10-20 10:45:05] 127.0.0.1 [20/Oct/2026:10:44:50 -0400] "POST /v1/chat/completions HTTP/1.1" 200 754 "-" "python-httpx/0.28.1"
+[priority] plan-prio-198b5705 demote=1/5n retire=0/0n protect=6 nodes=24 ms=1.6 usage=0.0184
+[2026-10-20 10:45:06] Decode batch, #running-req: 1, #token: 1144, token usage: 0.02, cuda graph: True, gen throughput (token/s): 58.46, #queue-req: 0
+[decode] 1002179-11t0-eeb1775b decode_ms=2526.75 output_tokens=81
+[ctl] 1002179-11t0-eeb1775b queue_ms=0.0 advance_ms=2.9 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:45:06] 127.0.0.1 [20/Oct/2026:10:45:03 -0400] "POST /v1/chat/completions HTTP/1.1" 200 835 "-" "python-httpx/0.28.1"
+[call] 1002179 #11 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(4,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002179 err_s=+0.00 done=872/1066 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-e0486782 demote=1/2n retire=0/0n protect=6 nodes=24 ms=1.7 usage=0.0000
+[priority] plan-prio-50af7925 demote=0/0n retire=0/0n protect=6 nodes=17 ms=1.3 usage=0.0174
+[2026-10-20 10:45:06] Prefill batch, #new-seq: 1, #new-token: 188, #cached-token: 878, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 93.43
+[serve] 1002179-12t0-5acfd17b prompt_tokens=1066 cached_tokens=878 cached_device=878 cached_host=0 ttft_ms=195.82 inflight_prefill=0 inflight_decode=1
+[call] 1001768 #22 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 2)
+[invalidate] 1001768 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-d35dcd46 demote=0/0n retire=0/0n protect=6 nodes=17 ms=1.4 usage=0.0175
+[call] 1001766 #21 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 1)
+[invalidate] 1001766 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1002351 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1002351 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002351 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[promote] plan-hold-c6d39dfb tokens=10296 device=10296 host=0 started=0 free=2373 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-c6d39dfb tokens=10296 duration_ms=1672.04
+[2026-10-20 10:45:12] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 418, token usage: 0.16, #running-req: 1, #queue-req: 2, cuda graph: False, input throughput (token/s): 30.49
+[priority] plan-prio-0a0b1323 demote=10/0n retire=0/0n protect=6 nodes=27 ms=3.0 usage=0.1568
+[2026-10-20 10:45:17] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.22, #running-req: 1, #queue-req: 2, cuda graph: False, input throughput (token/s): 873.76
+[promote] plan-hold-52ac429f tokens=1624 device=1624 host=0 started=0 free=2056 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-52ac429f tokens=1624 duration_ms=4683.48
+[2026-10-20 10:45:22] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.29, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 892.18
+[priority] plan-prio-339bad2f demote=0/0n retire=0/0n protect=5 nodes=16 ms=0.8 usage=0.2903
+[2026-10-20 10:45:25] Prefill batch, #new-seq: 3, #new-token: 4096, #cached-token: 842, token usage: 0.31, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1394.96
+[priority] plan-prio-86944163 demote=0/0n retire=0/0n protect=5 nodes=16 ms=0.6 usage=0.3146
+[ledger] drift +over=1368 +under=0 (total {'over': 2373, 'under': 1}) device_used=50496
+[serve] 1001768-23t0-c1d23dd9 prompt_tokens=13505 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=18150.77 inflight_prefill=2 inflight_decode=2
+[ledger] drift +over=120 +under=0 (total {'over': 2493, 'under': 1}) device_used=49808
+[serve] 1001766-22t0-203e654e prompt_tokens=2676 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=18084.62 inflight_prefill=1 inflight_decode=3
+[2026-10-20 10:45:26] Prefill batch, #new-seq: 1, #new-token: 1490, #cached-token: 0, token usage: 0.31, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 4087.53
+[ledger] drift +over=146 +under=0 (total {'over': 2639, 'under': 1}) device_used=48640
+[serve] 1002351-7t0-e7a173d4 prompt_tokens=2953 cached_tokens=415 cached_device=415 cached_host=0 ttft_ms=18240.65 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:45:26] Decode batch, #running-req: 4, #token: 19405, token usage: 0.32, cuda graph: True, gen throughput (token/s): 4.57, #queue-req: 0
+[decode] 1002179-12t0-5acfd17b decode_ms=20656.94 output_tokens=47
+[ctl] 1002179-12t0-5acfd17b queue_ms=0.0 advance_ms=0.3 pre_ms=2.7 post_ms=0.2
+[decode] 1001768-23t0-c1d23dd9 decode_ms=2276.38 output_tokens=37
+[ctl] 1001768-23t0-c1d23dd9 queue_ms=0.0 advance_ms=19.7 pre_ms=22.0 post_ms=0.7
+[2026-10-20 10:45:27] 127.0.0.1 [20/Oct/2026:10:45:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 678 "-" "python-httpx/0.28.1"
+[2026-10-20 10:45:27] 127.0.0.1 [20/Oct/2026:10:45:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 602 "-" "python-httpx/0.28.1"
+[call] 1001768 #23 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(6,)
+[invalidate] 1001768 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001768 err_s=+0.00 done=0/11314 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-21a6137b demote=2/10n retire=0/0n protect=6 nodes=26 ms=2.9 usage=0.0861
+[promote] plan-hold-e96604bc tokens=10360 device=10360 host=0 started=0 free=410 reserve=4096 ms=1.0
+[promote-rpc] plan-hold-e96604bc tokens=10360 duration_ms=24.52
+[priority] plan-prio-c67ba997 demote=0/0n retire=0/0n protect=5 nodes=29 ms=1.6 usage=0.2871
+[call] 1002179 #12 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:45:30] Prefill batch, #new-seq: 1, #new-token: 2091, #cached-token: 10301, token usage: 0.29, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 371.24
+[serve] 1001768-24t0-b3ecfa2e prompt_tokens=12392 cached_tokens=10301 cached_device=10301 cached_host=0 ttft_ms=2656.35 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-12934e34 demote=5/0n retire=0/0n protect=6 nodes=33 ms=2.4 usage=0.2871
+[2026-10-20 10:45:30] Prefill batch, #new-seq: 1, #new-token: 804, #cached-token: 427, token usage: 0.30, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2549.95
+[ledger] drift +over=36 +under=0 (total {'over': 2675, 'under': 1}) device_used=61440
+[serve] 1002179-13t0-b7cb4a21 prompt_tokens=1231 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=1528.33 inflight_prefill=0 inflight_decode=4
+[decode] 1001766-22t0-203e654e decode_ms=5939.89 output_tokens=46
+[ctl] 1001766-22t0-203e654e queue_ms=0.0 advance_ms=11.0 pre_ms=4.5 post_ms=0.3
+[2026-10-20 10:45:30] 127.0.0.1 [20/Oct/2026:10:45:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 652 "-" "python-httpx/0.28.1"
+[priority] plan-prio-d139ed3b demote=1/6n retire=0/0n protect=6 nodes=33 ms=1.9 usage=0.2632
+[2026-10-20 10:45:31] Decode batch, #running-req: 3, #token: 16204, token usage: 0.26, cuda graph: True, gen throughput (token/s): 29.23, #queue-req: 0
+[priority] plan-prio-8f742f27 demote=0/0n retire=0/0n protect=6 nodes=20 ms=0.7 usage=0.2651
+[priority] plan-prio-95c54457 demote=0/0n retire=0/0n protect=6 nodes=20 ms=0.7 usage=0.2652
+[2026-10-20 10:45:32] Decode batch, #running-req: 3, #token: 16324, token usage: 0.27, cuda graph: True, gen throughput (token/s): 86.53, #queue-req: 0
+[call] 1001766 #22 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 2)
+[invalidate] 1001766 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-4dc65432 demote=0/0n retire=0/0n protect=5 nodes=20 ms=0.7 usage=0.3228
+[2026-10-20 10:45:36] Prefill batch, #new-seq: 1, #new-token: 3488, #cached-token: 418, token usage: 0.32, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 143.78
+[serve] 1001766-23t0-d0d39690 prompt_tokens=3906 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=3447.10 inflight_prefill=0 inflight_decode=4
+[promote] plan-hold-f8446de6 tokens=2416 device=2416 host=0 started=0 free=2456 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-f8446de6 tokens=2416 duration_ms=1755.47
+[decode] 1002179-13t0-b7cb4a21 decode_ms=6157.97 output_tokens=80
+[ctl] 1002179-13t0-b7cb4a21 queue_ms=0.0 advance_ms=4.1 pre_ms=2.3 post_ms=0.2
+[2026-10-20 10:45:37] 127.0.0.1 [20/Oct/2026:10:45:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 810 "-" "python-httpx/0.28.1"
+[priority] plan-prio-1f284162 demote=1/6n retire=0/0n protect=5 nodes=21 ms=0.9 usage=0.3094
+[2026-10-20 10:45:37] Decode batch, #running-req: 3, #token: 19056, token usage: 0.31, cuda graph: True, gen throughput (token/s): 28.47, #queue-req: 0
+[priority] plan-prio-d33e69d9 demote=0/0n retire=0/0n protect=5 nodes=11 ms=0.5 usage=0.3107
+[priority] plan-prio-82098ae8 demote=0/0n retire=0/0n protect=5 nodes=11 ms=0.4 usage=0.3108
+[decode] 1001768-24t0-b3ecfa2e decode_ms=8141.63 output_tokens=114
+[ctl] 1001768-24t0-b3ecfa2e queue_ms=0.1 advance_ms=21.2 pre_ms=18.1 post_ms=0.7
+[2026-10-20 10:45:38] 127.0.0.1 [20/Oct/2026:10:45:27 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1005 "-" "python-httpx/0.28.1"
+[close] 1001768 calls=24
+[2026-10-20 10:45:38] 127.0.0.1 [20/Oct/2026:10:45:38 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-f5554cb3 demote=1/2n retire=0/0n protect=5 nodes=24 ms=3.3 usage=0.1083
+[priority] plan-prio-f60c9818 demote=0/0n retire=24/61n protect=4 nodes=11 ms=17.2 usage=0.1083
+[decode] 1002351-7t0-e7a173d4 decode_ms=12345.67 output_tokens=161
+[ctl] 1002351-7t0-e7a173d4 queue_ms=0.0 advance_ms=3.8 pre_ms=4.8 post_ms=0.2
+[2026-10-20 10:45:38] 127.0.0.1 [20/Oct/2026:10:45:07 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1012 "-" "python-httpx/0.28.1"
+[call] 1002351 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 1002351 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002351 err_s=+0.00 done=0/1722 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-9ab8379f demote=1/4n retire=0/0n protect=4 nodes=13 ms=0.8 usage=0.0645
+[promote] plan-hold-130b4a0d tokens=1680 device=1680 host=0 started=0 free=2279 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-130b4a0d tokens=1680 duration_ms=17.48
+[priority] plan-prio-174e4015 demote=0/0n retire=0/0n protect=4 nodes=16 ms=0.6 usage=0.1116
+[call] 1002179 #13 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 2)
+[invalidate] 1002179 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:45:39] Prefill batch, #new-seq: 1, #new-token: 1320, #cached-token: 1625, token usage: 0.11, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1053.93
+[serve] 1002351-8t0-f2bfb5bc prompt_tokens=2945 cached_tokens=1625 cached_device=1625 cached_host=0 ttft_ms=1350.41 inflight_prefill=1 inflight_decode=2
+[priority] plan-prio-374e15c6 demote=0/0n retire=0/0n protect=3 nodes=16 ms=0.5 usage=0.1117
+[promote] plan-hold-f60c2ebc tokens=960 device=960 host=0 started=0 free=48 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-f60c2ebc tokens=960 duration_ms=185.53
+[2026-10-20 10:45:40] Prefill batch, #new-seq: 1, #new-token: 909, #cached-token: 424, token usage: 0.13, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1457.37
+[ledger] drift +over=49 +under=0 (total {'over': 2724, 'under': 1}) device_used=61440
+[serve] 1002179-14t0-368e3d79 prompt_tokens=1333 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=1619.86 inflight_prefill=0 inflight_decode=3
+[2026-10-20 10:45:41] Decode batch, #running-req: 3, #token: 7822, token usage: 0.13, cuda graph: True, gen throughput (token/s): 31.13, #queue-req: 0
+[decode] 1001766-23t0-d0d39690 decode_ms=4924.98 output_tokens=82
+[ctl] 1001766-23t0-d0d39690 queue_ms=0.0 advance_ms=6.0 pre_ms=7.4 post_ms=0.3
+[2026-10-20 10:45:41] 127.0.0.1 [20/Oct/2026:10:45:32 -0400] "POST /v1/chat/completions HTTP/1.1" 200 809 "-" "python-httpx/0.28.1"
+[call] 1001766 #23 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(6,)
+[invalidate] 1001766 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1001766 err_s=+0.00 done=0/2490 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-51846540 demote=1/5n retire=0/0n protect=3 nodes=25 ms=1.2 usage=0.0696
+[promote] plan-hold-5ed3b582 tokens=2480 device=2480 host=0 started=0 free=1183 reserve=4096 ms=0.4
+[promote-rpc] plan-hold-5ed3b582 tokens=2480 duration_ms=11.93
+[priority] plan-prio-d88e5986 demote=0/0n retire=0/0n protect=3 nodes=24 ms=0.8 usage=0.1240
+[2026-10-20 10:45:42] Prefill batch, #new-seq: 1, #new-token: 1286, #cached-token: 2420, token usage: 0.12, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 426.65
+[serve] 1001766-24t0-f71dd4de prompt_tokens=3706 cached_tokens=2420 cached_device=2420 cached_host=0 ttft_ms=1376.55 inflight_prefill=0 inflight_decode=3
+[priority] plan-prio-d179cd83 demote=0/0n retire=0/0n protect=3 nodes=22 ms=0.7 usage=0.1250
+[priority] plan-prio-9900ba77 demote=0/0n retire=0/0n protect=3 nodes=22 ms=0.6 usage=0.1250
+[call] 1002827 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1002827 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1002827 unplanned site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-cf3f58f2 demote=0/0n retire=0/0n protect=4 nodes=22 ms=0.7 usage=0.1251
+[2026-10-20 10:45:43] Prefill batch, #new-seq: 1, #new-token: 77, #cached-token: 429, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1462.93
+[serve] 1002827-1t0-5f536618 prompt_tokens=506 cached_tokens=429 cached_device=429 cached_host=0 ttft_ms=165.86 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:45:43] Decode batch, #running-req: 4, #token: 8169, token usage: 0.13, cuda graph: True, gen throughput (token/s): 45.22, #queue-req: 0
+[priority] plan-prio-9d3baa5c demote=0/0n retire=0/0n protect=4 nodes=15 ms=0.6 usage=0.1335
+[priority] plan-prio-e675730e demote=0/0n retire=0/0n protect=4 nodes=15 ms=0.6 usage=0.1335
+[decode] 1002179-14t0-368e3d79 decode_ms=3722.63 output_tokens=72
+[ctl] 1002179-14t0-368e3d79 queue_ms=0.0 advance_ms=3.1 pre_ms=2.6 post_ms=0.2
+[2026-10-20 10:45:44] 127.0.0.1 [20/Oct/2026:10:45:39 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[call] 1002179 #14 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(4,)
+[invalidate] 1002179 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=0/1074 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-d00a0d8a demote=1/5n retire=0/0n protect=4 nodes=22 ms=0.8 usage=0.1121
+[promote] plan-hold-45781a84 tokens=1024 device=1024 host=0 started=0 free=1631 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-45781a84 tokens=1024 duration_ms=31.14
+[priority] plan-prio-774edf79 demote=0/0n retire=0/0n protect=4 nodes=23 ms=0.8 usage=0.1270
+[2026-10-20 10:45:44] Prefill batch, #new-seq: 1, #new-token: 317, #cached-token: 964, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 68.70
+[serve] 1002179-15t0-9ffdc906 prompt_tokens=1281 cached_tokens=964 cached_device=964 cached_host=0 ttft_ms=377.13 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:45:45] Decode batch, #running-req: 4, #token: 7887, token usage: 0.13, cuda graph: True, gen throughput (token/s): 98.31, #queue-req: 0
+[decode] 1002827-1t0-5f536618 decode_ms=1801.00 output_tokens=47
+[ctl] 1002827-1t0-5f536618 queue_ms=0.0 advance_ms=0.2 pre_ms=1.7 post_ms=0.1
+[2026-10-20 10:45:45] 127.0.0.1 [20/Oct/2026:10:45:43 -0400] "POST /v1/chat/completions HTTP/1.1" 200 658 "-" "python-httpx/0.28.1"
+[priority] plan-prio-9e8e8530 demote=1/2n retire=0/0n protect=4 nodes=23 ms=0.8 usage=0.1203
+[priority] plan-prio-a3798d73 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.4 usage=0.1218
+[priority] plan-prio-8799d603 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.4 usage=0.1218
+[2026-10-20 10:45:46] Decode batch, #running-req: 3, #token: 4791, token usage: 0.08, cuda graph: True, gen throughput (token/s): 96.01, #queue-req: 0
+[decode] 1002351-8t0-f2bfb5bc decode_ms=6954.51 output_tokens=136
+[ctl] 1002351-8t0-f2bfb5bc queue_ms=0.0 advance_ms=6.4 pre_ms=4.8 post_ms=0.2
+[2026-10-20 10:45:46] 127.0.0.1 [20/Oct/2026:10:45:38 -0400] "POST /v1/chat/completions HTTP/1.1" 200 992 "-" "python-httpx/0.28.1"
+[close] 1002351 calls=8
+[2026-10-20 10:45:46] 127.0.0.1 [20/Oct/2026:10:45:46 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-337aea38 demote=1/2n retire=0/0n protect=4 nodes=18 ms=1.0 usage=0.0780
+[priority] plan-prio-868602fa demote=0/0n retire=8/18n protect=3 nodes=14 ms=2.2 usage=0.0780
+[decode] 1002179-15t0-9ffdc906 decode_ms=2135.76 output_tokens=68
+[ctl] 1002179-15t0-9ffdc906 queue_ms=0.0 advance_ms=3.3 pre_ms=2.4 post_ms=0.2
+[2026-10-20 10:45:46] 127.0.0.1 [20/Oct/2026:10:45:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 776 "-" "python-httpx/0.28.1"
+[call] 1002179 #15 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(5,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002179 err_s=+0.00 done=1024/1273 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-719ef1df demote=1/2n retire=0/0n protect=3 nodes=14 ms=0.7 usage=0.0622
+[priority] plan-prio-da001bab demote=0/0n retire=0/0n protect=3 nodes=5 ms=0.3 usage=0.0623
+[2026-10-20 10:45:47] Prefill batch, #new-seq: 1, #new-token: 248, #cached-token: 1025, token usage: 0.08, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 127.70
+[serve] 1002179-16t0-d19b5d5f prompt_tokens=1273 cached_tokens=1025 cached_device=1025 cached_host=0 ttft_ms=318.29 inflight_prefill=0 inflight_decode=2
+[call] 1002827 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1002827 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002827 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-4de64a6e demote=0/0n retire=0/0n protect=3 nodes=5 ms=0.3 usage=0.0825
+[2026-10-20 10:45:49] Prefill batch, #new-seq: 1, #new-token: 2224, #cached-token: 418, token usage: 0.12, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 102.45
+[serve] 1002827-2t0-a654efc4 prompt_tokens=2642 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2191.64 inflight_prefill=0 inflight_decode=3
+[decode] 1001766-24t0-f71dd4de decode_ms=7125.67 output_tokens=136
+[ctl] 1001766-24t0-f71dd4de queue_ms=0.0 advance_ms=8.4 pre_ms=6.4 post_ms=0.3
+[2026-10-20 10:45:49] 127.0.0.1 [20/Oct/2026:10:45:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1033 "-" "python-httpx/0.28.1"
+[close] 1001766 calls=24
+[2026-10-20 10:45:49] 127.0.0.1 [20/Oct/2026:10:45:49 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] plan-prio-be5755f8 demote=1/2n retire=0/0n protect=3 nodes=15 ms=1.3 usage=0.0633
+[priority] plan-prio-44f92faf demote=0/0n retire=24/53n protect=2 nodes=5 ms=5.4 usage=0.0634
+[2026-10-20 10:45:50] Decode batch, #running-req: 2, #token: 3918, token usage: 0.06, cuda graph: True, gen throughput (token/s): 23.95, #queue-req: 0
+[decode] 1002179-16t0-d19b5d5f decode_ms=3554.67 output_tokens=47
+[ctl] 1002179-16t0-d19b5d5f queue_ms=0.0 advance_ms=0.3 pre_ms=3.1 post_ms=0.1
+[2026-10-20 10:45:50] 127.0.0.1 [20/Oct/2026:10:45:46 -0400] "POST /v1/chat/completions HTTP/1.1" 200 678 "-" "python-httpx/0.28.1"
+[priority] plan-prio-6cd8354b demote=1/2n retire=0/0n protect=2 nodes=5 ms=0.5 usage=0.0436
+[decode] 1002827-2t0-a654efc4 decode_ms=1547.15 output_tokens=52
+[ctl] 1002827-2t0-a654efc4 queue_ms=0.0 advance_ms=0.3 pre_ms=6.9 post_ms=0.1
+[2026-10-20 10:45:51] 127.0.0.1 [20/Oct/2026:10:45:47 -0400] "POST /v1/chat/completions HTTP/1.1" 200 650 "-" "python-httpx/0.28.1"
+[priority] plan-prio-615c325f demote=1/5n retire=0/0n protect=2 nodes=5 ms=0.6 usage=0.0000
+[call] 1002862 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1002862 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1002862 unplanned site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-456a3b7b demote=0/0n retire=0/0n protect=3 nodes=5 ms=0.3 usage=0.0080
+[2026-10-20 10:45:52] Prefill batch, #new-seq: 1, #new-token: 63, #cached-token: 428, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 913.75
+[serve] 1002862-1t0-55676af0 prompt_tokens=491 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=72.61 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:45:52] Decode batch, #running-req: 1, #token: 501, token usage: 0.01, cuda graph: True, gen throughput (token/s): 27.83, #queue-req: 0
+[call] 1002179 #16 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-d9531941 demote=7/14n retire=0/0n protect=4 nodes=13 ms=1.9 usage=0.0084
+[call] 1002827 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1002827 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002827 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:45:53] Prefill batch, #new-seq: 1, #new-token: 367, #cached-token: 1071, token usage: 0.03, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 54.60
+[serve] 1002179-17t0-96ade188 prompt_tokens=1438 cached_tokens=1071 cached_device=1071 cached_host=0 ttft_ms=425.33 inflight_prefill=1 inflight_decode=2
+[priority] plan-prio-117cfcbf demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.5 usage=0.0311
+[promote] plan-hold-31b0e7b3 tokens=368 device=368 host=0 started=0 free=624 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-31b0e7b3 tokens=368 duration_ms=982.60
+[call] 1002881 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 1002881 ClaimAnalyzer.decompose kills ['questions']
+[timing] 1002881 unplanned site=ClaimAnalyzer.decompose_claim:90
+[2026-10-20 10:45:55] Prefill batch, #new-seq: 1, #new-token: 2425, #cached-token: 419, token usage: 0.07, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 154.75
+[serve] 1002827-3t0-a42768a7 prompt_tokens=2844 cached_tokens=419 cached_device=419 cached_host=0 ttft_ms=2378.76 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-c2432154 demote=0/0n retire=0/0n protect=5 nodes=13 ms=0.6 usage=0.0706
+[2026-10-20 10:45:55] Prefill batch, #new-seq: 1, #new-token: 75, #cached-token: 429, token usage: 0.07, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 18322.55
+[serve] 1002881-1t0-26b80c66 prompt_tokens=504 cached_tokens=429 cached_device=429 cached_host=0 ttft_ms=440.45 inflight_prefill=0 inflight_decode=4
+[decode] 1002862-1t0-55676af0 decode_ms=3718.97 output_tokens=32
+[ctl] 1002862-1t0-55676af0 queue_ms=0.0 advance_ms=0.2 pre_ms=1.7 post_ms=0.1
+[2026-10-20 10:45:55] 127.0.0.1 [20/Oct/2026:10:45:52 -0400] "POST /v1/chat/completions HTTP/1.1" 200 600 "-" "python-httpx/0.28.1"
+[priority] plan-prio-dc54cc6b demote=1/2n retire=0/0n protect=5 nodes=13 ms=0.6 usage=0.0706
+[2026-10-20 10:45:56] Decode batch, #running-req: 3, #token: 4386, token usage: 0.07, cuda graph: True, gen throughput (token/s): 21.46, #queue-req: 0
+[decode] 1002827-3t0-a42768a7 decode_ms=1481.91 output_tokens=46
+[ctl] 1002827-3t0-a42768a7 queue_ms=0.0 advance_ms=3.9 pre_ms=5.8 post_ms=0.2
+[2026-10-20 10:45:57] 127.0.0.1 [20/Oct/2026:10:45:53 -0400] "POST /v1/chat/completions HTTP/1.1" 200 652 "-" "python-httpx/0.28.1"
+[call] 1002827 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1002827 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002827 err_s=+0.00 done=368/1461 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-6fc4ca71 demote=1/6n retire=0/0n protect=5 nodes=13 ms=0.9 usage=0.0242
+[decode] 1002881-1t0-26b80c66 decode_ms=1392.93 output_tokens=46
+[ctl] 1002881-1t0-26b80c66 queue_ms=0.0 advance_ms=0.2 pre_ms=1.8 post_ms=0.1
+[2026-10-20 10:45:57] 127.0.0.1 [20/Oct/2026:10:45:55 -0400] "POST /v1/chat/completions HTTP/1.1" 200 687 "-" "python-httpx/0.28.1"
+[promote] plan-hold-58e4646f tokens=464 device=464 host=0 started=0 free=405 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-58e4646f tokens=464 duration_ms=17.54
+[call] 1002862 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1002862 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002862 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-4770544a demote=1/2n retire=0/0n protect=5 nodes=17 ms=0.8 usage=0.0661
+[call] 1002881 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 1002881 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002881 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:45:59] Prefill batch, #new-seq: 1, #new-token: 2256, #cached-token: 368, token usage: 0.09, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 18.58
+[serve] 1002827-4t0-71801dd1 prompt_tokens=2624 cached_tokens=368 cached_device=368 cached_host=0 ttft_ms=2649.27 inflight_prefill=2 inflight_decode=2
+[priority] plan-prio-567a1172 demote=0/0n retire=0/0n protect=5 nodes=17 ms=0.6 usage=0.0887
+[2026-10-20 10:46:00] Prefill batch, #new-seq: 1, #new-token: 1389, #cached-token: 418, token usage: 0.09, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2321.14
+[serve] 1002862-2t0-619ebae7 prompt_tokens=1807 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2918.31 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-761e3e3f demote=0/0n retire=0/0n protect=5 nodes=17 ms=0.6 usage=0.0926
+[2026-10-20 10:46:00] Prefill batch, #new-seq: 1, #new-token: 238, #cached-token: 427, token usage: 0.09, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 7101.88
+[serve] 1002881-2t0-b5a6fc9e prompt_tokens=665 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=1785.54 inflight_prefill=0 inflight_decode=4
+[2026-10-20 10:46:01] Decode batch, #running-req: 4, #token: 5745, token usage: 0.09, cuda graph: True, gen throughput (token/s): 25.99, #queue-req: 0
+[decode] 1002179-17t0-96ade188 decode_ms=8654.82 output_tokens=80
+[ctl] 1002179-17t0-96ade188 queue_ms=0.0 advance_ms=3.4 pre_ms=2.8 post_ms=0.3
+[2026-10-20 10:46:01] 127.0.0.1 [20/Oct/2026:10:45:52 -0400] "POST /v1/chat/completions HTTP/1.1" 200 810 "-" "python-httpx/0.28.1"
+[priority] plan-prio-59cf3fba demote=1/10n retire=0/0n protect=5 nodes=17 ms=0.8 usage=0.0769
+[priority] plan-prio-ec752bfb demote=0/0n retire=0/0n protect=5 nodes=13 ms=0.5 usage=0.0773
+[priority] plan-prio-0c16a1bc demote=0/0n retire=0/0n protect=5 nodes=13 ms=0.4 usage=0.0773
+[decode] 1002881-2t0-b5a6fc9e decode_ms=1537.56 output_tokens=50
+[ctl] 1002881-2t0-b5a6fc9e queue_ms=0.0 advance_ms=0.3 pre_ms=2.0 post_ms=0.1
+[2026-10-20 10:46:02] 127.0.0.1 [20/Oct/2026:10:45:59 -0400] "POST /v1/chat/completions HTTP/1.1" 200 667 "-" "python-httpx/0.28.1"
+[priority] plan-prio-ff0e344a demote=1/6n retire=0/0n protect=5 nodes=13 ms=0.6 usage=0.0729
+[2026-10-20 10:46:02] Decode batch, #running-req: 2, #token: 4488, token usage: 0.07, cuda graph: True, gen throughput (token/s): 108.00, #queue-req: 0
+[decode] 1002862-2t0-619ebae7 decode_ms=3012.03 output_tokens=92
+[ctl] 1002862-2t0-619ebae7 queue_ms=0.0 advance_ms=0.3 pre_ms=4.8 post_ms=0.1
+[2026-10-20 10:46:03] 127.0.0.1 [20/Oct/2026:10:45:57 -0400] "POST /v1/chat/completions HTTP/1.1" 200 858 "-" "python-httpx/0.28.1"
+[priority] plan-prio-2c36409f demote=1/5n retire=0/0n protect=5 nodes=13 ms=0.8 usage=0.0442
+[2026-10-20 10:46:03] Decode batch, #running-req: 1, #token: 2718, token usage: 0.04, cuda graph: True, gen throughput (token/s): 64.94, #queue-req: 0
+[call] 1002179 #17 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 2)
+[invalidate] 1002179 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-83d9eb9d demote=0/0n retire=0/0n protect=4 nodes=13 ms=0.5 usage=0.0443
+[promote] plan-hold-1c6542fd tokens=1168 device=1168 host=0 started=0 free=1102 reserve=4096 ms=0.3
+[promote-rpc] plan-hold-1c6542fd tokens=1168 duration_ms=91.35
+[2026-10-20 10:46:04] Prefill batch, #new-seq: 1, #new-token: 366, #cached-token: 1173, token usage: 0.07, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 70.15
+[serve] 1002179-18t0-89b7cf56 prompt_tokens=1539 cached_tokens=1173 cached_device=1173 cached_host=0 ttft_ms=416.51 inflight_prefill=0 inflight_decode=2
+[call] 1002881 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1002881 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002881 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[priority] plan-prio-a915f323 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.5 usage=0.0688
+[promote] plan-hold-4fcadd47 tokens=368 device=368 host=0 started=0 free=2274 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-4fcadd47 tokens=368 duration_ms=985.53
+[call] 1002862 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 1002862 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002862 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:46:06] Prefill batch, #new-seq: 1, #new-token: 2385, #cached-token: 418, token usage: 0.11, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 143.63
+[serve] 1002881-3t0-3ae524f9 prompt_tokens=2803 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2369.77 inflight_prefill=1 inflight_decode=3
+[priority] plan-prio-1de5ba50 demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.5 usage=0.1076
+[promote] plan-hold-6eb9d4a1 tokens=360 device=360 host=0 started=0 free=1079 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-6eb9d4a1 tokens=360 duration_ms=391.18
+[2026-10-20 10:46:08] Prefill batch, #new-seq: 1, #new-token: 1192, #cached-token: 424, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2011.92
+[serve] 1002862-3t0-356fab77 prompt_tokens=1616 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=2279.32 inflight_prefill=0 inflight_decode=4
+[decode] 1002827-4t0-71801dd1 decode_ms=8360.16 output_tokens=109
+[ctl] 1002827-4t0-71801dd1 queue_ms=0.0 advance_ms=6.2 pre_ms=4.5 post_ms=0.2
+[2026-10-20 10:46:08] 127.0.0.1 [20/Oct/2026:10:45:57 -0400] "POST /v1/chat/completions HTTP/1.1" 200 918 "-" "python-httpx/0.28.1"
+[call] 1002827 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1002827 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002827 err_s=+0.00 done=0/2616 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-8db76f31 demote=1/2n retire=0/0n protect=4 nodes=16 ms=1.0 usage=0.0836
+[priority] plan-prio-e9d233cf demote=0/0n retire=0/0n protect=4 nodes=14 ms=0.5 usage=0.0837
+[priority] plan-prio-3da1d024 demote=0/0n retire=0/0n protect=4 nodes=8 ms=0.5 usage=0.1255
+[2026-10-20 10:46:10] Prefill batch, #new-seq: 1, #new-token: 2150, #cached-token: 466, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 526.81
+[serve] 1002827-5t0-c1956845 prompt_tokens=2616 cached_tokens=466 cached_device=466 cached_host=0 ttft_ms=2162.83 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-4d41a4d9 demote=0/0n retire=0/0n protect=4 nodes=8 ms=0.4 usage=0.1255
+[priority] plan-prio-e1653c56 demote=0/0n retire=0/0n protect=4 nodes=7 ms=0.4 usage=0.1256
+[priority] plan-prio-59bd65c6 demote=0/0n retire=0/0n protect=4 nodes=7 ms=0.3 usage=0.1257
+[priority] plan-prio-ccbc04c7 demote=0/0n retire=0/0n protect=4 nodes=5 ms=0.3 usage=0.1265
+[priority] plan-prio-5cabbd89 demote=0/0n retire=0/0n protect=4 nodes=5 ms=0.3 usage=0.1266
+[2026-10-20 10:46:11] Decode batch, #running-req: 4, #token: 7800, token usage: 0.13, cuda graph: True, gen throughput (token/s): 17.69, #queue-req: 0
+[decode] 1002862-3t0-356fab77 decode_ms=3430.01 output_tokens=42
+[ctl] 1002862-3t0-356fab77 queue_ms=0.0 advance_ms=3.8 pre_ms=3.2 post_ms=0.2
+[2026-10-20 10:46:11] 127.0.0.1 [20/Oct/2026:10:46:05 -0400] "POST /v1/chat/completions HTTP/1.1" 200 618 "-" "python-httpx/0.28.1"
+[call] 1002862 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1002862 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002862 err_s=+0.00 done=0/1367 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-2cac6a7f demote=1/5n retire=0/0n protect=4 nodes=7 ms=0.6 usage=0.1078
+[promote] plan-hold-3d38215f tokens=448 device=448 host=0 started=0 free=2188 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-3d38215f tokens=448 duration_ms=27.01
+[priority] plan-prio-6a6610e2 demote=0/0n retire=0/0n protect=4 nodes=8 ms=0.4 usage=0.1321
+[2026-10-20 10:46:12] Prefill batch, #new-seq: 1, #new-token: 1172, #cached-token: 367, token usage: 0.13, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 905.60
+[serve] 1002862-4t0-7f142386 prompt_tokens=1539 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=1173.63 inflight_prefill=0 inflight_decode=4
+[decode] 1002881-3t0-3ae524f9 decode_ms=5862.54 output_tokens=47
+[ctl] 1002881-3t0-3ae524f9 queue_ms=0.0 advance_ms=1.9 pre_ms=6.4 post_ms=0.2
+[2026-10-20 10:46:12] 127.0.0.1 [20/Oct/2026:10:46:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 664 "-" "python-httpx/0.28.1"
+[call] 1002881 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 1002881 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002881 err_s=+0.00 done=0/480 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-6191857a demote=1/5n retire=0/0n protect=4 nodes=11 ms=0.7 usage=0.0927
+[promote] plan-hold-bdff66f8 tokens=464 device=464 host=0 started=0 free=1002 reserve=4096 ms=0.1
+[promote-rpc] plan-hold-bdff66f8 tokens=464 duration_ms=26.52
+[priority] plan-prio-ea4111f2 demote=0/0n retire=0/0n protect=4 nodes=10 ms=0.4 usage=0.1129
+[2026-10-20 10:46:14] Prefill batch, #new-seq: 1, #new-token: 1237, #cached-token: 368, token usage: 0.11, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 896.21
+[serve] 1002881-4t0-c4d19f23 prompt_tokens=1605 cached_tokens=368 cached_device=368 cached_host=0 ttft_ms=1234.62 inflight_prefill=0 inflight_decode=4
+[decode] 1002827-5t0-c1956845 decode_ms=3785.48 output_tokens=47
+[ctl] 1002827-5t0-c1956845 queue_ms=0.0 advance_ms=0.3 pre_ms=5.8 post_ms=0.1
+[2026-10-20 10:46:14] 127.0.0.1 [20/Oct/2026:10:46:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 658 "-" "python-httpx/0.28.1"
+[priority] plan-prio-a7867914 demote=1/2n retire=0/0n protect=4 nodes=10 ms=0.8 usage=0.0706
+[decode] 1002179-18t0-89b7cf56 decode_ms=10150.66 output_tokens=72
+[ctl] 1002179-18t0-89b7cf56 queue_ms=0.0 advance_ms=3.5 pre_ms=3.0 post_ms=0.2
+[2026-10-20 10:46:14] 127.0.0.1 [20/Oct/2026:10:46:03 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[call] 1002179 #18 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(5,)
+[invalidate] 1002179 EvidenceAnalyzer.decide kills ['completed_evidences']
+[timing] 1002179 err_s=-0.00 done=0/1280 kind=hold state=queued site=EvidenceAnalyzer.verify_claim:251
+[priority] plan-prio-50cd5da6 demote=1/9n retire=0/0n protect=4 nodes=19 ms=0.7 usage=0.0458
+[promote] plan-hold-ce646777 tokens=1232 device=1232 host=0 started=0 free=2252 reserve=4096 ms=0.2
+[promote-rpc] plan-hold-ce646777 tokens=1232 duration_ms=26.29
+[priority] plan-prio-5d752a8e demote=0/0n retire=0/0n protect=4 nodes=18 ms=0.5 usage=0.0641
+[2026-10-20 10:46:14] Prefill batch, #new-seq: 1, #new-token: 316, #cached-token: 1171, token usage: 0.06, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1414.10
+[serve] 1002179-19t0-0024c12a prompt_tokens=1487 cached_tokens=1171 cached_device=1171 cached_host=0 ttft_ms=370.83 inflight_prefill=0 inflight_decode=3
+[2026-10-20 10:46:14] Decode batch, #running-req: 3, #token: 3942, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.94, #queue-req: 0
+[call] 1002827 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 1002827 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002827 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[2026-10-20 10:46:16] Decode batch, #running-req: 3, #token: 4062, token usage: 0.07, cuda graph: True, gen throughput (token/s): 97.01, #queue-req: 0
+[priority] plan-prio-e77fb0ac demote=2/0n retire=0/0n protect=5 nodes=22 ms=1.3 usage=0.0662
+[priority] plan-prio-2c2f21c3 demote=0/0n retire=0/0n protect=5 nodes=20 ms=0.8 usage=0.1388
+[2026-10-20 10:46:20] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 419, token usage: 0.14, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 58.47
+[priority] plan-prio-292b0dcd demote=0/0n retire=0/0n protect=5 nodes=19 ms=0.8 usage=0.1427
+[2026-10-20 10:46:20] Prefill batch, #new-seq: 1, #new-token: 237, #cached-token: 0, token usage: 0.14, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 18689.19
+[ledger] drift +over=258 +under=0 (total {'over': 2982, 'under': 1}) device_used=59376
+[serve] 1002827-6t0-7278a329 prompt_tokens=4752 cached_tokens=419 cached_device=419 cached_host=0 ttft_ms=4349.35 inflight_prefill=0 inflight_decode=4
+[priority] plan-prio-71641a15 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.6 usage=0.1427
+[priority] plan-prio-900fd258 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.6 usage=0.1428
+[decode] 1002179-19t0-0024c12a decode_ms=6398.49 output_tokens=68
+[ctl] 1002179-19t0-0024c12a queue_ms=0.0 advance_ms=3.7 pre_ms=2.8 post_ms=0.2
+[2026-10-20 10:46:21] 127.0.0.1 [20/Oct/2026:10:46:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 776 "-" "python-httpx/0.28.1"
+[call] 1002179 #19 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(6,)
+[invalidate] 1002179 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002179 err_s=+0.00 done=0/1479 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-d8c6527e demote=1/2n retire=0/0n protect=5 nodes=19 ms=1.1 usage=0.1250
+[priority] plan-prio-b93c5a92 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.6 usage=0.1483
+[2026-10-20 10:46:21] Prefill batch, #new-seq: 1, #new-token: 247, #cached-token: 1232, token usage: 0.15, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 216.48
+[serve] 1002179-20t0-10bc7aa2 prompt_tokens=1479 cached_tokens=1232 cached_device=1232 cached_host=0 ttft_ms=290.71 inflight_prefill=0 inflight_decode=4
+[decode] 1002862-4t0-7f142386 decode_ms=8967.23 output_tokens=94
+[ctl] 1002862-4t0-7f142386 queue_ms=0.0 advance_ms=4.1 pre_ms=3.0 post_ms=0.2
+[2026-10-20 10:46:21] 127.0.0.1 [20/Oct/2026:10:46:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 880 "-" "python-httpx/0.28.1"
+[call] 1002862 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1002862 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002862 err_s=+0.00 done=0/1531 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-030ffdf3 demote=1/2n retire=0/0n protect=5 nodes=12 ms=0.9 usage=0.1279
+[priority] plan-prio-7e8765d9 demote=0/0n retire=0/0n protect=5 nodes=9 ms=0.6 usage=0.1280
+[2026-10-20 10:46:22] Prefill batch, #new-seq: 1, #new-token: 1080, #cached-token: 451, token usage: 0.15, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 207.75
+[serve] 1002862-5t0-7110dfea prompt_tokens=1531 cached_tokens=451 cached_device=451 cached_host=0 ttft_ms=1091.50 inflight_prefill=0 inflight_decode=4
+[decode] 1002179-20t0-10bc7aa2 decode_ms=1260.71 output_tokens=8
+[ctl] 1002179-20t0-10bc7aa2 queue_ms=0.0 advance_ms=0.3 pre_ms=3.5 post_ms=0.1
+[2026-10-20 10:46:22] 127.0.0.1 [20/Oct/2026:10:46:21 -0400] "POST /v1/chat/completions HTTP/1.1" 200 500 "-" "python-httpx/0.28.1"
+[priority] plan-prio-7c3dcac3 demote=1/2n retire=0/0n protect=5 nodes=9 ms=0.9 usage=0.1289
+[2026-10-20 10:46:23] Decode batch, #running-req: 3, #token: 7934, token usage: 0.13, cuda graph: True, gen throughput (token/s): 21.98, #queue-req: 0
+[decode] 1002827-6t0-7278a329 decode_ms=2928.87 output_tokens=52
+[ctl] 1002827-6t0-7278a329 queue_ms=0.0 advance_ms=13.0 pre_ms=7.9 post_ms=0.4
+[2026-10-20 10:46:23] 127.0.0.1 [20/Oct/2026:10:46:16 -0400] "POST /v1/chat/completions HTTP/1.1" 200 650 "-" "python-httpx/0.28.1"
+[priority] plan-prio-f86e8e61 demote=1/7n retire=0/0n protect=5 nodes=9 ms=1.1 usage=0.0524
+[decode] 1002862-5t0-7110dfea decode_ms=1005.03 output_tokens=33
+[ctl] 1002862-5t0-7110dfea queue_ms=0.0 advance_ms=0.3 pre_ms=3.8 post_ms=0.1
+[2026-10-20 10:46:23] 127.0.0.1 [20/Oct/2026:10:46:21 -0400] "POST /v1/chat/completions HTTP/1.1" 200 605 "-" "python-httpx/0.28.1"
+[priority] plan-prio-605ba3e2 demote=1/2n retire=0/0n protect=5 nodes=9 ms=0.9 usage=0.0282
+[2026-10-20 10:46:24] Decode batch, #running-req: 1, #token: 1745, token usage: 0.03, cuda graph: True, gen throughput (token/s): 65.96, #queue-req: 0
+[decode] 1002881-4t0-c4d19f23 decode_ms=10866.07 output_tokens=162
+[ctl] 1002881-4t0-c4d19f23 queue_ms=0.0 advance_ms=3.9 pre_ms=3.1 post_ms=0.2
+[2026-10-20 10:46:24] 127.0.0.1 [20/Oct/2026:10:46:12 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1176 "-" "python-httpx/0.28.1"
+[call] 1002179 #20 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 1)
+[invalidate] 1002179 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[timing] 1002179 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205
+[call] 1002881 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 1002881 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[timing] 1002881 err_s=+0.00 done=0/1597 kind=hold state=queued site=ClaimAnalyzer.decompose_claim:90
+[priority] plan-prio-8389658c demote=1/2n retire=0/0n protect=5 nodes=12 ms=0.9 usage=0.0000
+[priority] plan-prio-6aa38971 demote=9/11n retire=0/0n protect=6 nodes=16 ms=2.0 usage=0.0271
+[call] 1002827 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 1002827 EvidenceScout.investigate kills ['completed_evidences']
+[timing] 1002827 err_s=+0.00 done=411/411 kind=hold state=done site=EvidenceScout.assess_evidence:205

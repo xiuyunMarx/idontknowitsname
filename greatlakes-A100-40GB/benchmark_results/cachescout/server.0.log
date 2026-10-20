@@ -1,0 +1,489 @@
+[start_server] 2026-10-20 10:34:27 cachescout: /home/xiaoyma/miniforge3/envs/mortis/bin/python -m server.cacheScout_server Qwen/Qwen3-32B-AWQ --sched fcfs --host 25 --kv 61440 --port 9000 --engine-log info (CLIP=4096)
+[http] listening on 0.0.0.0:9000
+[cachescout] call-site agents on original-order prompts (guard controller front, no host admission)
+[2026-10-20 10:34:39] --default-priority-value is not set while --enable-priority-scheduling is enabled. Requests without explicit priority will have priority=None, resulting in priority='None' string labels in Prometheus metrics.
+[2026-10-20 10:34:39] server_args=ServerArgs(model_path='Qwen/Qwen3-32B-AWQ', tokenizer_path='Qwen/Qwen3-32B-AWQ', tokenizer_mode='auto', tokenizer_worker_num=1, skip_tokenizer_init=False, load_format='auto', model_loader_extra_config='{}', trust_remote_code=False, context_length=32768, is_embedding=False, enable_multimodal=None, revision=None, model_impl='auto', host='127.0.0.1', port=30000, fastapi_root_path='', grpc_mode=False, skip_server_warmup=False, warmups=None, nccl_port=None, checkpoint_engine_wait_weights_before_ready=False, ssl_keyfile=None, ssl_certfile=None, ssl_ca_certs=None, ssl_keyfile_password=None, enable_ssl_refresh=False, dtype='auto', quantization=None, quantization_param_path=None, kv_cache_dtype='auto', enable_fp32_lm_head=False, modelopt_quant=None, modelopt_checkpoint_restore_path=None, modelopt_checkpoint_save_path=None, modelopt_export_path=None, quantize_and_serve=False, rl_quant_profile=None, mem_fraction_static=0.89, max_running_requests=None, max_queued_requests=None, max_total_tokens=61440, chunked_prefill_size=4096, enable_dynamic_chunking=False, max_prefill_tokens=16384, prefill_max_requests=None, schedule_policy='fcfs', enable_priority_scheduling=True, disable_priority_preemption=False, default_priority_value=None, abort_on_priority_when_disabled=False, schedule_low_priority_values_first=False, priority_scheduling_preemption_threshold=10, schedule_conservativeness=1.0, cache_risk_aging_s=10.0, page_size=1, swa_full_tokens_ratio=0.8, disable_hybrid_swa_memory=False, radix_eviction_policy='priority', enable_prefill_delayer=False, prefill_delayer_max_delay_passes=30, prefill_delayer_token_usage_low_watermark=None, prefill_delayer_forward_passes_buckets=None, prefill_delayer_wait_seconds_buckets=None, device='cuda', tp_size=1, pp_size=1, pp_max_micro_batch_size=None, pp_async_batch_depth=0, stream_interval=1, stream_response_default_include_usage=False, incremental_streaming_output=False, enable_streaming_session=False, random_seed=596682661, constrained_json_whitespace_pattern=None, constrained_json_disable_any_whitespace=False, watchdog_timeout=300, soft_watchdog_timeout=None, dist_timeout=None, download_dir=None, model_checksum=None, base_gpu_id=0, gpu_id_step=1, sleep_on_idle=False, use_ray=False, custom_sigquit_handler=None, log_level='info', log_level_http=None, log_requests=False, log_requests_level=2, log_requests_format='text', log_requests_target=None, uvicorn_access_log_exclude_prefixes=[], crash_dump_folder=None, show_time_cost=False, enable_metrics=False, enable_mfu_metrics=False, enable_metrics_for_all_schedulers=False, tokenizer_metrics_custom_labels_header='x-custom-labels', tokenizer_metrics_allowed_custom_labels=None, extra_metric_labels=None, bucket_time_to_first_token=None, bucket_inter_token_latency=None, bucket_e2e_request_latency=None, collect_tokens_histogram=False, prompt_tokens_buckets=None, generation_tokens_buckets=None, gc_warning_threshold_secs=0.0, decode_log_interval=40, enable_request_time_stats_logging=False, kv_events_config=None, enable_trace=False, otlp_traces_endpoint='localhost:4317', export_metrics_to_file=False, export_metrics_to_file_dir=None, api_key=None, admin_api_key=None, served_model_name='Qwen/Qwen3-32B-AWQ', weight_version='default', chat_template=None, hf_chat_template_name=None, completion_template=None, file_storage_path='sglang_storage', enable_cache_report=False, reasoning_parser=None, tool_call_parser=None, tool_server=None, sampling_defaults='model', dp_size=1, load_balance_method='round_robin', attn_cp_size=1, moe_dp_size=1, dist_init_addr=None, nnodes=1, node_rank=0, json_model_override_args='{}', preferred_sampling_params=None, enable_lora=None, enable_lora_overlap_loading=None, max_lora_rank=None, lora_target_modules=None, lora_paths=None, max_loaded_loras=None, max_loras_per_batch=8, lora_eviction_policy='lru', lora_backend='csgmv', max_lora_chunk_size=16, experts_shared_outer_loras=None, attention_backend='flashinfer', decode_attention_backend=None, prefill_attention_backend=None, sampling_backend='flashinfer', grammar_backend='xgrammar', mm_attention_backend=None, fp8_gemm_runner_backend='auto', fp4_gemm_runner_backend='auto', nsa_prefill_backend=None, nsa_decode_backend=None, disable_flashinfer_autotune=False, mamba_backend='triton', speculative_algorithm=None, speculative_draft_model_path=None, speculative_draft_model_revision=None, speculative_draft_load_format=None, speculative_num_steps=None, speculative_eagle_topk=None, speculative_num_draft_tokens=None, speculative_accept_threshold_single=1.0, speculative_accept_threshold_acc=1.0, speculative_token_map=None, speculative_attention_mode='prefill', speculative_draft_attention_backend=None, speculative_moe_runner_backend='auto', speculative_moe_a2a_backend=None, speculative_draft_model_quantization=None, speculative_ngram_min_bfs_breadth=1, speculative_ngram_max_bfs_breadth=10, speculative_ngram_match_type='BFS', speculative_ngram_max_trie_depth=18, speculative_ngram_capacity=10000000, enable_multi_layer_eagle=False, ep_size=1, moe_a2a_backend='none', moe_runner_backend='auto', flashinfer_mxfp4_moe_precision='default', enable_flashinfer_allreduce_fusion=False, enforce_disable_flashinfer_allreduce_fusion=False, enable_aiter_allreduce_fusion=False, deepep_mode='auto', ep_num_redundant_experts=0, ep_dispatch_algorithm=None, init_expert_location='trivial', enable_eplb=False, eplb_algorithm='auto', eplb_rebalance_num_iterations=1000, eplb_rebalance_layers_per_chunk=None, eplb_min_rebalancing_utilization_threshold=1.0, expert_distribution_recorder_mode=None, expert_distribution_recorder_buffer_size=1000, enable_expert_distribution_metrics=False, deepep_config=None, moe_dense_tp_size=None, elastic_ep_backend=None, enable_elastic_expert_backup=False, mooncake_ib_device=None, max_mamba_cache_size=None, mamba_ssm_dtype=None, mamba_full_memory_ratio=0.9, mamba_scheduler_strategy='no_buffer', mamba_track_interval=256, linear_attn_backend='triton', linear_attn_decode_backend=None, linear_attn_prefill_backend=None, enable_hierarchical_cache=True, hicache_ratio=2.0, hicache_size=25, hicache_write_policy='write_through', hicache_io_backend='kernel', hicache_mem_layout='layer_first', hicache_storage_backend=None, hicache_storage_prefetch_policy='best_effort', hicache_storage_backend_extra_config=None, enable_hisparse=False, hisparse_config=None, enable_lmcache=False, kt_weight_path=None, kt_method=None, kt_cpuinfer=None, kt_threadpool_count=None, kt_num_gpu_experts=None, kt_max_deferred_experts_per_token=None, dllm_algorithm=None, dllm_algorithm_config=None, enable_double_sparsity=False, ds_channel_config_path=None, ds_heavy_channel_num=32, ds_heavy_token_num=256, ds_heavy_channel_type='qk', ds_sparse_decode_threshold=4096, cpu_offload_gb=0, offload_group_size=-1, offload_num_in_group=1, offload_prefetch_step=1, offload_mode='cpu', multi_item_scoring_delimiter=None, disable_radix_cache=False, cuda_graph_max_bs=32, cuda_graph_bs=[1, 2, 4, 8, 12, 16, 24, 32], disable_cuda_graph=False, disable_cuda_graph_padding=False, enable_profile_cuda_graph=False, enable_cudagraph_gc=False, enable_layerwise_nvtx_marker=False, enable_nccl_nvls=False, enable_symm_mem=False, disable_flashinfer_cutlass_moe_fp4_allgather=False, enable_tokenizer_batch_encode=False, disable_tokenizer_batch_decode=False, disable_outlines_disk_cache=False, disable_custom_all_reduce=False, enable_mscclpp=False, enable_torch_symm_mem=False, pre_warm_nccl=False, disable_overlap_schedule=False, enable_mixed_chunk=False, enable_dp_attention=False, enable_dp_lm_head=False, enable_two_batch_overlap=False, enable_single_batch_overlap=False, tbo_token_distribution_threshold=0.48, enable_torch_compile=False, disable_piecewise_cuda_graph=True, enforce_piecewise_cuda_graph=False, enable_torch_compile_debug_mode=False, torch_compile_max_bs=32, piecewise_cuda_graph_max_tokens=4096, piecewise_cuda_graph_tokens=[4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352, 384, 416, 448, 480, 512, 576, 640, 704, 768, 832, 896, 960, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096], piecewise_cuda_graph_compiler='eager', torchao_config='', enable_nan_detection=False, enable_p2p_check=False, triton_attention_reduce_in_fp32=False, triton_attention_num_kv_splits=8, triton_attention_split_tile_size=None, num_continuous_decode_steps=1, delete_ckpt_after_loading=False, enable_memory_saver=False, enable_weights_cpu_backup=False, enable_draft_weights_cpu_backup=False, allow_auto_truncate=False, enable_custom_logit_processor=False, flashinfer_mla_disable_ragged=False, disable_shared_experts_fusion=False, disable_chunked_prefix_cache=False, disable_fast_image_processor=False, keep_mm_feature_on_device=False, enable_return_hidden_states=False, enable_return_routed_experts=False, scheduler_recv_interval=1, numa_node=None, enable_deterministic_inference=False, rl_on_policy_target=None, enable_attn_tp_input_scattered=False, gc_threshold=None, enable_nsa_prefill_context_parallel=False, nsa_prefill_cp_mode='round-robin-split', enable_fused_qk_norm_rope=False, enable_precise_embedding_interpolation=False, enable_fused_moe_sum_all_reduce=False, enable_prefill_context_parallel=False, prefill_cp_mode='in-seq-split', enable_dynamic_batch_tokenizer=False, dynamic_batch_tokenizer_batch_size=32, dynamic_batch_tokenizer_batch_timeout=0.002, debug_tensor_dump_output_folder=None, debug_tensor_dump_layers=None, debug_tensor_dump_input_file=None, debug_tensor_dump_inject=False, disaggregation_mode='null', disaggregation_transfer_backend='mooncake', disaggregation_bootstrap_port=8998, disaggregation_ib_device=None, disaggregation_decode_enable_offload_kvcache=False, num_reserved_decode_tokens=512, disaggregation_decode_polling_interval=1, encoder_only=False, language_only=False, encoder_transfer_backend='zmq_to_scheduler', encoder_urls=[], enable_adaptive_dispatch_to_encoder=False, custom_weight_loader=[], weight_loader_disable_mmap=False, remote_instance_weight_loader_seed_instance_ip=None, remote_instance_weight_loader_seed_instance_service_port=None, remote_instance_weight_loader_send_weights_group_ports=None, remote_instance_weight_loader_backend='nccl', remote_instance_weight_loader_start_seed_via_transfer_engine=False, engine_info_bootstrap_port=6789, modelexpress_config=None, enable_pdmux=False, pdmux_config_path=None, sm_group_num=8, enable_broadcast_mm_inputs_process=False, enable_prefix_mm_cache=False, mm_enable_dp_encoder=False, mm_process_config={}, limit_mm_data_per_request=None, enable_mm_global_cache=False, decrypted_config_file=None, decrypted_draft_config_file=None, forward_hooks=None)
+[2026-10-20 10:34:39] NUMA affinity is already constrained for process, skipping NUMA node configuration for GPU. Remove your constraints to allow automatic configuration.
+[2026-10-20 10:34:39] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:34:40] Using default HuggingFace chat template with detected content format: string
+[2026-10-20 10:34:47] NUMA affinity is already constrained for process, skipping NUMA node configuration for GPU. Remove your constraints to allow automatic configuration.
+[2026-10-20 10:34:47] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:34:48] The model is convertible to awq_marlin during runtime. Using awq_marlin kernel.
+[2026-10-20 10:34:48] Init torch distributed begin.
+[W1020 10:34:48.565931405 socket.cpp:767] [c10d] The client socket cannot be initialized to connect to [localhost]:41029 (errno: 97 - Address family not supported by protocol).
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[2026-10-20 10:34:48] Init torch distributed ends. elapsed=0.20 s, mem usage=0.03 GB
+[2026-10-20 10:34:49] Load weight begin. avail mem=38.91 GB
+[2026-10-20 10:34:49] Found local HF snapshot for Qwen/Qwen3-32B-AWQ at /tmp/xiaoyma/hf/hub/models--Qwen--Qwen3-32B-AWQ/snapshots/0499c3ac83fdef8810b907a23894ba91e95eddd8; skipping download.
+Multi-thread loading shards:   0% Completed | 0/4 [00:00<?, ?it/s]Multi-thread loading shards:  25% Completed | 1/4 [00:01<00:05,  1.90s/it]Multi-thread loading shards:  50% Completed | 2/4 [00:02<00:02,  1.42s/it]Multi-thread loading shards:  75% Completed | 3/4 [00:04<00:01,  1.24s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:05<00:00,  1.53s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:05<00:00,  1.50s/it]
+[2026-10-20 10:34:57] Load weight end. elapsed=8.32 s, type=Qwen3ForCausalLM, quant=awq, bits=4, avail mem=20.64 GB, mem usage=18.27 GB.
+[2026-10-20 10:34:57] Using KV cache dtype: torch.float16
+[2026-10-20 10:34:57] KV Cache is allocated. #tokens: 61440, K size: 7.50 GB, V size: 7.50 GB
+[2026-10-20 10:34:57] Memory pool end. avail mem=5.14 GB
+[2026-10-20 10:34:57] Capture cuda graph begin. This can take up to several minutes. avail mem=4.58 GB
+[2026-10-20 10:34:57] Capture cuda graph bs [1, 2, 4, 8, 12, 16, 24, 32]
+  0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=4.56 GB):   0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=4.56 GB):  12%|█▎        | 1/8 [00:01<00:09,  1.31s/it]Capturing batches (bs=24 avail_mem=4.49 GB):  12%|█▎        | 1/8 [00:01<00:09,  1.31s/it]Capturing batches (bs=24 avail_mem=4.49 GB):  25%|██▌       | 2/8 [00:01<00:03,  1.65it/s]Capturing batches (bs=16 avail_mem=4.49 GB):  25%|██▌       | 2/8 [00:01<00:03,  1.65it/s]Capturing batches (bs=16 avail_mem=4.49 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.57it/s]Capturing batches (bs=12 avail_mem=4.48 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.57it/s]Capturing batches (bs=8 avail_mem=4.46 GB):  38%|███▊      | 3/8 [00:01<00:01,  2.57it/s] Capturing batches (bs=8 avail_mem=4.46 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.48it/s]Capturing batches (bs=4 avail_mem=4.45 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.48it/s]Capturing batches (bs=2 avail_mem=4.42 GB):  62%|██████▎   | 5/8 [00:01<00:00,  4.48it/s]Capturing batches (bs=2 avail_mem=4.42 GB):  88%|████████▊ | 7/8 [00:01<00:00,  6.06it/s]Capturing batches (bs=1 avail_mem=4.42 GB):  88%|████████▊ | 7/8 [00:01<00:00,  6.06it/s]Capturing batches (bs=1 avail_mem=4.42 GB): 100%|██████████| 8/8 [00:02<00:00,  3.96it/s]
+[2026-10-20 10:35:00] Capture cuda graph end. Time elapsed: 2.52 s. mem usage=0.19 GB. avail mem=4.39 GB.
+[2026-10-20 10:35:00] Disable piecewise CUDA graph because --disable-piecewise-cuda-graph is set
+[2026-10-20 10:35:01] max_total_num_tokens=61440, chunked_prefill_size=4096, max_prefill_tokens=16384, max_running_requests=2048, context_len=32768, available_gpu_mem=4.39 GB
+[2026-10-20 10:35:01] Allocating 25.00 GB host memory for hierarchical KV cache.
+[ledger] device=61440 tokens host=95367 tokens stride=8 kv_bytes_per_token=262144
+[2026-10-20 10:35:08] Prefill batch, #new-seq: 1, #new-token: 64, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.00
+[2026-10-20 10:35:08] Prefill batch, #new-seq: 1, #new-token: 512, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 127.95
+[warmup] engine ready in 752 ms
+[loop] 0: head ClaimAnalyzer.decompose_claim:90 body ['ClaimAnalyzer.decompose_claim:90', 'EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205']
+[loop] 1: head EvidenceScout.assess_evidence:205 body ['EvidenceScout.assess_evidence:205'] in loop 0
+[layout] ClaimAnalyzer.decompose_claim:90 order=None header_last=False bindings=[('maximum_questions', 'CONST'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[layout] EvidenceScout.assess_evidence:205 order=None header_last=False bindings=[('search_results', 'VOLATILE'), ('question', 'RESP'), ('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'COPY')]
+[layout] EvidenceAnalyzer.verify_claim:251 order=None header_last=False bindings=[('claim', 'COPY'), ('evidences', 'EXTEND'), ('self', 'CONST')]
+[program] /home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac: 3 sites, entry ClaimAnalyzer.decompose_claim:90, exits ['EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205'], edges ['ClaimAnalyzer.decompose_claim:90->EvidenceAnalyzer.verify_claim:251', 'ClaimAnalyzer.decompose_claim:90->EvidenceScout.assess_evidence:205', 'EvidenceAnalyzer.verify_claim:251->ClaimAnalyzer.decompose_claim:90', 'EvidenceScout.assess_evidence:205->EvidenceAnalyzer.verify_claim:251', 'EvidenceScout.assess_evidence:205->EvidenceScout.assess_evidence:205']
+[2026-10-20 10:35:10] 127.0.0.1 [20/Oct/2026:10:35:10 -0400] "POST /v1/programs/register HTTP/1.1" 200 283 "-" "Python-urllib/3.12"
+[call] 993661 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 993661 ClaimAnalyzer.decompose kills ['questions']
+[scout] 993661-1t0-68ee2764 agent=464b2d75 anchor=504
+[2026-10-20 10:35:15] Prefill batch, #new-seq: 1, #new-token: 504, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 76.07
+[serve] 993661-1t0-68ee2764 prompt_tokens=504 cached_tokens=0 cached_device=0 cached_host=0 ttft_ms=632.52 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:16] Decode batch, #running-req: 1, #token: 537, token usage: 0.01, cuda graph: True, gen throughput (token/s): 1.37, #queue-req: 0
+[decode] 993661-1t0-68ee2764 decode_ms=1555.68 output_tokens=58
+[priority] scout-065476be demote=0/0n retire=0/0n protect=2 nodes=2 ms=0.3 usage=0.0091
+[ctl] 993661-1t0-68ee2764 queue_ms=0.1 advance_ms=4.8 pre_ms=1.5 post_ms=0.2
+[2026-10-20 10:35:17] 127.0.0.1 [20/Oct/2026:10:35:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 714 "-" "python-httpx/0.28.1"
+[call] 993661 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 993661 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993661-2t0-8ab34cb6 agent=1599390b anchor=1237
+[2026-10-20 10:35:20] Prefill batch, #new-seq: 1, #new-token: 1187, #cached-token: 50, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 108.36
+[serve] 993661-2t0-8ab34cb6 prompt_tokens=1237 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=1037.79 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:20] Decode batch, #running-req: 1, #token: 1252, token usage: 0.02, cuda graph: True, gen throughput (token/s): 9.59, #queue-req: 0
+[2026-10-20 10:35:21] Decode batch, #running-req: 1, #token: 1292, token usage: 0.02, cuda graph: True, gen throughput (token/s): 36.37, #queue-req: 0
+[decode] 993661-2t0-8ab34cb6 decode_ms=2017.49 output_tokens=74
+[priority] scout-d42b1b2b demote=0/0n retire=0/0n protect=2 nodes=3 ms=0.4 usage=0.0213
+[ctl] 993661-2t0-8ab34cb6 queue_ms=0.0 advance_ms=2.4 pre_ms=2.9 post_ms=0.2
+[2026-10-20 10:35:22] 127.0.0.1 [20/Oct/2026:10:35:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 756 "-" "python-httpx/0.28.1"
+[call] 993661 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 993661 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993661-3t0-ecd9860e agent=1599390b anchor=418
+[2026-10-20 10:35:25] Prefill batch, #new-seq: 1, #new-token: 1364, #cached-token: 418, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 226.32
+[serve] 993661-3t0-ecd9860e prompt_tokens=1782 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=1169.11 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:26] Decode batch, #running-req: 1, #token: 1803, token usage: 0.03, cuda graph: True, gen throughput (token/s): 9.27, #queue-req: 0
+[2026-10-20 10:35:27] Decode batch, #running-req: 1, #token: 1843, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.09, #queue-req: 0
+[2026-10-20 10:35:28] Decode batch, #running-req: 1, #token: 1883, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.08, #queue-req: 0
+[2026-10-20 10:35:29] Decode batch, #running-req: 1, #token: 1923, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.06, #queue-req: 0
+[2026-10-20 10:35:30] Decode batch, #running-req: 1, #token: 1963, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.05, #queue-req: 0
+[decode] 993661-3t0-ecd9860e decode_ms=5527.87 output_tokens=200
+[priority] scout-7a314680 demote=0/0n retire=0/0n protect=3 nodes=6 ms=0.5 usage=0.0323
+[ctl] 993661-3t0-ecd9860e queue_ms=0.0 advance_ms=2.8 pre_ms=3.7 post_ms=0.2
+[2026-10-20 10:35:31] 127.0.0.1 [20/Oct/2026:10:35:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1361 "-" "python-httpx/0.28.1"
+[call] 993661 #3 EvidenceAnalyzer.verify_claim:251 predicted=miss ctx=(1,)
+[invalidate] 993661 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993661-4t0-15a9d316 agent=1440d46e anchor=1848
+[2026-10-20 10:35:32] Prefill batch, #new-seq: 1, #new-token: 1797, #cached-token: 51, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 191.54
+[serve] 993661-4t0-15a9d316 prompt_tokens=1848 cached_tokens=51 cached_device=51 cached_host=0 ttft_ms=1533.82 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:33] Decode batch, #running-req: 1, #token: 1869, token usage: 0.03, cuda graph: True, gen throughput (token/s): 14.88, #queue-req: 0
+[2026-10-20 10:35:34] Decode batch, #running-req: 1, #token: 1909, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.08, #queue-req: 0
+[2026-10-20 10:35:35] Decode batch, #running-req: 1, #token: 1949, token usage: 0.03, cuda graph: True, gen throughput (token/s): 36.06, #queue-req: 0
+[decode] 993661-4t0-15a9d316 decode_ms=3507.66 output_tokens=127
+[priority] scout-37aa396b demote=0/0n retire=0/0n protect=2 nodes=4 ms=0.5 usage=0.0321
+[ctl] 993661-4t0-15a9d316 queue_ms=0.0 advance_ms=3.9 pre_ms=3.3 post_ms=0.2
+[2026-10-20 10:35:36] 127.0.0.1 [20/Oct/2026:10:35:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1044 "-" "python-httpx/0.28.1"
+[call] 993661 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 993661 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993661-5t0-c8e18a8a agent=464b2d75 anchor=464
+[2026-10-20 10:35:37] Prefill batch, #new-seq: 1, #new-token: 1376, #cached-token: 464, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 379.68
+[serve] 993661-5t0-c8e18a8a prompt_tokens=1840 cached_tokens=464 cached_device=464 cached_host=0 ttft_ms=1165.46 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:37] Decode batch, #running-req: 1, #token: 1854, token usage: 0.03, cuda graph: True, gen throughput (token/s): 17.26, #queue-req: 0
+[decode] 993661-5t0-c8e18a8a decode_ms=1368.56 output_tokens=50
+[priority] scout-0e6f6f91 demote=0/0n retire=0/0n protect=8 nodes=14 ms=1.0 usage=0.0308
+[ctl] 993661-5t0-c8e18a8a queue_ms=0.0 advance_ms=4.1 pre_ms=3.3 post_ms=0.3
+[2026-10-20 10:35:38] 127.0.0.1 [20/Oct/2026:10:35:36 -0400] "POST /v1/chat/completions HTTP/1.1" 200 704 "-" "python-httpx/0.28.1"
+[call] 993661 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 993661 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993661-6t0-dc2dbf5d agent=1599390b anchor=418
+[2026-10-20 10:35:43] Prefill batch, #new-seq: 1, #new-token: 3759, #cached-token: 418, token usage: 0.07, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 206.17
+[serve] 993661-6t0-dc2dbf5d prompt_tokens=4177 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=3238.14 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:44] Decode batch, #running-req: 1, #token: 4181, token usage: 0.07, cuda graph: True, gen throughput (token/s): 6.23, #queue-req: 0
+[2026-10-20 10:35:45] Decode batch, #running-req: 1, #token: 4221, token usage: 0.07, cuda graph: True, gen throughput (token/s): 35.14, #queue-req: 0
+[decode] 993661-6t0-dc2dbf5d decode_ms=2077.97 output_tokens=73
+[priority] scout-6af6854a demote=0/0n retire=0/0n protect=9 nodes=16 ms=1.4 usage=0.0692
+[ctl] 993661-6t0-dc2dbf5d queue_ms=0.0 advance_ms=7.8 pre_ms=8.3 post_ms=0.3
+[2026-10-20 10:35:46] 127.0.0.1 [20/Oct/2026:10:35:40 -0400] "POST /v1/chat/completions HTTP/1.1" 200 762 "-" "python-httpx/0.28.1"
+[call] 993661 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 993661 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993661-7t0-e2cf3378 agent=1599390b anchor=418
+[2026-10-20 10:35:50] Prefill batch, #new-seq: 1, #new-token: 2965, #cached-token: 418, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 562.34
+[serve] 993661-7t0-e2cf3378 prompt_tokens=3383 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2541.50 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:50] Decode batch, #running-req: 1, #token: 3394, token usage: 0.06, cuda graph: True, gen throughput (token/s): 6.97, #queue-req: 0
+[2026-10-20 10:35:52] Decode batch, #running-req: 1, #token: 3434, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.48, #queue-req: 0
+[2026-10-20 10:35:53] Decode batch, #running-req: 1, #token: 3474, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.47, #queue-req: 0
+[decode] 993661-7t0-e2cf3378 decode_ms=2700.61 output_tokens=96
+[priority] scout-5a1a8c1e demote=0/0n retire=0/0n protect=10 nodes=18 ms=1.6 usage=0.0566
+[ctl] 993661-7t0-e2cf3378 queue_ms=0.0 advance_ms=5.7 pre_ms=6.1 post_ms=0.3
+[2026-10-20 10:35:53] 127.0.0.1 [20/Oct/2026:10:35:48 -0400] "POST /v1/chat/completions HTTP/1.1" 200 886 "-" "python-httpx/0.28.1"
+[call] 993661 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 993661 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993661-8t0-eb415a48 agent=1440d46e anchor=1738
+[2026-10-20 10:35:54] Prefill batch, #new-seq: 1, #new-token: 1613, #cached-token: 1738, token usage: 0.05, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 706.14
+[serve] 993661-8t0-eb415a48 prompt_tokens=3351 cached_tokens=1738 cached_device=1738 cached_host=0 ttft_ms=1432.56 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:35:55] Decode batch, #running-req: 1, #token: 3386, token usage: 0.06, cuda graph: True, gen throughput (token/s): 15.33, #queue-req: 0
+[2026-10-20 10:35:56] Decode batch, #running-req: 1, #token: 3426, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.50, #queue-req: 0
+[2026-10-20 10:35:58] Decode batch, #running-req: 1, #token: 3466, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.49, #queue-req: 0
+[decode] 993661-8t0-eb415a48 decode_ms=4294.43 output_tokens=153
+[priority] scout-4cdfbf10 demote=0/0n retire=0/0n protect=11 nodes=21 ms=1.8 usage=0.0570
+[ctl] 993661-8t0-eb415a48 queue_ms=0.0 advance_ms=6.9 pre_ms=5.8 post_ms=0.2
+[2026-10-20 10:35:59] 127.0.0.1 [20/Oct/2026:10:35:53 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1172 "-" "python-httpx/0.28.1"
+[close] 993661
+[close] 993661 calls=8
+[2026-10-20 10:35:59] 127.0.0.1 [20/Oct/2026:10:35:59 -0400] "POST /v1/sessions/close HTTP/1.1" 200 196 "-" "python-httpx/0.28.1"
+[call] 993882 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['questions']
+[scout] 993882-1t0-94d70a7a agent=464b2d75 anchor=428
+[call] 993881 #0 ClaimAnalyzer.decompose_claim:90 ctx=(1,)
+[invalidate] 993881 ClaimAnalyzer.decompose kills ['questions']
+[scout] 993881-1t0-a356cbe0 agent=464b2d75 anchor=428
+[2026-10-20 10:36:04] Prefill batch, #new-seq: 1, #new-token: 68, #cached-token: 428, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 165.03
+[serve] 993882-1t0-94d70a7a prompt_tokens=496 cached_tokens=428 cached_device=428 cached_host=0 ttft_ms=128.64 inflight_prefill=1 inflight_decode=1
+[2026-10-20 10:36:04] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 503, token usage: 0.01, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 20858.49
+[ledger] drift +over=1 +under=0 (total {'over': 1, 'under': 0}) device_used=14544
+[serve] 993881-1t0-a356cbe0 prompt_tokens=504 cached_tokens=503 cached_device=503 cached_host=0 ttft_ms=128.98 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:04] Decode batch, #running-req: 2, #token: 576, token usage: 0.01, cuda graph: True, gen throughput (token/s): 6.23, #queue-req: 0
+[2026-10-20 10:36:05] Decode batch, #running-req: 2, #token: 656, token usage: 0.01, cuda graph: True, gen throughput (token/s): 72.28, #queue-req: 0
+[decode] 993882-1t0-94d70a7a decode_ms=1277.12 output_tokens=47
+[priority] scout-920dd75d demote=0/0n retire=0/0n protect=4 nodes=7 ms=0.5 usage=0.0090
+[ctl] 993882-1t0-94d70a7a queue_ms=0.1 advance_ms=1.8 pre_ms=1.2 post_ms=0.2
+[2026-10-20 10:36:05] 127.0.0.1 [20/Oct/2026:10:36:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 676 "-" "python-httpx/0.28.1"
+[decode] 993881-1t0-a356cbe0 decode_ms=1574.98 output_tokens=58
+[priority] scout-07b40fde demote=0/0n retire=0/0n protect=5 nodes=11 ms=0.5 usage=0.0000
+[ctl] 993881-1t0-a356cbe0 queue_ms=2.6 advance_ms=0.2 pre_ms=1.1 post_ms=0.2
+[2026-10-20 10:36:06] 127.0.0.1 [20/Oct/2026:10:36:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 714 "-" "python-httpx/0.28.1"
+[call] 993882 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-2t0-a6b59a13 agent=1599390b anchor=415
+[2026-10-20 10:36:08] Prefill batch, #new-seq: 1, #new-token: 236, #cached-token: 415, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.28
+[serve] 993882-2t0-a6b59a13 prompt_tokens=651 cached_tokens=415 cached_device=415 cached_host=0 ttft_ms=213.51 inflight_prefill=0 inflight_decode=1
+[call] 993881 #1 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 1)
+[invalidate] 993881 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993881-2t0-f2f21e65 agent=1599390b anchor=415
+[2026-10-20 10:36:08] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1236, token usage: 0.02, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 645.17
+[serve] 993881-2t0-f2f21e65 prompt_tokens=1237 cached_tokens=1236 cached_device=1236 cached_host=0 ttft_ms=78.43 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:08] Decode batch, #running-req: 2, #token: 1509, token usage: 0.02, cuda graph: True, gen throughput (token/s): 18.49, #queue-req: 0
+[decode] 993882-2t0-a6b59a13 decode_ms=1317.74 output_tokens=47
+[priority] scout-400fff39 demote=0/0n retire=0/0n protect=6 nodes=13 ms=0.7 usage=0.0207
+[ctl] 993882-2t0-a6b59a13 queue_ms=0.0 advance_ms=1.6 pre_ms=1.6 post_ms=0.2
+[2026-10-20 10:36:09] 127.0.0.1 [20/Oct/2026:10:36:07 -0400] "POST /v1/chat/completions HTTP/1.1" 200 650 "-" "python-httpx/0.28.1"
+[2026-10-20 10:36:09] Decode batch, #running-req: 1, #token: 1289, token usage: 0.02, cuda graph: True, gen throughput (token/s): 57.51, #queue-req: 0
+[decode] 993881-2t0-f2f21e65 decode_ms=2027.99 output_tokens=74
+[priority] scout-3188c40b demote=0/0n retire=0/0n protect=7 nodes=17 ms=0.6 usage=0.0000
+[ctl] 993881-2t0-f2f21e65 queue_ms=0.0 advance_ms=0.3 pre_ms=2.8 post_ms=0.2
+[2026-10-20 10:36:10] 127.0.0.1 [20/Oct/2026:10:36:08 -0400] "POST /v1/chat/completions HTTP/1.1" 200 756 "-" "python-httpx/0.28.1"
+[call] 993882 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-3t0-c8d495f5 agent=1599390b anchor=415
+[2026-10-20 10:36:11] Prefill batch, #new-seq: 1, #new-token: 317, #cached-token: 416, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.30
+[serve] 993882-3t0-c8d495f5 prompt_tokens=733 cached_tokens=416 cached_device=416 cached_host=0 ttft_ms=275.39 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:12] Decode batch, #running-req: 1, #token: 751, token usage: 0.01, cuda graph: True, gen throughput (token/s): 17.16, #queue-req: 0
+[call] 993881 #2 EvidenceScout.assess_evidence:205 predicted=hit ctx=(1, 2)
+[invalidate] 993881 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993881-3t0-45931ddb agent=1599390b anchor=415
+[2026-10-20 10:36:12] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1781, token usage: 0.03, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 358.17
+[serve] 993881-3t0-45931ddb prompt_tokens=1782 cached_tokens=1781 cached_device=1781 cached_host=0 ttft_ms=86.22 inflight_prefill=0 inflight_decode=2
+[decode] 993882-3t0-c8d495f5 decode_ms=1422.28 output_tokens=51
+[priority] scout-d0a1144e demote=0/0n retire=0/0n protect=8 nodes=20 ms=0.8 usage=0.0293
+[ctl] 993882-3t0-c8d495f5 queue_ms=0.0 advance_ms=1.7 pre_ms=1.7 post_ms=0.2
+[2026-10-20 10:36:13] 127.0.0.1 [20/Oct/2026:10:36:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 670 "-" "python-httpx/0.28.1"
+[call] 993882 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-4t0-214bdac0 agent=1440d46e anchor=367
+[2026-10-20 10:36:13] Prefill batch, #new-seq: 1, #new-token: 290, #cached-token: 367, token usage: 0.04, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1.10
+[serve] 993882-4t0-214bdac0 prompt_tokens=657 cached_tokens=367 cached_device=367 cached_host=0 ttft_ms=315.62 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:13] Decode batch, #running-req: 2, #token: 2419, token usage: 0.04, cuda graph: True, gen throughput (token/s): 44.54, #queue-req: 0
+[2026-10-20 10:36:14] Decode batch, #running-req: 2, #token: 2499, token usage: 0.04, cuda graph: True, gen throughput (token/s): 70.45, #queue-req: 0
+[decode] 993882-4t0-214bdac0 decode_ms=2189.17 output_tokens=78
+[priority] scout-569eefed demote=0/0n retire=0/0n protect=9 nodes=22 ms=0.9 usage=0.0418
+[ctl] 993882-4t0-214bdac0 queue_ms=0.0 advance_ms=1.7 pre_ms=1.4 post_ms=0.2
+[2026-10-20 10:36:15] 127.0.0.1 [20/Oct/2026:10:36:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 822 "-" "python-httpx/0.28.1"
+[call] 993882 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993882-5t0-5219c594 agent=464b2d75 anchor=428
+[2026-10-20 10:36:16] Prefill batch, #new-seq: 1, #new-token: 193, #cached-token: 456, token usage: 0.04, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 116.44
+[serve] 993882-5t0-5219c594 prompt_tokens=649 cached_tokens=456 cached_device=456 cached_host=0 ttft_ms=245.50 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:16] Decode batch, #running-req: 2, #token: 2491, token usage: 0.04, cuda graph: True, gen throughput (token/s): 58.07, #queue-req: 0
+[2026-10-20 10:36:17] Decode batch, #running-req: 2, #token: 2571, token usage: 0.04, cuda graph: True, gen throughput (token/s): 70.44, #queue-req: 0
+[decode] 993882-5t0-5219c594 decode_ms=1421.36 output_tokens=51
+[priority] scout-3e57b878 demote=0/0n retire=0/0n protect=10 nodes=25 ms=0.9 usage=0.0315
+[ctl] 993882-5t0-5219c594 queue_ms=0.0 advance_ms=2.0 pre_ms=1.4 post_ms=0.2
+[2026-10-20 10:36:17] 127.0.0.1 [20/Oct/2026:10:36:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 705 "-" "python-httpx/0.28.1"
+[2026-10-20 10:36:18] Decode batch, #running-req: 1, #token: 1969, token usage: 0.03, cuda graph: True, gen throughput (token/s): 43.90, #queue-req: 0
+[decode] 993881-3t0-45931ddb decode_ms=6069.84 output_tokens=200
+[priority] scout-e829297a demote=0/0n retire=0/0n protect=11 nodes=28 ms=0.9 usage=0.0000
+[ctl] 993881-3t0-45931ddb queue_ms=0.0 advance_ms=0.3 pre_ms=3.6 post_ms=0.2
+[2026-10-20 10:36:18] 127.0.0.1 [20/Oct/2026:10:36:12 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1361 "-" "python-httpx/0.28.1"
+[call] 993881 #3 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(1,)
+[invalidate] 993881 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993881-4t0-94c8e5d3 agent=1440d46e anchor=367
+[2026-10-20 10:36:18] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1847, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 69.69
+[ledger] drift +over=1 +under=0 (total {'over': 2, 'under': 0}) device_used=15656
+[serve] 993881-4t0-94c8e5d3 prompt_tokens=1848 cached_tokens=1847 cached_device=1847 cached_host=0 ttft_ms=42.76 inflight_prefill=0 inflight_decode=1
+[call] 993882 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-6t0-f5e04487 agent=1599390b anchor=415
+[2026-10-20 10:36:19] Decode batch, #running-req: 1, #token: 1875, token usage: 0.03, cuda graph: True, gen throughput (token/s): 33.91, #queue-req: 0
+[2026-10-20 10:36:19] Prefill batch, #new-seq: 1, #new-token: 394, #cached-token: 424, token usage: 0.04, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.91
+[serve] 993882-6t0-f5e04487 prompt_tokens=818 cached_tokens=424 cached_device=424 cached_host=0 ttft_ms=387.15 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:21] Decode batch, #running-req: 2, #token: 2722, token usage: 0.04, cuda graph: True, gen throughput (token/s): 53.13, #queue-req: 0
+[decode] 993882-6t0-f5e04487 decode_ms=1480.02 output_tokens=53
+[priority] scout-4f724df2 demote=0/0n retire=0/0n protect=12 nodes=31 ms=1.2 usage=0.0314
+[ctl] 993882-6t0-f5e04487 queue_ms=0.0 advance_ms=3.5 pre_ms=1.6 post_ms=0.2
+[2026-10-20 10:36:21] 127.0.0.1 [20/Oct/2026:10:36:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 676 "-" "python-httpx/0.28.1"
+[2026-10-20 10:36:22] Decode batch, #running-req: 1, #token: 1955, token usage: 0.03, cuda graph: True, gen throughput (token/s): 48.25, #queue-req: 0
+[decode] 993881-4t0-94c8e5d3 decode_ms=3881.31 output_tokens=127
+[priority] scout-a1ce0d1f demote=0/0n retire=0/0n protect=13 nodes=35 ms=1.2 usage=0.0000
+[ctl] 993881-4t0-94c8e5d3 queue_ms=0.0 advance_ms=0.3 pre_ms=3.9 post_ms=0.2
+[2026-10-20 10:36:22] 127.0.0.1 [20/Oct/2026:10:36:18 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1044 "-" "python-httpx/0.28.1"
+[call] 993881 #4 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(2,)
+[invalidate] 993881 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993881-5t0-0ff48770 agent=464b2d75 anchor=428
+[2026-10-20 10:36:22] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 1839, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 136.68
+[ledger] drift +over=1 +under=0 (total {'over': 3, 'under': 0}) device_used=16048
+[serve] 993881-5t0-0ff48770 prompt_tokens=1840 cached_tokens=1839 cached_device=1839 cached_host=0 ttft_ms=42.54 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:23] Decode batch, #running-req: 1, #token: 1860, token usage: 0.03, cuda graph: True, gen throughput (token/s): 33.92, #queue-req: 0
+[call] 993882 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-7t0-d502cd2d agent=1599390b anchor=415
+[2026-10-20 10:36:23] Prefill batch, #new-seq: 1, #new-token: 467, #cached-token: 427, token usage: 0.04, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.91
+[serve] 993882-7t0-d502cd2d prompt_tokens=894 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=445.76 inflight_prefill=0 inflight_decode=2
+[decode] 993881-5t0-0ff48770 decode_ms=1784.83 output_tokens=50
+[priority] scout-6ef5a8fd demote=0/0n retire=0/0n protect=14 nodes=39 ms=1.4 usage=0.0150
+[ctl] 993881-5t0-0ff48770 queue_ms=0.0 advance_ms=0.4 pre_ms=3.9 post_ms=0.3
+[2026-10-20 10:36:24] 127.0.0.1 [20/Oct/2026:10:36:22 -0400] "POST /v1/chat/completions HTTP/1.1" 200 704 "-" "python-httpx/0.28.1"
+[2026-10-20 10:36:24] Decode batch, #running-req: 1, #token: 929, token usage: 0.02, cuda graph: True, gen throughput (token/s): 42.41, #queue-req: 0
+[decode] 993882-7t0-d502cd2d decode_ms=1342.66 output_tokens=49
+[priority] scout-908add0c demote=0/0n retire=0/0n protect=15 nodes=41 ms=1.5 usage=0.0153
+[ctl] 993882-7t0-d502cd2d queue_ms=0.0 advance_ms=1.6 pre_ms=1.7 post_ms=0.2
+[2026-10-20 10:36:25] 127.0.0.1 [20/Oct/2026:10:36:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 673 "-" "python-httpx/0.28.1"
+[call] 993882 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-8t0-89fb44c6 agent=1440d46e anchor=367
+[2026-10-20 10:36:25] Prefill batch, #new-seq: 1, #new-token: 270, #cached-token: 547, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 283.47
+[serve] 993882-8t0-89fb44c6 prompt_tokens=817 cached_tokens=547 cached_device=547 cached_host=0 ttft_ms=250.06 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:26] Decode batch, #running-req: 1, #token: 843, token usage: 0.01, cuda graph: True, gen throughput (token/s): 29.14, #queue-req: 0
+[call] 993881 #5 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 1)
+[invalidate] 993881 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993881-6t0-6c90eba0 agent=1599390b anchor=415
+[2026-10-20 10:36:26] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 4176, token usage: 0.08, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 227.45
+[serve] 993881-6t0-6c90eba0 prompt_tokens=4177 cached_tokens=4176 cached_device=4176 cached_host=0 ttft_ms=87.69 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:27] Decode batch, #running-req: 2, #token: 5033, token usage: 0.08, cuda graph: True, gen throughput (token/s): 53.74, #queue-req: 0
+[decode] 993882-8t0-89fb44c6 decode_ms=2032.56 output_tokens=72
+[priority] scout-b9a9a60a demote=0/0n retire=0/0n protect=16 nodes=44 ms=1.7 usage=0.0821
+[ctl] 993882-8t0-89fb44c6 queue_ms=0.0 advance_ms=2.0 pre_ms=1.7 post_ms=0.2
+[2026-10-20 10:36:27] 127.0.0.1 [20/Oct/2026:10:36:25 -0400] "POST /v1/chat/completions HTTP/1.1" 200 806 "-" "python-httpx/0.28.1"
+[call] 993882 #8 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(3,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993882-9t0-0eb910fd agent=464b2d75 anchor=428
+[2026-10-20 10:36:27] Prefill batch, #new-seq: 1, #new-token: 201, #cached-token: 608, token usage: 0.08, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.87
+[serve] 993882-9t0-0eb910fd prompt_tokens=809 cached_tokens=608 cached_device=608 cached_host=0 ttft_ms=251.72 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:28] Decode batch, #running-req: 2, #token: 5031, token usage: 0.08, cuda graph: True, gen throughput (token/s): 56.57, #queue-req: 0
+[decode] 993881-6t0-6c90eba0 decode_ms=2294.30 output_tokens=73
+[priority] scout-36df7ddb demote=0/0n retire=0/0n protect=17 nodes=48 ms=1.9 usage=0.0138
+[ctl] 993881-6t0-6c90eba0 queue_ms=0.0 advance_ms=0.5 pre_ms=7.8 post_ms=0.3
+[2026-10-20 10:36:29] 127.0.0.1 [20/Oct/2026:10:36:26 -0400] "POST /v1/chat/completions HTTP/1.1" 200 762 "-" "python-httpx/0.28.1"
+[decode] 993882-9t0-0eb910fd decode_ms=1413.84 output_tokens=50
+[priority] scout-50ac04c6 demote=0/0n retire=0/0n protect=17 nodes=48 ms=2.0 usage=0.0000
+[ctl] 993882-9t0-0eb910fd queue_ms=0.0 advance_ms=2.3 pre_ms=1.7 post_ms=0.2
+[2026-10-20 10:36:29] 127.0.0.1 [20/Oct/2026:10:36:27 -0400] "POST /v1/chat/completions HTTP/1.1" 200 684 "-" "python-httpx/0.28.1"
+[call] 993881 #6 EvidenceScout.assess_evidence:205 predicted=hit ctx=(2, 2)
+[invalidate] 993881 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993881-7t0-f3a617fd agent=1599390b anchor=415
+[2026-10-20 10:36:31] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 3382, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 61.86
+[serve] 993881-7t0-f3a617fd prompt_tokens=3383 cached_tokens=3382 cached_device=3382 cached_host=0 ttft_ms=48.47 inflight_prefill=0 inflight_decode=1
+[call] 993882 #9 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-10t0-5e6476a7 agent=1599390b anchor=415
+[2026-10-20 10:36:32] Prefill batch, #new-seq: 1, #new-token: 669, #cached-token: 418, token usage: 0.07, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.93
+[serve] 993882-10t0-5e6476a7 prompt_tokens=1087 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=614.33 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:32] Decode batch, #running-req: 2, #token: 4076, token usage: 0.07, cuda graph: True, gen throughput (token/s): 14.83, #queue-req: 0
+[2026-10-20 10:36:33] Decode batch, #running-req: 2, #token: 4156, token usage: 0.07, cuda graph: True, gen throughput (token/s): 69.39, #queue-req: 0
+[decode] 993882-10t0-5e6476a7 decode_ms=1417.65 output_tokens=50
+[priority] scout-15515324 demote=0/0n retire=0/0n protect=17 nodes=48 ms=2.2 usage=0.0562
+[ctl] 993882-10t0-5e6476a7 queue_ms=0.0 advance_ms=3.8 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:36:33] 127.0.0.1 [20/Oct/2026:10:36:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 661 "-" "python-httpx/0.28.1"
+[decode] 993881-7t0-f3a617fd decode_ms=3279.56 output_tokens=96
+[priority] scout-df3967e4 demote=0/0n retire=0/0n protect=18 nodes=51 ms=2.2 usage=0.0000
+[ctl] 993881-7t0-f3a617fd queue_ms=0.0 advance_ms=0.5 pre_ms=6.7 post_ms=0.3
+[2026-10-20 10:36:34] 127.0.0.1 [20/Oct/2026:10:36:31 -0400] "POST /v1/chat/completions HTTP/1.1" 200 886 "-" "python-httpx/0.28.1"
+[call] 993881 #7 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(2,)
+[invalidate] 993881 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993881-8t0-0f32e454 agent=1440d46e anchor=367
+[2026-10-20 10:36:34] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 3350, token usage: 0.05, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 288.61
+[serve] 993881-8t0-0f32e454 prompt_tokens=3351 cached_tokens=3350 cached_device=3350 cached_host=0 ttft_ms=50.21 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:34] Decode batch, #running-req: 1, #token: 3356, token usage: 0.05, cuda graph: True, gen throughput (token/s): 39.52, #queue-req: 0
+[call] 993882 #10 EvidenceScout.assess_evidence:205 predicted=hit ctx=(3, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-11t0-e7b285e6 agent=1599390b anchor=415
+[2026-10-20 10:36:36] Prefill batch, #new-seq: 1, #new-token: 740, #cached-token: 427, token usage: 0.07, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.54
+[serve] 993882-11t0-e7b285e6 prompt_tokens=1167 cached_tokens=427 cached_device=427 cached_host=0 ttft_ms=679.60 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:36] Decode batch, #running-req: 2, #token: 4514, token usage: 0.07, cuda graph: True, gen throughput (token/s): 23.29, #queue-req: 0
+[2026-10-20 10:36:37] Decode batch, #running-req: 2, #token: 4594, token usage: 0.07, cuda graph: True, gen throughput (token/s): 69.19, #queue-req: 0
+[decode] 993882-11t0-e7b285e6 decode_ms=1451.31 output_tokens=51
+[priority] scout-606c1942 demote=0/0n retire=0/0n protect=18 nodes=51 ms=2.4 usage=0.0561
+[ctl] 993882-11t0-e7b285e6 queue_ms=0.0 advance_ms=2.3 pre_ms=2.2 post_ms=0.2
+[2026-10-20 10:36:37] 127.0.0.1 [20/Oct/2026:10:36:35 -0400] "POST /v1/chat/completions HTTP/1.1" 200 667 "-" "python-httpx/0.28.1"
+[call] 993882 #11 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(3,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-12t0-254cb205 agent=1440d46e anchor=367
+[2026-10-20 10:36:38] Prefill batch, #new-seq: 1, #new-token: 384, #cached-token: 707, token usage: 0.07, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 391.82
+[serve] 993882-12t0-254cb205 prompt_tokens=1091 cached_tokens=707 cached_device=707 cached_host=0 ttft_ms=377.94 inflight_prefill=0 inflight_decode=2
+[2026-10-20 10:36:39] Decode batch, #running-req: 2, #token: 4228, token usage: 0.07, cuda graph: True, gen throughput (token/s): 52.08, #queue-req: 0
+[decode] 993881-8t0-0f32e454 decode_ms=5314.99 output_tokens=153
+[priority] scout-4819fc35 demote=0/0n retire=0/0n protect=19 nodes=55 ms=2.5 usage=0.0187
+[ctl] 993881-8t0-0f32e454 queue_ms=0.0 advance_ms=0.3 pre_ms=6.5 post_ms=0.3
+[2026-10-20 10:36:39] 127.0.0.1 [20/Oct/2026:10:36:34 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1172 "-" "python-httpx/0.28.1"
+[close] 993881
+[close] 993881 calls=8
+[2026-10-20 10:36:39] 127.0.0.1 [20/Oct/2026:10:36:39 -0400] "POST /v1/sessions/close HTTP/1.1" 200 196 "-" "python-httpx/0.28.1"
+[2026-10-20 10:36:40] Decode batch, #running-req: 1, #token: 1159, token usage: 0.02, cuda graph: True, gen throughput (token/s): 60.63, #queue-req: 0
+[2026-10-20 10:36:41] Decode batch, #running-req: 1, #token: 1199, token usage: 0.02, cuda graph: True, gen throughput (token/s): 36.45, #queue-req: 0
+[decode] 993882-12t0-254cb205 decode_ms=3702.04 output_tokens=133
+[priority] scout-0543397d demote=0/0n retire=0/0n protect=11 nodes=29 ms=1.2 usage=0.0199
+[ctl] 993882-12t0-254cb205 queue_ms=0.0 advance_ms=2.8 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:36:42] 127.0.0.1 [20/Oct/2026:10:36:37 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1034 "-" "python-httpx/0.28.1"
+[call] 993882 #12 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(4,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993882-13t0-decfe55c agent=464b2d75 anchor=428
+[2026-10-20 10:36:42] Prefill batch, #new-seq: 1, #new-token: 315, #cached-token: 768, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 95.13
+[serve] 993882-13t0-decfe55c prompt_tokens=1083 cached_tokens=768 cached_device=768 cached_host=0 ttft_ms=278.40 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:42] Decode batch, #running-req: 1, #token: 1098, token usage: 0.02, cuda graph: True, gen throughput (token/s): 28.43, #queue-req: 0
+[decode] 993882-13t0-decfe55c decode_ms=1291.21 output_tokens=48
+[priority] scout-3e2f1313 demote=0/0n retire=0/0n protect=11 nodes=30 ms=1.2 usage=0.0184
+[ctl] 993882-13t0-decfe55c queue_ms=0.0 advance_ms=2.8 pre_ms=2.1 post_ms=0.2
+[2026-10-20 10:36:43] 127.0.0.1 [20/Oct/2026:10:36:42 -0400] "POST /v1/chat/completions HTTP/1.1" 200 690 "-" "python-httpx/0.28.1"
+[call] 993882 #13 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-14t0-6ccf15c4 agent=1599390b anchor=415
+[2026-10-20 10:36:46] Prefill batch, #new-seq: 1, #new-token: 434, #cached-token: 927, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 84.30
+[serve] 993882-14t0-6ccf15c4 prompt_tokens=1361 cached_tokens=927 cached_device=927 cached_host=0 ttft_ms=387.15 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:46] Decode batch, #running-req: 1, #token: 1368, token usage: 0.02, cuda graph: True, gen throughput (token/s): 11.37, #queue-req: 0
+[2026-10-20 10:36:47] Decode batch, #running-req: 1, #token: 1408, token usage: 0.02, cuda graph: True, gen throughput (token/s): 36.21, #queue-req: 0
+[2026-10-20 10:36:48] Decode batch, #running-req: 1, #token: 1448, token usage: 0.02, cuda graph: True, gen throughput (token/s): 36.19, #queue-req: 0
+[decode] 993882-14t0-6ccf15c4 decode_ms=2378.50 output_tokens=87
+[priority] scout-997485d2 demote=0/0n retire=0/0n protect=11 nodes=31 ms=1.3 usage=0.0236
+[ctl] 993882-14t0-6ccf15c4 queue_ms=0.0 advance_ms=5.0 pre_ms=2.4 post_ms=0.2
+[2026-10-20 10:36:48] 127.0.0.1 [20/Oct/2026:10:36:45 -0400] "POST /v1/chat/completions HTTP/1.1" 200 798 "-" "python-httpx/0.28.1"
+[call] 993882 #14 EvidenceScout.assess_evidence:205 predicted=hit ctx=(4, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-15t0-fbc2716c agent=1599390b anchor=415
+[2026-10-20 10:36:51] Prefill batch, #new-seq: 1, #new-token: 739, #cached-token: 734, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 85.47
+[serve] 993882-15t0-fbc2716c prompt_tokens=1473 cached_tokens=734 cached_device=734 cached_host=0 ttft_ms=641.20 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:52] Decode batch, #running-req: 1, #token: 1513, token usage: 0.02, cuda graph: True, gen throughput (token/s): 10.58, #queue-req: 0
+[decode] 993882-15t0-fbc2716c decode_ms=1331.49 output_tokens=49
+[priority] scout-098315c7 demote=0/0n retire=0/0n protect=11 nodes=32 ms=1.3 usage=0.0248
+[ctl] 993882-15t0-fbc2716c queue_ms=0.0 advance_ms=3.1 pre_ms=2.7 post_ms=0.2
+[2026-10-20 10:36:52] 127.0.0.1 [20/Oct/2026:10:36:50 -0400] "POST /v1/chat/completions HTTP/1.1" 200 673 "-" "python-httpx/0.28.1"
+[call] 993882 #15 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(4,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-16t0-26a80991 agent=1440d46e anchor=367
+[2026-10-20 10:36:52] Prefill batch, #new-seq: 1, #new-token: 416, #cached-token: 981, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 421.34
+[serve] 993882-16t0-26a80991 prompt_tokens=1397 cached_tokens=981 cached_device=981 cached_host=0 ttft_ms=365.86 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:53] Decode batch, #running-req: 1, #token: 1428, token usage: 0.02, cuda graph: True, gen throughput (token/s): 26.62, #queue-req: 0
+[2026-10-20 10:36:54] Decode batch, #running-req: 1, #token: 1468, token usage: 0.02, cuda graph: True, gen throughput (token/s): 36.20, #queue-req: 0
+[decode] 993882-16t0-26a80991 decode_ms=2406.41 output_tokens=88
+[priority] scout-958e0a88 demote=0/0n retire=0/0n protect=11 nodes=33 ms=1.3 usage=0.0242
+[ctl] 993882-16t0-26a80991 queue_ms=0.0 advance_ms=3.0 pre_ms=2.5 post_ms=0.2
+[2026-10-20 10:36:55] 127.0.0.1 [20/Oct/2026:10:36:52 -0400] "POST /v1/chat/completions HTTP/1.1" 200 842 "-" "python-httpx/0.28.1"
+[call] 993882 #16 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(5,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993882-17t0-989e1b90 agent=464b2d75 anchor=428
+[2026-10-20 10:36:55] Prefill batch, #new-seq: 1, #new-token: 347, #cached-token: 1042, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 149.69
+[serve] 993882-17t0-989e1b90 prompt_tokens=1389 cached_tokens=1042 cached_device=1042 cached_host=0 ttft_ms=315.98 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:36:56] Decode batch, #running-req: 1, #token: 1412, token usage: 0.02, cuda graph: True, gen throughput (token/s): 27.54, #queue-req: 0
+[decode] 993882-17t0-989e1b90 decode_ms=913.89 output_tokens=34
+[priority] scout-383c1626 demote=0/0n retire=0/0n protect=11 nodes=34 ms=1.4 usage=0.0000
+[ctl] 993882-17t0-989e1b90 queue_ms=0.0 advance_ms=3.2 pre_ms=2.5 post_ms=0.2
+[2026-10-20 10:36:56] 127.0.0.1 [20/Oct/2026:10:36:55 -0400] "POST /v1/chat/completions HTTP/1.1" 200 623 "-" "python-httpx/0.28.1"
+[call] 993882 #17 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-18t0-54843d0a agent=1599390b anchor=415
+[2026-10-20 10:36:59] Prefill batch, #new-seq: 1, #new-token: 1107, #cached-token: 437, token usage: 0.03, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 88.56
+[serve] 993882-18t0-54843d0a prompt_tokens=1544 cached_tokens=437 cached_device=437 cached_host=0 ttft_ms=947.00 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:00] Decode batch, #running-req: 1, #token: 1573, token usage: 0.03, cuda graph: True, gen throughput (token/s): 9.78, #queue-req: 0
+[decode] 993882-18t0-54843d0a decode_ms=1252.43 output_tokens=46
+[priority] scout-0268ca87 demote=0/0n retire=0/0n protect=11 nodes=35 ms=1.5 usage=0.0000
+[ctl] 993882-18t0-54843d0a queue_ms=0.0 advance_ms=3.3 pre_ms=2.7 post_ms=0.2
+[2026-10-20 10:37:00] 127.0.0.1 [20/Oct/2026:10:36:58 -0400] "POST /v1/chat/completions HTTP/1.1" 200 652 "-" "python-httpx/0.28.1"
+[call] 993882 #18 EvidenceScout.assess_evidence:205 predicted=hit ctx=(5, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-19t0-5797406e agent=1599390b anchor=415
+[2026-10-20 10:37:06] Prefill batch, #new-seq: 1, #new-token: 3788, #cached-token: 418, token usage: 0.07, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 167.82
+[serve] 993882-19t0-5797406e prompt_tokens=4206 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=3278.87 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:06] Decode batch, #running-req: 1, #token: 4229, token usage: 0.07, cuda graph: True, gen throughput (token/s): 6.18, #queue-req: 0
+[2026-10-20 10:37:08] Decode batch, #running-req: 1, #token: 4269, token usage: 0.07, cuda graph: True, gen throughput (token/s): 35.17, #queue-req: 0
+[2026-10-20 10:37:09] Decode batch, #running-req: 1, #token: 4309, token usage: 0.07, cuda graph: True, gen throughput (token/s): 35.17, #queue-req: 0
+[decode] 993882-19t0-5797406e decode_ms=3155.37 output_tokens=111
+[priority] scout-4f4422dd demote=0/0n retire=0/0n protect=11 nodes=35 ms=1.7 usage=0.0703
+[ctl] 993882-19t0-5797406e queue_ms=0.0 advance_ms=3.4 pre_ms=9.3 post_ms=0.3
+[2026-10-20 10:37:09] 127.0.0.1 [20/Oct/2026:10:37:02 -0400] "POST /v1/chat/completions HTTP/1.1" 200 912 "-" "python-httpx/0.28.1"
+[call] 993882 #19 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(5,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-20t0-440325f5 agent=1440d46e anchor=367
+[2026-10-20 10:37:10] Prefill batch, #new-seq: 1, #new-token: 1242, #cached-token: 1287, token usage: 0.04, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 880.00
+[serve] 993882-20t0-440325f5 prompt_tokens=2529 cached_tokens=1287 cached_device=1287 cached_host=0 ttft_ms=1085.04 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:11] Decode batch, #running-req: 1, #token: 2561, token usage: 0.04, cuda graph: True, gen throughput (token/s): 17.77, #queue-req: 0
+[2026-10-20 10:37:12] Decode batch, #running-req: 1, #token: 2601, token usage: 0.04, cuda graph: True, gen throughput (token/s): 35.69, #queue-req: 0
+[2026-10-20 10:37:13] Decode batch, #running-req: 1, #token: 2641, token usage: 0.04, cuda graph: True, gen throughput (token/s): 35.68, #queue-req: 0
+[decode] 993882-20t0-440325f5 decode_ms=3900.88 output_tokens=140
+[priority] scout-a78aa452 demote=0/0n retire=0/0n protect=11 nodes=36 ms=1.9 usage=0.0434
+[ctl] 993882-20t0-440325f5 queue_ms=0.0 advance_ms=5.4 pre_ms=4.2 post_ms=0.2
+[2026-10-20 10:37:14] 127.0.0.1 [20/Oct/2026:10:37:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1050 "-" "python-httpx/0.28.1"
+[call] 993882 #20 ClaimAnalyzer.decompose_claim:90 predicted=hit ctx=(6,)
+[invalidate] 993882 ClaimAnalyzer.decompose kills ['completed_evidences', 'expected_evidences', 'round', 'verdict']
+[scout] 993882-21t0-a1724de1 agent=464b2d75 anchor=428
+[2026-10-20 10:37:15] Prefill batch, #new-seq: 1, #new-token: 1173, #cached-token: 1348, token usage: 0.04, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 248.52
+[serve] 993882-21t0-a1724de1 prompt_tokens=2521 cached_tokens=1348 cached_device=1348 cached_host=0 ttft_ms=1033.71 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:15] Decode batch, #running-req: 1, #token: 2533, token usage: 0.04, cuda graph: True, gen throughput (token/s): 18.20, #queue-req: 0
+[decode] 993882-21t0-a1724de1 decode_ms=929.15 output_tokens=34
+[priority] scout-a369a117 demote=0/0n retire=0/0n protect=11 nodes=37 ms=1.9 usage=0.0000
+[ctl] 993882-21t0-a1724de1 queue_ms=0.0 advance_ms=5.4 pre_ms=4.2 post_ms=0.3
+[2026-10-20 10:37:16] 127.0.0.1 [20/Oct/2026:10:37:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 634 "-" "python-httpx/0.28.1"
+[call] 993882 #21 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 1)
+[invalidate] 993882 EvidenceScout.investigate kills ['expected_evidences', 'questions']
+[scout] 993882-22t0-3c2783e8 agent=1599390b anchor=415
+[2026-10-20 10:37:19] Prefill batch, #new-seq: 1, #new-token: 1292, #cached-token: 1384, token usage: 0.04, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 283.73
+[serve] 993882-22t0-3c2783e8 prompt_tokens=2676 cached_tokens=1384 cached_device=1384 cached_host=0 ttft_ms=1136.42 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:20] Decode batch, #running-req: 1, #token: 2694, token usage: 0.04, cuda graph: True, gen throughput (token/s): 9.29, #queue-req: 0
+[decode] 993882-22t0-3c2783e8 decode_ms=1270.64 output_tokens=46
+[priority] scout-c84a57b5 demote=0/0n retire=0/0n protect=11 nodes=37 ms=2.0 usage=0.0000
+[ctl] 993882-22t0-3c2783e8 queue_ms=0.0 advance_ms=11.5 pre_ms=4.3 post_ms=0.3
+[2026-10-20 10:37:20] 127.0.0.1 [20/Oct/2026:10:37:18 -0400] "POST /v1/chat/completions HTTP/1.1" 200 652 "-" "python-httpx/0.28.1"
+[call] 993882 #22 EvidenceScout.assess_evidence:205 predicted=hit ctx=(6, 2)
+[invalidate] 993882 EvidenceScout.investigate kills ['completed_evidences']
+[scout] 993882-23t0-843e4456 agent=1599390b anchor=415
+[2026-10-20 10:37:25] Prefill batch, #new-seq: 1, #new-token: 3488, #cached-token: 418, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 203.92
+[serve] 993882-23t0-843e4456 prompt_tokens=3906 cached_tokens=418 cached_device=418 cached_host=0 ttft_ms=2998.70 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:26] Decode batch, #running-req: 1, #token: 3918, token usage: 0.06, cuda graph: True, gen throughput (token/s): 6.46, #queue-req: 0
+[2026-10-20 10:37:27] Decode batch, #running-req: 1, #token: 3958, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.20, #queue-req: 0
+[decode] 993882-23t0-843e4456 decode_ms=2327.99 output_tokens=82
+[priority] scout-65fd9f5c demote=0/0n retire=0/0n protect=11 nodes=36 ms=2.3 usage=0.0649
+[ctl] 993882-23t0-843e4456 queue_ms=0.0 advance_ms=5.6 pre_ms=7.1 post_ms=0.3
+[2026-10-20 10:37:28] 127.0.0.1 [20/Oct/2026:10:37:22 -0400] "POST /v1/chat/completions HTTP/1.1" 200 809 "-" "python-httpx/0.28.1"
+[call] 993882 #23 EvidenceAnalyzer.verify_claim:251 predicted=hit ctx=(6,)
+[invalidate] 993882 EvidenceAnalyzer.decide kills ['completed_evidences']
+[scout] 993882-24t0-7a4151c4 agent=1440d46e anchor=367
+[2026-10-20 10:37:29] Prefill batch, #new-seq: 1, #new-token: 1286, #cached-token: 2420, token usage: 0.06, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 978.30
+[serve] 993882-24t0-7a4151c4 prompt_tokens=3706 cached_tokens=2420 cached_device=2420 cached_host=0 ttft_ms=1169.82 inflight_prefill=0 inflight_decode=1
+[2026-10-20 10:37:29] Decode batch, #running-req: 1, #token: 3716, token usage: 0.06, cuda graph: True, gen throughput (token/s): 17.00, #queue-req: 0
+[2026-10-20 10:37:30] Decode batch, #running-req: 1, #token: 3756, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.40, #queue-req: 0
+[2026-10-20 10:37:32] Decode batch, #running-req: 1, #token: 3796, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.38, #queue-req: 0
+[2026-10-20 10:37:33] Decode batch, #running-req: 1, #token: 3836, token usage: 0.06, cuda graph: True, gen throughput (token/s): 35.37, #queue-req: 0
+[decode] 993882-24t0-7a4151c4 decode_ms=3824.80 output_tokens=136
+[priority] scout-75db5720 demote=0/0n retire=0/0n protect=11 nodes=37 ms=2.3 usage=0.0625
+[ctl] 993882-24t0-7a4151c4 queue_ms=0.0 advance_ms=7.4 pre_ms=6.1 post_ms=0.3
+[2026-10-20 10:37:33] 127.0.0.1 [20/Oct/2026:10:37:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1033 "-" "python-httpx/0.28.1"
+[close] 993882
+[close] 993882 calls=24
+[2026-10-20 10:37:33] 127.0.0.1 [20/Oct/2026:10:37:33 -0400] "POST /v1/sessions/close HTTP/1.1" 200 196 "-" "python-httpx/0.28.1"
+[2026-10-20 10:37:34] Cache flushed successfully!
+[flush] ok=True
+[2026-10-20 10:37:34] 127.0.0.1 [20/Oct/2026:10:37:34 -0400] "POST /v1/cache/flush HTTP/1.1" 200 195 "-" "Python-urllib/3.12"
+[2026-10-20 10:37:34] SIGTERM received. signum=None frame=None. Draining requests and shutting down...
+[2026-10-20 10:37:35] Subprocess detokenizer (pid=993450) crashed with exit code -15. Triggering SIGQUIT for cleanup...
+[2026-10-20 10:37:35] SIGQUIT received. signum=None, frame=None. It usually means one child failed.

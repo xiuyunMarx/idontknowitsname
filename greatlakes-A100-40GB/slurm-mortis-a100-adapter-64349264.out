@@ -1,0 +1,21 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 10:38:04
+staged 19G 10:40:47
+arm=adapter node=gl1250.arc-ts.umich.edu job=64349264 gpus=MIG-98141577-d909-5297-b01a-7934dd19952d cpus=8 start=2026-10-20 10:40:47
+NVIDIA A100 80GB PCIe, 81920 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2662 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 10:40:47 adapter ARM-START part=all levels=29 results=greatlakes-A100-40GB/benchmark_results/adapter
+10-20 10:40:47 adapter server start #1 log=greatlakes-A100-40GB/benchmark_results/adapter/server.0.log
+adapter server ready: pid=997994 log=greatlakes-A100-40GB/benchmark_results/adapter/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-20 10:41:32 adapter server ready in 45s
+10-20 10:41:32 adapter sweep_fact_check_c4 start (1/29) fact_check=4x4 warmup=1 wrap=True
+[plan] adapter/sweep_fact_check_c4 fact_check: 4 lanes x 4 sessions, 120 inputs (6 skipped), wrap=True
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-eae6423f6bc7b424.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 1 rc=0 wall=50.324s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 1 rc=0 wall=73.003s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 3 rc=0 wall=89.924s rounds=2 verdict=SUPPORTED/SUPPORTED
+[fact_check] measured 4 rc=0 wall=156.653s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 6 rc=0 wall=73.753s rounds=2 verdict=NOT_SUPPORTED/SUPPORTED
+[fact_check] measured 2 rc=0 wall=164.961s rounds=6 verdict=NEED_MORE/SUPPORTED
+[fact_check] measured 5 rc=0 wall=153.697s rounds=6 verdict=NEED_MORE/NOT_SUPPORTED

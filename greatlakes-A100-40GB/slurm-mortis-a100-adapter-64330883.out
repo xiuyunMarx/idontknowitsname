@@ -1,0 +1,34 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 01:49:51
+staged 19G 01:50:42
+arm=adapter node=gl1250.arc-ts.umich.edu job=64330883 gpus=MIG-98141577-d909-5297-b01a-7934dd19952d cpus=8 start=2026-10-20 01:50:42
+NVIDIA A100 80GB PCIe, 81920 MiB, 595.71.05
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2639 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 01:50:43 adapter ARM-START part=all levels=29 results=greatlakes-A100-40GB/benchmark_results/adapter
+10-20 01:50:43 adapter server start #1 log=greatlakes-A100-40GB/benchmark_results/adapter/server.0.log
+adapter server died; last lines of greatlakes-A100-40GB/benchmark_results/adapter/server.0.log:
+    await server.start()
+  File "/home/xiaoyma/idontknowitsname/server/http_server.py", line 101, in start
+    await web.TCPSite(self._runner, self.host, self.port).start()
+  File "/home/xiaoyma/miniforge3/envs/mortis/lib/python3.12/site-packages/aiohttp/web_runner.py", line 138, in start
+    self._server = await loop.create_server(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1791, in create_server
+OSError: [Errno 98] error while attempting to bind on address ('0.0.0.0', 8964): address already in use
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/xiaoyma/idontknowitsname/benchmark/run_arm.py", line 278, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/xiaoyma/idontknowitsname/benchmark/run_arm.py", line 270, in main
+    rc = arm.run(levels)
+         ^^^^^^^^^^^^^^^
+  File "/home/xiaoyma/idontknowitsname/benchmark/run_arm.py", line 169, in run
+    self.ensure_server(lv.name)
+  File "/home/xiaoyma/idontknowitsname/benchmark/run_arm.py", line 131, in ensure_server
+    self.start_server()
+  File "/home/xiaoyma/idontknowitsname/benchmark/run_arm.py", line 113, in start_server
+    raise RuntimeError(f"start_server.bash {self.arm} failed with rc={rc}")
+RuntimeError: start_server.bash adapter failed with rc=1
+arm=adapter rc=1 end=2026-10-20 01:51:01

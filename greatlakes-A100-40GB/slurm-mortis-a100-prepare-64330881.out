@@ -1,0 +1,54 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 01:41:57
+staged 19G 01:42:47
+node=gl1250.arc-ts.umich.edu job=64330881 gpus=MIG-c47e7ad2-95ac-50bd-9b69-9cee99fe0675 python=/home/xiaoyma/miniforge3/envs/mortis/bin/python jac=/home/xiaoyma/idontknowitsname/jaseci/jac/zig-out/bin/jac
+NVIDIA A100 80GB PCIe, 81920 MiB, 595.71.05
+              total        used        free      shared  buff/cache   available
+Mem:           1006          20         867           3         118         977
+8
+kv=61440 host=25GB mem_fraction=0.89 chunked_prefill=4096 cuda_graph_max_bs=32 results=greatlakes-A100-40GB/benchmark_results
+profile: {"model":"Qwen/Qwen3-32B-AWQ","device":{"prefill_tps_idle":1070.7,"prefill_tps_loaded":1086.5,"promote_tps":147918.1,"loaded_decoders":12}}
+== smoke vanilla 2026-10-20 01:42:47
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2639 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 01:42:47 vanilla ARM-START part=all levels=1 results=greatlakes-A100-40GB/benchmark_results/vanilla
+10-20 01:42:47 vanilla server start #1 log=greatlakes-A100-40GB/benchmark_results/vanilla/server.0.log
+vanilla server ready: pid=578892 log=greatlakes-A100-40GB/benchmark_results/vanilla/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-20 01:43:49 vanilla server ready in 62s
+10-20 01:43:49 vanilla smoke_fact_check start (1/1) fact_check=2x1 warmup=1 wrap=False
+[plan] vanilla/smoke_fact_check fact_check: 2 lanes x 1 sessions, 120 inputs (6 skipped), wrap=False
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 1 rc=0 wall=56.734s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 1 rc=0 wall=41.667s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=94.648s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 160 events
+[level] server.log slice: 34925 bytes from offset 17633
+
+[vanilla/smoke_fact_check] full-load window 41.7 s, 1.44 sessions/min, 35.36 prompt ktok/min, 12.59 recompute ktok/min; done_600s=2, done_900s=2, done_1200s=2, done_full_load=1
+[vanilla/smoke_fact_check/fact_check] sessions=2 failed=0 timed_out=0 elapsed_s=94.6 sessions_per_min=1.27 jct_p50_s=94.6 jct_p95_s=94.6 jct_mean_s=68.2 rounds_mean=4 accuracy=1/2 done_full_load=1 done_600s=2 done_900s=2 done_1200s=2 calls=32 calls_per_min=20.29 prompt_tokens_per_call=1743 prompt_ktokens_per_min=35.36 recompute_ktokens_per_min=12.59 output_ktokens_per_min=1.56 output_tokens_per_call=77 decode_ms_mean=2291 ttft_p50_ms=317 ttft_p95_ms=2997 ttft_mean_ms=573 device_pct=64.4 host_pct=0.0 miss_pct=35.6 predicted_hit=None
+10-20 01:46:20 vanilla smoke_fact_check done in 151s: sessions=2 failed=0 full_load=41.7s sessions/min=1.44 prompt_ktok/min=35.36 recompute_ktok/min=12.59 host%=[0.0] miss%=[35.6]
+10-20 01:46:21 vanilla flush before smoke_fact_check end: ok (attempt 1)
+10-20 01:46:25 vanilla ARM-DONE
+== smoke cachescout 2026-10-20 01:46:25
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2639 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 01:46:25 cachescout ARM-START part=all levels=1 results=greatlakes-A100-40GB/benchmark_results/cachescout
+10-20 01:46:25 cachescout server start #1 log=greatlakes-A100-40GB/benchmark_results/cachescout/server.0.log
+cachescout server ready: pid=582520 log=greatlakes-A100-40GB/benchmark_results/cachescout/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-20 01:47:07 cachescout server ready in 42s
+10-20 01:47:07 cachescout smoke_fact_check start (1/1) fact_check=2x1 warmup=1 wrap=False
+[plan] cachescout/smoke_fact_check fact_check: 2 lanes x 1 sessions, 120 inputs (6 skipped), wrap=False
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-58ec5c9bcfc5d3f7.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 1 rc=0 wall=50.525s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 1 rc=0 wall=45.322s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=97.982s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 160 events
+[level] server.log slice: 47885 bytes from offset 17732
+
+[cachescout/smoke_fact_check] full-load window 45.3 s, 1.32 sessions/min, 34.16 prompt ktok/min, 12.16 recompute ktok/min; done_600s=2, done_900s=2, done_1200s=2, done_full_load=1
+[cachescout/smoke_fact_check/fact_check] sessions=2 failed=0 timed_out=0 elapsed_s=98.0 sessions_per_min=1.22 jct_p50_s=98.0 jct_p95_s=98.0 jct_mean_s=71.7 rounds_mean=4 accuracy=1/2 done_full_load=1 done_600s=2 done_900s=2 done_1200s=2 calls=32 calls_per_min=19.6 prompt_tokens_per_call=1743 prompt_ktokens_per_min=34.16 recompute_ktokens_per_min=12.16 output_ktokens_per_min=1.51 output_tokens_per_call=77 decode_ms_mean=2466 ttft_p50_ms=316 ttft_p95_ms=2999 ttft_mean_ms=573 device_pct=64.4 host_pct=0.0 miss_pct=35.6 predicted_hit=1.0
+10-20 01:49:35 cachescout smoke_fact_check done in 149s: sessions=2 failed=0 full_load=45.3s sessions/min=1.32 prompt_ktok/min=34.16 recompute_ktok/min=12.16 host%=[0.0] miss%=[35.6]
+10-20 01:49:36 cachescout flush before smoke_fact_check end: ok (attempt 1)
+10-20 01:49:41 cachescout ARM-DONE
+prepare done 2026-10-20 01:49:41
