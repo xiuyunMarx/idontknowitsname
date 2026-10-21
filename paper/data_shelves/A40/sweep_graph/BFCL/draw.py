@@ -8,6 +8,9 @@ import re
 import csv
 from collections.abc import Iterator
 
+# Only the leftmost panel of each row in the paper figure carries the y label.
+SHOW_YLABEL = False
+
 
 def read_csv(file_path) -> dict:
     metrics: Dict[int, Dict[str, float]] = {}
@@ -47,7 +50,7 @@ def draw_line_chart(records: dict):
     display_names = {
         "vanilla": "Vanilla",
         "adapter": "Static-Adapter",
-        "kvonly": r"\textsc{Mortis}-KV-only",
+        "kvonly": r"\textsc{Mortis}-No-Relayout",
         "relayout": r"\textsc{Mortis}-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
@@ -126,8 +129,10 @@ def draw_line_chart(records: dict):
         "ps.fonttype": 42,
     })
 
-    def plot_metric(metric: str, output_file: str) -> Path:
-        fig, ax = plt.subplots(figsize=(2.25, 1.55), constrained_layout=True)
+    def plot_metric(metric: str, ylabel: str, output_file: str) -> Path:
+        fig, ax = plt.subplots(figsize=(2.25, 1.55))
+        # Fixed margins give all four panels the same plot area, with room for the y label.
+        fig.subplots_adjust(left=0.255, right=0.965, bottom=0.235, top=0.955)
 
         # A subtle reference line makes values above/below the baseline obvious.
         ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)
@@ -158,6 +163,8 @@ def draw_line_chart(records: dict):
             )
 
         ax.set_xlabel("Concurrency")
+        if SHOW_YLABEL:
+            ax.set_ylabel(ylabel)
         ax.set_xticks(all_concurrencies)
         # Flat panels get too few automatic y ticks; fix the count.
         ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 2.5, 5, 10], min_n_ticks=3))
@@ -167,14 +174,14 @@ def draw_line_chart(records: dict):
         # The legend is shared across all panels; see ../draw_legend.py.
 
         output_path = Path(output_file)
-        fig.savefig(output_path, format="pdf", bbox_inches="tight", pad_inches=0.02)
+        fig.savefig(output_path, format="pdf")
         plt.close(fig)
         return output_path
 
-    jct_path = plot_metric("jct_speedup", "jct_speedup.pdf")
-    ttft_path = plot_metric("ttft_speedup", "ttft_speedup.pdf")
+    jct_path = plot_metric("jct_speedup", r"Avg.\ JCT speedup", "jct_speedup.pdf")
+    ttft_path = plot_metric("ttft_speedup", r"Avg.\ TTFT speedup", "ttft_speedup.pdf")
     # Throughput (prompt ktokens/min) speedup over vanilla, from the measured per-level elapsed time.
-    tp_path = plot_metric("tp_speedup", "throughput_speedup.pdf")
+    tp_path = plot_metric("tp_speedup", "Throughput speedup", "throughput_speedup.pdf")
     return jct_path, ttft_path, tp_path
 
 
@@ -192,6 +199,5 @@ if __name__ == "__main__":
             metrics["jct_speedup"] = baseline_metrics["mean_jct"] / metrics["mean_jct"]
             metrics["ttft_speedup"] = baseline_metrics['mean_TTFT']/metrics["mean_TTFT"]
             metrics["tp_speedup"] = metrics["throughput"] / baseline_metrics["throughput"]
-    full_records = {arm: {c: m for c, m in data.items() if c != 32} for arm, data in full_records.items()}
     jct_pdf, ttft_pdf, tp_pdf = draw_line_chart(full_records)
     print(f"Saved {jct_pdf}, {ttft_pdf} and {tp_pdf}")

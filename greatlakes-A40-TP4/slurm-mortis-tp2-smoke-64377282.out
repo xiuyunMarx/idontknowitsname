@@ -1,0 +1,90 @@
+staging Qwen/Qwen3-32B-AWQ -> /tmp/xiaoyma/hf 19:37:43
+staged 19G 19:38:24
+node=gl1517.arc-ts.umich.edu job=64377282 gpus=0,1 cpus=8 python=/home/xiaoyma/miniforge3/envs/mortis/bin/python
+NVIDIA A40, 46068 MiB, 595.71.05
+NVIDIA A40, 46068 MiB, 595.71.05
+	[4mGPU0	GPU1	NIC0	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	PXB	PIX	4-7	0		N/A
+GPU1	PXB	 X 	PXB	4-7	0		N/A
+NIC0	PIX	PXB	 X 				
+
+Legend:
+
+  X    = Self
+tp=2 kv=61440 host=25GB port=9103 results=greatlakes-A40-TP4/smoke_tp2
+== profile 2026-10-20 19:38:24
+[start_server] 2026-10-20 19:38:24 profile: /home/xiaoyma/miniforge3/envs/mortis/bin/python -m server.server Qwen/Qwen3-32B-AWQ --host 25 --kv 31830 --profile-only --port 9103 --reprofile 
+[http] listening on 0.0.0.0:9103
+[W1020 19:39:09.559674785 socket.cpp:767] [c10d] The client socket cannot be initialized to connect to [localhost]:40259 (errno: 97 - Address family not supported by protocol).
+[W1020 19:39:09.563272967 socket.cpp:767] [c10d] The client socket cannot be initialized to connect to [localhost]:40259 (errno: 97 - Address family not supported by protocol).
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 0 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 1 is connected to 1 peer ranks. Expected number of connected peer ranks is : 1
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+Multi-thread loading shards:   0% Completed | 0/4 [00:00<?, ?it/s]Multi-thread loading shards:  25% Completed | 1/4 [00:01<00:05,  1.97s/it]Multi-thread loading shards:  50% Completed | 2/4 [00:03<00:03,  1.79s/it]Multi-thread loading shards:  75% Completed | 3/4 [00:05<00:01,  1.74s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:07<00:00,  1.80s/it]Multi-thread loading shards: 100% Completed | 4/4 [00:07<00:00,  1.80s/it]
+  0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=29.86 GB):   0%|          | 0/8 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=29.86 GB):  12%|█▎        | 1/8 [00:14<01:41, 14.46s/it]Capturing batches (bs=24 avail_mem=29.76 GB):  12%|█▎        | 1/8 [00:14<01:41, 14.46s/it]Capturing batches (bs=24 avail_mem=29.76 GB):  25%|██▌       | 2/8 [00:15<00:38,  6.44s/it]Capturing batches (bs=16 avail_mem=29.76 GB):  25%|██▌       | 2/8 [00:15<00:38,  6.44s/it]Capturing batches (bs=16 avail_mem=29.76 GB):  38%|███▊      | 3/8 [00:15<00:17,  3.57s/it]Capturing batches (bs=12 avail_mem=29.75 GB):  38%|███▊      | 3/8 [00:15<00:17,  3.57s/it]Capturing batches (bs=12 avail_mem=29.75 GB):  50%|█████     | 4/8 [00:15<00:08,  2.22s/it]Capturing batches (bs=8 avail_mem=29.72 GB):  50%|█████     | 4/8 [00:15<00:08,  2.22s/it] Capturing batches (bs=8 avail_mem=29.72 GB):  62%|██████▎   | 5/8 [00:15<00:04,  1.47s/it]Capturing batches (bs=4 avail_mem=29.71 GB):  62%|██████▎   | 5/8 [00:15<00:04,  1.47s/it]Capturing batches (bs=4 avail_mem=29.71 GB):  75%|███████▌  | 6/8 [00:15<00:02,  1.03s/it]Capturing batches (bs=2 avail_mem=29.68 GB):  75%|███████▌  | 6/8 [00:15<00:02,  1.03s/it]Capturing batches (bs=2 avail_mem=29.68 GB):  88%|████████▊ | 7/8 [00:16<00:00,  1.34it/s]Capturing batches (bs=1 avail_mem=29.68 GB):  88%|████████▊ | 7/8 [00:16<00:00,  1.34it/s]Capturing batches (bs=1 avail_mem=29.68 GB): 100%|██████████| 8/8 [00:16<00:00,  1.55it/s]Capturing batches (bs=1 avail_mem=29.68 GB): 100%|██████████| 8/8 [00:16<00:00,  2.06s/it]
+[ledger] device=31830 tokens host=95367 tokens stride=8 kv_bytes_per_token=262144
+[warmup] engine ready in 1590 ms
+[priority] devprof-retire demote=0/0n retire=6/17n protect=0 nodes=0 ms=3.5 usage=0.0129
+[priority] devprof-retire demote=0/0n retire=6/17n protect=0 nodes=0 ms=3.6 usage=0.0129
+[promote] devprof-promote tokens=16384 device=0 host=16384 started=16384 free=6841 reserve=4096 ms=2.6
+[promote] devprof-promote tokens=16384 device=0 host=16384 started=16384 free=6841 reserve=4096 ms=2.6
+[promote-rpc] devprof-promote tokens=16384 duration_ms=7.00
+[promote-dep] batch waits on 8 in-flight promotion(s) demand_loads=0
+[promote-dep] batch waits on 8 in-flight promotion(s) demand_loads=0
+[profile-device] prefill_idle=1950tps prefill_loaded=2020tps promote=34519tps
+[profile-only] model/NVIDIA_A40_tp2/Qwen--Qwen3-32B-AWQ.profile.json: {'prefill_tps_idle': 1949.8, 'prefill_tps_loaded': 2020.5, 'promote_tps': 34518.6, 'loaded_decoders': 12}
+profile: {"model":"Qwen/Qwen3-32B-AWQ","device":{"prefill_tps_idle":1949.8,"prefill_tps_loaded":2020.5,"promote_tps":34518.6,"loaded_decoders":12}}
+== smoke vanilla 2026-10-20 19:40:54
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2838 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 19:40:54 vanilla ARM-START part=all levels=1 results=greatlakes-A40-TP4/smoke_tp2/vanilla
+10-20 19:40:54 vanilla server start #1 log=greatlakes-A40-TP4/smoke_tp2/vanilla/server.0.log
+vanilla server ready: pid=2889365 log=greatlakes-A40-TP4/smoke_tp2/vanilla/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-20 19:41:42 vanilla server ready in 48s
+10-20 19:41:42 vanilla smoke_fact_check start (1/1) fact_check=2x1 warmup=1 wrap=False
+[plan] vanilla/smoke_fact_check fact_check: 2 lanes x 1 sessions, 120 inputs (6 skipped), wrap=False
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-eae6423f6bc7b424.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 1 rc=0 wall=42.52s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 1 rc=0 wall=33.013s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=74.062s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 160 events
+[level] server.log slice: 35943 bytes from offset 20654
+
+[vanilla/smoke_fact_check] full-load window 33.0 s, 1.82 sessions/min, 45.19 prompt ktok/min, 16.09 recompute ktok/min; done_600s=2, done_900s=2, done_1200s=2, done_full_load=1
+[vanilla/smoke_fact_check/fact_check] sessions=2 failed=0 timed_out=0 elapsed_s=74.1 sessions_per_min=1.62 jct_p50_s=74.1 jct_p95_s=74.1 jct_mean_s=53.5 rounds_mean=4 accuracy=1/2 done_full_load=1 done_600s=2 done_900s=2 done_1200s=2 calls=32 calls_per_min=25.92 prompt_tokens_per_call=1743 prompt_ktokens_per_min=45.19 recompute_ktokens_per_min=16.09 output_ktokens_per_min=2.0 output_tokens_per_call=77 decode_ms_mean=1545 ttft_p50_ms=196 ttft_p95_ms=1746 ttft_mean_ms=366 device_pct=64.4 host_pct=0.0 miss_pct=35.6 predicted_hit=None
+10-20 19:43:39 vanilla smoke_fact_check done in 117s: sessions=2 failed=0 full_load=33.0s sessions/min=1.82 prompt_ktok/min=45.19 recompute_ktok/min=16.09 host%=[0.0] miss%=[35.6]
+10-20 19:43:39 vanilla flush before smoke_fact_check end: ok (attempt 1)
+10-20 19:43:42 vanilla ARM-DONE
+== smoke ours 2026-10-20 19:43:42
+[cache] FC_CACHE_DIR=benchmark/applications/bench_data/HoVer/wiki_cache: 2838 files
+[cache] BF_CACHE_DIR=benchmark/applications/bench_data/BFCL/web_cache: 4200 files
+10-20 19:43:43 ours ARM-START part=all levels=1 results=greatlakes-A40-TP4/smoke_tp2/ours
+10-20 19:43:43 ours server start #1 log=greatlakes-A40-TP4/smoke_tp2/ours/server.0.log
+ours server ready: pid=2893241 log=greatlakes-A40-TP4/smoke_tp2/ours/server.0.log model=Qwen/Qwen3-32B-AWQ kv=61440 host=25GB clip=4096
+10-20 19:44:31 ours server ready in 48s
+10-20 19:44:31 ours smoke_fact_check start (1/1) fact_check=2x1 warmup=1 wrap=False
+[plan] ours/smoke_fact_check fact_check: 2 lanes x 1 sessions, 120 inputs (6 skipped), wrap=False
+[launcher] analysis from cache /home/xiaoyma/idontknowitsname/static_analysis/.cache/fact_check-eae6423f6bc7b424.json
+[register] fact_check: {'ok': True, 'file': '/home/xiaoyma/idontknowitsname/benchmark/applications/fact_check.jac', 'sites': 3}
+[fact_check] warmup 1 rc=0 wall=40.968s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 1 rc=0 wall=34.114s rounds=2 verdict=NOT_SUPPORTED/NOT_SUPPORTED
+[fact_check] measured 2 rc=0 wall=79.819s rounds=6 verdict=NEED_MORE/SUPPORTED
+[level] requests.jsonl slice: 160 events
+[level] server.log slice: 78810 bytes from offset 20742
+
+[ours/smoke_fact_check] full-load window 34.1 s, 1.76 sessions/min, 54.83 prompt ktok/min, 16.35 recompute ktok/min; done_600s=2, done_900s=2, done_1200s=2, done_full_load=1
+[ours/smoke_fact_check/fact_check] sessions=2 failed=0 timed_out=0 elapsed_s=79.8 sessions_per_min=1.5 jct_p50_s=79.8 jct_p95_s=79.8 jct_mean_s=57.0 rounds_mean=4 accuracy=1/2 done_full_load=1 done_600s=2 done_900s=2 done_1200s=2 calls=32 calls_per_min=24.05 prompt_tokens_per_call=2279 prompt_ktokens_per_min=54.83 recompute_ktokens_per_min=16.35 output_ktokens_per_min=2.08 output_tokens_per_call=87 decode_ms_mean=1725 ttft_p50_ms=212 ttft_p95_ms=1547 ttft_mean_ms=414 device_pct=70.2 host_pct=0.0 miss_pct=29.8 predicted_hit=1.0
+10-20 19:46:32 ours smoke_fact_check done in 121s: sessions=2 failed=0 full_load=34.1s sessions/min=1.76 prompt_ktok/min=54.83 recompute_ktok/min=16.35 host%=[0.0] miss%=[29.8]
+10-20 19:46:33 ours flush before smoke_fact_check end: ok (attempt 1)
+10-20 19:46:38 ours ARM-DONE
+smoke done 2026-10-20 19:46:38

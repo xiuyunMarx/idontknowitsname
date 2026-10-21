@@ -11,7 +11,7 @@ def draw_legend(output_file: str) -> Path:
     display_names = {
         "vanilla": "Vanilla SGLang",
         "adapter": "Static-Adapter",
-        "kvonly": r"\textsc{Mortis}-KV-only",
+        "kvonly": r"\textsc{Mortis}-No-Relayout",
         "relayout": r"\textsc{Mortis}-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",

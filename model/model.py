@@ -147,11 +147,16 @@ class Engine:
             engine_kwargs.setdefault("chunked_prefill_size", int(chunked_prefill_size))
         if cuda_graph_max_bs := os.environ.get("CUDA_GRAPH_MAX_BS"):
             engine_kwargs.setdefault("cuda_graph_max_bs", int(cuda_graph_max_bs))
+        if tp_size := os.environ.get("TP_SIZE"):
+            engine_kwargs.setdefault("tp_size", int(tp_size))
+        self.tp_size = int(engine_kwargs.get("tp_size") or 1)
         device_kv_tokens = engine_kwargs.pop("device_kv_tokens", None)
         kv_bytes_per_token = engine_kwargs.pop("kv_bytes_per_token", None)
         if host_gb > 0:
             engine_kwargs.setdefault("enable_hierarchical_cache", True)
-            engine_kwargs.setdefault("hicache_size", host_gb) 
+            # host_gb is the whole tier; sglang's hicache_size is per TP rank (each holds 1/tp of a token)
+            per_rank = host_gb // self.tp_size if host_gb % self.tp_size == 0 else host_gb / self.tp_size
+            engine_kwargs.setdefault("hicache_size", per_rank)
             # "kernel" (sglang default): one copy kernel per layer. "direct" ran torch gather/scatter
             engine_kwargs.setdefault("hicache_io_backend", "kernel")
         self.name = model_name
@@ -238,9 +243,10 @@ class Engine:
         return self.ledger.cost(toks)
 
     def profile_path(self) -> str:
-        """model/<device>/<model>.profile.json: the rates are specific to the GPU they were measured on."""
+        """model/<device>[_tp<n>]/<model>.profile.json: the rates depend on the GPU and the TP degree."""
         chip_name = torch.cuda.get_device_name(0).replace(" ", "_").replace("-", "_").replace(".", "_")
-        return f"model/{chip_name}/{self.name.replace('/', '--')}.profile.json"
+        tp = f"_tp{self.tp_size}" if self.tp_size > 1 else ""
+        return f"model/{chip_name}{tp}/{self.name.replace('/', '--')}.profile.json"
 
     def save_profile(self, path: str) -> None:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)

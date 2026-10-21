@@ -15,7 +15,8 @@ is now, so arms run with an older list are graded on the same inputs.
 
 Prints accuracy per arm and application pooled over every level, then the same per
 prompt layout (original: the arm serves the applications' own prompts; relayout: the
-arm serves the re-laid prompts), and with --levels per level. Writes the same tables to
+arm serves the re-laid prompts; adapter: the static adapter's layout), and with --levels
+per level. Writes the same tables to
 <results>/accuracy/by_arm.csv, by_layout.csv and by_level.csv.
 
 benchmark.workload calls verdict, max_tokens_hits and accuracy for summary.json.
@@ -173,7 +174,14 @@ def accuracy(records: Iterable[dict], excluded: "set[int]" = frozenset()) -> str
 
 # ---------------------------------------------------------------- grading a results tree
 
+LAYOUTS = ("original", "relayout", "adapter")
+
+
 def layout(arm: str) -> str:
+    """Prompt layout an arm serves: the applications' own prompts, the re-laid prompts,
+    or the static adapter's program-agnostic hoisting (the adapter arm only)."""
+    if arm == "adapter":
+        return "adapter"
     return "relayout" if "relayout" in arm or arm.startswith("ours") else "original"
 
 
@@ -264,7 +272,7 @@ def main() -> int:
         per_arm[arm] = tot
 
     arm_rows = [(arm, {p: tuple(v) for p, v in tot.items()}) for arm, tot in per_arm.items()]
-    layout_rows = [(lay, {p: tuple(v) for p, v in per_layout[lay].items()}) for lay in ("original", "relayout")
+    layout_rows = [(lay, {p: tuple(v) for p, v in per_layout[lay].items()}) for lay in LAYOUTS
                    if lay in per_layout]
     print_table("accuracy per arm (all levels pooled; max_tokens, UNGRADED and dirty inputs dropped)", arm_rows)
     print_table("accuracy per prompt layout", layout_rows)

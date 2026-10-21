@@ -13,7 +13,7 @@ HERE = Path(__file__).resolve().parent
 WORKLOADS = [
     ("fact_check", "fact", "Fact check", set()),
     ("coding", "coding", "Coding", set()),
-    ("BFCL", "bfcl", "BFCL", {32}),
+    ("BFCL", "bfcl", "BFCL", set()),
     ("finance", "finance", "Finance", set()),
 ]
 # Rows top to bottom: external baselines, each followed by its re-laid variant,
@@ -35,7 +35,7 @@ DISPLAY_NAMES = {
     "cachescout_relayout": "CacheScout+Relayout",
     "kvflow": "KVFlow",
     "kvflow_relayout": "KVFlow+Relayout",
-    "kvonly": r"\textsc{Mortis}-KV-only",
+    "kvonly": r"\textsc{Mortis}-No-Relayout",
     "relayout": r"\textsc{Mortis}-Relayout-only",
     "ours": r"\textsc{Mortis}",
 }
@@ -108,9 +108,10 @@ def draw_hit_rate(output_file: Path) -> Path:
         spine.set_visible(False)
     ax.tick_params(length=0)
 
-    # Temperature bar; the caption defines the unit.
+    # Temperature bar; its label gives the unit of the cell values.
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     cbar = fig.colorbar(sm, ax=ax, fraction=0.035, pad=0.02, aspect=30)
+    cbar.set_label(r"Cache hit rate (\%)", fontsize=7, labelpad=2)
     cbar.ax.tick_params(labelsize=6.5, length=2, width=0.4)
     cbar.outline.set_linewidth(0.4)
 

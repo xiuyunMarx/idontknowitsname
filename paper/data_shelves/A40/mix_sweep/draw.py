@@ -1,7 +1,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator, ScalarFormatter
+from matplotlib.ticker import FuncFormatter, MaxNLocator, MultipleLocator, ScalarFormatter
 from pathlib import Path
 from typing import Dict
 import csv
@@ -24,7 +24,7 @@ def read_csv(file_path) -> dict:
             lanes = int(row["lanes"])
             metrics.setdefault(arm, {})[lanes] = {
                 "throughput": float(row["prompt_ktokens_per_min"]),
-                "mean_TTFT": float(row["ttft_mean_s"]),
+                "hit_rate": float(row["device_pct"]) + float(row["host_pct"]),
             }
     return metrics
 
@@ -37,7 +37,7 @@ class TimesFormatter(ScalarFormatter):
 
 
 def draw_line_chart(records: dict):
-    """Draw throughput and TTFT speedup curves and save them as vector PDFs."""
+    """Draw throughput speedup and hit rate curves, in identical styles, as vector PDFs."""
     if not records:
         raise ValueError("records is empty")
 
@@ -45,7 +45,7 @@ def draw_line_chart(records: dict):
     display_names = {
         "vanilla": "Vanilla SGLang",
         "adapter": "Static-Adapter",
-        "kvonly": r"\textsc{Mortis}-KV-only",
+        "kvonly": r"\textsc{Mortis}-No-Relayout",
         "relayout": r"\textsc{Mortis}-Relayout-only",
         "continuum": "Continuum",
         "cachescout": "CacheScout",
@@ -53,7 +53,7 @@ def draw_line_chart(records: dict):
         "cachescout_relayout": "CacheScout+Relayout",
         "kvflow": "KVFlow",
         "kvflow_relayout": "KVFlow+Relayout",
-        "ours_noprefetch": r"\textsc{Mortis}-no-prefetch",
+        "ours_noprefetch": r"\textsc{Mortis}-No-Prefetch",
         "ours": r"\textsc{Mortis}",
     }
     # A variant (*_relayout, ours_noprefetch) reuses its base arm's color and
@@ -119,12 +119,14 @@ def draw_line_chart(records: dict):
         "ps.fonttype": 42,
     })
 
-    def plot_metric(metric: str, output_file: str, legend: bool = False) -> Path:
+    def plot_metric(metric: str, ylabel: str, output_file: str) -> Path:
         # Sized for half a column so fonts print at their true size.
         fig, ax = plt.subplots(figsize=(1.6, 1.2), constrained_layout=True)
 
-        # A subtle reference line makes values above/below the baseline obvious.
-        ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)
+        is_speedup = metric.endswith("_speedup")
+        if is_speedup:
+            # A subtle reference line makes values above/below the baseline obvious.
+            ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)
 
         for arm in arm_order:
             points = sorted(records[arm].items())
@@ -133,25 +135,39 @@ def draw_line_chart(records: dict):
 
             is_ours = arm == "ours"
             color = colors.get(arm)
-            ax.plot(
-                x,
-                y,
-                label=display_names.get(arm, arm),
-                color=color,
-                marker=markers.get(arm, "o"),
-                markersize=4.0 if is_ours else 2.6,
-                markeredgewidth=0.5,
-                markerfacecolor="white" if arm in variants else color,
-                linewidth=1.0 if is_ours else 0.7,
-                linestyle=(0, (3, 1.5)) if arm in variants or arm == "vanilla" else "-",
-                zorder=4 if is_ours else 2,
-            )
+            if is_speedup:
+                style = dict(
+                    markersize=4.0 if is_ours else 2.6,
+                    markeredgewidth=0.5,
+                    markerfacecolor="white" if arm in variants else color,
+                    linewidth=1.0 if is_ours else 0.7,
+                    linestyle=(0, (3, 1.5)) if arm in variants or arm == "vanilla" else "-",
+                )
+            else:
+                # Same color, marker and dash per arm, so the shared legend applies.
+                hollow = arm in variants
+                style = dict(
+                    markersize=4.2 if is_ours else 3.0,
+                    markeredgewidth=0.5,
+                    markerfacecolor="white" if hollow else color,
+                    linewidth=1.0 if is_ours else 0.7,
+                    linestyle=(0, (3, 1.5)) if hollow or arm == "vanilla" else "-",
+                )
+            ax.plot(x, y, label=display_names.get(arm, arm), color=color,
+                    marker=markers.get(arm, "o"), zorder=4 if is_ours else 2, **style)
 
         ax.set_xlabel("Lanes per agent")
-        ax.set_xticks(all_levels)
-        # Flat panels get too few automatic y ticks; fix the count.
-        ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 2.5, 5, 10], min_n_ticks=3))
-        ax.yaxis.set_major_formatter(TimesFormatter())
+        ax.set_ylabel(ylabel)
+        # Every integer gets a tick, so an unmeasured level (7) shows as a tick without markers.
+        ax.set_xticks(range(all_levels[0], all_levels[-1] + 1))
+        if is_speedup:
+            # Flat panels get too few automatic y ticks; fix the count.
+            ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 2.5, 5, 10], min_n_ticks=3))
+            ax.yaxis.set_major_formatter(TimesFormatter())
+        else:
+            ax.set_ylim(bottom=0)
+            ax.yaxis.set_major_locator(MultipleLocator(20))
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: rf"{v:.0f}\%"))
         ax.grid(axis="y", color="#DDDDDD", linewidth=0.4, linestyle=(0, (1, 1.5)))
         ax.set_axisbelow(True)
 
@@ -160,10 +176,11 @@ def draw_line_chart(records: dict):
         plt.close(fig)
         return output_path
 
-    tp_path = plot_metric("tp_speedup", "throughput_speedup.pdf")
-    ttft_path = plot_metric("ttft_speedup", "ttft_speedup.pdf")
+    tp_path = plot_metric("tp_speedup", "Throughput speedup", "throughput_speedup.pdf")
+    # Total (device + host) hit rate.
+    hit_path = plot_metric("hit_rate", "Cache hit rate", "hit_rate.pdf")
 
-    # Shared legend strip placed above the two panels in LaTeX.
+    # Shared legend strip placed above both panels in LaTeX.
     from matplotlib.lines import Line2D
     handles = [
         Line2D([], [], color=colors[a], marker=markers[a],
@@ -182,7 +199,7 @@ def draw_line_chart(records: dict):
     fig.savefig(legend_path, format="pdf", bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
 
-    return tp_path, ttft_path
+    return tp_path, hit_path
 
 
 if __name__ == "__main__":
@@ -194,7 +211,6 @@ if __name__ == "__main__":
         for level, metrics in data.items():
             baseline_metrics = records[baseline][level]
             metrics["tp_speedup"] = metrics["throughput"] / baseline_metrics["throughput"]
-            metrics["ttft_speedup"] = baseline_metrics["mean_TTFT"] / metrics["mean_TTFT"]
 
-    tp_pdf, ttft_pdf = draw_line_chart(records)
-    print(f"Saved {tp_pdf} and {ttft_pdf}")
+    tp_pdf, hit_pdf = draw_line_chart(records)
+    print(f"Saved {tp_pdf} and {hit_pdf}")
