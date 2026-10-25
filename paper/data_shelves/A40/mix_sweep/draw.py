@@ -5,8 +5,11 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator, MultipleLocator, Scala
 from pathlib import Path
 from typing import Dict
 import csv
+import math
 
 FILE = "lane_sweep.csv"
+# Per-agent rows of one lane level; JCT must be normalized per agent (see read_jct).
+PROGRAMS_FILE = "mix_L{lanes}_programs.csv"
 # Drawn bottom to top in this order; every arm is measured at every lane level.
 ARMS = [
     "vanilla", "adapter", "kvonly", "relayout", "continuum", "continuum_relayout",
@@ -29,6 +32,25 @@ def read_csv(file_path) -> dict:
     return metrics
 
 
+def read_jct(metrics: dict) -> None:
+    """Attach each arm's mean JCT per agent, {program: seconds}, at every lane level."""
+    levels = sorted({level for data in metrics.values() for level in data})
+    for lanes in levels:
+        with open(PROGRAMS_FILE.format(lanes=lanes), "r", newline="", encoding="utf-8") as csvfile:
+            for row in csv.DictReader(csvfile):
+                if row["arm"] in metrics and row["program"] != "all":
+                    metrics[row["arm"]][lanes].setdefault("jct", {})[row["program"]] = float(row["jct_done_mean_s"])
+
+
+def jct_speedup(jct: dict, baseline_jct: dict) -> float:
+    """Geometric mean over agents of the baseline-to-arm mean JCT ratio.
+
+    Agents differ several-fold in JCT, so a pooled mean would weight them by
+    duration; normalizing each agent first gives every agent equal weight."""
+    ratios = [baseline_jct[program] / seconds for program, seconds in jct.items()]
+    return math.exp(sum(math.log(r) for r in ratios) / len(ratios))
+
+
 class TimesFormatter(ScalarFormatter):
     """Speedup tick labels: the default number followed by a times sign."""
 
@@ -37,7 +59,7 @@ class TimesFormatter(ScalarFormatter):
 
 
 def draw_line_chart(records: dict):
-    """Draw throughput speedup and hit rate curves, in identical styles, as vector PDFs."""
+    """Draw throughput speedup, JCT speedup and hit rate curves, in identical styles, as vector PDFs."""
     if not records:
         raise ValueError("records is empty")
 
@@ -119,9 +141,15 @@ def draw_line_chart(records: dict):
         "ps.fonttype": 42,
     })
 
+    # Panel and legend sizes equal their LaTeX widths (a third and all of the 3.25in
+    # column), so fonts print at true size and the three axes boxes line up exactly.
+    panel_w, panel_h = 3.25 / 3, 0.98
+    margin_l, margin_r, margin_b, margin_t = 0.25, 0.03, 0.27, 0.06
+
     def plot_metric(metric: str, ylabel: str, output_file: str) -> Path:
-        # Sized for half a column so fonts print at their true size.
-        fig, ax = plt.subplots(figsize=(1.6, 1.2), constrained_layout=True)
+        fig = plt.figure(figsize=(panel_w, panel_h))
+        ax = fig.add_axes([margin_l / panel_w, margin_b / panel_h,
+                           1 - (margin_l + margin_r) / panel_w, 1 - (margin_b + margin_t) / panel_h])
 
         is_speedup = metric.endswith("_speedup")
         if is_speedup:
@@ -135,52 +163,48 @@ def draw_line_chart(records: dict):
 
             is_ours = arm == "ours"
             color = colors.get(arm)
-            if is_speedup:
-                style = dict(
-                    markersize=4.0 if is_ours else 2.6,
-                    markeredgewidth=0.5,
-                    markerfacecolor="white" if arm in variants else color,
-                    linewidth=1.0 if is_ours else 0.7,
-                    linestyle=(0, (3, 1.5)) if arm in variants or arm == "vanilla" else "-",
-                )
-            else:
-                # Same color, marker and dash per arm, so the shared legend applies.
-                hollow = arm in variants
-                style = dict(
-                    markersize=4.2 if is_ours else 3.0,
-                    markeredgewidth=0.5,
-                    markerfacecolor="white" if hollow else color,
-                    linewidth=1.0 if is_ours else 0.7,
-                    linestyle=(0, (3, 1.5)) if hollow or arm == "vanilla" else "-",
-                )
+            style = dict(
+                markersize=4.0 if is_ours else 2.6,
+                markeredgewidth=0.5,
+                markerfacecolor="white" if arm in variants else color,
+                linewidth=1.0 if is_ours else 0.7,
+                linestyle=(0, (3, 1.5)) if arm in variants or arm == "vanilla" else "-",
+            )
             ax.plot(x, y, label=display_names.get(arm, arm), color=color,
                     marker=markers.get(arm, "o"), zorder=4 if is_ours else 2, **style)
 
         ax.set_xlabel("Lanes per agent")
-        ax.set_ylabel(ylabel)
-        # Every integer gets a tick, so an unmeasured level (7) shows as a tick without markers.
-        ax.set_xticks(range(all_levels[0], all_levels[-1] + 1))
+        # No y label: the subcaption names the metric and the tick suffix (x or %) its unit,
+        # leaving the narrow panel's width to the plot.
+        # Label every other lane level so the narrow panel stays legible; minor ticks mark the rest.
+        ax.set_xticks(range(all_levels[0], all_levels[-1] + 1, 2))
+        ax.set_xticks(range(all_levels[0], all_levels[-1] + 1), minor=True)
+        ax.set_xlim(all_levels[0] - 0.4, all_levels[-1] + 0.4)
         if is_speedup:
-            # Flat panels get too few automatic y ticks; fix the count.
-            ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 2.5, 5, 10], min_n_ticks=3))
+            # Both speedup panels share one scale so they compare at a glance.
+            ax.set_ylim(0.9, 1.95)
+            ax.yaxis.set_major_locator(MultipleLocator(0.2))
+            ax.yaxis.set_minor_locator(MultipleLocator(0.1))
             ax.yaxis.set_major_formatter(TimesFormatter())
         else:
-            ax.set_ylim(bottom=0)
+            ax.set_ylim(0, 62)
             ax.yaxis.set_major_locator(MultipleLocator(20))
+            ax.yaxis.set_minor_locator(MultipleLocator(10))
             ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: rf"{v:.0f}\%"))
-        ax.grid(axis="y", color="#DDDDDD", linewidth=0.4, linestyle=(0, (1, 1.5)))
+        ax.grid(axis="y", which="both", color="#DDDDDD", linewidth=0.4, linestyle=(0, (1, 1.5)))
         ax.set_axisbelow(True)
 
         output_path = Path(output_file)
-        fig.savefig(output_path, format="pdf", bbox_inches="tight", pad_inches=0.02)
+        fig.savefig(output_path, format="pdf")
         plt.close(fig)
         return output_path
 
     tp_path = plot_metric("tp_speedup", "Throughput speedup", "throughput_speedup.pdf")
+    jct_path = plot_metric("jct_speedup", "JCT speedup", "jct_speedup.pdf")
     # Total (device + host) hit rate.
     hit_path = plot_metric("hit_rate", "Cache hit rate", "hit_rate.pdf")
 
-    # Shared legend strip placed above both panels in LaTeX.
+    # Shared legend strip placed above the panels in LaTeX.
     from matplotlib.lines import Line2D
     handles = [
         Line2D([], [], color=colors[a], marker=markers[a],
@@ -191,19 +215,21 @@ def draw_line_chart(records: dict):
                label=display_names[a])
         for a in arm_order
     ]
-    fig = plt.figure(figsize=(3.4, 0.5))
-    fig.legend(handles=handles, loc="center", ncol=4, frameon=False,
-               handlelength=1.7, columnspacing=1.0, handletextpad=0.4,
+    # Three columns filled top to bottom keep each base arm next to its variant.
+    fig = plt.figure(figsize=(3.25, 0.46))
+    fig.legend(handles=handles, loc="center", ncol=3, frameon=False, fontsize=6.5,
+               handlelength=1.6, columnspacing=0.9, handletextpad=0.35, labelspacing=0.25,
                borderpad=0, borderaxespad=0)
     legend_path = Path("legend.pdf")
-    fig.savefig(legend_path, format="pdf", bbox_inches="tight", pad_inches=0.02)
+    fig.savefig(legend_path, format="pdf")
     plt.close(fig)
 
-    return tp_path, hit_path
+    return tp_path, jct_path, hit_path
 
 
 if __name__ == "__main__":
     records = read_csv(FILE)
+    read_jct(records)
 
     # calculate speedup over vanilla at the same lane level
     baseline = "vanilla"
@@ -211,6 +237,7 @@ if __name__ == "__main__":
         for level, metrics in data.items():
             baseline_metrics = records[baseline][level]
             metrics["tp_speedup"] = metrics["throughput"] / baseline_metrics["throughput"]
+            metrics["jct_speedup"] = jct_speedup(metrics["jct"], baseline_metrics["jct"])
 
-    tp_pdf, hit_pdf = draw_line_chart(records)
-    print(f"Saved {tp_pdf} and {hit_pdf}")
+    tp_pdf, jct_pdf, hit_pdf = draw_line_chart(records)
+    print(f"Saved {tp_pdf}, {jct_pdf} and {hit_pdf}")

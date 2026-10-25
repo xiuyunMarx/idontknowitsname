@@ -37,6 +37,7 @@ for arm in $(ssh "$TARGET" "ls $SRC/$TP4_RESULTS" 2>/dev/null); do
         mkdir -p "$TP4_RESULTS/$arm/$sub"
         rsync -az --info=name1 "$@" --include="$pat/" --include="$pat/**" --exclude='*' \
               "$REMOTE/$arm/" "$TP4_RESULTS/$arm/$sub/"
+        rmdir "$TP4_RESULTS/$arm/$sub" 2>/dev/null || true   # drop it if nothing matched
     done
 done
 rsync -az --info=name1 "$@" "$TARGET:$SRC/$TP4_DIR/slurm-*.out" "$TARGET:$SRC/$TP4_DIR/profile.out" "$TARGET:$SRC/$TP4_JOBS" "$TP4_DIR/" || true

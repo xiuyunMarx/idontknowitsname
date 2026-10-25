@@ -864,12 +864,21 @@ class HiCacheController:
                     )
                 )
 
-    def pop_finished_promotions(self) -> List[HiCacheAck]:
-        """Acks whose copies have landed, in issue order (a single worker issues them)."""
-        done = []
+    def count_finished_promotions(self) -> int:
+        """How many of the oldest pending promotions have landed (issue order: a single worker issues them)."""
+        n = 0
         with self.promote_lock:
-            while self.ack_promote_queue and self.ack_promote_queue[0].finish_event.query():
-                done.append(self.ack_promote_queue.pop(0))
+            for ack in self.ack_promote_queue:
+                if not ack.finish_event.query():
+                    break
+                n += 1
+        return n
+
+    def pop_promotions(self, n: int) -> List[HiCacheAck]:
+        """The n oldest pending promotions; the caller decided n (synced across TP ranks)."""
+        with self.promote_lock:
+            done = self.ack_promote_queue[:n]
+            del self.ack_promote_queue[:n]
         return done
 
     def evict_device(self, device_indices: torch.Tensor) -> int:

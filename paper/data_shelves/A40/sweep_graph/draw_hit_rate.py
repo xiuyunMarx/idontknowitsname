@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 
 # (workload directory, CSV prefix, panel title, concurrency levels left out of the paper figures)
 WORKLOADS = [
-    ("fact_check", "fact", "Fact check", set()),
+    ("fact_check", "fact", "Fact-check", set()),
     ("coding", "coding", "Coding", set()),
     ("BFCL", "bfcl", "BFCL", set()),
     ("finance", "finance", "Finance", set()),
@@ -27,7 +27,7 @@ ARMS = [
 ]
 # Same names as the legend of the speedup figure (draw_legend.py).
 DISPLAY_NAMES = {
-    "vanilla": "Vanilla",
+    "vanilla": "SGLang",
     "adapter": "Static-Adapter",
     "continuum": "Continuum",
     "cachescout": "CacheScout",

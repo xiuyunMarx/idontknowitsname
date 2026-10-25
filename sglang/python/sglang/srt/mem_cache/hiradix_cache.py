@@ -1111,7 +1111,17 @@ class HiRadixCache(RadixCache):
         return device_hit, m.host_hit_length, len(device_indices), event
 
     def promote_check(self):
-        for ack in self.cache_controller.pop_finished_promotions():
+        # ongoing_promote is identical on every rank (same RPCs, pops synced below): skip the sync when empty
+        if len(self.ongoing_promote) == 0:
+            return
+        finish_count = self.cache_controller.count_finished_promotions()
+        if self.tp_world_size > 1:
+            # each GPU's copy lands at its own time; ack only what every rank has finished, otherwise
+            # lock_ref and evictions diverge across ranks and they build different batches (NCCL hang)
+            count = torch.tensor(finish_count, dtype=torch.int, device="cpu")
+            torch.distributed.all_reduce(count, op=torch.distributed.ReduceOp.MIN, group=self.tp_group)
+            finish_count = int(count.item())
+        for ack in self.cache_controller.pop_promotions(finish_count):
             for ack_id in ack.node_ids:
                 end_node, nodes = self.ongoing_promote.pop(ack_id)
                 for n in nodes:

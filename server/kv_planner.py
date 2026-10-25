@@ -222,7 +222,7 @@ class KVPlanner:
             for j in held.values():
                 if j.state == "queued" and len(j.toks) - self.engine.cost(j.toks)[0] > j.done_upto:
                     j.cooldown_cycles = self.NO_ROOM_COOLDOWN_CYCLES
-
+    
     def _gc(self, now: float) -> None:
         # Keep completed jobs until they are replaced or the session ends, so note_arrival can retrieve them when the predicted call actually arrives.
         changed = False
