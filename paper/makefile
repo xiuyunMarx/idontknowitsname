@@ -2,8 +2,8 @@
 #
 #   make          compile Mortis/mortis.tex -> mortis.pdf (intermediates in _cache/)
 #   make clean    empty _cache/ (keeps mortis.pdf)
-
-SRC_DIR := $(CURDIR)/Mortis
+PAPER   ?=
+SRC_DIR := $(CURDIR)/Mortis$(if $(PAPER),_$(PAPER))
 MAIN    := mortis
 CACHE   := $(CURDIR)/_cache
 TEXBIN  ?= /home/xiaoyu/miniconda3/envs/mortis/texlive/bin/x86_64-linux
@@ -12,7 +12,7 @@ export PATH := $(TEXBIN):$(PATH)
 
 FLAGS := -interaction=nonstopmode -halt-on-error -file-line-error
 
-.PHONY: all clean
+.PHONY: all clean lingjia
 
 # latexmk tracks dependencies itself (via _cache/$(MAIN).fdb_latexmk), so
 # always hand off to it and let it decide whether a rerun is needed.
@@ -22,3 +22,7 @@ all:
 
 clean:
 	rm -rf $(CACHE)/*
+	rm ./mortis.pdf
+	
+lingjia:
+	$(MAKE) PAPER=Lingjia all

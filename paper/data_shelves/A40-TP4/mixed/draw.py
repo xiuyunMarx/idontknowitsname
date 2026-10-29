@@ -118,7 +118,7 @@ def draw(records: dict):
     })
     # The two speedup panels share one row of the 3.25in column; the hit-rate bars take a full row.
     column_w, panel_h = 3.25, 0.98
-    margin_l, margin_r, margin_b, margin_t = 0.29, 0.03, 0.27, 0.06
+    margin_l, margin_r, margin_b, margin_t = 0.29, 0.03, 0.24, 0.04
     levels = sorted({lv for data in records.values() for lv in data})
 
     def new_axes(panel_w, h=panel_h, left=margin_l):
@@ -194,9 +194,9 @@ def draw(records: dict):
 
     # Shared legend strip placed above the panels in LaTeX; five names do not fit one 3.25in row, so two.
     handles = [Line2D([], [], label=display_names[a], **line_style(a)) for a in ARMS]
-    fig = plt.figure(figsize=(3.25, 0.22))
+    fig = plt.figure(figsize=(3.25, 0.19))
     fig.legend(handles=handles, loc="center", ncol=3, frameon=False, fontsize=6.5,
-               handlelength=1.2, columnspacing=0.5, handletextpad=0.25, labelspacing=0.25,
+               handlelength=1.2, columnspacing=0.5, handletextpad=0.25, labelspacing=0.12,
                borderpad=0, borderaxespad=0)
     fig.savefig("legend.pdf", format="pdf")
     plt.close(fig)

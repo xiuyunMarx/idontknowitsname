@@ -5,13 +5,16 @@ Uncommitted local edits are stashed, Overleaf's commits are applied, and the
 edits are restored on top. If they clash with Overleaf, git leaves conflict
 markers in the affected files and also keeps the edits in `git stash`.
 
-Usage: python3 pull_from_overleaf.py
+Usage: python3 pull_from_overleaf.py [PAPER]   (default Lingjia -> Mortis_Lingjia/; "" -> Mortis/)
 """
 import os, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-REPO = ROOT / "Mortis"
+PAPER = sys.argv[1] if len(sys.argv) > 1 else "Lingjia"  # Mortis/ is a stale backup; pass "" to target it
+REPO = ROOT / ("Mortis" + (f"_{PAPER}" if PAPER else ""))
+if not (REPO / ".git").is_dir():
+    sys.exit(f"error: {REPO} is not its own git repo (no .git); refusing to touch the parent repo.")
 KEY_FILE = ROOT / "overleaf_key"
 UPSTREAM = "origin/main"
 

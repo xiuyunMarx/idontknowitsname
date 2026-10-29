@@ -1,0 +1,785 @@
+[relayout] Extractor.extract:72 "question = 'What is the FY2018 capital expenditure amount (in USD millions) for 3M? Give a response to the question by relying on the details shown in the cash "...
+[call] 2493149 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493149 Extractor.run kills ['facts']
+[priority] kvflow-88188c31 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[2026-10-18 02:01:18] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 50, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 14.16
+[2026-10-18 02:01:21] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1133.12
+[2026-10-18 02:01:23] Prefill batch, #new-seq: 1, #new-token: 3365, #cached-token: 0, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 2506.46
+[serve] 2493149-1t0-247cccb5 prompt_tokens=11607 cached_tokens=50 cached_device=50 cached_host=0 ttft_ms=9939.65 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:01:24] Decode batch, #running-req: 1, #token: 11625, token usage: 0.19, cuda graph: True, gen throughput (token/s): 2.39, #queue-req: 0
+[decode] 2493149-1t0-247cccb5 decode_ms=2246.52 output_tokens=53
+[ctl] 2493149-1t0-247cccb5 queue_ms=0.1 advance_ms=61.1 pre_ms=29.6 post_ms=31.8
+[2026-10-18 02:01:25] 127.0.0.1 [18/Oct/2026:02:01:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 655 "-" "python-httpx/0.28.1"
+[priority] kvflow-0f6c61ae demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.1898
+[relayout] Analyst.compute:91 "question = 'What is the FY2018 capital expenditure amount (in USD millions) for 3M? Give a response to the question by relying on the details shown in the cash "...
+[call] 2493149 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493149 Analyst.run kills ['facts']
+[priority] kvflow-49f13959 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.0000
+[2026-10-18 02:01:26] Prefill batch, #new-seq: 1, #new-token: 271, #cached-token: 11481, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1239.86
+[serve] 2493149-2t0-f2ef2366 prompt_tokens=11752 cached_tokens=11481 cached_device=11481 cached_host=0 ttft_ms=350.22 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:01:26] Decode batch, #running-req: 1, #token: 11757, token usage: 0.19, cuda graph: True, gen throughput (token/s): 20.45, #queue-req: 0
+[2026-10-18 02:01:27] Decode batch, #running-req: 1, #token: 11797, token usage: 0.19, cuda graph: True, gen throughput (token/s): 26.33, #queue-req: 0
+[2026-10-18 02:01:29] Decode batch, #running-req: 1, #token: 11837, token usage: 0.19, cuda graph: True, gen throughput (token/s): 26.32, #queue-req: 0
+[decode] 2493149-2t0-f2ef2366 decode_ms=3653.82 output_tokens=97
+[ctl] 2493149-2t0-f2ef2366 queue_ms=0.1 advance_ms=30.9 pre_ms=28.2 post_ms=32.3
+[2026-10-18 02:01:29] 127.0.0.1 [18/Oct/2026:02:01:25 -0400] "POST /v1/chat/completions HTTP/1.1" 200 881 "-" "python-httpx/0.28.1"
+[priority] kvflow-61c7acb2 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.4 usage=0.1929
+[layout] Auditor.check:113 order=['question', 'document', 'analysis', 'facts'] header_last=True sized={'analysis': 89}
+[layout] Writer.answer:137 order=['question', 'analysis', 'facts', 'audit'] header_last=True sized={'analysis': 89}
+[relayout] Auditor.check:113 "question = 'What is the FY2018 capital expenditure amount (in USD millions) for 3M? Give a response to the question by relying on the details shown in the cash "...
+[call] 2493149 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493149 Auditor.run kills ['analysis']
+[priority] kvflow-265bf77e demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.4 usage=0.0000
+[2026-10-18 02:01:30] Prefill batch, #new-seq: 1, #new-token: 414, #cached-token: 11482, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 63.99
+[serve] 2493149-3t0-5c88c4d3 prompt_tokens=11896 cached_tokens=11482 cached_device=11482 cached_host=0 ttft_ms=489.51 inflight_prefill=0 inflight_decode=1
+[decode] 2493149-3t0-5c88c4d3 decode_ms=505.69 output_tokens=14
+[ctl] 2493149-3t0-5c88c4d3 queue_ms=0.1 advance_ms=2.8 pre_ms=28.8 post_ms=2.7
+[2026-10-18 02:01:30] 127.0.0.1 [18/Oct/2026:02:01:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[relayout] Writer.answer:137 "question = 'What is the FY2018 capital expenditure amount (in USD millions) for 3M? Give a response to the question by relying on the details shown in the cash "...
+[call] 2493149 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493149 Writer.run kills ['audit']
+[priority] kvflow-c9763e2c demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.4 usage=0.0000
+[priority] kvflow-a24e0597 demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.4 usage=0.0089
+[2026-10-18 02:01:31] Prefill batch, #new-seq: 1, #new-token: 456, #cached-token: 92, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 464.79
+[serve] 2493149-4t0-744cbaff prompt_tokens=548 cached_tokens=92 cached_device=92 cached_host=0 ttft_ms=353.26 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:01:31] Decode batch, #running-req: 1, #token: 562, token usage: 0.01, cuda graph: True, gen throughput (token/s): 16.88, #queue-req: 0
+[2026-10-18 02:01:32] Decode batch, #running-req: 1, #token: 602, token usage: 0.01, cuda graph: True, gen throughput (token/s): 30.34, #queue-req: 0
+[decode] 2493149-4t0-744cbaff decode_ms=2648.30 output_tokens=81
+[ctl] 2493149-4t0-744cbaff queue_ms=0.0 advance_ms=0.6 pre_ms=2.3 post_ms=0.0
+[2026-10-18 02:01:33] 127.0.0.1 [18/Oct/2026:02:01:30 -0400] "POST /v1/chat/completions HTTP/1.1" 200 821 "-" "python-httpx/0.28.1"
+[close] 2493149 calls=4
+[2026-10-18 02:01:33] 127.0.0.1 [18/Oct/2026:02:01:33 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-e242cf7f demote=0/0n retire=4/4n protect=0 nodes=0 ms=3.7 usage=0.0102
+[priority] kvflow-a8169918 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[call] 2493260 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493260 Extractor.run kills ['facts']
+[priority] kvflow-c392f148 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[2026-10-18 02:01:41] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 11606, token usage: 0.19, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 45.84
+[serve] 2493260-1t0-5e2ae44a prompt_tokens=11607 cached_tokens=11606 cached_device=11606 cached_host=0 ttft_ms=99.98 inflight_prefill=0 inflight_decode=1
+[call] 2493262 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493262 Extractor.run kills ['facts']
+[call] 2493261 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493261 Extractor.run kills ['facts']
+[priority] kvflow-cb7c2ccc demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.1890
+[call] 2493263 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493263 Extractor.run kills ['facts']
+[priority] kvflow-739a4e16 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.2556
+[2026-10-18 02:01:45] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 53, token usage: 0.32, #running-req: 1, #queue-req: 2, cuda graph: False, input throughput (token/s): 0.21
+[2026-10-18 02:01:49] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.39, #running-req: 1, #queue-req: 1, cuda graph: False, input throughput (token/s): 1175.02
+[2026-10-18 02:01:52] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 53, token usage: 0.46, #running-req: 1, #queue-req: 1, cuda graph: False, input throughput (token/s): 1200.42
+[serve] 2493262-1t0-d74849ee prompt_tokens=10369 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=11618.37 inflight_prefill=2 inflight_decode=2
+[2026-10-18 02:01:56] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.52, #running-req: 2, #queue-req: 1, cuda graph: False, input throughput (token/s): 1103.34
+[2026-10-18 02:02:00] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.59, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1168.14
+[2026-10-18 02:02:03] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 54, token usage: 0.66, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1215.07
+[serve] 2493261-1t0-0234da22 prompt_tokens=10625 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=22125.84 inflight_prefill=1 inflight_decode=3
+[2026-10-18 02:02:05] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.67, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1707.22
+[2026-10-18 02:02:06] Prefill batch, #new-seq: 1, #new-token: 646, #cached-token: 0, token usage: 0.67, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 7227.93
+[serve] 2493263-1t0-7f3540e3 prompt_tokens=8484 cached_tokens=54 cached_device=54 cached_host=0 ttft_ms=25006.84 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:07] Decode batch, #running-req: 4, #token: 40965, token usage: 0.67, cuda graph: True, gen throughput (token/s): 1.88, #queue-req: 0
+[2026-10-18 02:02:09] Decode batch, #running-req: 4, #token: 41125, token usage: 0.67, cuda graph: True, gen throughput (token/s): 78.01, #queue-req: 0
+[decode] 2493260-1t0-5e2ae44a decode_ms=27904.07 output_tokens=53
+[ctl] 2493260-1t0-5e2ae44a queue_ms=0.1 advance_ms=1.3 pre_ms=31.6 post_ms=1.2
+[2026-10-18 02:02:09] 127.0.0.1 [18/Oct/2026:02:01:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 655 "-" "python-httpx/0.28.1"
+[call] 2493260 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493260 Analyst.run kills ['facts']
+[priority] kvflow-01b227bd demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.4 usage=0.4805
+[priority] kvflow-b78f476d demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.4 usage=0.4806
+[2026-10-18 02:02:09] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 11751, token usage: 0.67, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 221.15
+[ledger] drift +over=1 +under=0 (total {'over': 1153115, 'under': 187536}) device_used=61432
+[serve] 2493260-2t0-59ba62a3 prompt_tokens=11752 cached_tokens=11751 cached_device=11751 cached_host=0 ttft_ms=157.86 inflight_prefill=0 inflight_decode=4
+[decode] 2493261-1t0-0234da22 decode_ms=6556.21 output_tokens=66
+[ctl] 2493261-1t0-0234da22 queue_ms=0.3 advance_ms=26.4 pre_ms=27.6 post_ms=28.4
+[2026-10-18 02:02:10] 127.0.0.1 [18/Oct/2026:02:01:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 684 "-" "python-httpx/0.28.1"
+[priority] kvflow-902b47a9 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.5 usage=0.6720
+[call] 2493261 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493261 Analyst.run kills ['facts']
+[priority] kvflow-9513f924 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.4 usage=0.4989
+[2026-10-18 02:02:10] Prefill batch, #new-seq: 1, #new-token: 284, #cached-token: 10499, token usage: 0.67, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 0.87
+[serve] 2493261-2t0-ea2865a9 prompt_tokens=10783 cached_tokens=10499 cached_device=10499 cached_host=0 ttft_ms=371.12 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:11] Decode batch, #running-req: 4, #token: 41463, token usage: 0.67, cuda graph: True, gen throughput (token/s): 64.74, #queue-req: 0
+[2026-10-18 02:02:13] Decode batch, #running-req: 4, #token: 41623, token usage: 0.68, cuda graph: True, gen throughput (token/s): 77.78, #queue-req: 0
+[decode] 2493260-2t0-59ba62a3 decode_ms=5220.64 output_tokens=97
+[ctl] 2493260-2t0-59ba62a3 queue_ms=0.1 advance_ms=30.8 pre_ms=28.7 post_ms=33.0
+[2026-10-18 02:02:14] 127.0.0.1 [18/Oct/2026:02:02:09 -0400] "POST /v1/chat/completions HTTP/1.1" 200 881 "-" "python-httpx/0.28.1"
+[priority] kvflow-8387fe1b demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.7 usage=0.6788
+[call] 2493260 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493260 Auditor.run kills ['analysis']
+[priority] kvflow-e0b5a1fb demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.6 usage=0.4869
+[2026-10-18 02:02:14] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 11895, token usage: 0.68, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 65.71
+[ledger] drift +over=1 +under=0 (total {'over': 1153116, 'under': 187536}) device_used=61432
+[serve] 2493260-3t0-e7b76fe8 prompt_tokens=11896 cached_tokens=11895 cached_device=11895 cached_host=0 ttft_ms=160.36 inflight_prefill=0 inflight_decode=4
+[decode] 2493260-3t0-e7b76fe8 decode_ms=671.43 output_tokens=14
+[ctl] 2493260-3t0-e7b76fe8 queue_ms=0.1 advance_ms=0.5 pre_ms=29.0 post_ms=0.3
+[2026-10-18 02:02:15] 127.0.0.1 [18/Oct/2026:02:02:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493260 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493260 Writer.run kills ['audit']
+[priority] kvflow-9c16ef27 demote=4/4n retire=0/0n protect=0 nodes=0 ms=4.7 usage=0.4877
+[priority] kvflow-d958c393 demote=4/4n retire=0/0n protect=0 nodes=0 ms=4.9 usage=0.4957
+[2026-10-18 02:02:15] Prefill batch, #new-seq: 1, #new-token: 1, #cached-token: 547, token usage: 0.50, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1.20
+[serve] 2493260-4t0-36349e61 prompt_tokens=548 cached_tokens=547 cached_device=547 cached_host=0 ttft_ms=129.46 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:15] Decode batch, #running-req: 4, #token: 30464, token usage: 0.50, cuda graph: True, gen throughput (token/s): 72.13, #queue-req: 0
+[decode] 2493261-2t0-ea2865a9 decode_ms=5292.92 output_tokens=100
+[ctl] 2493261-2t0-ea2865a9 queue_ms=0.1 advance_ms=28.0 pre_ms=25.4 post_ms=28.9
+[2026-10-18 02:02:15] 127.0.0.1 [18/Oct/2026:02:02:10 -0400] "POST /v1/chat/completions HTTP/1.1" 200 779 "-" "python-httpx/0.28.1"
+[priority] kvflow-eef9353f demote=5/5n retire=0/0n protect=0 nodes=0 ms=6.0 usage=0.3197
+[call] 2493261 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493261 Auditor.run kills ['analysis']
+[priority] kvflow-253d44eb demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.9 usage=0.3198
+[2026-10-18 02:02:16] Prefill batch, #new-seq: 1, #new-token: 430, #cached-token: 10500, token usage: 0.50, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1.35
+[serve] 2493261-3t0-b218abdb prompt_tokens=10930 cached_tokens=10500 cached_device=10500 cached_host=0 ttft_ms=511.33 inflight_prefill=0 inflight_decode=4
+[decode] 2493261-3t0-b218abdb decode_ms=618.60 output_tokens=14
+[ctl] 2493261-3t0-b218abdb queue_ms=0.1 advance_ms=1.9 pre_ms=28.1 post_ms=2.8
+[2026-10-18 02:02:16] 127.0.0.1 [18/Oct/2026:02:02:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493261 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493261 Writer.run kills ['audit']
+[priority] kvflow-6d73a923 demote=6/6n retire=0/0n protect=0 nodes=0 ms=7.0 usage=0.3205
+[priority] kvflow-96e6fe12 demote=6/6n retire=0/0n protect=0 nodes=0 ms=7.3 usage=0.3290
+[2026-10-18 02:02:17] Prefill batch, #new-seq: 1, #new-token: 472, #cached-token: 103, token usage: 0.33, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 410.50
+[serve] 2493261-4t0-b0397399 prompt_tokens=575 cached_tokens=103 cached_device=103 cached_host=0 ttft_ms=397.00 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:18] Decode batch, #running-req: 4, #token: 20297, token usage: 0.33, cuda graph: True, gen throughput (token/s): 59.72, #queue-req: 0
+[decode] 2493260-4t0-36349e61 decode_ms=4290.87 output_tokens=81
+[ctl] 2493260-4t0-36349e61 queue_ms=0.0 advance_ms=0.3 pre_ms=2.4 post_ms=0.0
+[2026-10-18 02:02:19] 127.0.0.1 [18/Oct/2026:02:02:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 821 "-" "python-httpx/0.28.1"
+[close] 2493260 calls=4
+[2026-10-18 02:02:19] 127.0.0.1 [18/Oct/2026:02:02:19 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[2026-10-18 02:02:19] Decode batch, #running-req: 4, #token: 20456, token usage: 0.33, cuda graph: True, gen throughput (token/s): 94.66, #queue-req: 0
+[priority] kvflow-31dee34a demote=3/3n retire=4/4n protect=0 nodes=0 ms=7.4 usage=0.3329
+[priority] kvflow-eecad472 demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.5 usage=0.3236
+[2026-10-18 02:02:21] Decode batch, #running-req: 3, #token: 20001, token usage: 0.33, cuda graph: True, gen throughput (token/s): 71.40, #queue-req: 0
+[decode] 2493261-4t0-b0397399 decode_ms=4647.57 output_tokens=111
+[ctl] 2493261-4t0-b0397399 queue_ms=0.0 advance_ms=0.3 pre_ms=2.4 post_ms=0.0
+[2026-10-18 02:02:22] 127.0.0.1 [18/Oct/2026:02:02:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 812 "-" "python-httpx/0.28.1"
+[close] 2493261 calls=4
+[2026-10-18 02:02:22] 127.0.0.1 [18/Oct/2026:02:02:22 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-fb76205b demote=0/0n retire=4/4n protect=0 nodes=0 ms=3.5 usage=0.3261
+[priority] kvflow-385937cc demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.3158
+[2026-10-18 02:02:23] Decode batch, #running-req: 2, #token: 19458, token usage: 0.32, cuda graph: True, gen throughput (token/s): 54.39, #queue-req: 0
+[2026-10-18 02:02:24] Decode batch, #running-req: 2, #token: 19538, token usage: 0.32, cuda graph: True, gen throughput (token/s): 47.97, #queue-req: 0
+[2026-10-18 02:02:26] Decode batch, #running-req: 2, #token: 19618, token usage: 0.32, cuda graph: True, gen throughput (token/s): 47.93, #queue-req: 0
+[call] 2493433 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493433 Extractor.run kills ['facts']
+[priority] kvflow-73202553 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.3200
+[call] 2493444 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493444 Extractor.run kills ['facts']
+[2026-10-18 02:02:32] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 52, token usage: 0.45, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 31.97
+[priority] kvflow-b9260898 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.4533
+[2026-10-18 02:02:35] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.52, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1195.60
+[2026-10-18 02:02:38] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 53, token usage: 0.58, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1231.48
+[serve] 2493433-1t0-2fb42c3f prompt_tokens=9008 cached_tokens=52 cached_device=52 cached_host=0 ttft_ms=11488.10 inflight_prefill=1 inflight_decode=3
+[2026-10-18 02:02:40] Prefill batch, #new-seq: 1, #new-token: 3386, #cached-token: 0, token usage: 0.58, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 2467.32
+[serve] 2493444-1t0-971a1a52 prompt_tokens=6771 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=11653.33 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:41] Decode batch, #running-req: 4, #token: 35412, token usage: 0.58, cuda graph: True, gen throughput (token/s): 7.85, #queue-req: 0
+[2026-10-18 02:02:43] Decode batch, #running-req: 4, #token: 35572, token usage: 0.58, cuda graph: True, gen throughput (token/s): 81.96, #queue-req: 0
+[decode] 2493433-1t0-2fb42c3f decode_ms=5445.33 output_tokens=75
+[ctl] 2493433-1t0-2fb42c3f queue_ms=0.1 advance_ms=24.9 pre_ms=24.1 post_ms=25.8
+[2026-10-18 02:02:44] 127.0.0.1 [18/Oct/2026:02:02:27 -0400] "POST /v1/chat/completions HTTP/1.1" 200 796 "-" "python-httpx/0.28.1"
+[priority] kvflow-438f5a93 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.1 usage=0.5800
+[call] 2493433 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493433 Analyst.run kills ['facts']
+[priority] kvflow-e374b0ce demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.1 usage=0.4331
+[2026-10-18 02:02:44] Prefill batch, #new-seq: 1, #new-token: 293, #cached-token: 8882, token usage: 0.58, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 796.26
+[serve] 2493433-2t0-d9b6189d prompt_tokens=9175 cached_tokens=8882 cached_device=8882 cached_host=0 ttft_ms=359.73 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:45] Decode batch, #running-req: 4, #token: 35821, token usage: 0.58, cuda graph: True, gen throughput (token/s): 70.17, #queue-req: 0
+[decode] 2493444-1t0-971a1a52 decode_ms=5631.32 output_tokens=107
+[ctl] 2493444-1t0-971a1a52 queue_ms=0.1 advance_ms=18.3 pre_ms=17.1 post_ms=20.5
+[2026-10-18 02:02:46] 127.0.0.1 [18/Oct/2026:02:02:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 968 "-" "python-httpx/0.28.1"
+[call] 2493444 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493444 Analyst.run kills ['facts']
+[priority] kvflow-f87ad500 demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.8 usage=0.5835
+[priority] kvflow-d4d6f938 demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.8 usage=0.4725
+[2026-10-18 02:02:46] Prefill batch, #new-seq: 1, #new-token: 325, #cached-token: 6645, token usage: 0.59, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 155.48
+[serve] 2493444-2t0-f8689c6f prompt_tokens=6970 cached_tokens=6645 cached_device=6645 cached_host=0 ttft_ms=421.98 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:48] Decode batch, #running-req: 4, #token: 36070, token usage: 0.59, cuda graph: True, gen throughput (token/s): 68.88, #queue-req: 0
+[2026-10-18 02:02:50] Decode batch, #running-req: 4, #token: 36230, token usage: 0.59, cuda graph: True, gen throughput (token/s): 81.53, #queue-req: 0
+[decode] 2493433-2t0-d9b6189d decode_ms=6162.18 output_tokens=120
+[ctl] 2493433-2t0-d9b6189d queue_ms=0.1 advance_ms=25.7 pre_ms=23.7 post_ms=26.9
+[2026-10-18 02:02:51] 127.0.0.1 [18/Oct/2026:02:02:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 994 "-" "python-httpx/0.28.1"
+[priority] kvflow-6e3c08b9 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.8 usage=0.5909
+[call] 2493433 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493433 Auditor.run kills ['analysis']
+[priority] kvflow-d2c6b684 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.4406
+[2026-10-18 02:02:51] Prefill batch, #new-seq: 1, #new-token: 459, #cached-token: 8883, token usage: 0.59, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 66.48
+[serve] 2493433-3t0-205c159d prompt_tokens=9342 cached_tokens=8883 cached_device=8883 cached_host=0 ttft_ms=529.88 inflight_prefill=0 inflight_decode=4
+[decode] 2493433-3t0-205c159d decode_ms=651.65 output_tokens=14
+[ctl] 2493433-3t0-205c159d queue_ms=0.1 advance_ms=1.9 pre_ms=25.5 post_ms=2.8
+[2026-10-18 02:02:52] 127.0.0.1 [18/Oct/2026:02:02:51 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493433 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493433 Writer.run kills ['audit']
+[priority] kvflow-6bcb2368 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.6 usage=0.4413
+[priority] kvflow-242945ee demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.8 usage=0.4499
+[2026-10-18 02:02:52] Prefill batch, #new-seq: 1, #new-token: 501, #cached-token: 80, token usage: 0.45, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 417.10
+[serve] 2493433-4t0-32a8de82 prompt_tokens=581 cached_tokens=80 cached_device=80 cached_host=0 ttft_ms=416.66 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:52] Decode batch, #running-req: 4, #token: 27658, token usage: 0.45, cuda graph: True, gen throughput (token/s): 56.77, #queue-req: 0
+[decode] 2493263-1t0-7f3540e3 decode_ms=47193.85 output_tokens=665
+[ctl] 2493263-1t0-7f3540e3 queue_ms=67.2 advance_ms=23.1 pre_ms=22.0 post_ms=27.2
+[2026-10-18 02:02:53] 127.0.0.1 [18/Oct/2026:02:01:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 3346 "-" "python-httpx/0.28.1"
+[call] 2493263 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493263 Analyst.run kills ['facts']
+[priority] kvflow-00b32ddb demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.8 usage=0.4513
+[priority] kvflow-7b91129c demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.8 usage=0.3033
+[2026-10-18 02:02:54] Prefill batch, #new-seq: 1, #new-token: 863, #cached-token: 8358, token usage: 0.45, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 261.78
+[serve] 2493263-2t0-1a0e9993 prompt_tokens=9221 cached_tokens=8358 cached_device=8358 cached_host=0 ttft_ms=927.29 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:02:55] Decode batch, #running-req: 4, #token: 27887, token usage: 0.45, cuda graph: True, gen throughput (token/s): 58.28, #queue-req: 0
+[decode] 2493433-4t0-32a8de82 decode_ms=4437.02 output_tokens=79
+[ctl] 2493433-4t0-32a8de82 queue_ms=0.1 advance_ms=0.3 pre_ms=2.6 post_ms=0.0
+[2026-10-18 02:02:57] 127.0.0.1 [18/Oct/2026:02:02:52 -0400] "POST /v1/chat/completions HTTP/1.1" 200 865 "-" "python-httpx/0.28.1"
+[close] 2493433 calls=4
+[2026-10-18 02:02:57] 127.0.0.1 [18/Oct/2026:02:02:57 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-07496ebd demote=2/2n retire=4/4n protect=0 nodes=0 ms=5.1 usage=0.4562
+[priority] kvflow-113809f8 demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.9 usage=0.4464
+[2026-10-18 02:02:57] Decode batch, #running-req: 3, #token: 27434, token usage: 0.45, cuda graph: True, gen throughput (token/s): 85.62, #queue-req: 0
+[2026-10-18 02:02:59] Decode batch, #running-req: 3, #token: 27554, token usage: 0.45, cuda graph: True, gen throughput (token/s): 66.23, #queue-req: 0
+[2026-10-18 02:03:00] Decode batch, #running-req: 3, #token: 27674, token usage: 0.45, cuda graph: True, gen throughput (token/s): 66.17, #queue-req: 0
+[decode] 2493444-2t0-f8689c6f decode_ms=15462.32 output_tokens=296
+[ctl] 2493444-2t0-f8689c6f queue_ms=0.1 advance_ms=17.9 pre_ms=17.0 post_ms=21.0
+[2026-10-18 02:03:02] 127.0.0.1 [18/Oct/2026:02:02:46 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1539 "-" "python-httpx/0.28.1"
+[call] 2493444 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493444 Auditor.run kills ['analysis']
+[priority] kvflow-0ede94b1 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.4517
+[priority] kvflow-3d874508 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.3344
+[2026-10-18 02:03:02] Prefill batch, #new-seq: 1, #new-token: 667, #cached-token: 6646, token usage: 0.45, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 103.25
+[serve] 2493444-3t0-f6f2248a prompt_tokens=7313 cached_tokens=6646 cached_device=6646 cached_host=0 ttft_ms=726.85 inflight_prefill=0 inflight_decode=3
+[decode] 2493262-1t0-d74849ee decode_ms=70344.39 output_tokens=842
+[ctl] 2493262-1t0-d74849ee queue_ms=0.1 advance_ms=27.6 pre_ms=26.7 post_ms=33.2
+[2026-10-18 02:03:03] 127.0.0.1 [18/Oct/2026:02:01:41 -0400] "POST /v1/chat/completions HTTP/1.1" 200 2646 "-" "python-httpx/0.28.1"
+[call] 2493262 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493262 Analyst.run kills ['facts']
+[priority] kvflow-718f791d demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.8 usage=0.4528
+[priority] kvflow-42a786e6 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.7 usage=0.2713
+[call] 2493545 #0 Extractor.extract:72 ctx=()
+[invalidate] 2493545 Extractor.run kills ['facts']
+[2026-10-18 02:03:04] Prefill batch, #new-seq: 1, #new-token: 1060, #cached-token: 10243, token usage: 0.45, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 452.77
+[serve] 2493262-2t0-0d786243 prompt_tokens=11303 cached_tokens=10243 cached_device=10243 cached_host=0 ttft_ms=1147.60 inflight_prefill=1 inflight_decode=3
+[priority] kvflow-10af72c5 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.9 usage=0.4544
+[2026-10-18 02:03:07] Prefill batch, #new-seq: 1, #new-token: 3573, #cached-token: 53, token usage: 0.51, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 374.44
+[serve] 2493545-1t0-8ab0f35a prompt_tokens=3626 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=3361.49 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:07] Decode batch, #running-req: 4, #token: 31503, token usage: 0.51, cuda graph: True, gen throughput (token/s): 17.91, #queue-req: 0
+[decode] 2493444-3t0-f6f2248a decode_ms=4537.65 output_tokens=14
+[ctl] 2493444-3t0-f6f2248a queue_ms=0.1 advance_ms=2.8 pre_ms=19.9 post_ms=3.6
+[2026-10-18 02:03:07] 127.0.0.1 [18/Oct/2026:02:03:02 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493444 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493444 Writer.run kills ['audit']
+[priority] kvflow-746271db demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.4 usage=0.3945
+[priority] kvflow-1de6b594 demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.6 usage=0.4068
+[2026-10-18 02:03:08] Prefill batch, #new-seq: 1, #new-token: 709, #cached-token: 96, token usage: 0.41, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 3754.12
+[serve] 2493444-4t0-ce8cddf8 prompt_tokens=805 cached_tokens=96 cached_device=96 cached_host=0 ttft_ms=683.06 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:09] Decode batch, #running-req: 4, #token: 25140, token usage: 0.41, cuda graph: True, gen throughput (token/s): 65.57, #queue-req: 0
+[2026-10-18 02:03:11] Decode batch, #running-req: 4, #token: 25300, token usage: 0.41, cuda graph: True, gen throughput (token/s): 90.29, #queue-req: 0
+[2026-10-18 02:03:13] Decode batch, #running-req: 4, #token: 25460, token usage: 0.41, cuda graph: True, gen throughput (token/s): 90.15, #queue-req: 0
+[decode] 2493545-1t0-8ab0f35a decode_ms=7533.24 output_tokens=154
+[ctl] 2493545-1t0-8ab0f35a queue_ms=0.1 advance_ms=10.6 pre_ms=9.5 post_ms=10.9
+[2026-10-18 02:03:14] 127.0.0.1 [18/Oct/2026:02:03:03 -0400] "POST /v1/chat/completions HTTP/1.1" 200 873 "-" "python-httpx/0.28.1"
+[call] 2493545 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2493545 Analyst.run kills ['facts']
+[priority] kvflow-e6f410ab demote=6/6n retire=0/0n protect=0 nodes=0 ms=5.3 usage=0.4165
+[priority] kvflow-067e2b5c demote=6/6n retire=0/0n protect=0 nodes=0 ms=4.9 usage=0.3559
+[2026-10-18 02:03:15] Prefill batch, #new-seq: 1, #new-token: 362, #cached-token: 3500, token usage: 0.42, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 100.83
+[serve] 2493545-2t0-13fbac3c prompt_tokens=3862 cached_tokens=3500 cached_device=3500 cached_host=0 ttft_ms=388.75 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:15] Decode batch, #running-req: 4, #token: 25700, token usage: 0.42, cuda graph: True, gen throughput (token/s): 75.02, #queue-req: 0
+[decode] 2493444-4t0-ce8cddf8 decode_ms=8066.71 output_tokens=175
+[ctl] 2493444-4t0-ce8cddf8 queue_ms=0.1 advance_ms=0.3 pre_ms=3.4 post_ms=0.0
+[2026-10-18 02:03:16] 127.0.0.1 [18/Oct/2026:02:03:07 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1203 "-" "python-httpx/0.28.1"
+[close] 2493444 calls=4
+[2026-10-18 02:03:16] 127.0.0.1 [18/Oct/2026:02:03:16 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-a2ca020c demote=3/3n retire=4/4n protect=0 nodes=0 ms=5.2 usage=0.4195
+[priority] kvflow-a2c497fa demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.4045
+[2026-10-18 02:03:17] Decode batch, #running-req: 3, #token: 24911, token usage: 0.41, cuda graph: True, gen throughput (token/s): 78.13, #queue-req: 0
+[decode] 2493263-2t0-1a0e9993 decode_ms=22836.15 output_tokens=385
+[ctl] 2493263-2t0-1a0e9993 queue_ms=0.1 advance_ms=25.2 pre_ms=25.7 post_ms=28.2
+[2026-10-18 02:03:17] 127.0.0.1 [18/Oct/2026:02:02:53 -0400] "POST /v1/chat/completions HTTP/1.1" 200 2113 "-" "python-httpx/0.28.1"
+[call] 2493263 #2 Auditor.check:113 predicted=hit ctx=()
+[priority] kvflow-ce60649d demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.7 usage=0.4057
+[invalidate] 2493263 Auditor.run kills ['analysis']
+[priority] kvflow-cb9bba01 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.7 usage=0.2503
+[2026-10-18 02:03:18] Prefill batch, #new-seq: 1, #new-token: 1294, #cached-token: 8359, token usage: 0.41, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 101.07
+[serve] 2493263-3t0-be0fe1bc prompt_tokens=9653 cached_tokens=8359 cached_device=8359 cached_host=0 ttft_ms=1305.66 inflight_prefill=0 inflight_decode=3
+[decode] 2493263-3t0-be0fe1bc decode_ms=605.01 output_tokens=14
+[ctl] 2493263-3t0-be0fe1bc queue_ms=0.1 advance_ms=4.9 pre_ms=25.4 post_ms=5.6
+[2026-10-18 02:03:19] 127.0.0.1 [18/Oct/2026:02:03:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493263 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493263 Writer.run kills ['audit']
+[priority] kvflow-35a9b745 demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.0 usage=0.2507
+[priority] kvflow-71334d3f demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.8 usage=0.2508
+[2026-10-18 02:03:20] Prefill batch, #new-seq: 1, #new-token: 1336, #cached-token: 92, token usage: 0.27, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 740.99
+[serve] 2493263-4t0-8831027e prompt_tokens=1428 cached_tokens=92 cached_device=92 cached_host=0 ttft_ms=1103.52 inflight_prefill=0 inflight_decode=3
+[2026-10-18 02:03:21] Decode batch, #running-req: 3, #token: 16834, token usage: 0.27, cuda graph: True, gen throughput (token/s): 28.74, #queue-req: 0
+[2026-10-18 02:03:22] Decode batch, #running-req: 3, #token: 16954, token usage: 0.28, cuda graph: True, gen throughput (token/s): 73.75, #queue-req: 0
+[call] 2496344 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496344 Extractor.run kills ['facts']
+[priority] kvflow-f7bf5b38 demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.0 usage=0.2771
+[2026-10-18 02:03:28] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 57, token usage: 0.41, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 168.20
+[2026-10-18 02:03:31] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.44, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1615.53
+[2026-10-18 02:03:32] Prefill batch, #new-seq: 1, #new-token: 1584, #cached-token: 0, token usage: 0.44, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 4102.01
+[serve] 2496344-1t0-35e2c61a prompt_tokens=9833 cached_tokens=57 cached_device=57 cached_host=0 ttft_ms=8256.32 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:33] Decode batch, #running-req: 4, #token: 26871, token usage: 0.44, cuda graph: True, gen throughput (token/s): 13.45, #queue-req: 0
+[decode] 2493262-2t0-0d786243 decode_ms=29151.43 output_tokens=336
+[ctl] 2493262-2t0-0d786243 queue_ms=0.1 advance_ms=30.9 pre_ms=31.8 post_ms=35.2
+[2026-10-18 02:03:33] 127.0.0.1 [18/Oct/2026:02:03:03 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1709 "-" "python-httpx/0.28.1"
+[priority] kvflow-5715a9c4 demote=6/6n retire=0/0n protect=0 nodes=0 ms=6.6 usage=0.4382
+[call] 2493262 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493262 Auditor.run kills ['analysis']
+[priority] kvflow-8bde7b0f demote=6/6n retire=0/0n protect=0 nodes=0 ms=6.2 usage=0.2498
+[2026-10-18 02:03:35] Prefill batch, #new-seq: 1, #new-token: 1442, #cached-token: 10244, token usage: 0.44, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 503.49
+[serve] 2493262-3t0-faac02de prompt_tokens=11686 cached_tokens=10244 cached_device=10244 cached_host=0 ttft_ms=1513.44 inflight_prefill=0 inflight_decode=4
+[decode] 2493262-3t0-faac02de decode_ms=624.58 output_tokens=14
+[ctl] 2493262-3t0-faac02de queue_ms=0.1 advance_ms=5.0 pre_ms=32.0 post_ms=5.5
+[2026-10-18 02:03:35] 127.0.0.1 [18/Oct/2026:02:03:33 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2493262 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493262 Writer.run kills ['audit']
+[priority] kvflow-77d74e1e demote=7/7n retire=0/0n protect=0 nodes=0 ms=7.3 usage=0.2506
+[priority] kvflow-023322c0 demote=7/7n retire=0/0n protect=0 nodes=0 ms=7.5 usage=0.2750
+[2026-10-18 02:03:37] Prefill batch, #new-seq: 1, #new-token: 1484, #cached-token: 71, token usage: 0.28, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 785.18
+[serve] 2493262-4t0-360577a7 prompt_tokens=1555 cached_tokens=71 cached_device=71 cached_host=0 ttft_ms=1174.46 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:37] Decode batch, #running-req: 4, #token: 16928, token usage: 0.28, cuda graph: True, gen throughput (token/s): 35.54, #queue-req: 0
+[decode] 2493545-2t0-13fbac3c decode_ms=22517.21 output_tokens=216
+[ctl] 2493545-2t0-13fbac3c queue_ms=0.1 advance_ms=10.7 pre_ms=9.2 post_ms=12.0
+[2026-10-18 02:03:37] 127.0.0.1 [18/Oct/2026:02:03:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1147 "-" "python-httpx/0.28.1"
+[call] 2493545 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2493545 Auditor.run kills ['analysis']
+[priority] kvflow-80dd8c36 demote=8/8n retire=0/0n protect=0 nodes=0 ms=7.8 usage=0.2762
+[priority] kvflow-d4dcb291 demote=8/8n retire=0/0n protect=0 nodes=0 ms=7.7 usage=0.2107
+[2026-10-18 02:03:38] Prefill batch, #new-seq: 1, #new-token: 624, #cached-token: 3501, token usage: 0.28, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1038.33
+[serve] 2493545-3t0-4025a74c prompt_tokens=4125 cached_tokens=3501 cached_device=3501 cached_host=0 ttft_ms=647.03 inflight_prefill=0 inflight_decode=4
+[decode] 2493545-3t0-4025a74c decode_ms=423.42 output_tokens=11
+[ctl] 2493545-3t0-4025a74c queue_ms=0.1 advance_ms=2.2 pre_ms=11.2 post_ms=3.1
+[2026-10-18 02:03:38] 127.0.0.1 [18/Oct/2026:02:03:37 -0400] "POST /v1/chat/completions HTTP/1.1" 200 503 "-" "python-httpx/0.28.1"
+[call] 2493545 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2493545 Writer.run kills ['audit']
+[priority] kvflow-19e8a3c3 demote=9/9n retire=0/0n protect=0 nodes=0 ms=8.4 usage=0.2113
+[priority] kvflow-7f8f72d2 demote=9/9n retire=0/0n protect=0 nodes=0 ms=8.5 usage=0.2227
+[2026-10-18 02:03:39] Prefill batch, #new-seq: 1, #new-token: 666, #cached-token: 82, token usage: 0.22, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 576.56
+[serve] 2493545-4t0-d14ea1e0 prompt_tokens=748 cached_tokens=82 cached_device=82 cached_host=0 ttft_ms=626.65 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:03:40] Decode batch, #running-req: 4, #token: 13744, token usage: 0.22, cuda graph: True, gen throughput (token/s): 56.15, #queue-req: 0
+[decode] 2493263-4t0-8831027e decode_ms=19774.28 output_tokens=182
+[ctl] 2493263-4t0-8831027e queue_ms=0.1 advance_ms=0.3 pre_ms=5.4 post_ms=0.0
+[2026-10-18 02:03:40] 127.0.0.1 [18/Oct/2026:02:03:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1254 "-" "python-httpx/0.28.1"
+[close] 2493263 calls=4
+[2026-10-18 02:03:40] 127.0.0.1 [18/Oct/2026:02:03:40 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-632bd7c7 demote=6/6n retire=4/4n protect=0 nodes=0 ms=8.8 usage=0.2241
+[priority] kvflow-aa681e08 demote=6/6n retire=0/0n protect=0 nodes=0 ms=5.3 usage=0.1988
+[2026-10-18 02:03:41] Decode batch, #running-req: 3, #token: 12312, token usage: 0.20, cuda graph: True, gen throughput (token/s): 81.01, #queue-req: 0
+[decode] 2493262-4t0-360577a7 decode_ms=5796.65 output_tokens=117
+[ctl] 2493262-4t0-360577a7 queue_ms=0.1 advance_ms=0.3 pre_ms=5.0 post_ms=0.0
+[2026-10-18 02:03:42] 127.0.0.1 [18/Oct/2026:02:03:35 -0400] "POST /v1/chat/completions HTTP/1.1" 200 886 "-" "python-httpx/0.28.1"
+[close] 2493262 calls=4
+[2026-10-18 02:03:42] 127.0.0.1 [18/Oct/2026:02:03:42 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-e59bed48 demote=3/3n retire=4/4n protect=0 nodes=0 ms=5.4 usage=0.2018
+[priority] kvflow-5584bb83 demote=3/3n retire=0/0n protect=0 nodes=0 ms=1.5 usage=0.1755
+[2026-10-18 02:03:43] Decode batch, #running-req: 2, #token: 10802, token usage: 0.18, cuda graph: True, gen throughput (token/s): 71.26, #queue-req: 0
+[decode] 2496344-1t0-35e2c61a decode_ms=12303.00 output_tokens=206
+[ctl] 2496344-1t0-35e2c61a queue_ms=0.1 advance_ms=27.8 pre_ms=26.6 post_ms=29.1
+[2026-10-18 02:03:44] 127.0.0.1 [18/Oct/2026:02:03:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1144 "-" "python-httpx/0.28.1"
+[priority] kvflow-e66a29c6 demote=4/4n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.1768
+[call] 2496344 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496344 Analyst.run kills ['facts']
+[priority] kvflow-5919d54d demote=4/4n retire=0/0n protect=0 nodes=0 ms=2.6 usage=0.0143
+[2026-10-18 02:03:44] Prefill batch, #new-seq: 1, #new-token: 424, #cached-token: 9707, token usage: 0.18, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 122.54
+[serve] 2496344-2t0-47a3d513 prompt_tokens=10131 cached_tokens=9707 cached_device=9707 cached_host=0 ttft_ms=514.03 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:03:45] Decode batch, #running-req: 2, #token: 10969, token usage: 0.18, cuda graph: True, gen throughput (token/s): 38.90, #queue-req: 0
+[2026-10-18 02:03:46] Decode batch, #running-req: 2, #token: 11049, token usage: 0.18, cuda graph: True, gen throughput (token/s): 52.65, #queue-req: 0
+[decode] 2493545-4t0-d14ea1e0 decode_ms=7837.32 output_tokens=194
+[ctl] 2493545-4t0-d14ea1e0 queue_ms=0.0 advance_ms=0.2 pre_ms=2.7 post_ms=0.0
+[2026-10-18 02:03:47] 127.0.0.1 [18/Oct/2026:02:03:38 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1063 "-" "python-httpx/0.28.1"
+[close] 2493545 calls=4
+[2026-10-18 02:03:47] 127.0.0.1 [18/Oct/2026:02:03:47 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-9d10b6c5 demote=1/1n retire=4/4n protect=0 nodes=0 ms=2.8 usage=0.1804
+[priority] kvflow-2cf0ff30 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.1660
+[call] 2496441 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496441 Extractor.run kills ['facts']
+[priority] kvflow-b9b32df3 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.1661
+[call] 2496452 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496452 Extractor.run kills ['facts']
+[2026-10-18 02:03:52] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 60, token usage: 0.29, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 57.94
+[priority] kvflow-73917f3f demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.2862
+[call] 2496485 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496485 Extractor.run kills ['facts']
+[2026-10-18 02:03:55] Prefill batch, #new-seq: 1, #new-token: 3279, #cached-token: 0, token usage: 0.35, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1479.68
+[serve] 2496441-1t0-499ee42a prompt_tokens=7435 cached_tokens=60 cached_device=60 cached_host=0 ttft_ms=7407.98 inflight_prefill=2 inflight_decode=2
+[priority] kvflow-880781b9 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.3529
+[2026-10-18 02:03:58] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 60, token usage: 0.42, #running-req: 2, #queue-req: 1, cuda graph: False, input throughput (token/s): 935.37
+[2026-10-18 02:04:02] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.49, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1178.41
+[2026-10-18 02:04:05] Prefill batch, #new-seq: 2, #new-token: 4096, #cached-token: 53, token usage: 0.55, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1203.37
+[serve] 2496452-1t0-104d7ddf prompt_tokens=9764 cached_tokens=60 cached_device=60 cached_host=0 ttft_ms=15724.75 inflight_prefill=1 inflight_decode=3
+[2026-10-18 02:04:08] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.59, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1458.33
+[2026-10-18 02:04:09] Prefill batch, #new-seq: 1, #new-token: 2087, #cached-token: 0, token usage: 0.59, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 3137.51
+[serve] 2496485-1t0-12273b0c prompt_tokens=8820 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=15438.97 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:04:10] Decode batch, #running-req: 4, #token: 36113, token usage: 0.59, cuda graph: True, gen throughput (token/s): 4.13, #queue-req: 0
+[2026-10-18 02:04:12] Decode batch, #running-req: 4, #token: 36273, token usage: 0.59, cuda graph: True, gen throughput (token/s): 81.42, #queue-req: 0
+[2026-10-18 02:04:14] Decode batch, #running-req: 4, #token: 36433, token usage: 0.59, cuda graph: True, gen throughput (token/s): 81.35, #queue-req: 0
+[decode] 2496344-2t0-47a3d513 decode_ms=29522.52 output_tokens=169
+[ctl] 2496344-2t0-47a3d513 queue_ms=0.1 advance_ms=27.9 pre_ms=27.3 post_ms=25.3
+[2026-10-18 02:04:14] 127.0.0.1 [18/Oct/2026:02:03:44 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1130 "-" "python-httpx/0.28.1"
+[priority] kvflow-1a0c445d demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.4 usage=0.5932
+[call] 2496344 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496344 Auditor.run kills ['analysis']
+[priority] kvflow-6f1b3020 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.2 usage=0.4265
+[2026-10-18 02:04:15] Prefill batch, #new-seq: 1, #new-token: 639, #cached-token: 9708, token usage: 0.59, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 360.81
+[serve] 2496344-3t0-fd207129 prompt_tokens=10347 cached_tokens=9708 cached_device=9708 cached_host=0 ttft_ms=771.13 inflight_prefill=0 inflight_decode=4
+[decode] 2496441-1t0-499ee42a decode_ms=20496.34 output_tokens=105
+[ctl] 2496441-1t0-499ee42a queue_ms=0.1 advance_ms=21.5 pre_ms=20.4 post_ms=21.6
+[2026-10-18 02:04:15] 127.0.0.1 [18/Oct/2026:02:03:47 -0400] "POST /v1/chat/completions HTTP/1.1" 200 782 "-" "python-httpx/0.28.1"
+[call] 2496441 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496441 Analyst.run kills ['facts']
+[priority] kvflow-1645fead demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.3 usage=0.5945
+[priority] kvflow-64926b98 demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.4 usage=0.4728
+[2026-10-18 02:04:16] Prefill batch, #new-seq: 1, #new-token: 313, #cached-token: 7309, token usage: 0.60, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 935.18
+[serve] 2496441-2t0-f74d09f0 prompt_tokens=7622 cached_tokens=7309 cached_device=7309 cached_host=0 ttft_ms=379.96 inflight_prefill=0 inflight_decode=4
+[decode] 2496344-3t0-fd207129 decode_ms=939.46 output_tokens=14
+[ctl] 2496344-3t0-fd207129 queue_ms=0.0 advance_ms=2.0 pre_ms=21.8 post_ms=3.3
+[2026-10-18 02:04:16] 127.0.0.1 [18/Oct/2026:02:04:14 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496344 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496344 Writer.run kills ['audit']
+[priority] kvflow-b43ae002 demote=4/4n retire=0/0n protect=0 nodes=0 ms=4.5 usage=0.4286
+[priority] kvflow-6fc7b123 demote=4/4n retire=0/0n protect=0 nodes=0 ms=4.5 usage=0.4399
+[2026-10-18 02:04:16] Prefill batch, #new-seq: 1, #new-token: 681, #cached-token: 66, token usage: 0.44, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 336.61
+[serve] 2496344-4t0-f62b6a9a prompt_tokens=747 cached_tokens=66 cached_device=66 cached_host=0 ttft_ms=640.35 inflight_prefill=0 inflight_decode=4
+[decode] 2496485-1t0-12273b0c decode_ms=7551.95 output_tokens=119
+[ctl] 2496485-1t0-12273b0c queue_ms=0.1 advance_ms=25.1 pre_ms=24.0 post_ms=29.4
+[2026-10-18 02:04:17] 127.0.0.1 [18/Oct/2026:02:03:54 -0400] "POST /v1/chat/completions HTTP/1.1" 200 981 "-" "python-httpx/0.28.1"
+[priority] kvflow-e9dcf986 demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.4 usage=0.4402
+[call] 2496485 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496485 Analyst.run kills ['facts']
+[priority] kvflow-cd21a309 demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.5 usage=0.2957
+[2026-10-18 02:04:17] Prefill batch, #new-seq: 1, #new-token: 332, #cached-token: 8694, token usage: 0.44, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 974.48
+[serve] 2496485-2t0-78ebcaf0 prompt_tokens=9026 cached_tokens=8694 cached_device=8694 cached_host=0 ttft_ms=432.79 inflight_prefill=0 inflight_decode=4
+[2026-10-18 02:04:18] Decode batch, #running-req: 4, #token: 27184, token usage: 0.44, cuda graph: True, gen throughput (token/s): 39.53, #queue-req: 0
+[2026-10-18 02:04:19] Decode batch, #running-req: 4, #token: 27344, token usage: 0.45, cuda graph: True, gen throughput (token/s): 88.44, #queue-req: 0
+[2026-10-18 02:04:21] Decode batch, #running-req: 4, #token: 27504, token usage: 0.45, cuda graph: True, gen throughput (token/s): 88.33, #queue-req: 0
+[decode] 2496344-4t0-f62b6a9a decode_ms=5639.79 output_tokens=118
+[ctl] 2496344-4t0-f62b6a9a queue_ms=0.0 advance_ms=0.3 pre_ms=2.9 post_ms=0.0
+[2026-10-18 02:04:22] 127.0.0.1 [18/Oct/2026:02:04:16 -0400] "POST /v1/chat/completions HTTP/1.1" 200 887 "-" "python-httpx/0.28.1"
+[close] 2496344 calls=4
+[2026-10-18 02:04:22] 127.0.0.1 [18/Oct/2026:02:04:22 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-4a3a08dd demote=2/2n retire=4/4n protect=0 nodes=0 ms=6.1 usage=0.4489
+[priority] kvflow-66219937 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.0 usage=0.4358
+[decode] 2496485-2t0-78ebcaf0 decode_ms=5845.98 output_tokens=130
+[ctl] 2496485-2t0-78ebcaf0 queue_ms=0.1 advance_ms=27.6 pre_ms=26.9 post_ms=30.5
+[2026-10-18 02:04:23] 127.0.0.1 [18/Oct/2026:02:04:17 -0400] "POST /v1/chat/completions HTTP/1.1" 200 852 "-" "python-httpx/0.28.1"
+[2026-10-18 02:04:23] Decode batch, #running-req: 3, #token: 26830, token usage: 0.44, cuda graph: True, gen throughput (token/s): 77.24, #queue-req: 0
+[priority] kvflow-e3fbb86c demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.0 usage=0.4367
+[call] 2496485 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496485 Auditor.run kills ['analysis']
+[priority] kvflow-e1f6b63f demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.9 usage=0.2886
+[2026-10-18 02:04:24] Prefill batch, #new-seq: 1, #new-token: 508, #cached-token: 8695, token usage: 0.44, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 51.23
+[serve] 2496485-3t0-5985ffd1 prompt_tokens=9203 cached_tokens=8695 cached_device=8695 cached_host=0 ttft_ms=543.42 inflight_prefill=0 inflight_decode=3
+[decode] 2496485-3t0-5985ffd1 decode_ms=599.69 output_tokens=14
+[ctl] 2496485-3t0-5985ffd1 queue_ms=0.1 advance_ms=2.3 pre_ms=30.2 post_ms=3.0
+[2026-10-18 02:04:24] 127.0.0.1 [18/Oct/2026:02:04:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496485 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496485 Writer.run kills ['audit']
+[priority] kvflow-90a67095 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.8 usage=0.2891
+[priority] kvflow-d55b03e4 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.9 usage=0.2993
+[2026-10-18 02:04:25] Prefill batch, #new-seq: 1, #new-token: 550, #cached-token: 128, token usage: 0.30, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 472.65
+[serve] 2496485-4t0-3da2f6dd prompt_tokens=678 cached_tokens=128 cached_device=128 cached_host=0 ttft_ms=442.85 inflight_prefill=0 inflight_decode=3
+[2026-10-18 02:04:26] Decode batch, #running-req: 3, #token: 18455, token usage: 0.30, cuda graph: True, gen throughput (token/s): 44.85, #queue-req: 0
+[decode] 2496441-2t0-f74d09f0 decode_ms=10937.06 output_tokens=206
+[ctl] 2496441-2t0-f74d09f0 queue_ms=0.0 advance_ms=21.2 pre_ms=19.7 post_ms=23.2
+[2026-10-18 02:04:27] 127.0.0.1 [18/Oct/2026:02:04:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1039 "-" "python-httpx/0.28.1"
+[priority] kvflow-a5b889c6 demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.8 usage=0.3014
+[call] 2496441 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496441 Auditor.run kills ['analysis']
+[priority] kvflow-13809d28 demote=5/5n retire=0/0n protect=0 nodes=0 ms=4.7 usage=0.1750
+[2026-10-18 02:04:27] Prefill batch, #new-seq: 1, #new-token: 565, #cached-token: 7310, token usage: 0.30, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 228.85
+[serve] 2496441-3t0-0ddc2d0f prompt_tokens=7875 cached_tokens=7310 cached_device=7310 cached_host=0 ttft_ms=571.97 inflight_prefill=0 inflight_decode=3
+[decode] 2496441-3t0-0ddc2d0f decode_ms=553.81 output_tokens=14
+[ctl] 2496441-3t0-0ddc2d0f queue_ms=0.7 advance_ms=2.5 pre_ms=24.1 post_ms=3.1
+[2026-10-18 02:04:28] 127.0.0.1 [18/Oct/2026:02:04:27 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496441 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496441 Writer.run kills ['audit']
+[priority] kvflow-b908c840 demote=6/6n retire=0/0n protect=0 nodes=0 ms=5.6 usage=0.1755
+[priority] kvflow-d5a24aa4 demote=6/6n retire=0/0n protect=0 nodes=0 ms=6.0 usage=0.1865
+[2026-10-18 02:04:28] Prefill batch, #new-seq: 1, #new-token: 607, #cached-token: 130, token usage: 0.19, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 487.40
+[serve] 2496441-4t0-b4148282 prompt_tokens=737 cached_tokens=130 cached_device=130 cached_host=0 ttft_ms=572.97 inflight_prefill=0 inflight_decode=3
+[2026-10-18 02:04:28] Decode batch, #running-req: 3, #token: 11466, token usage: 0.19, cuda graph: True, gen throughput (token/s): 43.08, #queue-req: 0
+[decode] 2496452-1t0-104d7ddf decode_ms=23845.23 output_tokens=346
+[ctl] 2496452-1t0-104d7ddf queue_ms=0.1 advance_ms=28.5 pre_ms=26.1 post_ms=31.1
+[2026-10-18 02:04:29] 127.0.0.1 [18/Oct/2026:02:03:49 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1420 "-" "python-httpx/0.28.1"
+[priority] kvflow-e7a8d7f9 demote=7/7n retire=0/0n protect=0 nodes=0 ms=6.8 usage=0.1872
+[call] 2496452 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496452 Analyst.run kills ['facts']
+[call] 2496650 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496650 Extractor.run kills ['facts']
+[priority] kvflow-96a552f6 demote=7/7n retire=0/0n protect=0 nodes=0 ms=6.8 usage=0.0238
+[priority] kvflow-14979235 demote=7/7n retire=0/0n protect=0 nodes=0 ms=6.8 usage=0.1885
+[2026-10-18 02:04:31] Prefill batch, #new-seq: 1, #new-token: 539, #cached-token: 9638, token usage: 0.26, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 237.56
+[serve] 2496452-2t0-88c42dfd prompt_tokens=10177 cached_tokens=9638 cached_device=9638 cached_host=0 ttft_ms=1919.52 inflight_prefill=1 inflight_decode=3
+[2026-10-18 02:04:34] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 53, token usage: 0.32, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 160.41
+[2026-10-18 02:04:36] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.32, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 1909.70
+[2026-10-18 02:04:36] Prefill batch, #new-seq: 1, #new-token: 22, #cached-token: 0, token usage: 0.32, #running-req: 3, #queue-req: 0, cuda graph: False, input throughput (token/s): 633030.14
+[serve] 2496650-1t0-697cca9e prompt_tokens=8267 cached_tokens=53 cached_device=53 cached_host=0 ttft_ms=7361.66 inflight_prefill=0 inflight_decode=4
+[decode] 2496485-4t0-3da2f6dd decode_ms=11950.18 output_tokens=84
+[ctl] 2496485-4t0-3da2f6dd queue_ms=0.0 advance_ms=0.3 pre_ms=2.8 post_ms=0.0
+[2026-10-18 02:04:37] 127.0.0.1 [18/Oct/2026:02:04:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 758 "-" "python-httpx/0.28.1"
+[close] 2496485 calls=4
+[2026-10-18 02:04:37] 127.0.0.1 [18/Oct/2026:02:04:37 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-2f70d4ee demote=4/4n retire=4/4n protect=0 nodes=0 ms=7.2 usage=0.3225
+[priority] kvflow-d0e9acd8 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.9 usage=0.3110
+[2026-10-18 02:04:37] Decode batch, #running-req: 3, #token: 19157, token usage: 0.31, cuda graph: True, gen throughput (token/s): 13.04, #queue-req: 0
+[2026-10-18 02:04:39] Decode batch, #running-req: 3, #token: 19277, token usage: 0.31, cuda graph: True, gen throughput (token/s): 71.96, #queue-req: 0
+[2026-10-18 02:04:41] Decode batch, #running-req: 3, #token: 19397, token usage: 0.32, cuda graph: True, gen throughput (token/s): 71.77, #queue-req: 0
+[decode] 2496441-4t0-b4148282 decode_ms=13273.95 output_tokens=140
+[ctl] 2496441-4t0-b4148282 queue_ms=0.1 advance_ms=0.3 pre_ms=2.9 post_ms=0.0
+[2026-10-18 02:04:42] 127.0.0.1 [18/Oct/2026:02:04:28 -0400] "POST /v1/chat/completions HTTP/1.1" 200 879 "-" "python-httpx/0.28.1"
+[close] 2496441 calls=4
+[2026-10-18 02:04:42] 127.0.0.1 [18/Oct/2026:02:04:42 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-19dffa62 demote=1/1n retire=4/4n protect=0 nodes=0 ms=4.3 usage=0.3166
+[priority] kvflow-ae0c090c demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.3 usage=0.3034
+[decode] 2496650-1t0-697cca9e decode_ms=5791.80 output_tokens=135
+[ctl] 2496650-1t0-697cca9e queue_ms=0.1 advance_ms=18.2 pre_ms=19.6 post_ms=22.5
+[2026-10-18 02:04:42] 127.0.0.1 [18/Oct/2026:02:04:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 790 "-" "python-httpx/0.28.1"
+[priority] kvflow-ccd6f3b0 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.1 usage=0.3038
+[call] 2496650 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496650 Analyst.run kills ['facts']
+[priority] kvflow-8162ed40 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.1 usage=0.1679
+[2026-10-18 02:04:43] Prefill batch, #new-seq: 1, #new-token: 348, #cached-token: 8141, token usage: 0.31, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 3.49
+[serve] 2496650-2t0-e2c0fb1c prompt_tokens=8489 cached_tokens=8141 cached_device=8141 cached_host=0 ttft_ms=418.50 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:04:43] Decode batch, #running-req: 2, #token: 18762, token usage: 0.31, cuda graph: True, gen throughput (token/s): 47.46, #queue-req: 0
+[2026-10-18 02:04:44] Decode batch, #running-req: 2, #token: 18842, token usage: 0.31, cuda graph: True, gen throughput (token/s): 48.39, #queue-req: 0
+[2026-10-18 02:04:46] Decode batch, #running-req: 2, #token: 18922, token usage: 0.31, cuda graph: True, gen throughput (token/s): 48.35, #queue-req: 0
+[2026-10-18 02:04:48] Decode batch, #running-req: 2, #token: 19002, token usage: 0.31, cuda graph: True, gen throughput (token/s): 48.31, #queue-req: 0
+[call] 2496697 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496697 Extractor.run kills ['facts']
+[decode] 2496650-2t0-e2c0fb1c decode_ms=5943.28 output_tokens=144
+[ctl] 2496650-2t0-e2c0fb1c queue_ms=0.0 advance_ms=22.7 pre_ms=20.6 post_ms=21.6
+[2026-10-18 02:04:49] 127.0.0.1 [18/Oct/2026:02:04:42 -0400] "POST /v1/chat/completions HTTP/1.1" 200 795 "-" "python-httpx/0.28.1"
+[priority] kvflow-7b18bbe4 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.2 usage=0.3099
+[call] 2496650 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496650 Auditor.run kills ['analysis']
+[priority] kvflow-08fa908c demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.9 usage=0.2369
+[2026-10-18 02:04:53] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 61, token usage: 0.30, #running-req: 1, #queue-req: 1, cuda graph: False, input throughput (token/s): 32.64
+[priority] kvflow-520604ca demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.1 usage=0.3036
+[2026-10-18 02:04:57] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 0, token usage: 0.49, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1133.13
+[2026-10-18 02:04:59] Prefill batch, #new-seq: 2, #new-token: 3367, #cached-token: 8142, token usage: 0.49, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 2518.75
+[serve] 2496697-1t0-c0683709 prompt_tokens=11081 cached_tokens=61 cached_device=61 cached_host=0 ttft_ms=9991.06 inflight_prefill=1 inflight_decode=2
+[serve] 2496650-3t0-7215ed4d prompt_tokens=8681 cached_tokens=8142 cached_device=8142 cached_host=0 ttft_ms=9888.41 inflight_prefill=0 inflight_decode=3
+[decode] 2496650-3t0-7215ed4d decode_ms=893.34 output_tokens=14
+[ctl] 2496650-3t0-7215ed4d queue_ms=0.1 advance_ms=2.0 pre_ms=21.5 post_ms=2.9
+[2026-10-18 02:04:59] 127.0.0.1 [18/Oct/2026:02:04:49 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496650 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496650 Writer.run kills ['audit']
+[priority] kvflow-286cd838 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.6 usage=0.3501
+[priority] kvflow-a1274227 demote=4/4n retire=0/0n protect=0 nodes=0 ms=4.0 usage=0.3604
+[2026-10-18 02:05:00] Prefill batch, #new-seq: 1, #new-token: 581, #cached-token: 103, token usage: 0.36, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 2241.35
+[serve] 2496650-4t0-0c4037a8 prompt_tokens=684 cached_tokens=103 cached_device=103 cached_host=0 ttft_ms=574.61 inflight_prefill=0 inflight_decode=3
+[2026-10-18 02:05:00] Decode batch, #running-req: 3, #token: 22157, token usage: 0.36, cuda graph: True, gen throughput (token/s): 7.79, #queue-req: 0
+[2026-10-18 02:05:02] Decode batch, #running-req: 3, #token: 22277, token usage: 0.36, cuda graph: True, gen throughput (token/s): 69.73, #queue-req: 0
+[2026-10-18 02:05:04] Decode batch, #running-req: 3, #token: 22397, token usage: 0.36, cuda graph: True, gen throughput (token/s): 69.66, #queue-req: 0
+[decode] 2496452-2t0-88c42dfd decode_ms=33113.01 output_tokens=389
+[ctl] 2496452-2t0-88c42dfd queue_ms=0.1 advance_ms=29.4 pre_ms=29.7 post_ms=30.6
+[2026-10-18 02:05:04] 127.0.0.1 [18/Oct/2026:02:04:29 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1383 "-" "python-httpx/0.28.1"
+[priority] kvflow-d449edd7 demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.0 usage=0.3649
+[call] 2496452 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496452 Auditor.run kills ['analysis']
+[priority] kvflow-88eb60ec demote=5/5n retire=0/0n protect=0 nodes=0 ms=5.0 usage=0.1939
+[2026-10-18 02:05:05] Prefill batch, #new-seq: 1, #new-token: 975, #cached-token: 9639, token usage: 0.37, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 113.48
+[serve] 2496452-3t0-9234df51 prompt_tokens=10614 cached_tokens=9639 cached_device=9639 cached_host=0 ttft_ms=1137.15 inflight_prefill=0 inflight_decode=3
+[decode] 2496697-1t0-c0683709 decode_ms=6820.56 output_tokens=114
+[ctl] 2496697-1t0-c0683709 queue_ms=0.1 advance_ms=27.6 pre_ms=26.4 post_ms=32.8
+[2026-10-18 02:05:05] 127.0.0.1 [18/Oct/2026:02:04:49 -0400] "POST /v1/chat/completions HTTP/1.1" 200 811 "-" "python-httpx/0.28.1"
+[priority] kvflow-da187a49 demote=6/6n retire=0/0n protect=0 nodes=0 ms=6.5 usage=0.3660
+[call] 2496697 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496697 Analyst.run kills ['facts']
+[priority] kvflow-ed3c150b demote=6/6n retire=0/0n protect=0 nodes=0 ms=6.3 usage=0.1849
+[2026-10-18 02:05:06] Prefill batch, #new-seq: 1, #new-token: 327, #cached-token: 10955, token usage: 0.37, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 1314.03
+[serve] 2496697-2t0-00161622 prompt_tokens=11282 cached_tokens=10955 cached_device=10955 cached_host=0 ttft_ms=422.68 inflight_prefill=0 inflight_decode=3
+[decode] 2496452-3t0-9234df51 decode_ms=923.90 output_tokens=14
+[ctl] 2496452-3t0-9234df51 queue_ms=0.0 advance_ms=3.3 pre_ms=29.1 post_ms=4.3
+[2026-10-18 02:05:06] 127.0.0.1 [18/Oct/2026:02:05:04 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496452 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496452 Writer.run kills ['audit']
+[priority] kvflow-a0e25316 demote=7/7n retire=0/0n protect=0 nodes=0 ms=7.5 usage=0.1958
+[priority] kvflow-7ee1d0be demote=7/7n retire=0/0n protect=0 nodes=0 ms=7.6 usage=0.2132
+[2026-10-18 02:05:07] Prefill batch, #new-seq: 1, #new-token: 1017, #cached-token: 115, token usage: 0.21, #running-req: 2, #queue-req: 0, cuda graph: False, input throughput (token/s): 283.81
+[serve] 2496452-4t0-0cfd514e prompt_tokens=1132 cached_tokens=115 cached_device=115 cached_host=0 ttft_ms=935.02 inflight_prefill=0 inflight_decode=3
+[decode] 2496650-4t0-0c4037a8 decode_ms=7233.98 output_tokens=115
+[ctl] 2496650-4t0-0c4037a8 queue_ms=0.1 advance_ms=0.3 pre_ms=2.6 post_ms=0.0
+[2026-10-18 02:05:07] 127.0.0.1 [18/Oct/2026:02:04:59 -0400] "POST /v1/chat/completions HTTP/1.1" 200 764 "-" "python-httpx/0.28.1"
+[close] 2496650 calls=4
+[2026-10-18 02:05:07] 127.0.0.1 [18/Oct/2026:02:05:07 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-e6c54692 demote=4/4n retire=4/4n protect=0 nodes=0 ms=7.8 usage=0.2135
+[priority] kvflow-8daa4894 demote=4/4n retire=0/0n protect=0 nodes=0 ms=5.1 usage=0.2014
+[2026-10-18 02:05:08] Decode batch, #running-req: 2, #token: 12391, token usage: 0.20, cuda graph: True, gen throughput (token/s): 25.80, #queue-req: 0
+[2026-10-18 02:05:09] Decode batch, #running-req: 2, #token: 12471, token usage: 0.20, cuda graph: True, gen throughput (token/s): 51.79, #queue-req: 0
+[2026-10-18 02:05:11] Decode batch, #running-req: 2, #token: 12551, token usage: 0.20, cuda graph: True, gen throughput (token/s): 51.75, #queue-req: 0
+[2026-10-18 02:05:12] Decode batch, #running-req: 2, #token: 12631, token usage: 0.21, cuda graph: True, gen throughput (token/s): 51.72, #queue-req: 0
+[decode] 2496697-2t0-00161622 decode_ms=7484.70 output_tokens=170
+[ctl] 2496697-2t0-00161622 queue_ms=0.1 advance_ms=30.1 pre_ms=29.6 post_ms=32.6
+[2026-10-18 02:05:13] 127.0.0.1 [18/Oct/2026:02:05:05 -0400] "POST /v1/chat/completions HTTP/1.1" 200 989 "-" "python-httpx/0.28.1"
+[priority] kvflow-ac8f4e1d demote=5/5n retire=0/0n protect=0 nodes=0 ms=6.7 usage=0.2065
+[call] 2496697 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496697 Auditor.run kills ['analysis']
+[priority] kvflow-c8041b60 demote=5/5n retire=0/0n protect=0 nodes=0 ms=6.3 usage=0.0212
+[2026-10-18 02:05:14] Prefill batch, #new-seq: 1, #new-token: 543, #cached-token: 10956, token usage: 0.21, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 144.63
+[serve] 2496697-3t0-52a18bc4 prompt_tokens=11499 cached_tokens=10956 cached_device=10956 cached_host=0 ttft_ms=605.38 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:14] Decode batch, #running-req: 2, #token: 12754, token usage: 0.21, cuda graph: True, gen throughput (token/s): 36.74, #queue-req: 0
+[decode] 2496452-4t0-0cfd514e decode_ms=7392.43 output_tokens=178
+[ctl] 2496452-4t0-0cfd514e queue_ms=0.1 advance_ms=0.3 pre_ms=3.9 post_ms=0.0
+[2026-10-18 02:05:14] 127.0.0.1 [18/Oct/2026:02:05:06 -0400] "POST /v1/chat/completions HTTP/1.1" 200 938 "-" "python-httpx/0.28.1"
+[close] 2496452 calls=4
+[2026-10-18 02:05:15] 127.0.0.1 [18/Oct/2026:02:05:15 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-2ee849c9 demote=2/2n retire=4/4n protect=0 nodes=0 ms=6.7 usage=0.2077
+[priority] kvflow-1d6056f7 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.8 usage=0.1874
+[decode] 2496697-3t0-52a18bc4 decode_ms=519.82 output_tokens=14
+[ctl] 2496697-3t0-52a18bc4 queue_ms=0.1 advance_ms=2.3 pre_ms=31.0 post_ms=3.1
+[2026-10-18 02:05:15] 127.0.0.1 [18/Oct/2026:02:05:13 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496697 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496697 Writer.run kills ['audit']
+[priority] kvflow-2dbc4e62 demote=3/3n retire=0/0n protect=0 nodes=0 ms=3.9 usage=0.0000
+[priority] kvflow-bb19dd5a demote=3/3n retire=0/0n protect=0 nodes=0 ms=4.1 usage=0.0113
+[2026-10-18 02:05:15] Prefill batch, #new-seq: 1, #new-token: 585, #cached-token: 107, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 500.41
+[serve] 2496697-4t0-c3fbb907 prompt_tokens=692 cached_tokens=107 cached_device=107 cached_host=0 ttft_ms=532.56 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:05:16] Decode batch, #running-req: 1, #token: 726, token usage: 0.01, cuda graph: True, gen throughput (token/s): 22.57, #queue-req: 0
+[2026-10-18 02:05:18] Decode batch, #running-req: 1, #token: 766, token usage: 0.01, cuda graph: True, gen throughput (token/s): 30.27, #queue-req: 0
+[decode] 2496697-4t0-c3fbb907 decode_ms=3482.33 output_tokens=106
+[ctl] 2496697-4t0-c3fbb907 queue_ms=0.1 advance_ms=0.3 pre_ms=2.9 post_ms=0.0
+[2026-10-18 02:05:19] 127.0.0.1 [18/Oct/2026:02:05:15 -0400] "POST /v1/chat/completions HTTP/1.1" 200 867 "-" "python-httpx/0.28.1"
+[close] 2496697 calls=4
+[2026-10-18 02:05:19] 127.0.0.1 [18/Oct/2026:02:05:19 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-63e03e25 demote=0/0n retire=4/4n protect=0 nodes=0 ms=4.6 usage=0.0130
+[priority] kvflow-5b5993cb demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[call] 2496800 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496800 Extractor.run kills ['facts']
+[priority] kvflow-5c0d6819 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[2026-10-18 02:05:25] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 54, token usage: 0.11, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 57.71
+[call] 2496834 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496834 Extractor.run kills ['facts']
+[2026-10-18 02:05:27] Prefill batch, #new-seq: 1, #new-token: 2834, #cached-token: 0, token usage: 0.11, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 2866.61
+[serve] 2496800-1t0-68036164 prompt_tokens=6984 cached_tokens=54 cached_device=54 cached_host=0 ttft_ms=5644.11 inflight_prefill=1 inflight_decode=1
+[priority] kvflow-ab05dd31 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.1137
+[2026-10-18 02:05:32] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 58, token usage: 0.24, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 558.41
+[2026-10-18 02:05:34] Prefill batch, #new-seq: 1, #new-token: 3967, #cached-token: 0, token usage: 0.24, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 2310.63
+[ledger] drift +over=0 +under=1 (total {'over': 1153116, 'under': 187537}) device_used=61440
+[serve] 2496834-1t0-b53223c9 prompt_tokens=8121 cached_tokens=58 cached_device=58 cached_host=0 ttft_ms=7884.37 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:34] Decode batch, #running-req: 2, #token: 15062, token usage: 0.25, cuda graph: True, gen throughput (token/s): 2.80, #queue-req: 0
+[2026-10-18 02:05:36] Decode batch, #running-req: 2, #token: 15142, token usage: 0.25, cuda graph: True, gen throughput (token/s): 50.34, #queue-req: 0
+[decode] 2496800-1t0-68036164 decode_ms=8916.58 output_tokens=49
+[ctl] 2496800-1t0-68036164 queue_ms=0.1 advance_ms=19.3 pre_ms=17.6 post_ms=20.3
+[2026-10-18 02:05:36] 127.0.0.1 [18/Oct/2026:02:05:21 -0400] "POST /v1/chat/completions HTTP/1.1" 200 605 "-" "python-httpx/0.28.1"
+[priority] kvflow-4761caff demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.0 usage=0.1330
+[call] 2496800 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496800 Analyst.run kills ['facts']
+[priority] kvflow-3d46647d demote=1/1n retire=0/0n protect=0 nodes=0 ms=0.9 usage=0.1330
+[2026-10-18 02:05:36] Prefill batch, #new-seq: 1, #new-token: 267, #cached-token: 6858, token usage: 0.25, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 1599.49
+[serve] 2496800-2t0-264d7606 prompt_tokens=7125 cached_tokens=6858 cached_device=6858 cached_host=0 ttft_ms=327.81 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:37] Decode batch, #running-req: 2, #token: 15311, token usage: 0.25, cuda graph: True, gen throughput (token/s): 41.56, #queue-req: 0
+[2026-10-18 02:05:39] Decode batch, #running-req: 2, #token: 15391, token usage: 0.25, cuda graph: True, gen throughput (token/s): 50.21, #queue-req: 0
+[decode] 2496834-1t0-b53223c9 decode_ms=5634.63 output_tokens=131
+[ctl] 2496834-1t0-b53223c9 queue_ms=0.1 advance_ms=25.0 pre_ms=21.1 post_ms=24.0
+[2026-10-18 02:05:39] 127.0.0.1 [18/Oct/2026:02:05:26 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1023 "-" "python-httpx/0.28.1"
+[priority] kvflow-45d09371 demote=2/2n retire=0/0n protect=0 nodes=0 ms=2.0 usage=0.2507
+[call] 2496834 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496834 Analyst.run kills ['facts']
+[priority] kvflow-fec3868e demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.9 usage=0.1173
+[2026-10-18 02:05:40] Prefill batch, #new-seq: 1, #new-token: 349, #cached-token: 7995, token usage: 0.25, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 72.24
+[serve] 2496834-2t0-84d8f161 prompt_tokens=8344 cached_tokens=7995 cached_device=7995 cached_host=0 ttft_ms=445.47 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:41] Decode batch, #running-req: 2, #token: 15559, token usage: 0.25, cuda graph: True, gen throughput (token/s): 39.00, #queue-req: 0
+[2026-10-18 02:05:43] Decode batch, #running-req: 2, #token: 15639, token usage: 0.25, cuda graph: True, gen throughput (token/s): 50.06, #queue-req: 0
+[2026-10-18 02:05:44] Decode batch, #running-req: 2, #token: 15719, token usage: 0.26, cuda graph: True, gen throughput (token/s): 50.00, #queue-req: 0
+[decode] 2496834-2t0-84d8f161 decode_ms=5647.54 output_tokens=142
+[ctl] 2496834-2t0-84d8f161 queue_ms=0.0 advance_ms=23.0 pre_ms=20.7 post_ms=25.2
+[2026-10-18 02:05:45] 127.0.0.1 [18/Oct/2026:02:05:39 -0400] "POST /v1/chat/completions HTTP/1.1" 200 999 "-" "python-httpx/0.28.1"
+[priority] kvflow-5d48dcd3 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.8 usage=0.2568
+[call] 2496834 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496834 Auditor.run kills ['analysis']
+[priority] kvflow-c6b9618d demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.8 usage=0.1197
+[2026-10-18 02:05:46] Prefill batch, #new-seq: 1, #new-token: 537, #cached-token: 7996, token usage: 0.26, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 55.53
+[serve] 2496834-3t0-1ae25912 prompt_tokens=8533 cached_tokens=7996 cached_device=7996 cached_host=0 ttft_ms=557.87 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:46] Decode batch, #running-req: 2, #token: 15843, token usage: 0.26, cuda graph: True, gen throughput (token/s): 36.76, #queue-req: 0
+[decode] 2496834-3t0-1ae25912 decode_ms=415.27 output_tokens=11
+[ctl] 2496834-3t0-1ae25912 queue_ms=0.1 advance_ms=2.0 pre_ms=23.3 post_ms=2.8
+[2026-10-18 02:05:46] 127.0.0.1 [18/Oct/2026:02:05:45 -0400] "POST /v1/chat/completions HTTP/1.1" 200 503 "-" "python-httpx/0.28.1"
+[call] 2496834 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496834 Writer.run kills ['audit']
+[priority] kvflow-aac2684e demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.7 usage=0.1199
+[priority] kvflow-d0df6572 demote=4/4n retire=0/0n protect=0 nodes=0 ms=3.8 usage=0.1295
+[2026-10-18 02:05:47] Prefill batch, #new-seq: 1, #new-token: 579, #cached-token: 71, token usage: 0.13, #running-req: 1, #queue-req: 0, cuda graph: False, input throughput (token/s): 531.53
+[serve] 2496834-4t0-66abb323 prompt_tokens=650 cached_tokens=71 cached_device=71 cached_host=0 ttft_ms=562.15 inflight_prefill=0 inflight_decode=2
+[2026-10-18 02:05:48] Decode batch, #running-req: 2, #token: 8028, token usage: 0.13, cuda graph: True, gen throughput (token/s): 39.11, #queue-req: 0
+[2026-10-18 02:05:50] Decode batch, #running-req: 2, #token: 8108, token usage: 0.13, cuda graph: True, gen throughput (token/s): 54.48, #queue-req: 0
+[decode] 2496834-4t0-66abb323 decode_ms=2877.62 output_tokens=79
+[ctl] 2496834-4t0-66abb323 queue_ms=0.0 advance_ms=0.3 pre_ms=2.6 post_ms=0.0
+[2026-10-18 02:05:50] 127.0.0.1 [18/Oct/2026:02:05:47 -0400] "POST /v1/chat/completions HTTP/1.1" 200 774 "-" "python-httpx/0.28.1"
+[close] 2496834 calls=4
+[2026-10-18 02:05:50] 127.0.0.1 [18/Oct/2026:02:05:50 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-f2c4f46d demote=1/1n retire=4/4n protect=0 nodes=0 ms=4.1 usage=0.1321
+[priority] kvflow-efd08fe3 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.0 usage=0.1212
+[decode] 2496800-2t0-264d7606 decode_ms=14197.50 output_tokens=329
+[ctl] 2496800-2t0-264d7606 queue_ms=0.0 advance_ms=19.5 pre_ms=16.5 post_ms=21.1
+[2026-10-18 02:05:50] 127.0.0.1 [18/Oct/2026:02:05:36 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1391 "-" "python-httpx/0.28.1"
+[priority] kvflow-95c13b2d demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.8 usage=0.1213
+[call] 2496800 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496800 Auditor.run kills ['analysis']
+[priority] kvflow-4b9d9117 demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.9 usage=0.0000
+[2026-10-18 02:05:51] Prefill batch, #new-seq: 1, #new-token: 642, #cached-token: 6859, token usage: 0.12, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 145.90
+[serve] 2496800-3t0-3109f78a prompt_tokens=7501 cached_tokens=6859 cached_device=6859 cached_host=0 ttft_ms=691.04 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:05:52] Decode batch, #running-req: 1, #token: 7528, token usage: 0.12, cuda graph: True, gen throughput (token/s): 20.53, #queue-req: 0
+[2026-10-18 02:05:53] Decode batch, #running-req: 1, #token: 7568, token usage: 0.12, cuda graph: True, gen throughput (token/s): 27.68, #queue-req: 0
+[2026-10-18 02:05:55] Decode batch, #running-req: 1, #token: 7608, token usage: 0.12, cuda graph: True, gen throughput (token/s): 27.66, #queue-req: 0
+[2026-10-18 02:05:56] Decode batch, #running-req: 1, #token: 7648, token usage: 0.12, cuda graph: True, gen throughput (token/s): 27.65, #queue-req: 0
+[2026-10-18 02:05:58] Decode batch, #running-req: 1, #token: 7688, token usage: 0.13, cuda graph: True, gen throughput (token/s): 27.64, #queue-req: 0
+[decode] 2496800-3t0-3109f78a decode_ms=6885.37 output_tokens=191
+[ctl] 2496800-3t0-3109f78a queue_ms=0.1 advance_ms=2.4 pre_ms=20.2 post_ms=4.0
+[2026-10-18 02:05:58] 127.0.0.1 [18/Oct/2026:02:05:50 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1297 "-" "python-httpx/0.28.1"
+[call] 2496800 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496800 Writer.run kills ['audit']
+[priority] kvflow-cc35d2a9 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.9 usage=0.1252
+[priority] kvflow-20fcc754 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.0154
+[2026-10-18 02:05:59] Prefill batch, #new-seq: 1, #new-token: 855, #cached-token: 90, token usage: 0.02, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 84.22
+[serve] 2496800-4t0-873b4d4d prompt_tokens=945 cached_tokens=90 cached_device=90 cached_host=0 ttft_ms=702.28 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:06:00] Decode batch, #running-req: 1, #token: 981, token usage: 0.02, cuda graph: True, gen throughput (token/s): 19.37, #queue-req: 0
+[2026-10-18 02:06:01] Decode batch, #running-req: 1, #token: 1021, token usage: 0.02, cuda graph: True, gen throughput (token/s): 30.16, #queue-req: 0
+[2026-10-18 02:06:03] Decode batch, #running-req: 1, #token: 1061, token usage: 0.02, cuda graph: True, gen throughput (token/s): 30.13, #queue-req: 0
+[2026-10-18 02:06:04] Decode batch, #running-req: 1, #token: 1101, token usage: 0.02, cuda graph: True, gen throughput (token/s): 30.11, #queue-req: 0
+[decode] 2496800-4t0-873b4d4d decode_ms=5760.91 output_tokens=174
+[ctl] 2496800-4t0-873b4d4d queue_ms=0.1 advance_ms=0.3 pre_ms=3.6 post_ms=0.0
+[2026-10-18 02:06:04] 127.0.0.1 [18/Oct/2026:02:05:58 -0400] "POST /v1/chat/completions HTTP/1.1" 200 1177 "-" "python-httpx/0.28.1"
+[close] 2496800 calls=4
+[2026-10-18 02:06:04] 127.0.0.1 [18/Oct/2026:02:06:04 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-d78b1d06 demote=0/0n retire=4/4n protect=0 nodes=0 ms=3.0 usage=0.0182
+[priority] kvflow-67923974 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[call] 2496945 #0 Extractor.extract:72 ctx=()
+[invalidate] 2496945 Extractor.run kills ['facts']
+[priority] kvflow-d930fd3b demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000
+[2026-10-18 02:06:16] Prefill batch, #new-seq: 1, #new-token: 4096, #cached-token: 55, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 49.54
+[2026-10-18 02:06:18] Prefill batch, #new-seq: 1, #new-token: 3687, #cached-token: 0, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 2475.03
+[serve] 2496945-1t0-032dce2c prompt_tokens=7838 cached_tokens=55 cached_device=55 cached_host=0 ttft_ms=6436.48 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:06:19] Decode batch, #running-req: 1, #token: 7860, token usage: 0.13, cuda graph: True, gen throughput (token/s): 2.72, #queue-req: 0
+[decode] 2496945-1t0-032dce2c decode_ms=1852.70 output_tokens=47
+[ctl] 2496945-1t0-032dce2c queue_ms=0.1 advance_ms=19.5 pre_ms=16.1 post_ms=19.8
+[2026-10-18 02:06:19] 127.0.0.1 [18/Oct/2026:02:06:11 -0400] "POST /v1/chat/completions HTTP/1.1" 200 647 "-" "python-httpx/0.28.1"
+[priority] kvflow-f6d1abe6 demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.0 usage=0.1283
+[call] 2496945 #1 Analyst.compute:91 predicted=hit ctx=()
+[invalidate] 2496945 Analyst.run kills ['facts']
+[priority] kvflow-cd948a4c demote=1/1n retire=0/0n protect=0 nodes=0 ms=1.0 usage=0.0000
+[2026-10-18 02:06:20] Prefill batch, #new-seq: 1, #new-token: 265, #cached-token: 7712, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 1659.86
+[serve] 2496945-2t0-68ad8c46 prompt_tokens=7977 cached_tokens=7712 cached_device=7712 cached_host=0 ttft_ms=289.13 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:06:20] Decode batch, #running-req: 1, #token: 7992, token usage: 0.13, cuda graph: True, gen throughput (token/s): 22.33, #queue-req: 0
+[2026-10-18 02:06:22] Decode batch, #running-req: 1, #token: 8032, token usage: 0.13, cuda graph: True, gen throughput (token/s): 27.53, #queue-req: 0
+[decode] 2496945-2t0-68ad8c46 decode_ms=3095.22 output_tokens=86
+[ctl] 2496945-2t0-68ad8c46 queue_ms=0.0 advance_ms=17.2 pre_ms=15.4 post_ms=20.1
+[2026-10-18 02:06:23] 127.0.0.1 [18/Oct/2026:02:06:19 -0400] "POST /v1/chat/completions HTTP/1.1" 200 890 "-" "python-httpx/0.28.1"
+[priority] kvflow-e11a9dee demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.9 usage=0.1312
+[call] 2496945 #2 Auditor.check:113 predicted=hit ctx=()
+[invalidate] 2496945 Auditor.run kills ['analysis']
+[priority] kvflow-e6f1e617 demote=2/2n retire=0/0n protect=0 nodes=0 ms=1.9 usage=0.0000
+[2026-10-18 02:06:23] Prefill batch, #new-seq: 1, #new-token: 397, #cached-token: 7713, token usage: 0.13, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 74.10
+[serve] 2496945-3t0-725ae131 prompt_tokens=8110 cached_tokens=7713 cached_device=7713 cached_host=0 ttft_ms=414.90 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:06:24] Decode batch, #running-req: 1, #token: 8119, token usage: 0.13, cuda graph: True, gen throughput (token/s): 20.95, #queue-req: 0
+[decode] 2496945-3t0-725ae131 decode_ms=483.87 output_tokens=14
+[ctl] 2496945-3t0-725ae131 queue_ms=0.0 advance_ms=1.6 pre_ms=18.2 post_ms=2.6
+[2026-10-18 02:06:24] 127.0.0.1 [18/Oct/2026:02:06:23 -0400] "POST /v1/chat/completions HTTP/1.1" 200 512 "-" "python-httpx/0.28.1"
+[call] 2496945 #3 Writer.answer:137 predicted=hit ctx=()
+[invalidate] 2496945 Writer.run kills ['audit']
+[priority] kvflow-a671f027 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.0000
+[priority] kvflow-b940b813 demote=3/3n retire=0/0n protect=0 nodes=0 ms=2.7 usage=0.0086
+[2026-10-18 02:06:24] Prefill batch, #new-seq: 1, #new-token: 439, #cached-token: 87, token usage: 0.01, #running-req: 0, #queue-req: 0, cuda graph: False, input throughput (token/s): 463.96
+[serve] 2496945-4t0-9b80efa3 prompt_tokens=526 cached_tokens=87 cached_device=87 cached_host=0 ttft_ms=340.87 inflight_prefill=0 inflight_decode=1
+[2026-10-18 02:06:25] Decode batch, #running-req: 1, #token: 561, token usage: 0.01, cuda graph: True, gen throughput (token/s): 23.71, #queue-req: 0
+[2026-10-18 02:06:27] Decode batch, #running-req: 1, #token: 601, token usage: 0.01, cuda graph: True, gen throughput (token/s): 30.34, #queue-req: 0
+[decode] 2496945-4t0-9b80efa3 decode_ms=2712.91 output_tokens=83
+[ctl] 2496945-4t0-9b80efa3 queue_ms=0.0 advance_ms=0.2 pre_ms=2.2 post_ms=0.0
+[2026-10-18 02:06:27] 127.0.0.1 [18/Oct/2026:02:06:24 -0400] "POST /v1/chat/completions HTTP/1.1" 200 881 "-" "python-httpx/0.28.1"
+[close] 2496945 calls=4
+[2026-10-18 02:06:27] 127.0.0.1 [18/Oct/2026:02:06:27 -0400] "POST /v1/sessions/close HTTP/1.1" 200 197 "-" "python-httpx/0.28.1"
+[priority] kvflow-5b56a937 demote=0/0n retire=4/4n protect=0 nodes=0 ms=3.0 usage=0.0099
+[priority] kvflow-d883fb12 demote=0/0n retire=0/0n protect=0 nodes=0 ms=0.1 usage=0.0000

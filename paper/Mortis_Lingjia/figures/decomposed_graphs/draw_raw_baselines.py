@@ -111,7 +111,7 @@ def main() -> None:
         **COMBINED_RC,
     })
     fig, axes = plt.subplots(2, 4, figsize=(6.75, 2.15), sharex="col")
-    fig.subplots_adjust(left=0.062, right=0.997, top=0.885, bottom=0.11, wspace=0.28, hspace=0.07)
+    fig.subplots_adjust(left=0.062, right=0.997, top=0.855, bottom=0.11, wspace=0.28, hspace=0.07)
     for col, agent in enumerate(AGENTS):
         data = read_agent(agent)
         for row, (metric, ylabel) in enumerate(ROWS):

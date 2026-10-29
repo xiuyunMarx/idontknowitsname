@@ -1,0 +1,39 @@
+\section{Background and Motivation}
+\label{sec:bg_mt}
+\para{Prefix caching and KV-cache tiering}
+Serving engines such as SGLang~\cite{zheng2024sglang} and vLLM~\cite{kwon2023pagedattention} reuse the longest matching prefix, computing only the remaining tokens. Tiered caching systems such as CachedAttention~\cite{gao2024cachedattention}, Mooncake~\cite{qin2025mooncake}, and SGLang HiCache~\cite{sglang2026hicache} extend the KV-cache beyond device memory with host memory and optionally disk storage to improve capacity. However, off-device KV-cache must be promoted back before use.
+
+\para{KV-cache management for LLM agents}
+Agent serving systems use recurring patterns in agentic workloads to manage the KV-cache. KVFlow~\cite{pan2025kvflow} derives each agent's steps-to-execution from the workflow to guide eviction and prefetching of each agent's prompt prefix; Helium~\cite{wadlom2026helium} analyzes the workflow to order LLM calls and prewarm static prefixes; Learned Prefix Caching~\cite{yang2025lpc}, PBKV~\cite{zheng2026pbkv} and CacheScout~\cite{zhang2026cachescout} predict upcoming agent invocations with trained models to decide which caches to retain. They operate the KV-cache on the identified prefix. Some systems, such as Pythia~\cite{yu2026pythia}, furthermore prefill the predicted next invocations to proactively prepare KV-cache that does not exist yet. 
+
+
+
+% Learned Prefix Caching~\cite{yang2025lpc} predicts from the user prompt whether a conversation continues and combines the prediction with elapsed time. KVTether~\cite{fu2026kvtether} follows the application's message operations instead: a replaced or removed message invalidates the suffix it affects, and a forked context keeps what it still needs. 
+
+\para{Frameworks with LLM calls as typed functions}
+A class of agent frameworks exposes LLM invocations through typed programming interfaces. Such as byLLM's meaning-typed programming (MTP) abstraction~\cite{dantanarayana2025mtp}, DSPy's Signatures and Modules~\cite{khattab2024dspy}, and NOOA's typed Python methods~\cite{furgale2026nooa}. The developer declares a function or signature describing the desired behavior, inputs, and return type, and invokes it like an ordinary call within the program's control flow. At each invocation, the framework runtime lowers the declaration and its argument values into final prompts
+
+\input{figures/common_structure}
+Although these agent frameworks differ in surface syntax, they lower LLM invocations in the same way: the intermediate representation is lowered with the runtime argument values to produce the prompt. As shown in Figure~\ref{fig:common-structure}, these frameworks emit the same five kinds of components: framework scaffolding, task instruction, parameter descriptions, argument values, and output schema. The only difference is their relative positions. 
+
+\emph{Scheduling Opportunity:} The order of the five components is a framework convention: the runtime applies the same template to every call. Moreover, the order of argument values is just an artifact of the developer's personal preference: it follows the order of the argument list in the code. Therefore, this layout can be managed for better performance. For example, DSPy's static adapter~\cite{dspy2026chatadapter} lets users tweak the lowering process to put static prompt components at the front. NOOA~\cite{furgale2026nooa} lets developers label arguments as static prefix, append-only history or dynamic suffix so that the framework can order them for better cache reuse.
+
+\begin{figure}[t]
+    % \vspace{-8pt}
+    \centering
+    \includegraphics[width=0.82\columnwidth]{ArchOverview.pdf}
+    \caption{Architecture overview of \sysname. By analyzing data that already resides in the program itself, \sysname steers a more efficient KV-cache scheduling policy.}
+    \label{fig:design_overview}
+    \vspace{-8pt}
+\end{figure}
+
+\para{Intra-prompt heterogeneity in programs}
+Prompts can be decomposed into components with different sharing patterns and lifetimes, and frameworks with LLM calls as typed functions offer structural guarantees to make this information analyzable. Because components are mapped to program variables, the semantic boundaries and relationships are therefore analyzable from the program.
+
+\emph{Scheduling Opportunity:} 
+Prior serving policies fail to fully exploit the reuse in agent workloads because they ignore the component-level structure of prompts. By reasoning about the program itself, scheduling operations on specific KV-cache entries can be determined.
+
+\para{From Deficiencies to Design}
+Ignoring intra-prompt heterogeneity costs a serving system in two ways. First, shared tokens lose prefix caching: once a differing token appears ahead of them, their KV-cache can no longer be matched. Second, KV-cache retention lose precision: the system sees only a matched prefix and cannot manage entries by their individual reuse. Both costs are substantial. Among the agents we evaluated in \S\ref{sec:eval}, 51--92\% of shared tokens miss the prefix cache because a differing token precedes them, and about 20\% of served prompt tokens are used only once within a session. The layout freedom and the analyzability of intra-prompt heterogeneity address these deficiencies directly, upon which \sysname is built.
+
+

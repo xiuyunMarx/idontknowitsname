@@ -4,7 +4,7 @@
 Serving engines such as SGLang~\cite{zheng2024sglang} and vLLM~\cite{kwon2023pagedattention} reuse the longest matching prefix, computing only the remaining tokens. Tiered caching systems such as CachedAttention~\cite{gao2024cachedattention}, Mooncake~\cite{qin2025mooncake}, and SGLang HiCache~\cite{sglang2026hicache} extend the KV-cache beyond device memory with host memory and optionally disk storage to improve capacity. However, off-device KV-cache must be promoted back before use.
 
 \para{KV-cache management for LLM agents}
-Agent serving systems use recurring patterns in agentic workloads to manage the KV-cache. KVFlow~\cite{pan2025kvflow} derives each agent's steps-to-execution from the workflow to guide eviction and prefetching of each agent's prompt prefix; Helium~\cite{wadlom2026helium} analyzes the workflow to order LLM calls and prewarm static prefixes; Learned Prefix Caching~\cite{yang2025lpc}, PBKV~\cite{zheng2026pbkv} and CacheScout~\cite{zhang2026cachescout} predict upcoming agent invocations with trained models to decide which caches to retain. They operate the KV-cache on the identified prefix. Some systems, such as Pythia~\cite{yu2026pythia}, furthermore prefill the predicted next invocations to proactively prepare KV-cache that does not exist yet. 
+Agent serving systems use recurring patterns in agentic workloads to manage the KV-cache. KVFlow~\cite{pan2025kvflow} derives each agent's steps-to-execution from the workflow to guide eviction and prefetching of each agent's prompt prefix; Helium~\cite{wadlom2026helium} analyzes the workflow to order LLM calls and prewarm static prefixes; Learned Prefix Caching~\cite{yang2025lpc}, PBKV~\cite{zheng2026pbkv} and CacheScout~\cite{zhang2026cachescout} predict upcoming agent invocations with trained models to decide which caches to retain. KVTether~\cite{fu2026kvtether} captures runtime lifecycle semantics from agent harness signals to preferentially preserve live-but-idle KV-cache. They operate the KV-cache on the identified prefix. Some systems, such as Pythia~\cite{yu2026pythia}, prefill the predicted next invocations to proactively prepare KV-cache that does not exist yet. 
 
 
 
@@ -17,6 +17,15 @@ A class of agent frameworks exposes LLM invocations through typed programming in
 Although these agent frameworks differ in surface syntax, they lower LLM invocations in the same way: the intermediate representation is lowered with the runtime argument values to produce the prompt. As shown in Figure~\ref{fig:common-structure}, these frameworks emit the same five kinds of components: framework scaffolding, task instruction, parameter descriptions, argument values, and output schema. The only difference is their relative positions. 
 
 \emph{Scheduling Opportunity:} The order of the five components is a framework convention: the runtime applies the same template to every call. Moreover, the order of argument values is just an artifact of the developer's personal preference: it follows the order of the argument list in the code. Therefore, this layout can be managed for better performance. For example, DSPy's static adapter~\cite{dspy2026chatadapter} lets users tweak the lowering process to put static prompt components at the front. NOOA~\cite{furgale2026nooa} lets developers label arguments as static prefix, append-only history or dynamic suffix so that the framework can order them for better cache reuse.
+
+\begin{figure}[t]
+    % \vspace{-8pt}
+    \centering
+    \includegraphics[width=0.85\columnwidth]{ArchOverview.pdf}
+    \caption{Architecture overview of \sysname. By analyzing data that already resides in the program itself, \sysname steers a more efficient KV-cache scheduling policy.}
+    \label{fig:design_overview}
+    \vspace{-8pt}
+\end{figure}
 
 \para{Intra-prompt heterogeneity in programs}
 Prompts can be decomposed into components with different sharing patterns and lifetimes, and frameworks with LLM calls as typed functions offer structural guarantees to make this information analyzable. Because components are mapped to program variables, the semantic boundaries and relationships are therefore analyzable from the program.

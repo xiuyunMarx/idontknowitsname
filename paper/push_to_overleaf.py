@@ -8,13 +8,16 @@ prefixes. Any unpushed local commits are folded into that one commit.
 Refuses to push if Overleaf has edits you haven't pulled (run
 pull_from_overleaf.py first) or if files still contain conflict markers.
 
-Usage: python3 push_to_overleaf.py
+Usage: python3 push_to_overleaf.py [PAPER]   (default Lingjia -> Mortis_Lingjia/; "" -> Mortis/)
 """
 import os, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-REPO = ROOT / "Mortis"
+PAPER = sys.argv[1] if len(sys.argv) > 1 else "Lingjia"  # Mortis/ is a stale backup; pass "" to target it
+REPO = ROOT / ("Mortis" + (f"_{PAPER}" if PAPER else ""))
+if not (REPO / ".git").is_dir():
+    sys.exit(f"error: {REPO} is not its own git repo (no .git); refusing to touch the parent repo.")
 KEY_FILE = ROOT / "overleaf_key"
 BRANCH = "main"
 UPSTREAM = f"origin/{BRANCH}"
