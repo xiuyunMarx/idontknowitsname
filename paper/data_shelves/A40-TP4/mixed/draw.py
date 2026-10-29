@@ -137,7 +137,7 @@ def draw(records: dict):
 
     def plot_speedup(metric, title, output_file):
         # The y label names the metric in place of a subcaption, on two lines so the panel stays short.
-        fig, ax = new_axes(column_w / 2, h=1.0, left=0.50)
+        fig, ax = new_axes(column_w / 2, h=0.90, left=0.50)
         ax.set_ylabel(title.replace(" ", "\n"), linespacing=1.0)
         ax.axhline(1.0, color="#9A9A9A", linewidth=0.5, linestyle=(0, (4, 2)), zorder=1)
         for arm in ARMS:
@@ -194,7 +194,7 @@ def draw(records: dict):
 
     # Shared legend strip placed above the panels in LaTeX; five names do not fit one 3.25in row, so two.
     handles = [Line2D([], [], label=display_names[a], **line_style(a)) for a in ARMS]
-    fig = plt.figure(figsize=(3.25, 0.30))
+    fig = plt.figure(figsize=(3.25, 0.22))
     fig.legend(handles=handles, loc="center", ncol=3, frameon=False, fontsize=6.5,
                handlelength=1.2, columnspacing=0.5, handletextpad=0.25, labelspacing=0.25,
                borderpad=0, borderaxespad=0)
