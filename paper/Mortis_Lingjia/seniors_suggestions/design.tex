@@ -1,0 +1,150 @@
+% Replacement for sections/design.tex.
+% Requires the project's existing \sysname macro and algorithm/algpseudocode packages.
+% Include design_appendix.tex in the appendix to resolve sec:prediction_details.
+\section{Design}
+\label{sec:design}
+
+As shown in Figure~\ref{fig:design_overview}, \sysname combines compiler analysis with runtime observations to coordinate prompt layout and KV-cache management. An \emph{agent descriptor} (\S\ref{sec:agent_descriptor}) records prompt components and the agent's workflow. The compiler extracts their structure and relationships from the program (\S\ref{sec:analysis}), and the runtime adds observed sizes, probabilities, and timing. Adaptive prompt re-layout (\S\ref{sec:relayout}) uses this information to expose shared prefixes; proactive KV-cache scheduling (\S\ref{sec:Proactive KV-Cache Scheduling}) uses component lifetimes and predicted reuse to guide retention, eviction, and prefetching.
+
+\subsection{Agent Descriptor}
+\label{sec:agent_descriptor}
+
+The descriptor connects two views of an agent: what each prompt contains and which calls may execute next. Call-site templates describe prompt components and their relationships. A workflow automaton describes possible call sequences and carries runtime statistics.
+
+\subsubsection{Call-site Template}
+\label{sec:template}
+
+Each template separates \emph{invariant specifications}, such as fixed task instructions, from \emph{dynamic bindings}, the argument values supplied at runtime. For each binding, the descriptor records how its value evolves and where the program may overwrite it. Table~\ref{tab:evolution_classes} summarizes the evolution classes. Lifetime annotations distinguish session-wide values from values replaced within procedures or loop iterations.
+
+\begin{table}[t]
+\centering
+\caption{Binding evolution classes describe potential reuse. Actual KV reuse also requires a matching token prefix.}
+\label{tab:evolution_classes}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{0.20\columnwidth}p{0.74\columnwidth}@{}}
+\hline
+\textbf{Class} & \textbf{Value relationship} \\
+\hline
+CONST & Fixed by the program text. \\
+COPY & Carried unchanged from an earlier call-site. \\
+RESP & Produced by another call-site's reply. \\
+EXTEND & Grows by appending content to its previous value. \\
+VOLATILE & Produced afresh or has an origin outside the analysis boundary. \\
+\hline
+\end{tabular}
+\end{table}
+
+In the fact-checking example, the claim persists across calls, the evidence collection grows, and queries and individual search results are replaced between iterations. These relationships identify opportunities for reuse, but do not by themselves make KV states reusable: a later prompt must match the preceding tokens as well. The runtime therefore interprets component annotations together with the chosen prompt layout. Because reuse always requires this exact match, an inaccurate annotation can reduce cache efficiency but cannot change the KV states a prompt attends to.
+
+\subsubsection{Workflow Automaton}
+\label{sec:TPFM}
+
+The workflow automaton is a graph whose nodes are LLM call-sites and whose edges represent possible next calls. It identifies the entry call, possible termination points, and loops. The runtime augments this structure with transition and termination frequencies and timing observations, including gaps between consecutive calls. Together with the templates, these observations help predict which prefix may be needed next and when.
+
+\subsection{Constructing the Agent Descriptor}
+\label{sec:analysis}
+
+\paragraph{Workflow and prompt structure.}
+The compiler identifies LLM call-sites in the typed AST and projects the interprocedural control-flow graph onto them, contracting intervening non-LLM operations. Unresolved calls conservatively connect to their candidate targets. Bourdoncle's weak topological ordering~\cite{bourdoncle1993efficient} recovers loop nesting. To obtain prompt templates, the compiler runs the framework's lowering pass with symbolic arguments, separating fixed content from labeled argument placeholders.
+
+\paragraph{Evolution and lifetime.}
+Reaching-definition analysis traces each binding to literals, unchanged variables, earlier LLM replies, or append operations, yielding the classes in Table~\ref{tab:evolution_classes}. Unresolved or conflicting definitions fall back to VOLATILE. Transition-specific annotations record updates between call-sites, allowing the runtime to refine a classification when the observed transition determines the update. The compiler also records procedures and loop bodies that overwrite each binding. These annotations let the runtime track when earlier values cease to apply and reconsider the cached prefixes that contain them.
+
+% VERIFY: each claim below against the implementation before submitting.
+\paragraph{Why analyze the program?}
+A runtime that only watches argument values could detect a repeated value once it recurs, but three decisions benefit from knowing the structure earlier. First, the grouping that orders shared bindings comes from analysis, so a coordinated layout is available from a program's first session rather than after recurrences are observed; observed lengths only break ties. Second, transition annotations reveal an overwrite when the transition occurs, even if the next call does not carry the overwritten value, so heads holding the stale value can be cut back immediately rather than aging out. Third, COPY, RESP, and EXTEND relate a binding to values already seen in the session, which lets the runtime reconstruct a successor's prefix before that call arrives. Runtime observation then only needs to supply sizes, probabilities, and timing.
+
+\paragraph{Scope, fallback, and cost.}
+\sysname requires prompts lowered from typed declarations, arguments rendered as separable labeled components, and access to the program for analysis. byLLM, DSPy, and NOOA lower calls into the same kinds of components (Figure~\ref{fig:prompt_components}); our prototype targets byLLM. % VERIFY: replace fig:prompt_components with the label of Figure 3
+When analysis cannot resolve a binding, it falls back to VOLATILE, which forgoes reordering and retention for that binding; imprecise analysis therefore costs optimization opportunities rather than producing mismatched KV reuse. Analysis runs once per program, ahead of time. At runtime, each call updates frequency counts and refreshes predictions for the successors of the current call-site. % add measured analysis time and per-call overhead here if available
+
+\subsection{Adaptive Prompt Re-layout}
+\label{sec:relayout}
+
+Re-layout exposes reuse that the original prompt order hides. Moving the shared claim before call-specific instructions, for example, lets different fact-checking calls share a longer prefix. Placing accumulating evidence before temporary results similarly exposes its unchanged leading content.
+
+Re-layout differs from hoisting constant components to the front, as DSPy's adapters and the SGLang frontend do~\cite{dspy_adapter,zheng2024sglang}. % VERIFY: replace with the paper's bib keys
+Hoisting places each call-site's own instructions first, so a value shared by several call-sites still sits behind call-specific text and cannot be matched across them. \sysname instead coordinates a single order across call-sites and places call-specific instructions after the shared bindings.
+
+\subsubsection{Movable Components}
+
+The framework renders each argument as a self-contained component labeled by its parameter name. \sysname can change the order of these components and place the instruction specification before or after them. The common system prompt remains first; response and tool schemas are handled by the constrained decoding engine. A developer switch can pin the specification to the front. Because re-layout changes the prompt text, \S4.2 evaluates its effect on task quality. % replace \S4.2 with \S\ref{<your task-quality label>} if one exists
+
+\subsubsection{Layout Decision}
+\label{sec:layout_decision}
+
+Ordering components independently at each call-site can leave a shared value behind different preceding contexts. \sysname therefore builds a common order for bindings used by multiple call-sites, then projects that order onto each prompt (Algorithm~\ref{alg:layout}).
+
+For each workflow transition, shared bindings present at either endpoint fall into three ordered groups: unchanged at both endpoints, appended at both endpoints, and rewritten or present at only one endpoint. These groups contribute precedence preferences to a common graph. Conflicting preferences form cycles; collapsing each strongly connected component (SCC) produces a DAG. The algorithm orders the SCCs topologically and resolves conflicts within each SCC by observed token length, then depth. Here, depth is the number of transitions from the entry to the first call-site carrying a binding. An SCC's key is the smallest binding key it contains.
+
+\begin{algorithm}[t]
+\caption{Coordinated prompt layout}
+\label{alg:layout}
+\begin{algorithmic}[1]
+\Require Descriptor, observed token lengths, switch \textit{pin}
+\Ensure A layout for each call-site
+\State $B_{\mathrm{sh}} \gets$ bindings used at multiple call-sites \label{alg:layout:sh-begin}
+\State $G \gets$ empty precedence graph on $B_{\mathrm{sh}}$
+\ForAll{workflow transitions $(q,q')$}
+    \State Group bindings as unchanged, appended, or rewritten/one-sided
+    \State Add edges from earlier groups to later groups
+\EndFor
+\State Collapse SCCs of $G$ to obtain a DAG
+\State Binding key: $(-\mathrm{length},\mathrm{depth})$
+\State SCC key: smallest key among its bindings
+\State Topologically order SCCs, choosing the smallest available key
+\State $L \gets$ this order, with each SCC expanded in binding-key order \label{alg:layout:sh-end}
+\ForAll{call-sites $q$}
+    \State $\sigma_q \gets$ bindings of $q$ in $L$, then sorted private bindings \label{alg:layout:pv}
+    \State $s_q \gets$ instruction specification of $q$ \label{alg:layout:spec-begin}
+    \If{$\neg\textit{pin}$ and $q$ has a shared binding}
+        \State $\mathcal{L}_q \gets \sigma_q\Vert s_q$
+    \Else
+        \State $\mathcal{L}_q \gets s_q\Vert\sigma_q$ \label{alg:layout:spec-end}
+    \EndIf
+\EndFor
+\State \Return all layouts $\mathcal{L}_q$
+\end{algorithmic}
+\end{algorithm}
+
+Private bindings follow the shared bindings. Their lexicographic ordering prefers session-wide values, then the class order CONST, COPY, RESP, EXTEND, VOLATILE, then smaller depth, and finally greater token length. These are heuristic preferences for exposing reuse. At call-sites with shared bindings, the instruction specification follows the bindings unless pinned; otherwise, it precedes them.
+
+\subsection{Proactive KV-cache Scheduling}
+\label{sec:Proactive KV-Cache Scheduling}
+
+Re-layout makes longer prefixes reusable. Scheduling determines which of those prefixes remain available when memory is contested. \sysname combines component lifetimes with predictions of upcoming calls to prioritize cached states.
+
+Scheduling is designed around the split that re-layout creates. Under the original order, call-specific instructions end the reusable region early, so heads are short and protecting them saves little. After re-layout, heads carry the shared bindings, and retaining them while releasing tails pays off once memory is contested. We therefore expect re-layout to dominate under low memory pressure and scheduling to matter as pressure grows, which the evaluation confirms (\S4.2--\S4.4). % replace with \ref labels if available
+
+\subsubsection{Reusable Head and Volatile Tail}
+\label{sec:identify_reusable_kv}
+
+After re-layout, the runtime splits each served prompt into a reusable leading region, the \emph{head}, and the remaining \emph{volatile tail}. The head consists of the fixed content at the front of the emitted prompt followed by bindings whose values recur unchanged in a later call of the same session; it ends at the first component that does not. Its boundary is interpreted in the emitted prompt order: a reusable component behind a differing token cannot extend a matching KV prefix. In the running example, the shared claim and the unchanged leading evidence can contribute to reusable heads, while temporary results can form disposable tails.
+
+\subsubsection{Next-Call Prediction}
+
+After each call, the runtime predicts possible successors, their arrival probabilities and times, and the prefixes that can already be reconstructed. Transition counts are conditioned on the current call-site and enclosing loop iteration indices. Witten--Bell interpolation backs sparse observations off to shorter loop contexts, including the unconditional call-site counts. Timing estimates use observed inter-call gaps and favor earlier preparation when gaps are more dispersed.
+
+For each predicted successor, the runtime reconstructs its prompt in the chosen layout using values already observed in the session, stopping at the first unknown argument. It matches the resulting prefix against the cache to identify states worth retaining or fetching. Predictions are refreshed at each call and removed when the predicted call arrives or its estimated arrival time passes. Appendix~\ref{sec:prediction_details} gives the estimator and timing rules.
+
+\subsubsection{KV-cache Eviction Using Lifecycle Bands}
+
+The runtime assigns cache entries to four bands, from first evicted to last: \textbf{RETIRED} contains volatile tails from completed sessions; \textbf{TRANSIENT} contains tails from live sessions; \textbf{UNCLASSIFIED} receives the engine's default treatment; and \textbf{PLANNED} contains prefixes selected for predicted reuse.
+
+When a prompt is cached, its tail and generated reply become TRANSIENT. Its head remains UNCLASSIFIED unless selected for PLANNED retention. When a later transition overwrites a value, affected heads are cut back to the surviving prefix, and the remainder becomes TRANSIENT. At session completion, tails become RETIRED; heads remain eligible for sharing by other sessions and age out by recency.
+
+Device eviction starts with the lowest band and uses recency within the three lower bands. The host tier uses LRU, with RETIRED entries evicted first and TRANSIENT entries excluded from admission.
+
+\subsubsection{KV-cache Retention and Prefetch}
+
+\paragraph{Retention.}
+Each predicted prefix $\pi$ has an arrival probability $p_\pi$, a cached-token count $n_\pi$, and an estimated arrival time $t_\pi$. The runtime ranks predictions by:
+\[
+\mathcal{D}(\pi)=
+\frac{p_\pi\,n_\pi}
+{\max(t_\pi-t_{\mathrm{now}},\tau_{\min})}.
+\]
+This heuristic favors likely, large, and imminent reuse. The positive floor $\tau_{\min}$ bounds the score near arrival. Predictions enter PLANNED in descending score order until they cover a fixed fraction of device-cache capacity. % TODO: state the fraction and tau_min values used in the evaluation (here or in Sec. 4.1); reviewers will ask. Each radix-cache node accumulates the scores of all planned prefixes covering it, accounting for shared demand.
+
+\paragraph{Prefetch.}
+If part of a predicted prefix resides on the host, the runtime schedules its transfer before arrival, accounting for measured transfer and prefill rates (Appendix~\ref{sec:prediction_details}). Released predictions are ordered by deadline, then expected cached-token saving. Prefetch uses available device memory after reclaiming RETIRED and TRANSIENT entries. When space is insufficient, it pauses while refreshing the relevant entries' recency.

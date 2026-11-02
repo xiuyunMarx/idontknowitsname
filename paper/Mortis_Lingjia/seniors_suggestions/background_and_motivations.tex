@@ -1,0 +1,45 @@
+\section{Background and Motivation}
+\label{sec:bg_mt}
+\para{Prefix caching and KV-cache tiering}
+Serving engines such as SGLang~\cite{zheng2024sglang} and vLLM~\cite{kwon2023pagedattention} reuse the longest matching prefix, computing only the remaining tokens. Tiered caching systems such as CachedAttention~\cite{gao2024cachedattention}, Mooncake~\cite{qin2025mooncake}, and SGLang HiCache~\cite{sglang2026hicache} extend the KV-cache beyond device memory with host memory and optionally disk storage to improve capacity. However, off-device KV states must be transferred back to GPU memory before use.
+
+
+\para{KV-cache management for LLM agents}
+Agent serving systems use recurring patterns in agentic workloads to manage the KV-cache. KVFlow~\cite{pan2025kvflow} derives each agent's steps-to-execution from the workflow to guide eviction and prefetching of each agent's prompt prefix; Helium~\cite{wadlom2026helium} analyzes the workflow to order LLM calls and prewarm static prefixes; Learned Prefix Caching~\cite{yang2025lpc}, PBKV~\cite{zheng2026pbkv}, and CacheScout~\cite{zhang2026cachescout} use predictions of future reuse to guide cache retention. Some systems, such as Pythia~\cite{yu2026pythia}, furthermore prefill the predicted next invocations to proactively prepare KV-cache that does not exist yet. Predicting upcoming calls helps manage cached prefixes, but additional reuse may remain hidden by the existing prompt layout.
+
+
+
+\para{Frameworks with LLM calls as typed functions}
+A class of agent frameworks exposes LLM invocations through typed programming interfaces, such as byLLM's meaning-typed programming (MTP) abstraction~\cite{dantanarayana2025mtp}, DSPy's Signatures and Modules~\cite{khattab2024dspy}, and NOOA's typed Python methods~\cite{furgale2026nooa}. The developer declares a function or signature describing the desired behavior, inputs, and return type, and invokes it like an ordinary call within the program's control flow. At each invocation, the framework runtime lowers the declaration and its argument values into final prompts.
+
+
+\input{figures/common_structure}
+Although these frameworks differ in syntax and formatting, the examples in Figure~\ref{fig:common-structure} contain five common kinds of components: framework scaffolding, task instructions, parameter descriptions, argument values, and output schemas. Their placement varies across frameworks.
+
+
+\emph{Prompt-layout Opportunity:}
+By default, component order follows framework templates and argument declarations. These layouts can be adjusted to expose more prefix reuse. For example, DSPy's adapter interface~\cite{dspy2026chatadapter} allows developers to customize prompt rendering. NOOA~\cite{furgale2026nooa} organizes context into static prefixes, append-only history, and dynamic blocks to improve cache reuse. SGLang also explores compiler-based prompt reordering to lengthen constant prefixes~\cite{zheng2024sglang}. Exploiting this flexibility across call sites requires identifying which values are shared and how they change, motivating program analysis to coordinate prompt layouts.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.82\columnwidth]{ArchOverview.pdf}
+    \caption{Architecture overview of \sysname. Program analysis and runtime observations guide prompt re-layout and KV-cache management.}
+    \label{fig:design_overview}
+    \vspace{-8pt}
+\end{figure}
+
+
+
+\para{Intra-prompt heterogeneity in programs}
+Prompts contain components with different sharing patterns and lifetimes. In frameworks with typed LLM calls, components generated from arguments correspond to program variables. Program analysis can recover which values are shared, extended, or replaced, and identify possible future uses.
+
+\emph{Cache-management Opportunity:}
+Even after re-layout exposes a shared prefix, its KV states may be evicted before a later call reuses them. Conversely, cached tails that will not be reused may remain resident. Component sharing and lifetime information can help the runtime distinguish these cases and prioritize retention under memory pressure.
+
+
+\para{From Deficiencies to Design}
+Among the agents we evaluated in \S\ref{sec:eval}, 51--92\% of shared tokens miss the prefix cache because a differing token precedes them, and about 20\% of served prompt tokens are used only once within a session. These observations suggest opportunities to expose additional prefix reuse and distinguish cached states by their expected future use. \sysname combines program analysis with runtime observations to coordinate prompt layout and cache management, exposing reusable prefixes and guiding their retention.
+
+
+
+

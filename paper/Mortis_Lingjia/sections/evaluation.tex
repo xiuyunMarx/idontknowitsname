@@ -11,7 +11,7 @@
 \label{sec:eval}
 \subsection{Experimental Setup}
 \para{Testbed and model}
-We implement \sysname on top of SGLang v0.5.10.post1 and conduct evaluations on one A40 GPU using Qwen3-32B-AWQ. We allocate 15\,GB of GPU memory and 25\,GB of CPU memory to the device and host KV-cache pools. 
+We implement \sysname on top of SGLang v0.5.10.post1 and Jac~\cite{mars2023jaseci} compiler, and conduct evaluations on one A40 GPU using Qwen3-32B-AWQ. We allocate 15\,GB of GPU memory and 25\,GB of CPU memory to the device and host KV-cache pools. 
 
 \para{Baselines}
 We compare \sysname against five baselines, reimplemented on our SGLang fork:
@@ -32,19 +32,16 @@ We also evaluate the following ablation variants of \sysname:
 Additionally, we run baseline serving systems on top of \sysname's re-layout to isolate scheduling policy under the same prompt layout.
 
 \para{Workloads}
-We evaluate \sysname on four representative agent workloads, ported to Jac byLLM~\cite{mars2023jaseci}: a HoVer-style~\cite{jiang2020hover} Fact-check agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. 
+We evaluate \sysname on four representative agent workloads, ported to Jac byLLM: a HoVer-style~\cite{jiang2020hover} fact-check agent, a HumanEval~\cite{chen2021evaluating} coding agent, a BFCL~\cite{patil2025bfcl} tool-use agent, and a FinanceBench~\cite{islam2023financebench} financial-analysis agent. We further evaluate a mixed workload comprising all four agent types to assess \sysname's end-to-end performance under concurrent, heterogeneous demand. We report the average job completion time (JCT) and throughput (prompt tokens served per minute).
 
 
 \subsection{End-to-End Performance of \sysname}
-We test \sysname under different numbers of concurrent workflows and on a mixed workload. Across these workloads, we compare the average job completion time (JCT) and throughput (prompt tokens served per minute).
-
-
 \para{Performance on different workload types}
 As shown in Figure~\ref{fig:e2e_speedup}, \sysname achieves a 1.08--1.99$\times$ JCT speedup and increases throughput by 1.04--1.97$\times$ compared with SGLang, with geometric-mean gains of 1.45$\times$ in JCT and 1.49$\times$ in throughput. Across these agents, serving systems such as KVFlow show no significant improvement, because they ignore intra-prompt heterogeneity. 
 
 Under low concurrency, adaptive prompt re-layout accounts for nearly all of the improvement, because memory is sufficient. As load increases, however, the KV-cache becomes contested. Without knowing what to keep and what to give up, other serving systems fail to schedule it efficiently. 
 
-For the financial-analysis agent, \sysname's improvement is small, because this agent is a simple pipeline that digests large blobs of documents. Under low pressure, adaptive prompt re-layout accounts for nearly all of the improvement by exposing larger prefix reuse. \sysname's proactive KV-cache scheduling only takes effect under the highest load, because it can proactively evict stale KV-cache entries. 
+For the financial-analysis agent, KV-cache scheduling adds little, because this agent is a simple pipeline that digests large blobs of documents. Under low pressure, adaptive prompt re-layout accounts for nearly all of the improvement by exposing larger prefix reuse. \sysname's proactive KV-cache scheduling only takes effect under the highest load, because it can proactively evict stale KV-cache entries. 
 
 \para{Performance on mixed workload}
 We evaluate \sysname under varying pressure on the mixed workload and report metrics over each system's steady-state window. We vary the number of lanes (concurrent workflows) per agent, keeping it equal across all four agents.
@@ -81,10 +78,11 @@ In the mixed workload, agents have heterogeneous demands for KV-cache memory, wh
     \vspace{-8pt}
 \end{figure}
 
-\para{Task quality} The performance gains of \sysname do not come at the cost of task quality. As shown in Table~\ref{tab:layout_accuracy}, across three different layouts produced by the original byLLM, Static-Adapter, and \sysname, reordering components does not harm task quality.
+\para{Task quality} The performance gains of \sysname do not come at the cost of task quality. As shown in Table~\ref{tab:layout_accuracy}, across three different layouts produced by the original byLLM, Static-Adapter, and \sysname, reordering components does not harm task quality. Moreover, the three layouts differ by at most 3\% in LLM calls per task and 6\% in output tokens. \sysname's speedup is not the result of less work either.
 
 \begin{table}[tb]
     \centering
+    \small
     \caption{Task accuracy under three prompt layouts that appear in our evaluation.}
     \label{tab:layout_accuracy}
     \resizebox{\linewidth}{!}{%
@@ -185,21 +183,28 @@ This deficiency in baseline serving systems arises because they manage the KV-ca
 
 
 \subsection{Sensitivity Study}
+We run the mixed workload on four A40 GPUs with TP=4 and the same KV-cache pool size configurations. TP=4 increases the prefill speed by 1.74$\times$ (from 1292.4 to 2251.8 tokens/s), which lowers the cost of a cache miss. As shown in Figure~\ref{fig:sensitivity_study}, \sysname maintains its advantage even under cheaper cache misses. It achieves geometric-mean speedups of 1.60$\times$ in throughput and 1.58$\times$ in JCT (up to 1.92$\times$ and 1.87$\times$). Additionally, we evaluate on a smaller GPU with a smaller model. On one RTX 3090 with Qwen3-14B-AWQ, with 5.2\,GB of GPU memory and 10\,GB of CPU memory for the KV-cache pools, \sysname keeps the same pattern of improvement (Figure~\ref{fig:sensitivity_study}): re-layout exposes additional prefix cache reuse, and KV-cache scheduling takes effect once the cache becomes contested and thrashes.  
 
-
-We further run the mixed workload on four A40 GPUs with TP=4 and the same KV-cache pool size. TP=4 increases the prefill speed by 1.74$\times$ (from 1292.4 to 2251.8 tokens/s), which lowers the cost of a cache miss. As shown in Figure~\ref{fig:tp4}, \sysname maintains its advantage even under cheaper cache misses. It achieves geometric-mean speedups of 1.60$\times$ in throughput and 1.58$\times$ in JCT (up to 1.92$\times$ and 1.87$\times$).  
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=\columnwidth]{figures/TP=4/legend.pdf}\\[1pt]
-    \includegraphics[width=0.5\columnwidth]{figures/TP=4/throughput_speedup.pdf}%
-    \includegraphics[width=0.5\columnwidth]{figures/TP=4/jct_speedup.pdf}
-    \vspace{-6pt}
-    \caption{Speedup over SGLang under mixed workload, A40 TP=4}
-    \label{fig:tp4}
-    \vspace{-8pt}
+    \captionsetup[subfigure]{font=footnotesize,skip=1pt,margin=-6pt}
+    \includegraphics[width=\columnwidth]{figures/sensitivity_study/legend.pdf}\\[0pt]
+    \begin{subfigure}[t]{0.5\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sensitivity_study/tp4.pdf}
+        \caption{A40 TP=4}
+    \end{subfigure}%
+    \begin{subfigure}[t]{0.5\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/sensitivity_study/3090.pdf}
+        \caption{RTX 3090}
+    \end{subfigure}
+    \vspace{-9pt}
+    \caption{Throughput and JCT speedup over SGLang on the mixed workload under varying lanes per agent.}
+    \label{fig:sensitivity_study}
+    \vspace{-12pt}
 \end{figure}
-% \sysname's performance optimization comes from more efficient KV-cache scheduling. The advantage of \sysname does not disappear or shrink when a cache miss is cheaper. Trends under TP=4 in Figure~\ref{fig:tp4} show the same pattern as in Figure~\ref{fig:lane_sweep}. \sysname obtains up to 1.92$\times$ throughput speedup and 1.87$\times$ JCT speedup, with geometric-mean speedups of 1.60$\times$ and 1.58$\times$, respectively. 
 
 
 

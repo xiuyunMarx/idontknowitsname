@@ -15,33 +15,42 @@ The \emph{agent descriptor} contains the metadata for scheduling. Static analysi
 
 \subsubsection{Call-site Template}
 \label{sec:template}
+
+
 Prompts can be decomposed into heterogeneous components. We classify these components into the following two categories:
 \begin{enumerate*}[label=(\roman*)]
     \item \textbf{Invariant Specifications:} the part of prompt that is fixed once the program is compiled. They are rendered from the compiler's own intermediate representation and stay constant.
     \item \textbf{Dynamic Bindings:} the argument values of LLM functions, which are determined at runtime.
-    % \item \textbf{Dynamic Bindings:} because LLM calls are declared as ordinary functions, the arguments of a call-site are supplied at runtime. These runtime values are the dynamic bindings.
 \end{enumerate*}
 
 We define the call-site template as $\mathcal{T}_c=\langle \mathcal{I}_c,\ \mathcal{B}_c,\ \mathcal{H}_c \rangle$, where $\mathcal{I}_c$ denotes the invariant specifications, $\mathcal{B}_c$ the dynamic bindings, and $\mathcal{H}_c$ the heterogeneity annotation over those bindings.
 
 \paragraph{Heterogeneity annotation}
-For each dynamic binding, $\mathcal{H}_c$ records both how its value is shared and how long that value stays valid: $\mathcal{H}_c:\ \mathcal{B}_c \longrightarrow \mathcal{E} \times \mathcal{S}$, where $\mathcal{E}$ is the evolution component that governs which bytes a later prompt can reuse, and $\mathcal{S}$ is the scope of this binding in code, which decides when cached bytes can be given up.
-
-We divide $\mathcal{E}$ into five classes, listed from the most to the least reusable:
-\begin{enumerate*}[label=\textbf{(\roman*)}]
-    \item \textbf{CONST:} the value is fixed by the program text and is identical at every call.
-    \item \textbf{COPY:} the value is the same as the value another call-site carries.
-    \item \textbf{RESP:} the value comes from the reply produced by another call-site.
-    \item \textbf{EXTEND:} the binding is an append-only context, where the previous value remains a prefix of the new one.
-    \item \textbf{VOLATILE:} the value is freshly produced at each call, or its origin lies outside the analysis boundary.
-\end{enumerate*}
-
+For each dynamic binding, $\mathcal{H}_c$ records how its value is shared and how long that value stays valid, which we represent as $\mathcal{E}$ and $\mathcal{S}$ respectively. $\mathcal{S}$ is the set of program regions that overwrite a binding, and $\mathcal{E}$ classifies a binding into five classes (Table~\ref{tab:evolution_classes}) by reusability.
+\begin{table}[h]
+    \centering
+    \small
+    \caption{Evolution classes of a dynamic binding, from the most to the least reusable.}
+    \label{tab:evolution_classes}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{@{}lp{0.79\columnwidth}@{}}
+        \toprule
+        Class & Value relationship \\
+        \midrule
+        CONST    & Fixed by the code and identical at every call. \\
+        COPY     & Same as the value another call-site carries. \\
+        RESP     & Comes from the reply produced by another call-site. \\
+        EXTEND   & Append-only context; the previous value remains a prefix of the new one. \\
+        VOLATILE & Freshly produced at each call, or its origin lies outside the analysis boundary. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 % We write $\rho$ for the rank of a class in the order above, which expresses how much of a binding's bytes an earlier call can already supply. 
 \subsubsection{Workflow Automaton}
 \label{sec:TPFM}
 We abstract an agent's workflow as a time-annotated probabilistic finite-state automaton. We formulate it as: 
 \[
-\mathcal{A} = (Q, P, q_0, F, \mathcal{T}),
+\mathcal{A} = (Q, P, q_0, F, D^{\mathrm{gap}}),
 \]
 where:
 \begin{enumerate*}[label=(\roman*)]
@@ -49,14 +58,11 @@ where:
     \item $P$ denotes the transition probabilities between states;
     \item $q_0 \in Q$ is the entrance call-site;
     \item $F$ specifies the termination probability of the agent at each state;
-    \item $\mathcal{T} = \left\{D^{\mathrm{exec}}_q, D^{\mathrm{gap}}_{q,q'}\right\}$ is the timing annotations associated with states and transitions, where $D^{\mathrm{exec}}_q$ is the execution-time distribution of the LLM call-site $q$, and $D^{\mathrm{gap}}_{q,q'}$ is the inter-call gap distribution between the completion of $q$ and the invocation of its successor $q'$.
+    \item $D^{\mathrm{gap}}(q,q')$ is the inter-call gap distribution between the completion of call-site $q$ and the invocation of its successor $q'$..
 \end{enumerate*}
 
-% Static analysis fixes the shape of this automaton, while its weights come from runtime logs. The server observes $\mathcal{T}$ and $P$ online and accumulates them across sessions, updating the statistical model of the agent consistently. 
-
-\subsection{Agent Descriptor Skeleton via Compiler Analysis}
+\subsection{Constructing the Agent Descriptor}
 \label{sec:analysis}
-% The skeleton of the agent descriptor comes from program code: the graph structure of $\mathcal{A}$ and the tuple $\mathcal{T}_c$ for each call-site $c$.
 
 \para{Call-site graph construction}
 The compiler identifies LLM call-sites from the typed AST. It then builds the interprocedural control-flow graph (CFG) of the agent and projects it onto these call-sites. An edge $(q, q')$ is added whenever $q'$ is directly reachable in one hop from $q$, while non-LLM function call-sites are contracted. If a call target cannot be resolved statically, the compiler conservatively adds edges to all candidate targets. This projected graph forms the unweighted structure of $\mathcal{A}$. Finally, the compiler applies Bourdoncle's weak topological ordering~\cite{bourdoncle1993efficient} to recover the loop nesting structure from the cycles in $\mathcal{A}$.
@@ -78,14 +84,14 @@ If different CFG paths yield conflicting evolution classes for $b$, the compiler
 
 
 \para{Recovering lifetime scopes ($\mathcal{S}$)}
-The compiler records $\mathcal{S}(b)$ as the set of procedures (or loop bodies) that overwrite the binding $b$'s underlying variable. When the variable is assigned once and remains valid for the entire session, $\mathcal{S}_(b)=\emptyset$. Whenever execution enters a procedure in $\mathcal{S}(b)$, the variable is overwritten and its previously cached KV bytes become dead.
+The compiler records $\mathcal{S}(b)$ as the set of procedures (or loop bodies) that overwrite the binding $b$'s underlying variable. When the variable is assigned once and remains valid for the entire session, $\mathcal{S}(b)=\emptyset$. Whenever execution enters a procedure in $\mathcal{S}(b)$, the variable is overwritten and its previously cached KV bytes become dead.
 
 \subsection{Adaptive Prompt Re-layout}
 \label{sec:relayout}
 \begin{algorithm}[t]
-    \caption{Layout decision algorithm}
+    \caption{Layout decision }
     \label{alg:layout}
-    \small
+    \small\setlength{\lineskiplimit}{-3pt}
     \begin{algorithmic}[1]
     \algtext*{EndFor}\algtext*{EndIf}\algtext*{EndWhile}
     \Require Descriptor $(\mathcal{A},\{\mathcal{T}_q\}_{q\in Q})$, switch \textit{pin}, lengths $\ell$
@@ -94,39 +100,37 @@ The compiler records $\mathcal{S}(b)$ as the set of procedures (or loop bodies) 
     \State $G \gets(B_{\mathrm{sh}},\emptyset)$ \Comment{precedence graph}
     \ForAll{$(q,q')\in\Call{Edges}{\mathcal{A}}$}
         \State $P_1,P_2,P_3 \gets \emptyset$
-        \Statex \hfill Groups: unchanged, append, rewritten/one-sided
+        \Statex \Comment{Groups: unchanged, append, rewritten/one-sided}
         \ForAll{$b \in B_{\mathrm{sh}}\cap(\mathcal{B}_q\cup\mathcal{B}_{q'})$}
-            \State $P_{\tau(b)} \gets P_{\tau(b)}\cup\{b\}$ \Comment{$\tau(b)$: group of $b$}
+            \State $P_{\tau(b)} \gets P_{\tau(b)}\cup\{b\}$ \Comment{$\tau(b)$: group assignment of $b$}
         \EndFor
-        \State $E(G) \gets E(G)\cup\bigcup_{i<j}P_i\times P_j$
+        \State $E(G) \gets E(G)\cup\{(b,b')\in P_i\times P_k : i<k\}$
     \EndFor
     \State $\mathcal{C} \gets \Call{Tarjan}{G}$ \Comment{SCCs of $G$, sets of bindings}
     \State $\hat{E} \gets \{(C,C')\in\mathcal{C}^2 : C\neq C',\ (C\times C')\cap E(G)\neq\emptyset\}$
     \State $\hat{G} \gets (\mathcal{C},\hat{E})$ \Comment{condensation graph of $G$}
-    \State $j(b) \gets (-\ell(b),\textit{depth}(b))$ for $b\in B_{\mathrm{sh}}$
-    \State $J(C) \gets \min_{b\in C} j(b)$ for $C\in V(\hat{G})$
+    \State $j(b) \gets (-\ell(b),\textit{depth}(b)),\ \forall b\in B_{\mathrm{sh}}$
+    \State $J(C) \gets \min_{b\in C} j(b),\ \forall C\in V(\hat{G})$
     \State $L \gets [\,]$
-    \While{$V(\hat{G})\neq\emptyset$}
-        \State $C^{*} \gets \arg\min_{C\in V(\hat{G}),\ \textit{indeg}(C)=0} J(C)$
-        \State $L \gets L\,\Vert\,\Call{Sort}{C^{*},j}$;\ \ $\hat{G} \gets \hat{G}-C^{*}$ \label{alg:layout:sh-end}
+    \While{$V(\hat{G})\neq\emptyset$} \Comment{topological sort}
+        \State $R \gets \{C\in V(\hat{G}) : \textit{indeg}(C)=0\}$
+        \State $C^{*} \gets \arg\min_{C\in R} J(C)$
+        \State $L \gets L \concat \Call{Sort}{C^{*},j}$;\quad $\hat{G} \gets \hat{G}-C^{*}$ \label{alg:layout:sh-end}
     \EndWhile
     \ForAll{$q\in Q$}
-        \State $\pi_q \gets [\,b\in L : b\in\mathcal{B}_q\,]\,\Vert\,\Call{Sort}{\mathcal{B}_q\setminus B_{\mathrm{sh}},K}$ \label{alg:layout:pv}
+        \State $\sigma_q \gets [\,b\in L : b\in\mathcal{B}_q\,] \concat \Call{Sort}{\mathcal{B}_q\setminus B_{\mathrm{sh}},K}$ \label{alg:layout:pv}
         \State $s_q \gets \Call{Spec}{\mathcal{I}_q}$ \Comment{instruction specification of $q$} \label{alg:layout:spec-begin}
-        % \State $\mathcal{L}_q \gets \pi_q\Vert s_q$ \textbf{if} $\neg\textit{pin}\land\mathcal{B}_q\cap B_{\mathrm{sh}}\neq\emptyset$ \textbf{else} $s_q\Vert\pi_q$ 
-        % \label{alg:layout:spec-end}
-        \If{$\neg\textit{pin}\land\mathcal{B}_q\cap B_{\mathrm{sh}}\neq\emptyset$}
-            \State $\mathcal{L}_q \gets \pi_q\Vert s_q$
+        \If{$\neg\textit{pin}\land(\mathcal{B}_q\cap B_{\mathrm{sh}}\neq\emptyset)$}
+            \State $\mathcal{L}_q \gets \sigma_q \concat s_q$ \Comment{spec last}
         \Else
-            \State $\mathcal{L}_q \gets s_q\Vert\pi_q$
+            \State $\mathcal{L}_q \gets s_q \concat \sigma_q$ \Comment{spec first}
         \EndIf
+        \label{alg:layout:spec-end}
     \EndFor
     \State \Return $\{\mathcal{L}_q\}_{q\in Q}$
     \end{algorithmic}
 \end{algorithm}
 
-% The message a framework emits for a call-site follows the order of parameters in the function declaration, which may place a changing value ahead of values that later calls could reuse, reducing the effectiveness of prefix caching. \sysname's adaptive re-layout permutes prompt components to mitigate this inefficiency.
-% \sysname's \emph{adaptive prompt re-layout} permutes prompt components to maximize prefix cache reuse. 
 \subsubsection{Movable Components}
 First, the dynamic bindings $\mathcal{B}_c$ can be permuted freely. The compiler lowers each argument into a self-contained component labeled by its parameter name, and the framework places these components in declaration order only because that is the order of the argument list; re-layout may choose any order of the bindings.
 
@@ -137,7 +141,7 @@ Second, the instruction specification in $\mathcal{I}_c$ is movable. $\mathcal{I
 
 \sysname decides the layout $\mathcal{L}_q$ for each call-site $q$ by ranking the reusability of bindings (Algorithm~\ref{alg:layout}). It places shared bindings ahead of private bindings and prioritizes stable bindings within both categories to maximize prefix cache efficiency. 
 
-\paragraph{Sorting shared bindings {\normalfont(lines~\ref{alg:layout:sh-begin}--\ref{alg:layout:sh-end})}} Shared bindings are those that are carried by multiple call-sites. For every transition from $q$ to $q'$, we identify how each shared binding evolves. We categorize their behaviors into three sharing pattern groups, ordered as follows:
+\paragraph{Sorting shared bindings {\normalfont(lines~\ref{alg:layout:sh-begin}--\ref{alg:layout:sh-end})}} Shared bindings are those that are carried by multiple call-sites. For every transition $(q,q')$, we identify how each shared binding evolves. We categorize their behaviors into three sharing pattern groups, ordered as follows:
 \begin{enumerate*}[label=(\textbf{\roman*})]
     \item \textbf{unchanged:} Both call-sites carry it and its value does not change between the two calls.
     \item \textbf{append:} Both call-sites carry it and the program only appends to its value.
@@ -158,7 +162,7 @@ K(b)=\big(\textit{scoped},\ \rho,\ \textit{depth},\ -\textit{length}\big),
 where:
 \begin{enumerate*}[label=\textbf{(\roman*)}]
     \item \textit{scoped}: the lifetime of $b$; 0 if it is session-wide ($\mathcal{S}=\emptyset$) and 1 otherwise;
-    \item $\rho$: the stability rank for $\mathcal{E}$ in \S\ref{sec:template}, from 1 for CONST to 5 for VOLATILE.
+    \item $\rho$: the stability rank for $\mathcal{E}$ in Table~\ref{tab:evolution_classes}, from 1 for CONST to 5 for VOLATILE.
 \end{enumerate*}
 
 
@@ -194,16 +198,16 @@ Each call-site $q$ can be located by a chain of loops enclosing it; for each cal
 
 The table is approximated and updated by frequency counts observed at runtime. Let $q$ and $\zeta$ denote the call-site and loop context of the preceding call in the same session. When a call at $q'$ arrives, the server increments the count of outcome $q'$ in row $(q,\zeta)$; when the session closes at $q$, it increments the termination count in row $(q,\zeta)$. Each observation is also counted in every row $(q,\zeta_k)$ with $\zeta_k=(i_{m-k+1},\dots,i_m)$, $k=0,\dots,m$.
 
-After a call at $q$ lands, we compute the probability of each outcome $o$ by Witten--Bell interpolation from the empty context $\zeta_0$ to the full context $\zeta_m=\zeta$. The outcome $o$ ranges over $\mathrm{succ}(q)$, the static successors of $q$ plus a virtual outcome $\mathrm{end}$ for session termination:
-
+After a call at $q$ lands, we compute the probability of each outcome $o$ by Witten--Bell interpolation~\cite{witten1991zero} from the empty context $\zeta_0$ to the full context $\zeta_m=\zeta$. The outcome $o$ ranges over $\mathrm{succ}(q)$, the static successors of $q$ plus a virtual outcome $\mathrm{end}$ for session termination:
 \begin{align*}
 \hat{P}_k(o) &= \lambda_k\frac{c_k(o)}{n_k}+(1-\lambda_k)\hat{P}_{k-1}(o),\quad k=0,\dots,m, \\
-\hat{P}_{-1}(o) &= \frac{1}{|\mathrm{succ}(q)|},\qquad \lambda_k=\frac{n_k}{n_k+d_k}\ (\lambda_k=0 \text{ if } n_k=0)
+\hat{P}_{-1}(o) &= \frac{1}{|\mathrm{succ}(q)|},\qquad
+\lambda_k=\begin{cases}\dfrac{n_k}{n_k+d_k} & n_k>0,\\[4pt] 0 & n_k=0,\end{cases}
 \end{align*}
 $c_k(o)$ is how many times outcome $o$ followed a call at $q$ in context $\zeta_k$, $n_k=\sum_o c_k(o)$ is the total number of observations in that row, and $d_k$ is the number of distinct outcomes with $c_k(o)>0$. Then $\mathcal{P}(q'\mid q,\zeta)=\hat{P}_m(q')$ and $\mathcal{F}(q,\zeta)=\hat{P}_m(\mathrm{end})$. A context with no observation is skipped. The weight $\lambda_k$ grows with $n_k$, so a frequently observed context dominates the prediction, while a rarely observed one defers to its shorter contexts.
 
 \paragraph{Arrival time}
-The time of arrival is conservatively approximated based on recorded statistics. The workflow automaton records $D^{\mathrm{gap}}_{q,q'}$ per transition: each time a call at $q'$ arrives, the server appends the interval between the reply of the preceding call at $q$ and this arrival. The interval is the agent's own time spent in its code between two calls. We therefore estimate the time gap to the next call as:
+The time of arrival is conservatively approximated based on recorded statistics. The workflow automaton records $D^{\mathrm{gap}}(q,q')$ per transition: each time a call at $q'$ arrives, the server appends the interval between the reply of the preceding call at $q$ and this arrival. The interval is the agent's own time spent in its code between two calls. We estimate the time gap to the next call as:
 \[
 \hat{g}= \max \{t_{50}-\tfrac{1}{2}(t_{90}-t_{50}), 0 \}
 \]
@@ -212,7 +216,7 @@ where $t_{50}$ and $t_{90}$ are the 50th and 90th percentiles of the gap samples
 % the predicted call is then expected to arrive $\hat{g}$ after the reply of the current call. 
 
 \paragraph{Prefix reconstruction}
-\sysname constructs the prefix of call-site $q'$ for matching KV-cache entries to schedule. Since $\mathcal{H}_c$ records the relationships among arguments, \sysname builds the prefix in layout $L_{q'}$ using the argument values observed in the current session. The construction stops at the first argument with an unknown value.
+\sysname constructs the prefix of call-site $q'$ for matching KV-cache entries to schedule. Since $\mathcal{H}_c$ records the relationships among arguments, \sysname builds the prefix in layout $\mathcal{L}_{q'}$ using the argument values observed in the current session. The construction stops at the first argument with an unknown value.
 
 
 \subsubsection{KV-cache Eviction Using Lifecycle Bands}
